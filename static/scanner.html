@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(function(regs){
+    regs.forEach(function(r){r.unregister();});
+  });
+}
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GrailSweep — Live Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0c1a;
+    --surface: rgba(35,32,65,0.92);
+    --border: rgba(255,255,255,0.1);
+    --text: #f0ecff;
+    --muted: #9b95b8;
+    --gold: #ffd700;
+    --emerald: #00ff88;
+    --ruby: #ff2d6f;
+    --sapphire: #4d8eff;
+    --violet: #b14dff;
+    --cyan: #00e5ff;
+    --font-display: 'Orbitron', monospace;
+    --font-body: 'DM Sans', -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; }
+  body {
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: var(--font-body);
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+  }
+
+  .scanner-app { display: flex; flex-direction: column; width: 100%; height: 100dvh; overflow: hidden; position: relative; }
+
+  /* ── Top bar ── */
+  .top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px; background: var(--bg); z-index: 10; flex-shrink: 0;
+    border-bottom: 1px solid rgba(177,77,255,0.25); gap: 8px;
+  }
+  .top-left { display: flex; flex-direction: column; gap: 2px; }
+  .top-logo { font-family: var(--font-display); font-size: 0.9rem; font-weight: 900; background: linear-gradient(90deg, #b14dff, #00e5ff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .top-mode-row { display: flex; gap: 6px; align-items: center; }
+  .top-mode { font-size: 0.5rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--cyan); background: rgba(0,229,255,0.1); padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(0,229,255,0.2); }
+  .tcg-lock {
+    font-size: 0.55rem; font-weight: 700; padding: 2px 6px; border-radius: 3px;
+    background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.25);
+    color: var(--gold); font-family: var(--font-body); cursor: pointer;
+  }
+  .tcg-lock:focus { outline: none; border-color: var(--gold); }
+  .mode-toggle {
+    font-size: 0.5rem; font-weight: 700; padding: 2px 8px; border-radius: 3px;
+    cursor: pointer; border: 1px solid; font-family: var(--font-body); transition: all 0.2s;
+  }
+  .mode-toggle.fast { color: var(--emerald); background: rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.25); }
+  .mode-toggle.precise { color: var(--gold); background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.25); }
+  .top-stats { display: flex; gap: 14px; flex-shrink: 0; }
+  .stat { display: flex; flex-direction: column; align-items: center; }
+  .stat-val { font-family: var(--font-display); font-weight: 900; font-size: 0.9rem; }
+  .stat-val.count { color: var(--cyan); }
+  .stat-val.value { color: var(--emerald); }
+  .stat-label { font-size: 0.45rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+
+  /* ── Summary strip ── */
+  .summary-strip {
+    display: none; flex-shrink: 0; padding: 4px 12px; background: rgba(20,18,36,0.95);
+    border-bottom: 1px solid rgba(255,255,255,0.04); gap: 12px;
+    font-size: 0.6rem; color: var(--muted); align-items: center; overflow-x: auto; white-space: nowrap;
+  }
+  .summary-strip.visible { display: flex; }
+  .ss-item { display: flex; gap: 4px; align-items: center; }
+  .ss-val { font-weight: 700; }
+  .ss-val.gold { color: var(--gold); }
+  .ss-val.emerald { color: var(--emerald); }
+  .ss-val.cyan { color: var(--cyan); }
+  .ss-val.ruby { color: var(--ruby); }
+
+  /* ── Camera ── */
+  .camera-wrap { flex: 1; position: relative; overflow: hidden; background: #000; min-height: 0; }
+  .camera-wrap video { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .camera-wrap canvas { display: none; }
+
+  .guide-overlay { position: absolute; inset: 0; z-index: 5; pointer-events: none; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .card-guide { width: 55%; max-width: 260px; aspect-ratio: 2.5/3.5; border: 2px solid rgba(177,77,255,0.5); border-radius: 10px; position: relative; transition: border-color 0.3s, box-shadow 0.3s; }
+  .card-guide.detecting { border-color: rgba(255,215,0,0.7); box-shadow: 0 0 30px rgba(255,215,0,0.2); }
+  .card-guide.matched { border-color: rgba(0,255,136,0.8); box-shadow: 0 0 40px rgba(0,255,136,0.3); animation: matchFlash 0.5s ease-out; }
+  @keyframes matchFlash { 0% { box-shadow: 0 0 60px rgba(0,255,136,0.6); } 100% { box-shadow: 0 0 40px rgba(0,255,136,0.3); } }
+  .corner { position: absolute; width: 18px; height: 18px; border-color: var(--violet); border-style: solid; }
+  .corner-tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+  .corner-tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 4px 0 0; }
+  .corner-bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 0 4px; }
+  .corner-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 4px 0; }
+  .guide-text { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; font-weight: 600; color: rgba(255,255,255,0.6); white-space: nowrap; text-shadow: 0 1px 6px rgba(0,0,0,0.9); }
+  .guide-text.scanning { color: var(--gold); }
+  .guide-text.success { color: var(--emerald); }
+  .scan-line { position: absolute; left: 8%; right: 8%; height: 2px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); top: 20%; opacity: 0; pointer-events: none; }
+  .scan-line.active { opacity: 1; animation: scanSweep 1.8s ease-in-out infinite; }
+  @keyframes scanSweep { 0% { top: 12%; } 50% { top: 88%; } 100% { top: 12%; } }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    padding: 12px 16px; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    background: var(--bg); z-index: 100; position: relative; flex-shrink: 0; border-top: 1px solid rgba(177,77,255,0.25);
+  }
+  .btn-scan {
+    width: 62px; height: 62px; border-radius: 50%; border: 3px solid var(--violet);
+    background: rgba(177,77,255,0.1); cursor: pointer; display: flex;
+    align-items: center; justify-content: center; transition: all 0.3s; position: relative; flex-shrink: 0;
+  }
+  .btn-scan:hover { border-color: var(--cyan); box-shadow: 0 0 25px rgba(0,229,255,0.3); }
+  .btn-scan.active { border-color: var(--emerald); background: rgba(0,255,136,0.1); animation: scanBtnPulse 2s ease-in-out infinite; }
+  .btn-scan.active::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid rgba(0,255,136,0.3); animation: scanRing 2s ease-out infinite; }
+  @keyframes scanBtnPulse { 0%, 100% { box-shadow: 0 0 15px rgba(0,255,136,0.15); } 50% { box-shadow: 0 0 30px rgba(0,255,136,0.35); } }
+  @keyframes scanRing { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+  .btn-scan-icon { font-size: 1.5rem; line-height: 1; }
+  .btn-scan.active .btn-scan-icon { color: var(--emerald); }
+  .btn-ctrl {
+    padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04); color: var(--muted); font-size: 0.7rem;
+    font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: var(--font-body); white-space: nowrap;
+  }
+  .btn-ctrl:hover { background: rgba(177,77,255,0.12); border-color: rgba(177,77,255,0.3); color: var(--violet); }
+
+  /* ── Session panel ── */
+  .session-panel {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 200;
+    max-height: 65vh;
+    overflow-y: auto;
+    background: rgba(14,12,26,0.98);
+    border-top: 2px solid rgba(177,77,255,0.3);
+    border-radius: 16px 16px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.35s ease, visibility 0s linear 0.35s;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .session-panel.open {
+    transform: translateY(0);
+    transition: transform 0.35s ease, visibility 0s linear 0s;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  #sessionToggle:checked ~ .session-panel {
+    transform: translateY(0);
+    transition: transform 0.35s ease, visibility 0s linear 0s;
+    visibility: visible;
+    pointer-events: auto;
+  }
+  .session-header {
+    position: sticky; top: 0; z-index: 2; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(37,34,72,0.98); border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .session-title { font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; color: var(--gold); letter-spacing: 0.05em; }
+  .session-actions { display: flex; gap: 8px; align-items: center; }
+  .session-btn {
+    padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.04); color: var(--muted); font-size: 0.6rem;
+    font-weight: 600; cursor: pointer; font-family: var(--font-body);
+  }
+  .session-btn:hover { background: rgba(177,77,255,0.12); color: var(--violet); }
+  .session-btn.export { color: var(--emerald); border-color: rgba(0,255,136,0.2); }
+  .session-btn.clear { color: var(--ruby); border-color: rgba(255,45,111,0.2); }
+  .session-close { background: none; border: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; padding: 4px 8px; }
+
+  .scanned-card {
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: background 0.15s;
+  }
+  .scanned-card:active { background: rgba(177,77,255,0.12); }
+  .sc-num { font-family: var(--font-display); font-size: 0.6rem; color: var(--muted); width: 22px; text-align: center; flex-shrink: 0; }
+  .sc-thumb { width: 38px; height: 53px; border-radius: 4px; object-fit: cover; border: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); flex-shrink: 0; }
+  .sc-info { flex: 1; min-width: 0; }
+  .sc-name { font-size: 0.78rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sc-set { font-size: 0.58rem; color: var(--cyan); }
+  .sc-dupe { font-size: 0.5rem; font-weight: 800; color: var(--gold); background: rgba(255,215,0,0.12); padding: 1px 5px; border-radius: 3px; margin-left: 4px; }
+  .sc-right { text-align: right; flex-shrink: 0; }
+  .sc-price { font-family: var(--font-display); font-size: 0.78rem; font-weight: 900; }
+  .sc-price.high { color: var(--gold); }
+  .sc-price.mid { color: var(--emerald); }
+  .sc-price.low { color: var(--muted); }
+  .sc-match { font-size: 0.5rem; color: var(--muted); }
+  .session-empty { text-align: center; padding: 30px 16px; color: var(--muted); font-size: 0.8rem; }
+
+  /* ── Last match toast ── */
+  .last-match {
+    position: fixed; top: 70px; left: 10px; right: 10px; z-index: 150;
+    display: none; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 14px;
+    background: rgba(37,34,72,0.96); border: 1px solid rgba(0,255,136,0.3);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  .last-match.show { display: flex; animation: toastIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .last-match { box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(177,77,255,0.15); }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(-24px) scale(0.94); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .lm-thumb { width: 46px; height: 64px; border-radius: 6px; object-fit: cover; border: 2px solid rgba(255,215,0,0.4); flex-shrink: 0; animation: lmShimmer 4s ease-in-out infinite; }
+  @keyframes lmShimmer {
+    0%, 100% { border-color: rgba(255,215,0,0.5); box-shadow: 0 0 10px rgba(255,215,0,0.15); }
+    33%  { border-color: rgba(177,77,255,0.6); box-shadow: 0 0 14px rgba(177,77,255,0.25); }
+    66%  { border-color: rgba(0,229,255,0.6);  box-shadow: 0 0 14px rgba(0,229,255,0.25); }
+  }
+  .lm-info { flex: 1; min-width: 0; }
+  .lm-name { font-family: var(--font-display); font-size: 0.75rem; font-weight: 700; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lm-set { font-size: 0.6rem; color: var(--cyan); }
+  .lm-conf { font-size: 0.55rem; color: var(--muted); margin-top: 2px; }
+  .lm-price { font-family: var(--font-display); font-size: 1.1rem; font-weight: 900; color: var(--emerald); text-align: right; flex-shrink: 0; }
+
+  /* ── Card detail popup ── */
+  .detail-overlay {
+    position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,0.8);
+    display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  .detail-overlay.open { display: flex; }
+  .detail-box {
+    background: #1a1830; border: 1px solid rgba(177,77,255,0.3); border-radius: 16px;
+    width: 100%; max-width: 380px; max-height: 85vh; overflow-y: auto; position: relative;
+  }
+  .detail-close { position: absolute; top: 10px; right: 12px; background: none; border: none; color: var(--muted); font-size: 1.3rem; cursor: pointer; z-index: 2; }
+  .detail-top { display: flex; gap: 14px; padding: 20px 16px 12px; }
+  .detail-img { width: 100px; height: 140px; border-radius: 8px; object-fit: cover; border: 2px solid rgba(255,215,0,0.3); flex-shrink: 0; }
+  .detail-info { flex: 1; min-width: 0; }
+  .detail-name { font-family: var(--font-display); font-size: 0.9rem; font-weight: 700; color: var(--gold); margin-bottom: 4px; word-wrap: break-word; }
+  .detail-set { font-size: 0.7rem; color: var(--cyan); margin-bottom: 4px; }
+  .detail-sku { font-size: 0.6rem; color: var(--muted); font-family: var(--font-display); margin-bottom: 8px; }
+  .detail-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+  .detail-tag { font-size: 0.55rem; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; border: 1px solid; }
+  .tag-rarity { color: var(--sapphire); border-color: rgba(77,142,255,0.3); background: rgba(77,142,255,0.08); }
+  .tag-type { color: var(--violet); border-color: rgba(177,77,255,0.3); background: rgba(177,77,255,0.08); }
+  .detail-price-big { font-family: var(--font-display); font-size: 1.4rem; font-weight: 900; color: var(--emerald); }
+  .detail-conf { font-size: 0.65rem; color: var(--muted); margin-top: 4px; }
+  .detail-section { padding: 0 16px 12px; }
+  .detail-section-title { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }
+  .detail-prices { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dp-chip { display: flex; align-items: baseline; gap: 4px; padding: 4px 8px; border-radius: 6px; background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.12); }
+  .dp-source { font-size: 0.5rem; font-weight: 600; text-transform: uppercase; color: var(--muted); }
+  .dp-val { font-size: 0.75rem; font-weight: 800; color: var(--emerald); font-family: var(--font-display); }
+  .detail-links { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 16px; }
+  .dl-link { font-size: 0.65rem; font-weight: 600; padding: 6px 10px; border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: all 0.2s; }
+  .dl-buy { color: var(--emerald); background: rgba(0,255,136,0.05); border: 1px solid rgba(0,255,136,0.15); }
+  .dl-sell { color: var(--gold); background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.15); }
+  .detail-add {
+    width: calc(100% - 32px); margin: 0 16px 16px; padding: 12px; border-radius: 10px;
+    border: none; font-weight: 700; font-size: 0.8rem; cursor: pointer;
+    font-family: var(--font-body); background: linear-gradient(135deg, var(--violet), var(--cyan)); color: white;
+  }
+  .detail-add.saved { background: rgba(0,255,136,0.15); color: var(--emerald); border: 1px solid rgba(0,255,136,0.3); }
+
+  /* ── Config modal ── */
+  .config-overlay { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; }
+  .config-overlay.open { display: flex; }
+  .config-box { background: #1a1830; border: 1px solid rgba(177,77,255,0.25); border-radius: 16px; padding: 24px; width: 90%; max-width: 340px; }
+  .config-title { font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; color: var(--gold); margin-bottom: 18px; }
+  .config-field { margin-bottom: 14px; }
+  .config-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cyan); margin-bottom: 4px; }
+  .config-input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: var(--text); font-size: 0.8rem; font-family: var(--font-body); }
+  .config-input:focus { outline: none; border-color: var(--cyan); }
+  .config-row { display: flex; gap: 10px; align-items: center; }
+  .config-toggle { width: 42px; height: 24px; border-radius: 12px; background: rgba(255,255,255,0.1); border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .config-toggle.on { background: rgba(0,255,136,0.25); }
+  .config-toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); transition: all 0.2s; }
+  .config-toggle.on::after { left: 21px; background: var(--emerald); }
+  .config-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .config-btn { flex: 1; padding: 12px; border-radius: 10px; border: none; font-weight: 700; font-size: 0.8rem; cursor: pointer; font-family: var(--font-body); }
+  .config-save { background: linear-gradient(135deg, var(--violet), var(--cyan)); color: white; }
+  .config-cancel { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid rgba(255,255,255,0.1); }
+
+  .no-camera { text-align: center; padding: 60px 20px; }
+  .no-camera-icon { font-size: 3rem; margin-bottom: 16px; }
+  .no-camera-text { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+
+  @media (max-width: 400px) {
+    .top-bar { padding: 8px 10px; }
+    .card-guide { width: 65%; }
+    .controls { gap: 12px; }
+    .btn-scan { width: 54px; height: 54px; }
+    .btn-ctrl { padding: 8px 10px; font-size: 0.65rem; }
+  }
+
+  /* ── Ambient particle canvas (behind guide) ── */
+
+  /* ── Match burst ripple rings ── */
+  .burst-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    border: 2px solid rgba(0,255,136,0.9);
+    pointer-events: none;
+    animation: burstRing 0.75s ease-out forwards;
+    margin-left: -40px; margin-top: -40px;
+  }
+  .burst-ring-2 {
+    border-color: rgba(0,229,255,0.7);
+    animation-delay: 0.12s;
+  }
+  .burst-ring-3 {
+    border-color: rgba(177,77,255,0.5);
+    animation-delay: 0.24s;
+  }
+  @keyframes burstRing {
+    0%   { transform: scale(0.3); opacity: 1; }
+    100% { transform: scale(3.8); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="scanner-app">
+  <div class="top-bar">
+    <div class="top-left">
+      <div class="top-logo">GRAILSWEEP</div>
+      <div class="top-mode-row">
+        <span class="top-mode">Live Scanner</span>
+        <select class="tcg-lock" id="tcgLock">
+          <option value="">All TCGs</option>
+          <option value="POKEMON">Pokemon</option>
+          <option value="MTG">MTG</option>
+          <option value="YUGIOH">Yu-Gi-Oh</option>
+        </select>
+        <button class="mode-toggle fast" id="modeToggle" onclick="toggleMode()">⚡ FAST</button>
+      </div>
+    </div>
+    <div class="top-stats">
+      <div class="stat"><span class="stat-val count" id="scanCount">0</span><span class="stat-label">Scanned</span></div>
+      <div class="stat"><span class="stat-val value" id="scanValue">£0</span><span class="stat-label">Total</span></div>
+    </div>
+  </div>
+
+  <div class="summary-strip" id="summaryStrip">
+    <div class="ss-item"><span>👑 Best:</span><span class="ss-val gold" id="ssBest">—</span></div>
+    <div class="ss-item"><span>📊 Avg:</span><span class="ss-val emerald" id="ssAvg">—</span></div>
+    <div class="ss-item"><span>✨ Rare+:</span><span class="ss-val cyan" id="ssRare">0</span></div>
+    <div class="ss-item"><span>🔁 Dupes:</span><span class="ss-val ruby" id="ssDupes">0</span></div>
+  </div>
+
+  <div class="camera-wrap" id="cameraWrap">
+    <video id="camVideo" autoplay playsinline muted></video>
+    <canvas id="camCanvas"></canvas>
+    <div class="guide-overlay">
+      <div class="card-guide" id="cardGuide">
+        <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+        <div class="scan-line" id="scanLine"></div>
+        <div class="guide-text" id="guideText">Place card in frame</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-ctrl" id="btnList">📋 List</button>
+    <button class="btn-scan" id="btnScan" onclick="toggleScanning()">
+      <span class="btn-scan-icon" id="scanIcon">⚡</span>
+    </button>
+    <button class="btn-ctrl" onclick="openConfig()">⚙️ Setup</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="last-match" id="lastMatch">
+  <img class="lm-thumb" id="lmThumb" src="" alt="">
+  <div class="lm-info">
+    <div class="lm-name" id="lmName">—</div>
+    <div class="lm-set" id="lmSet">—</div>
+    <div class="lm-conf" id="lmConf">—</div>
+  </div>
+  <div class="lm-price" id="lmPrice">—</div>
+</div>
+
+<!-- Session panel -->
+<input type="checkbox" id="sessionToggle" style="display:none">
+<div class="session-panel" id="sessionPanel">
+  <div class="session-header">
+    <span class="session-title">Scanned Cards (<span id="sessionCount">0</span>)</span>
+    <div class="session-actions">
+      <button class="session-btn export" onclick="exportCSV()">📥 Export</button>
+      <button class="session-btn clear" onclick="clearSession()">🗑 Clear</button>
+      <button class="session-close" onclick="toggleSession()">✕</button>
+    </div>
+  </div>
+  <div id="sessionList"><div class="session-empty">No cards scanned yet. Hit ⚡ to start!</div></div>
+</div>
+
+<!-- Card detail popup -->
+<div class="detail-overlay" id="detailOverlay" onclick="closeDetail(event)">
+  <div class="detail-box" onclick="event.stopPropagation()">
+    <button class="detail-close" onclick="closeDetailForce()">✕</button>
+    <div class="detail-top">
+      <img class="detail-img" id="detImg" src="" alt="">
+      <div class="detail-info">
+        <div class="detail-name" id="detName">—</div>
+        <div class="detail-set" id="detSet">—</div>
+        <div class="detail-sku" id="detSku">—</div>
+        <div class="detail-tags" id="detTags"></div>
+        <div class="detail-price-big" id="detPrice">—</div>
+        <div class="detail-conf" id="detConf">—</div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Prices</div>
+      <div class="detail-prices" id="detPrices"></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Marketplace</div>
+      <div class="detail-links" id="detLinks"></div>
+    </div>
+    <button class="detail-add" id="detAddBtn" onclick="saveToCollection()">💾 Save to Collection</button>
+  </div>
+</div>
+
+<!-- Config -->
+<div class="config-overlay" id="configOverlay">
+  <div class="config-box">
+    <div class="config-title">⚙️ Scanner Setup</div>
+    <div class="config-field"><div class="config-row"><button class="config-toggle on" id="cfgSound" onclick="toggleCfg(this)"></button><span style="font-size:0.78rem;">Sound alerts by price</span></div></div>
+    <div class="config-field"><div class="config-row"><button class="config-toggle on" id="cfgAutoAdd" onclick="toggleCfg(this)"></button><span style="font-size:0.78rem;">Auto-add to session</span></div></div>
+    <div class="config-field"><div class="config-label">Camera</div><select class="config-input" id="cfgCamera"><option value="">Loading...</option></select></div>
+    <div class="config-actions"><button class="config-btn config-cancel" onclick="closeConfig()">Cancel</button><button class="config-btn config-save" onclick="saveConfig()">Save</button></div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('touchmove', function(e){ e.preventDefault(); }, {passive:false});
+var API_BASE = window.location.origin + '/api/v1';
+var scanning = false;
+var scanTimer = null;
+var soundEnabled = true;
+var autoAdd = true;
+var scannedCards = [];
+var totalValue = 0;
+var busy = false;
+var lastMatchSku = '';
+var lastMatchTime = 0;
+var toastTimer = null;
+var skuCounts = {};
+var highestCard = null;
+var rareCount = 0;
+var dupeCount = 0;
+var collection = [];
+
+// ── Mode: fast vs precise ──
+var scanMode = 'fast';  // 'fast' or 'precise'
+var FAST_INTERVAL = 4000;
+var PRECISE_INTERVAL = 8000;
+
+function toggleMode() {
+  var btn = document.getElementById('modeToggle');
+  if (scanMode === 'fast') {
+    scanMode = 'precise';
+    btn.textContent = '🎯 PRECISE';
+    btn.className = 'mode-toggle precise';
+  } else {
+    scanMode = 'fast';
+    btn.textContent = '⚡ FAST';
+    btn.className = 'mode-toggle fast';
+  }
+  try { localStorage.setItem('matchit_mode', scanMode); } catch(e) {}
+}
+
+function getScanInterval() {
+  return scanMode === 'fast' ? FAST_INTERVAL : PRECISE_INTERVAL;
+}
+
+// ── Persist settings ──
+function loadSettings() {
+  try {
+    var m = localStorage.getItem('matchit_mode');
+    if (m === 'precise') { scanMode = 'precise'; var btn = document.getElementById('modeToggle'); btn.textContent = '🎯 PRECISE'; btn.className = 'mode-toggle precise'; }
+    var snd = localStorage.getItem('matchit_sound');
+    if (snd === 'off') { soundEnabled = false; document.getElementById('cfgSound').classList.remove('on'); }
+  } catch(e) {}
+}
+
+function saveSettings() {
+  try {
+    localStorage.setItem('matchit_mode', scanMode);
+    localStorage.setItem('matchit_sound', soundEnabled ? 'on' : 'off');
+  } catch(e) {}
+}
+
+// ── Audio ──
+var audioCtx = null;
+function getAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); return audioCtx; }
+function playBeep(f, d) { if (!soundEnabled) return; try { var c=getAudio(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=f;o.type='sine';g.gain.value=0.15;o.start();g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+d);o.stop(c.currentTime+d); } catch(e){} }
+function beepLow() { playBeep(440,0.15); }
+function beepMid() { playBeep(660,0.2); setTimeout(function(){ playBeep(880,0.2); },180); }
+function beepHigh() { playBeep(880,0.15); setTimeout(function(){ playBeep(1100,0.15); },150); setTimeout(function(){ playBeep(1320,0.2); },300); }
+
+// ── Camera ──
+var video=document.getElementById('camVideo'),canvas=document.getElementById('camCanvas'),ctx2d=canvas.getContext('2d'),currentStream=null;
+function listCameras() { if (!navigator.mediaDevices||!navigator.mediaDevices.enumerateDevices) return; navigator.mediaDevices.enumerateDevices().then(function(devs){ var s=document.getElementById('cfgCamera');s.innerHTML='';var v=devs.filter(function(d){return d.kind==='videoinput';});for(var i=0;i<v.length;i++){var o=document.createElement('option');o.value=v[i].deviceId;o.textContent=v[i].label||('Camera '+(i+1));s.appendChild(o);}for(var j=0;j<v.length;j++){var l=(v[j].label||'').toLowerCase();if(l.indexOf('back')>=0||l.indexOf('rear')>=0||l.indexOf('environment')>=0){s.value=v[j].deviceId;break;}} }); }
+
+function startCamera(did) {
+  if(currentStream) currentStream.getTracks().forEach(function(t){t.stop();});
+  var c={video:{facingMode:'environment',width:{ideal:1280},height:{ideal:960}}};
+  if(did) c.video={deviceId:{exact:did},width:{ideal:1280},height:{ideal:960}};
+  navigator.mediaDevices.getUserMedia(c).then(function(s){
+    currentStream=s;video.srcObject=s;video.play();listCameras();
+  }).catch(function(e){
+    document.getElementById('cameraWrap').innerHTML='<div class="no-camera"><div class="no-camera-icon">📷</div><div class="no-camera-text">Camera access denied.<br>Check permissions and reload.</div></div>';
+  });
+}
+
+// ── Scanning ──
+function toggleScanning() {
+  scanning=!scanning;
+  var btn=document.getElementById('btnScan'),line=document.getElementById('scanLine'),txt=document.getElementById('guideText');
+  if(scanning){
+    try{getAudio();}catch(e){}
+    // FIX: reset busy flag on start so stale state doesn't block
+    busy=false;
+    btn.classList.add('active');line.classList.add('active');
+    txt.textContent='Scanning...';txt.className='guide-text scanning';
+    document.getElementById('scanIcon').textContent='⏸';
+    scanLoop();
+  } else {
+    btn.classList.remove('active');line.classList.remove('active');
+    txt.textContent='Paused';txt.className='guide-text';
+    document.getElementById('scanIcon').textContent='⚡';
+    if(scanTimer){clearTimeout(scanTimer);scanTimer=null;}
+    // FIX: reset busy flag on pause so next start works
+    busy=false;
+  }
+}
+
+function scanLoop() {
+  if(!scanning)return;
+  if(!busy) captureAndMatch();
+  scanTimer=setTimeout(scanLoop, getScanInterval());
+}
+
+function captureAndMatch() {
+  if(!video.videoWidth){
+    return;
+  }
+  busy=true;
+  var guide=document.getElementById('cardGuide');
+  guide.className='card-guide detecting';
+  document.getElementById('guideText').textContent='Analysing...';
+
+  // Crop to guide area only
+  var vw=video.videoWidth,vh=video.videoHeight;
+  var guideW=vw*0.55,guideH=guideW*(3.5/2.5);
+  if(guideH>vh*0.7){guideH=vh*0.7;guideW=guideH*(2.5/3.5);}
+  var cx=(vw-guideW)/2,cy=(vh-guideH)/2;
+  var targetW=Math.max(Math.round(guideW),800);
+  var targetH=Math.round(targetW*(guideH/guideW));
+  canvas.width=targetW;canvas.height=targetH;
+  ctx2d.imageSmoothingEnabled=true;ctx2d.imageSmoothingQuality='high';
+  ctx2d.drawImage(video,cx,cy,guideW,guideH,0,0,canvas.width,canvas.height);
+
+  canvas.toBlob(function(blob){
+    if(!blob){busy=false;return;}
+    var fd=new FormData();fd.append('api_key','matchit-demo-key-2026');fd.append('image',blob,'scan.jpg');fd.append('top_k','3');fd.append('include_diagnostics','true');
+    var tcg=document.getElementById('tcgLock').value;
+    if(tcg) fd.append('category',tcg);
+    fd.append('mode', scanMode);
+
+    fetch(API_BASE+'/match',{method:'POST',headers:{'X-API-Key':'matchit-demo-key-2026','ngrok-skip-browser-warning':'1'},body:fd})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      busy=false;
+      if(!data.matches||data.matches.length===0){
+        guide.className='card-guide';
+        if(scanning){document.getElementById('guideText').textContent='No match — scanning...';document.getElementById('guideText').className='guide-text scanning';}
+        return;
+      }
+
+      var m=data.matches[0];
+      var rawSim=m.score||m.similarity||0;
+      var pct=Math.min(100,Math.max(0,Math.round(((rawSim-0.65)/0.30)*100)));
+
+      // Skip very low confidence
+      if(pct<10){
+        guide.className='card-guide';
+        if(scanning){document.getElementById('guideText').textContent='Low confidence — scanning...';document.getElementById('guideText').className='guide-text scanning';}
+        return;
+      }
+
+      // Duplicate suppression — same card within 8 seconds
+      var now=Date.now();
+      if(m.sku===lastMatchSku&&(now-lastMatchTime)<8000){
+        guide.className='card-guide matched';
+        document.getElementById('guideText').textContent='Same card — next';
+        document.getElementById('guideText').className='guide-text success';
+        return;
+      }
+      lastMatchSku=m.sku;lastMatchTime=now;
+
+      var p=m.profile||{};
+      console.log('profile:', JSON.stringify(p));
+      console.log('prices:', JSON.stringify(p.prices));
+      console.log('autoAdd:', autoAdd);
+      var cardName=p.name||p.title||m.sku;
+      var setName=p.set_name||'';
+      var cardNumber=p.card_number||'';
+      var rarity=p.rarity||'';
+
+      // Extract best price
+      var bestPrice=0,allPrices={};
+      if(p.prices&&typeof p.prices==='object'){
+        var sources=Object.keys(p.prices);
+        for(var si=0;si<sources.length;si++){
+          var sdata=p.prices[sources[si]];
+          if(!sdata||typeof sdata!=='object')continue;
+          var best=0,variants=Object.keys(sdata);
+          for(var vi=0;vi<variants.length;vi++){
+            var vdata=sdata[variants[vi]],pr=0;
+            if(vdata&&typeof vdata==='object')pr=vdata.market||vdata.trend||vdata.avg_sell||vdata.mid||0;
+            else if(typeof vdata==='number')pr=vdata;
+            if(pr>best)best=pr;
+          }
+          if(best>0)allPrices[sources[si]]=best;
+          if(best>bestPrice)bestPrice=best;
+        }
+      }
+      console.log('DEBUG p.prices=',JSON.stringify(p.prices),'bestPrice=',bestPrice);
+      var gbp=bestPrice*0.79;
+      var gbpStr=p.prices?'£'+gbp.toFixed(2):'NO_PRICE_DATA';
+
+      // Sound alert
+      if(gbp>=10)beepHigh();else if(gbp>=1)beepMid();else beepLow();
+
+      // Visual feedback
+      guide.className='card-guide matched';
+      fireBurst();
+      document.getElementById('guideText').textContent=cardName;
+      document.getElementById('guideText').className='guide-text success';
+      setTimeout(function(){
+        guide.className='card-guide';
+        if(scanning){document.getElementById('guideText').textContent='Scanning...';document.getElementById('guideText').className='guide-text scanning';}
+      },2500);
+
+      var imgUrl='';
+      if(m.images&&m.images.length>0)imgUrl=API_BASE+'/image/'+m.images[0].image_id;
+
+      showToast(cardName,setName,cardNumber,pct,gbpStr,imgUrl);
+      if(autoAdd)addToSession({name:cardName,set:setName,num:cardNumber,pct:pct,price:gbp,priceStr:gbpStr,img:imgUrl,sku:m.sku,rarity:rarity,profile:p,allPrices:allPrices,tcgplayerUrl:p.tcgplayer_url||'',cardmarketUrl:p.cardmarket_url||''});
+    })
+    .catch(function(err){
+      busy=false;
+      guide.className='card-guide';
+      if(scanning){document.getElementById('guideText').textContent='Error — retrying...';document.getElementById('guideText').className='guide-text scanning';}
+    });
+  },'image/jpeg',0.95);
+}
+
+function showToast(name,set,num,pct,price,img){
+  document.getElementById('lmName').textContent=name;
+  document.getElementById('lmSet').textContent=set+(num?' #'+num:'');
+  document.getElementById('lmConf').textContent=pct+'% match';
+  document.getElementById('lmPrice').textContent=price;
+  if(img)document.getElementById('lmThumb').src=img;
+  var el=document.getElementById('lastMatch');el.classList.add('show');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){el.classList.remove('show');},4000);
+}
+
+function addToSession(card){
+  skuCounts[card.sku]=(skuCounts[card.sku]||0)+1;
+  if(skuCounts[card.sku]>1)dupeCount++;
+  card.dupeNum=skuCounts[card.sku];
+  scannedCards.unshift(card);
+  totalValue+=card.price;
+  if(!highestCard||card.price>highestCard.price)highestCard=card;
+  var r=(card.rarity||'').toLowerCase();
+  if(r.indexOf('rare')>=0||r.indexOf('holo')>=0||r.indexOf('mythic')>=0||r.indexOf('secret')>=0||r.indexOf('ultra')>=0)rareCount++;
+  updateStats();renderSession();
+}
+
+function updateStats(){
+  document.getElementById('scanCount').textContent=scannedCards.length;
+  document.getElementById('scanValue').textContent='£'+totalValue.toFixed(2)+(scannedCards.length>0?' ('+scannedCards.length+'c)':'');
+  document.getElementById('sessionCount').textContent=scannedCards.length;
+  var strip=document.getElementById('summaryStrip');
+  if(scannedCards.length>0){
+    strip.classList.add('visible');
+    document.getElementById('ssBest').textContent=highestCard?'£'+highestCard.price.toFixed(2):'—';
+    document.getElementById('ssAvg').textContent='£'+(totalValue/scannedCards.length).toFixed(2);
+    document.getElementById('ssRare').textContent=rareCount;
+    document.getElementById('ssDupes').textContent=dupeCount;
+  } else { strip.classList.remove('visible'); }
+}
+
+function renderSession(){
+  if(scannedCards.length===0){document.getElementById('sessionList').innerHTML='<div class="session-empty">No cards scanned yet. Hit ⚡ to start!</div>';return;}
+  var html='';
+  for(var i=0;i<scannedCards.length;i++){
+    var c=scannedCards[i],pc=c.price>=10?'high':c.price>=1?'mid':'low';
+    html+='<div class="scanned-card" onclick="openDetail('+i+')">';
+    html+='<span class="sc-num">'+(i+1)+'</span>';
+    if(c.img)html+='<img class="sc-thumb" src="'+c.img+'">';
+    html+='<div class="sc-info"><div class="sc-name">'+c.name;
+    if(c.dupeNum>1)html+='<span class="sc-dupe">x'+c.dupeNum+'</span>';
+    html+='</div><div class="sc-set">'+c.set+(c.num?' #'+c.num:'')+'</div></div>';
+    html+='<div class="sc-right"><div class="sc-price '+pc+'">'+c.priceStr+'</div><div class="sc-match">'+c.pct+'%</div></div>';
+    html+='</div>';
+  }
+  document.getElementById('sessionList').innerHTML=html;
+}
+
+function toggleSession(){
+  var panel=document.getElementById('sessionPanel');
+  var cb=document.getElementById('sessionToggle');
+  if(panel.style.transform==='translateY(0px)'||panel.classList.contains('open')){
+    panel.style.transform='translateY(100%)';
+    panel.style.visibility='hidden';
+    panel.classList.remove('open');
+    if(cb)cb.checked=false;
+  } else {
+    panel.style.transform='translateY(0px)';
+    panel.style.visibility='visible';
+    panel.style.pointerEvents='auto';
+    panel.classList.add('open');
+    if(cb)cb.checked=true;
+  }
+}
+
+function clearSession(){
+  if(scannedCards.length===0)return;
+  if(!confirm('Clear all '+scannedCards.length+' scanned cards?'))return;
+  scannedCards=[];totalValue=0;skuCounts={};highestCard=null;rareCount=0;dupeCount=0;
+  updateStats();renderSession();
+}
+
+function exportCSV(){ exportScannedCards(); }
+function exportScannedCards() {
+    if (!scannedCards || !scannedCards.length) { alert('No cards to export.'); return; }
+
+    const rows = [['Card Name', 'Set', 'SKU', 'Confidence', 'Value (GBP)', 'Scanned At']];
+    scannedCards.forEach(c => {
+        rows.push([
+            c.name || '',
+            c.set_name || c.set || '',
+            c.sku || '',
+            c.confidence ? Math.round(c.confidence) + '%' : (c.pct ? c.pct + '%' : ''),
+            c.gbp ? parseFloat(c.gbp).toFixed(2) : (c.price ? c.price.toFixed(2) : ''),
+            c.scanned_at || ''
+        ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [
+        {wch:30}, {wch:25}, {wch:25}, {wch:12}, {wch:14}, {wch:16}
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Scanned Cards');
+
+    const filename = 'GrailSweep_Scan_' + new Date().toISOString().slice(0,10) + '.xlsx';
+    if (window.showSaveFilePicker) {
+        (async () => {
+            try {
+                const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+                const blob = new Blob([wbout], { type: 'application/octet-stream' });
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{ description: 'Excel Files', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            } catch(e) {
+                if (e.name !== 'AbortError') XLSX.writeFile(wb, filename);
+            }
+        })();
+    } else {
+        XLSX.writeFile(wb, filename);
+    }
+}
+
+// ── Card Detail ──
+function openDetail(idx){
+  var c=scannedCards[idx];if(!c)return;
+  document.getElementById('detImg').src=c.img||'';
+  document.getElementById('detName').textContent=c.name;
+  document.getElementById('detSet').textContent=c.set+(c.num?' #'+c.num:'');
+  document.getElementById('detSku').textContent=c.sku;
+  document.getElementById('detPrice').textContent=c.priceStr;
+  document.getElementById('detConf').textContent=c.pct+'% match confidence';
+  var tags='';
+  if(c.rarity)tags+='<span class="detail-tag tag-rarity">'+c.rarity.replace(/_/g,' ')+'</span>';
+  var p=c.profile||{};
+  if(p.energy_type)tags+='<span class="detail-tag tag-type">'+p.energy_type.replace(/_/g,' ')+'</span>';
+  if(p.mtg_color)tags+='<span class="detail-tag tag-type">'+p.mtg_color.replace(/_/g,' ')+'</span>';
+  if(p.ygo_card_type)tags+='<span class="detail-tag tag-type">'+p.ygo_card_type.replace(/_/g,' ')+'</span>';
+  document.getElementById('detTags').innerHTML=tags;
+  var ph='';
+  if(c.allPrices){var srcs=Object.keys(c.allPrices);for(var i=0;i<srcs.length;i++){var src=srcs[i],val=c.allPrices[src],curr=src.toLowerCase().indexOf('cardmarket')>=0?'€':'$';var gbpConv=curr==='$'?(val*0.79).toFixed(2):(val*0.86).toFixed(2);ph+='<div class="dp-chip"><span class="dp-source">'+src+'</span><span class="dp-val">'+curr+val.toFixed(2)+' (~£'+gbpConv+')</span></div>';}}
+  document.getElementById('detPrices').innerHTML=ph||'<span style="color:var(--muted);font-size:0.7rem;">No price data</span>';
+  var enc=encodeURIComponent((c.name+' '+c.set+' '+c.num).trim());
+  var lh='';
+  lh+='<a class="dl-link dl-buy" href="https://www.google.com/search?q=site:bigorbitcards.co.uk+'+enc+'" target="_blank">Big Orbit</a>';
+  lh+='<a class="dl-link dl-sell" href="https://www.google.com/search?q=site:bigorbitcards.co.uk+sell+'+enc+'" target="_blank">Sell</a>';
+  if(c.tcgplayerUrl)lh+='<a class="dl-link dl-buy" href="'+c.tcgplayerUrl+'" target="_blank">TCGPlayer</a>';
+  else lh+='<a class="dl-link dl-buy" href="https://www.tcgplayer.com/search/all/product?q='+enc+'" target="_blank">TCGPlayer</a>';
+  if(c.cardmarketUrl)lh+='<a class="dl-link dl-buy" href="'+c.cardmarketUrl+'" target="_blank">Cardmarket</a>';
+  else lh+='<a class="dl-link dl-buy" href="https://www.cardmarket.com/en/Pokemon/Products/Search?searchString='+enc+'" target="_blank">Cardmarket</a>';
+  lh+='<a class="dl-link dl-buy" href="https://totalcards.net/search?q='+enc+'" target="_blank">Total Cards</a>';
+  lh+='<a class="dl-link dl-buy" href="https://www.miniaturemarket.com/searchresults?q='+enc+'" target="_blank">Mini Market</a>';
+  document.getElementById('detLinks').innerHTML=lh;
+  var btn=document.getElementById('detAddBtn');
+  var inColl=collection.indexOf(c.sku)>=0;
+  btn.textContent=inColl?'✅ In Collection':'💾 Save to Collection';
+  btn.className=inColl?'detail-add saved':'detail-add';
+  btn.dataset.idx=idx;
+  document.getElementById('detailOverlay').classList.add('open');
+}
+
+function closeDetail(e){if(e.target.id==='detailOverlay')document.getElementById('detailOverlay').classList.remove('open');}
+function closeDetailForce(){document.getElementById('detailOverlay').classList.remove('open');}
+
+function saveToCollection(){
+  var btn=document.getElementById('detAddBtn');
+  var idx=parseInt(btn.dataset.idx);
+  var c=scannedCards[idx];if(!c)return;
+  if(collection.indexOf(c.sku)<0){collection.push(c.sku);btn.textContent='✅ In Collection';btn.className='detail-add saved';}
+}
+
+// ── Config ──
+function openConfig(){document.getElementById('configOverlay').classList.add('open');}
+function closeConfig(){document.getElementById('configOverlay').classList.remove('open');}
+function toggleCfg(el){el.classList.toggle('on');}
+function saveConfig(){
+  soundEnabled=document.getElementById('cfgSound').classList.contains('on');
+  autoAdd=document.getElementById('cfgAutoAdd').classList.contains('on');
+  var camId=document.getElementById('cfgCamera').value;
+  if(camId)startCamera(camId);
+  saveSettings();
+  closeConfig();
+}
+
+// ── Match burst ripple ──
+function fireBurst(){
+  var guide=document.getElementById('cardGuide');
+  if(!guide)return;
+  var r1=document.createElement('div');
+  var r2=document.createElement('div');
+  var r3=document.createElement('div');
+  r1.className='burst-ring';
+  r2.className='burst-ring burst-ring-2';
+  r3.className='burst-ring burst-ring-3';
+  guide.appendChild(r1);guide.appendChild(r2);guide.appendChild(r3);
+  setTimeout(function(){
+    if(r1.parentNode)r1.parentNode.removeChild(r1);
+    if(r2.parentNode)r2.parentNode.removeChild(r2);
+    if(r3.parentNode)r3.parentNode.removeChild(r3);
+  },1100);
+}
+
+// ── Ambient scanner particles ──
+// ── Init ──
+window.addEventListener('load',function(){
+  loadSettings();
+  startCamera();
+  var bl=document.getElementById('btnList');
+  bl.addEventListener('click',toggleSession);
+  bl.addEventListener('touchstart',function(e){e.preventDefault();toggleSession();});
+  setTimeout(function(){}, 0);
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</body>
+</html>

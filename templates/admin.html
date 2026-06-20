@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block body %}
+<h2>Admin</h2>
+
+<p><b>DB rows:</b> {{ db_count }}</p>
+<p><b>Distinct SKUs:</b> {{ sku_count }}</p>
+<p><b>Cache rows:</b> {{ cache_count }}</p>
+<p><b>Cache loaded at:</b> {{ cache_loaded_at }}</p>
+
+<div style="display:flex; flex-wrap:wrap; gap:8px; margin: 10px 0;">
+  <a href="/admin/feedback" class="mi-btn">📊 View Match Feedback</a>
+  <a href="{{ url_for('db_image_review') }}" class="mi-btn">🖼️ Review Image Quality</a>
+  <a href="/history" class="mi-btn">🕐 History</a>
+  <a href="/static/scanner.html" class="mi-btn">📷 Scanner</a>
+  <a href="/db_upload" class="mi-btn">📤 DB Upload</a>
+  <a href="{{ url_for('db_manage') }}" class="mi-btn">🗄️ Manage Database</a>
+</div>
+
+<form method="POST" action="/admin/refresh_cache" style="margin: 10px 0;">
+  <button type="submit">Refresh Cache</button>
+</form>
+
+<hr>
+
+<h3>{{ ui_text.db_sync_title | default("DB Sync") }}</h3>
+<p>{{ ui_text.db_sync_desc | default("...") }}</p>
+<form method="POST" action="/admin/sync_keysdb">
+  <button>{{ ui_text.db_sync_button | default("Sync from DB") }}</button>
+</form>
+
+<hr>
+
+<h3>Embeddings</h3>
+<form method="POST" action="/admin/reembed_missing">
+  <button>Re-embed Missing Only (fast)</button>
+</form>
+<form method="POST" action="/admin/reembed_all">
+  <button>Re-embed ALL Images (slow)</button>
+</form>
+
+<hr>
+
+<!-- ── Set Scheduler Summary ── -->
+<h3>🗓️ Set Scheduler</h3>
+
+<div style="margin-bottom:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+  <form method="POST" action="/admin/run_scheduler" style="display:inline;">
+    <button class="mi-btn" type="submit">▶ Run Now</button>
+  </form>
+  <form method="POST" action="/admin/run_scheduler_dry" style="display:inline;">
+    <button class="mi-btn" type="submit">🔍 Dry Run</button>
+  </form>
+  <span style="font-size:0.8rem; color:var(--mi-muted,#aaa);">
+    Scheduled: Every Monday 03:00 UTC
+  </span>
+</div>
+
+{% if scheduler_runs %}
+  {% set latest = scheduler_runs[-1] %}
+
+  <!-- Latest run summary -->
+  <div class="mi-card" style="margin-bottom:16px; padding:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <strong>Latest Run</strong>
+      <span style="font-size:0.8rem; color:var(--mi-muted,#aaa);">
+        {{ latest.run_at[:19] | replace("T", " ") }}
+        {% if latest.dry_run %}<span style="color:#f5a623; font-size:0.75rem; margin-left:6px;">[DRY RUN]</span>{% endif %}
+      </span>
+    </div>
+
+    <!-- Per-TCG results -->
+    <table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin-bottom:12px;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+          <th style="text-align:left; padding:6px 8px; color:var(--mi-muted,#aaa); font-size:0.72rem; text-transform:uppercase;">TCG</th>
+          <th style="text-align:left; padding:6px 8px; color:var(--mi-muted,#aaa); font-size:0.72rem; text-transform:uppercase;">New Sets</th>
+          <th style="text-align:left; padding:6px 8px; color:var(--mi-muted,#aaa); font-size:0.72rem; text-transform:uppercase;">Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tcg, data in latest.tcgs.items() %}
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+          <td style="padding:6px 8px; font-weight:700;">{{ tcg }}</td>
+          <td style="padding:6px 8px;">
+            {% if data.new_sets | length > 0 %}
+              <span style="color:#00ff88; font-weight:700;">{{ data.new_sets | length }} new</span>
+            {% else %}
+              <span style="color:var(--mi-muted,#aaa);">Up to date</span>
+            {% endif %}
+          </td>
+          <td style="padding:6px 8px;">
+            {% if data.new_sets %}
+              {% for s in data.new_sets %}
+                <span style="display:inline-block; background:rgba(0,255,136,0.08); border:1px solid rgba(0,255,136,0.2); border-radius:4px; padding:1px 6px; font-size:0.72rem; margin:1px; color:#00ff88;">
+                  {{ s.id }}
+                </span>
+              {% endfor %}
+            {% else %}
+              <span style="color:var(--mi-muted,#aaa); font-size:0.8rem;">—</span>
+            {% endif %}
+            {% if data.error is defined %}
+              <span style="color:#ff2d6f; font-size:0.75rem;">⚠ {{ data.error }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Embed stats -->
+    {% set embed = latest.embed %}
+    {% if embed and embed.new_front is defined and embed.new_front > 0 %}
+    <div style="background:rgba(0,255,136,0.05); border:1px solid rgba(0,255,136,0.15); border-radius:8px; padding:10px 14px; font-size:0.82rem;">
+      <span style="color:var(--mi-muted,#aaa);">Embeddings added: </span>
+      <strong style="color:#00ff88;">{{ embed.new_front }}</strong>
+      <span style="color:var(--mi-muted,#aaa); margin-left:12px;">Total in DB: </span>
+      <strong style="color:#00e5ff;">{{ "{:,}".format(embed.total_front) }}</strong>
+      <span style="color:var(--mi-muted,#aaa); margin-left:12px;">Took: </span>
+      <strong style="color:#ffd700;">{{ embed.elapsed_s }}s</strong>
+    </div>
+    {% else %}
+    <div style="font-size:0.8rem; color:var(--mi-muted,#aaa);">
+      No new embeddings — DB up to date.
+      {% if embed %} Total: {{ "{:,}".format(embed.total_front | default(0)) }} embeddings.{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Run history table -->
+  {% if scheduler_runs | length > 1 %}
+  <details style="margin-top:8px;">
+    <summary style="cursor:pointer; font-size:0.85rem; color:var(--mi-muted,#aaa); margin-bottom:8px;">
+      📋 Run history ({{ scheduler_runs | length }} runs)
+    </summary>
+    <table style="width:100%; border-collapse:collapse; font-size:0.8rem; margin-top:8px;">
+      <thead>
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+          <th style="text-align:left; padding:5px 8px; color:var(--mi-muted,#aaa); font-size:0.7rem; text-transform:uppercase;">Date</th>
+          <th style="text-align:left; padding:5px 8px; color:var(--mi-muted,#aaa); font-size:0.7rem; text-transform:uppercase;">PKM</th>
+          <th style="text-align:left; padding:5px 8px; color:var(--mi-muted,#aaa); font-size:0.7rem; text-transform:uppercase;">MTG</th>
+          <th style="text-align:left; padding:5px 8px; color:var(--mi-muted,#aaa); font-size:0.7rem; text-transform:uppercase;">YGO</th>
+          <th style="text-align:left; padding:5px 8px; color:var(--mi-muted,#aaa); font-size:0.7rem; text-transform:uppercase;">Embedded</th>
+          <th style="text-align:left; padding:5px 8px; color:var(--mi-muted,#aaa); font-size:0.7rem; text-transform:uppercase;">Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in scheduler_runs | reverse %}
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+          <td style="padding:5px 8px; color:var(--mi-text,#eee);">
+            {{ run.run_at[:16] | replace("T", " ") }}
+            {% if run.dry_run %}<span style="color:#f5a623; font-size:0.65rem;"> DRY</span>{% endif %}
+          </td>
+          {% for tcg in ["POKEMON", "MTG", "YUGIOH"] %}
+          <td style="padding:5px 8px;">
+            {% if run.tcgs and tcg in run.tcgs %}
+              {% set n = run.tcgs[tcg].new_sets | length %}
+              {% if n > 0 %}
+                <span style="color:#00ff88; font-weight:700;">+{{ n }}</span>
+              {% else %}
+                <span style="color:var(--mi-muted,#aaa);">—</span>
+              {% endif %}
+            {% else %}
+              <span style="color:var(--mi-muted,#aaa);">—</span>
+            {% endif %}
+          </td>
+          {% endfor %}
+          <td style="padding:5px 8px; color:#00ff88;">
+            {% if run.embed and run.embed.new_front is defined and run.embed.new_front > 0 %}
+              +{{ run.embed.new_front }}
+            {% else %}
+              <span style="color:var(--mi-muted,#aaa);">—</span>
+            {% endif %}
+          </td>
+          <td style="padding:5px 8px; color:var(--mi-muted,#aaa);">{{ run.elapsed_s }}s</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </details>
+  {% endif %}
+
+{% else %}
+  <div style="color:var(--mi-muted,#aaa); font-size:0.85rem; padding:12px 0;">
+    No scheduler runs recorded yet. Click <strong>Run Now</strong> or <strong>Dry Run</strong> to start.
+  </div>
+{% endif %}
+
+<hr>
+
+<hr>
+<h3>Admin Password</h3>
+<p>
+  The admin password is stored in the Modal secret <code>app-credentials</code>.
+  To change it, run from PowerShell on the deploy machine:
+</p>
+<pre>modal secret create app-credentials --force `
+  FLASK_SECRET_KEY='&lt;existing value&gt;' `
+  ADMIN_TEST_CODE='GRAIL-XAJI-0Y6D' `
+  ADMIN_PASSWORD='&lt;new password&gt;'</pre>
+<p>Then redeploy: <code>PYTHONIOENCODING=utf-8 modal deploy matchit_modal.py</code></p>
+
+<h2>Subscription Codes</h2>
+<div style="margin-bottom:16px;">
+  <p style="color:var(--mi-muted,#aaa); font-size:0.85rem; margin:0 0 8px 0;">
+    Cancel a subscription code (soft — sets status=cancelled, preserves
+    audit trail). The holder loses premium access on their next page
+    load. To hard-delete, use the <code>/admin/delete_code</code>
+    endpoint directly.
+  </p>
+  <form method="POST"
+        action="/admin/cancel_code"
+        onsubmit="var c=this.code.value.trim().toUpperCase(); return confirm('Cancel code '+c+'?\n\nSets status=cancelled. The user loses premium access. This is reversible by editing subscriptions.json.');"
+        style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    <input type="text"
+           name="code"
+           placeholder="GRAIL-XXXX-XXXX"
+           required
+           autocomplete="off"
+           style="padding:6px 10px; font-family:monospace; min-width:220px; text-transform:uppercase;">
+    <button class="mi-btn" type="submit">Cancel Code</button>
+  </form>
+</div>
+
+<form method="POST" action="/reset_db">
+  <button>Reset Database</button>
+</form>
+
+{% endblock %}

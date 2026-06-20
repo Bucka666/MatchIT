@@ -1,0 +1,1546 @@
+﻿Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.01s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /sitemap_index.xml -> 404 Not Found  (duration: 39.2 s, execution: 27.1 ms)
+[modal-client] 2026-05-16T15:56:48+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.34s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+[SSR-FOOTER] total=857 today=9
+    GET / -> 200 OK  (duration: 23.9 s, execution: 510.0 ms)
+    GET / -> 200 OK  (duration: 4.04 s, execution: 597.2 ms)
+[modal-client] 2026-05-16T16:34:58+0000 Detected 1 background thread(s) [WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.08s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+   POST // -> 405 Method Not Allowed  (duration: 36.1 s, execution: 50.2 ms)
+   POST // -> 405 Method Not Allowed  (duration: 28.1 s, execution: 41.1 ms)
+[modal-client] 2026-05-16T16:47:01+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.67s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+[SSR-FOOTER] total=857 today=9
+    GET / -> 200 OK  (duration: 38.4 s, execution: 492.1 ms)
+    GET / -> 200 OK  (duration: 18.4 s, execution: 522.4 ms)
+    GET /static/style.css -> 304 Not Modified  (duration: 98.3 ms, execution: 26.7 ms)
+    GET /static/vendor/lucide.min.js -> 304 Not Modified  (duration: 103.2 ms, execution: 29.6 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 304 Not Modified  (duration: 179.4 ms, execution: 28.9 ms)
+    GET /sw.js -> 200 OK  (duration: 80.0 ms, execution: 37.4 ms)
+    GET /static/assets/Hero.mp4 -> 304 Not Modified  (duration: 102.5 ms, execution: 32.1 ms)
+    GET /api/stats -> 200 OK  (duration: 297.1 ms, execution: 200.9 ms)
+    GET /static/style.css -> 304 Not Modified  (duration: 142.8 ms, execution: 18.9 ms)
+    GET /static/assets/grailsweep_favicon.png -> 304 Not Modified  (duration: 82.8 ms, execution: 29.1 ms)
+    GET /static/assets/favicon.ico -> 304 Not Modified  (duration: 78.0 ms, execution: 28.2 ms)
+[SSR-FOOTER] total=857 today=9
+    GET /match -> 200 OK  (duration: 398.8 ms, execution: 350.9 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 302.0 ms, execution: 228.0 ms)
+    GET /sw.js -> 200 OK  (duration: 110.6 ms, execution: 55.4 ms)
+WARNING:ocr_confirm:[OCR-CROP] image=672x936 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,748)-(369,936) size=369x188
+[EMBEDDER-TIMING] preproc=0.022s model=2.631s total=2.654s (single-crop)
+
+============================================================
+[TIMING] save+normalize:  0.43s
+[TIMING] clean+groove:    0.00s
+[TIMING] embed FRONT:     2.65s
+[TIMING] embed BACK:      0.00s
+[TIMING] matching engine: 1.29s
+[TIMING] DINOv2 tiebreak: 0.00s
+[TIMING] ÔöÇÔöÇ TOTAL:        4.37s ÔöÇÔöÇ
+============================================================
+
+WARNING:ocr_confirm:[OCR-CROP] image=672x936 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,748)-(369,936) size=369x188
+[OCR] status=no_text_found extracted=None matched=None promoted=False confidence=0.00 high_confidence=False
+[STATS] parent stat: uid=0 gid=0 mode=0o40755
+[STATS] file stat: uid=0 gid=0 mode=0o100644
+[STATS] saved 67 bytes to /modal_data/stats.json
+[GRADE-PATH] CLIP: grade={'score': np.float64(5.1), 'label': 'Played', 'method': 'auto'}
+[SSR-FOOTER] total=858 today=10
+   POST /match -> 200 OK  (duration: 8.88 s, execution: 8.80 s)
+    GET /api/fx_rates -> 200 OK  (duration: 286.5 ms, execution: 227.7 ms)
+    GET /img/db/72a745a6-e67a-4d31-ae61-c54d85e7c8ac.jpg -> 200 OK  (duration: 374.6 ms, execution: 316.1 ms)
+    GET /img/db/6a6fb6c1-11bf-45d4-9f90-ec23049a80ef.jpg -> 200 OK  (duration: 375.4 ms, execution: 291.2 ms)
+    GET /img/db/9fa7884a-5048-44d1-a489-3bb5fb4eaa45.jpg -> 200 OK  (duration: 427.0 ms, execution: 255.3 ms)
+    GET /img/db/2a97ce12-5dcc-4360-a266-25334a96a171.jpg -> 200 OK  (duration: 539.0 ms, execution: 132.2 ms)
+    GET /img/db/c4b618fa-aa90-4656-aa9a-272e2c576b44.jpg -> 200 OK  (duration: 545.0 ms, execution: 151.6 ms)
+    GET /sitemap_index.xml -> 404 Not Found  (duration: 100.9 ms, execution: 49.7 ms)
+   POST /feedback -> 200 OK  (duration: 193.6 ms, execution: 137.9 ms)
+    GET /static/manifest.json -> 200 OK  (duration: 123.0 ms, execution: 62.6 ms)
+    GET /static/vendor/lucide.min.js.map -> 404 Not Found  (duration: 149.8 ms, execution: 56.9 ms)
+    GET /api/heartbeat -> 200 OK  (duration: 115.8 ms, execution: 45.7 ms)
+    GET /api/heartbeat -> 200 OK  (duration: 124.8 ms, execution: 60.1 ms)
+[SSR-FOOTER] total=858 today=10
+    GET /match -> 200 OK  (duration: 362.2 ms, execution: 306.9 ms)
+    GET /static/vendor/lucide.min.js.map -> 404 Not Found  (duration: 140.9 ms, execution: 82.4 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 264.9 ms, execution: 211.2 ms)
+WARNING:ocr_confirm:[OCR-CROP] image=672x936 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,748)-(369,936) size=369x188
+[EMBEDDER-TIMING] preproc=0.030s model=0.185s total=0.215s (single-crop)
+
+============================================================
+[TIMING] save+normalize:  0.52s
+[TIMING] clean+groove:    0.00s
+[TIMING] embed FRONT:     0.22s
+[TIMING] embed BACK:      0.00s
+[TIMING] matching engine: 2.26s
+[TIMING] DINOv2 tiebreak: 0.00s
+[TIMING] ÔöÇÔöÇ TOTAL:        3.00s ÔöÇÔöÇ
+============================================================
+
+WARNING:ocr_confirm:[OCR-CROP] image=672x936 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,748)-(369,936) size=369x188
+[OCR] status=no_text_found extracted=None matched=None promoted=False confidence=0.00 high_confidence=False
+[STATS] parent stat: uid=0 gid=0 mode=0o40755
+[STATS] file stat: uid=0 gid=0 mode=0o100644
+[STATS] saved 67 bytes to /modal_data/stats.json
+[GRADE-PATH] CLIP: grade={'score': np.float64(5.1), 'label': 'Played', 'method': 'auto'}
+[SSR-FOOTER] total=859 today=11
+   POST /match -> 200 OK  (duration: 13.4 s, execution: 13.3 s)
+    GET /static/vendor/lucide.min.js.map -> 404 Not Found  (duration: 124.5 ms, execution: 56.2 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 312.9 ms, execution: 255.8 ms)
+    GET /api/heartbeat -> 200 OK  (duration: 98.3 ms, execution: 46.3 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loaded 135789 embeddings from SQLite in 9.80s (FRONT=135789, BACK=0)
+[CACHE] Numpy fast cache saved to /modal_data/MatchITv2_ProductMatch_Data/cards/npy_cache
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=859 today=11
+[SSR-FOOTER] total=859 today=11
+    GET // -> 200 OK  (duration: 43.0 s, execution: 1.25 s)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.72s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=859 today=11
+[SSR-FOOTER] total=859 today=11
+    GET / -> 200 OK  (duration: 34.6 s, execution: 529.4 ms)
+Creating GPU memory snapshot for Function.
+Snapshot created. Restoring Function from memory snapshot.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.01s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+[SSR-FOOTER] total=859 today=11
+    GET / -> 200 OK  (duration: 37.0 s, execution: 418.1 ms)
+    GET / -> 200 OK  (duration: 17.4 s, execution: 533.2 ms)
+    GET /static/style.css -> 200 OK  (duration: 106.0 ms, execution: 39.3 ms)
+    GET /static/vendor/lucide.min.js -> 200 OK  (duration: 127.3 ms, execution: 80.8 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 183.9 ms, execution: 109.7 ms)
+    GET /sw.js -> 200 OK  (duration: 60.9 ms, execution: 17.8 ms)
+    GET /api/stats -> 200 OK  (duration: 220.1 ms, execution: 162.9 ms)
+    GET /static/style.css -> 200 OK  (duration: 97.5 ms, execution: 44.2 ms)
+    GET /static/assets/Hero.mp4 -> 200 OK  (duration: 699.1 ms, execution: 646.4 ms)
+    GET /static/assets/grailsweep_favicon.png -> 200 OK  (duration: 422.9 ms, execution: 97.3 ms)
+    GET /static/assets/favicon.ico -> 200 OK  (duration: 59.6 ms, execution: 18.7 ms)
+[SSR-FOOTER] total=859 today=11
+    GET /match -> 200 OK  (duration: 308.3 ms, execution: 257.3 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 209.5 ms, execution: 147.4 ms)
+    GET /sw.js -> 200 OK  (duration: 85.2 ms, execution: 21.0 ms)
+WARNING:ocr_confirm:[OCR-CROP] image=672x936 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,748)-(369,936) size=369x188
+[EMBEDDER-TIMING] preproc=0.014s model=1.441s total=1.455s (single-crop)
+
+============================================================
+[TIMING] save+normalize:  0.36s
+[TIMING] clean+groove:    0.00s
+[TIMING] embed FRONT:     1.45s
+[TIMING] embed BACK:      0.00s
+[TIMING] matching engine: 1.11s
+[TIMING] DINOv2 tiebreak: 0.00s
+[TIMING] ÔöÇÔöÇ TOTAL:        2.92s ÔöÇÔöÇ
+============================================================
+
+WARNING:ocr_confirm:[OCR-CROP] image=672x936 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,748)-(369,936) size=369x188
+[OCR] status=no_text_found extracted=None matched=None promoted=False confidence=0.00 high_confidence=False
+[PRICE_HISTORY] parent stat: uid=0 gid=0 mode=0o40755
+[PRICE_HISTORY] file stat: uid=0 gid=0 mode=0o100644
+[PRICE_HISTORY] saved 16807 bytes to /modal_data/price_history.json
+[STATS] parent stat: uid=0 gid=0 mode=0o40755
+[STATS] file stat: uid=0 gid=0 mode=0o100644
+[STATS] saved 67 bytes to /modal_data/stats.json
+[GRADE-PATH] CLIP: grade={'score': np.float64(5.1), 'label': 'Played', 'method': 'auto'}
+[SSR-FOOTER] total=860 today=12
+   POST /match -> 200 OK  (duration: 8.72 s, execution: 8.68 s)
+    GET /api/fx_rates -> 200 OK  (duration: 169.5 ms, execution: 130.2 ms)
+    GET /img/db/72a745a6-e67a-4d31-ae61-c54d85e7c8ac.jpg -> 200 OK  (duration: 167.0 ms, execution: 124.2 ms)
+    GET /img/db/c4b618fa-aa90-4656-aa9a-272e2c576b44.jpg -> 200 OK  (duration: 163.6 ms, execution: 99.3 ms)
+    GET /img/db/2a97ce12-5dcc-4360-a266-25334a96a171.jpg -> 200 OK  (duration: 134.4 ms, execution: 87.1 ms)
+    GET /img/db/9fa7884a-5048-44d1-a489-3bb5fb4eaa45.jpg -> 200 OK  (duration: 150.7 ms, execution: 94.2 ms)
+    GET /img/db/6a6fb6c1-11bf-45d4-9f90-ec23049a80ef.jpg -> 200 OK  (duration: 196.6 ms, execution: 65.4 ms)
+   POST /feedback -> 200 OK  (duration: 125.2 ms, execution: 79.7 ms)
+    GET /api/heartbeat -> 200 OK  (duration: 60.0 ms, execution: 18.9 ms)
+[SSR-SUBS] no gs_access_code cookie ÔÇö guest
+[SSR-PREMIUM] code=None tier=None is_premium=False
+[SSR-COLLECTION] no code ÔÇö none rendered
+[SSR-FOOTER] total=860 today=12
+    GET /collection -> 200 OK  (duration: 344.1 ms, execution: 298.4 ms)
+    GET /sw.js -> 200 OK  (duration: 73.9 ms, execution: 26.4 ms)
+[SSR-FOOTER] total=860 today=12
+    GET /match -> 200 OK  (duration: 283.7 ms, execution: 235.3 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 177.4 ms, execution: 137.4 ms)
+    GET /sw.js -> 200 OK  (duration: 76.9 ms, execution: 23.4 ms)
+[SSR-FOOTER] total=860 today=12
+    GET /match -> 200 OK  (duration: 274.6 ms, execution: 233.1 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 169.8 ms, execution: 122.7 ms)
+    GET /sw.js -> 200 OK  (duration: 73.6 ms, execution: 34.2 ms)
+WARNING:ocr_confirm:[OCR-CROP] image=672x936 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,748)-(369,936) size=369x188
+[EMBEDDER-TIMING] preproc=0.014s model=0.092s total=0.106s (single-crop)
+
+============================================================
+[TIMING] save+normalize:  0.33s
+[TIMING] clean+groove:    0.00s
+[TIMING] embed FRONT:     0.11s
+[TIMING] embed BACK:      0.00s
+[TIMING] matching engine: 1.44s
+[TIMING] DINOv2 tiebreak: 0.00s
+[TIMING] ÔöÇÔöÇ TOTAL:        1.88s ÔöÇÔöÇ
+============================================================
+
+WARNING:ocr_confirm:[OCR-CROP] image=672x936 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,748)-(369,936) size=369x188
+[OCR] status=no_text_found extracted=None matched=None promoted=False confidence=0.00 high_confidence=False
+[PRICE_HISTORY] parent stat: uid=0 gid=0 mode=0o40755
+[PRICE_HISTORY] file stat: uid=0 gid=0 mode=0o100644
+[PRICE_HISTORY] saved 16807 bytes to /modal_data/price_history.json
+[STATS] parent stat: uid=0 gid=0 mode=0o40755
+[STATS] file stat: uid=0 gid=0 mode=0o100644
+[STATS] saved 67 bytes to /modal_data/stats.json
+[GRADE-PATH] CLIP: grade={'score': np.float64(5.1), 'label': 'Played', 'method': 'auto'}
+[SSR-FOOTER] total=861 today=13
+   POST /match -> 200 OK  (duration: 6.02 s, execution: 5.97 s)
+    GET /api/fx_rates -> 200 OK  (duration: 164.5 ms, execution: 121.4 ms)
+    GET /api/heartbeat -> 200 OK  (duration: 62.7 ms, execution: 17.6 ms)
+[modal-client] 2026-05-16T17:39:17+0000 Detected 1 background thread(s) [WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Creating GPU memory snapshot for Function.
+Snapshot created. Restoring Function from memory snapshot.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loaded 135789 embeddings from SQLite in 9.01s (FRONT=135789, BACK=0)
+[CACHE] Numpy fast cache saved to /modal_data/MatchITv2_ProductMatch_Data/cards/npy_cache
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=861 today=13
+[SSR-STATS] total=861 today=13
+[SSR-FOOTER] total=861 today=13
+    GET / -> 200 OK  (duration: 38.4 s, execution: 950.9 ms)
+[SSR-FOOTER] total=861 today=13
+    GET / -> 200 OK  (duration: 58.7 s, execution: 1.22 s)
+    GET /static/style.css -> 200 OK  (duration: 107.1 ms, execution: 41.6 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 181.3 ms, execution: 120.2 ms)
+    GET /static/vendor/lucide.min.js -> 200 OK  (duration: 164.3 ms, execution: 90.8 ms)
+    GET /sw.js -> 200 OK  (duration: 55.7 ms, execution: 16.8 ms)
+    GET /api/stats -> 200 OK  (duration: 402.4 ms, execution: 317.1 ms)
+    GET /static/style.css -> 200 OK  (duration: 96.5 ms, execution: 33.0 ms)
+    GET /static/assets/Hero.mp4 -> 200 OK  (duration: 660.8 ms, execution: 616.0 ms)
+    GET /static/assets/grailsweep_favicon.png -> 200 OK  (duration: 398.8 ms, execution: 98.4 ms)
+    GET /static/assets/favicon.ico -> 200 OK  (duration: 98.9 ms, execution: 35.5 ms)
+[SSR-FOOTER] total=861 today=13
+    GET /match -> 200 OK  (duration: 486.0 ms, execution: 446.0 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 197.9 ms, execution: 152.3 ms)
+    GET /sw.js -> 200 OK  (duration: 92.4 ms, execution: 39.7 ms)
+WARNING:ocr_confirm:[OCR-CROP] image=672x936 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,748)-(369,936) size=369x188
+[EMBEDDER-TIMING] preproc=0.014s model=1.178s total=1.192s (single-crop)
+
+============================================================
+[TIMING] save+normalize:  0.41s
+[TIMING] clean+groove:    0.00s
+[TIMING] embed FRONT:     1.19s
+[TIMING] embed BACK:      0.00s
+[TIMING] matching engine: 1.45s
+[TIMING] DINOv2 tiebreak: 0.00s
+[TIMING] ÔöÇÔöÇ TOTAL:        3.05s ÔöÇÔöÇ
+============================================================
+
+WARNING:ocr_confirm:[OCR-CROP] image=672x936 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,748)-(369,936) size=369x188
+[OCR] status=no_text_found extracted=None matched=None promoted=False confidence=0.00 high_confidence=False
+[PRICE_HISTORY] parent stat: uid=0 gid=0 mode=0o40755
+[PRICE_HISTORY] file stat: uid=0 gid=0 mode=0o100644
+[PRICE_HISTORY] saved 16807 bytes to /modal_data/price_history.json
+[STATS] parent stat: uid=0 gid=0 mode=0o40755
+[STATS] file stat: uid=0 gid=0 mode=0o100644
+[STATS] saved 67 bytes to /modal_data/stats.json
+[GRADE-PATH] CLIP: grade={'score': np.float64(5.1), 'label': 'Played', 'method': 'auto'}
+[SSR-FOOTER] total=862 today=14
+   POST /match -> 200 OK  (duration: 8.71 s, execution: 8.65 s)
+    GET /img/db/2a97ce12-5dcc-4360-a266-25334a96a171.jpg -> 200 OK  (duration: 171.2 ms, execution: 94.2 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 264.2 ms, execution: 185.6 ms)
+    GET /img/db/c4b618fa-aa90-4656-aa9a-272e2c576b44.jpg -> 200 OK  (duration: 189.9 ms, execution: 136.1 ms)
+    GET /img/db/72a745a6-e67a-4d31-ae61-c54d85e7c8ac.jpg -> 200 OK  (duration: 327.1 ms, execution: 139.1 ms)
+    GET /img/db/9fa7884a-5048-44d1-a489-3bb5fb4eaa45.jpg -> 200 OK  (duration: 322.6 ms, execution: 121.3 ms)
+    GET /img/db/6a6fb6c1-11bf-45d4-9f90-ec23049a80ef.jpg -> 200 OK  (duration: 404.0 ms, execution: 98.5 ms)
+   POST /feedback -> 200 OK  (duration: 205.6 ms, execution: 161.5 ms)
+[SSR-FOOTER] total=862 today=14
+    GET /match -> 200 OK  (duration: 445.8 ms, execution: 395.0 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 197.2 ms, execution: 160.5 ms)
+    GET /sw.js -> 200 OK  (duration: 72.8 ms, execution: 29.3 ms)
+[EMBEDDER-TIMING] preproc=0.027s model=0.096s total=0.123s (single-crop)
+
+============================================================
+[TIMING] save+normalize:  0.15s
+[TIMING] clean+groove:    0.00s
+[TIMING] embed FRONT:     0.12s
+[TIMING] embed BACK:      0.00s
+[TIMING] matching engine: 1.29s
+[TIMING] DINOv2 tiebreak: 0.00s
+[TIMING] ÔöÇÔöÇ TOTAL:        1.57s ÔöÇÔöÇ
+============================================================
+
+WARNING:ocr_confirm:[OCR-CROP] image=734x1024 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,819)-(403,1024) size=403x205
+WARNING:ocr_confirm:[OCR-CROP] image=734x1024 region=(0.0, 0.75, 0.6, 0.95) ÔåÆ crop=(0,768)-(440,972) size=440x204
+WARNING:ocr_confirm:[OCR-CROP] image=734x1024 region=(0.0, 0.85, 0.5, 0.98) ÔåÆ crop=(0,870)-(367,1003) size=367x133
+[OCR] status=no_sku_match extracted=2 matched=None promoted=False confidence=0.00 high_confidence=False
+[PRICE_HISTORY] parent stat: uid=0 gid=0 mode=0o40755
+[PRICE_HISTORY] file stat: uid=0 gid=0 mode=0o100644
+[PRICE_HISTORY] saved 16860 bytes to /modal_data/price_history.json
+[STATS] parent stat: uid=0 gid=0 mode=0o40755
+[STATS] file stat: uid=0 gid=0 mode=0o100644
+[STATS] saved 67 bytes to /modal_data/stats.json
+[GRADE-PATH] CLIP: grade={'score': np.float64(9.1), 'label': 'Mint', 'method': 'auto'}
+[SSR-FOOTER] total=863 today=15
+   POST /match -> 200 OK  (duration: 13.0 s, execution: 12.9 s)
+    GET /img/db/c4e6c4ef-c83b-41b5-a95b-c1b6d6053e83.jpg -> 200 OK  (duration: 555.7 ms, execution: 493.1 ms)
+    GET /img/db/0ff881c0-5b8c-448d-a368-5e573c5c9746.jpg -> 200 OK  (duration: 587.1 ms, execution: 531.5 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 598.5 ms, execution: 554.5 ms)
+    GET /img/db/f546adad-cb7e-45d5-bced-c77816d2b3cb.jpg -> 200 OK  (duration: 889.7 ms, execution: 458.1 ms)
+    GET /img/db/ad6ee96e-f705-42b3-8e7e-8f9c64686d4f.jpg -> 200 OK  (duration: 1.08 s, execution: 482.4 ms)
+    GET /img/db/08eb3f43-d3ba-4056-8138-5f8745a135e4.jpg -> 200 OK  (duration: 1.07 s, execution: 466.3 ms)
+[SSR-FOOTER] total=863 today=15
+    GET /match -> 200 OK  (duration: 295.7 ms, execution: 250.3 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 249.0 ms, execution: 198.6 ms)
+    GET /sw.js -> 200 OK  (duration: 74.5 ms, execution: 34.1 ms)
+WARNING:ocr_confirm:[OCR-CROP] image=813x1185 region=(0.66, 0.68, 0.95, 0.79) ÔåÆ crop=(536,805)-(772,936) size=236x131
+WARNING:ocr_confirm:[OCR-YGO] region=(0.66, 0.68, 0.95, 0.79) raw texts: ['E OF RANDOM FIRE']
+[EMBEDDER-TIMING] preproc=0.018s model=0.091s total=0.108s (single-crop)
+[DINO-TIEBREAK] Loading DINOv2 for tie-breaking...
+
+[1A
+Loading weights:   0%|          | 0/439 [00:00<?, ?it/s]
+[1A
+Loading weights:   7%|Ôûï         | 30/439 [00:00<00:01, 277.98it/s]
+[1A
+Loading weights:  22%|ÔûêÔûêÔûÅ       | 96/439 [00:00<00:00, 483.20it/s]
+[1A
+Loading weights:  36%|ÔûêÔûêÔûêÔûî      | 156/439 [00:00<00:00, 519.91it/s]
+[1A
+Loading weights:  48%|ÔûêÔûêÔûêÔûêÔûè     | 209/439 [00:00<00:00, 512.89it/s]
+[1A
+Loading weights:  60%|ÔûêÔûêÔûêÔûêÔûêÔûê    | 264/439 [00:00<00:00, 518.79it/s]
+[1A
+Loading weights:  75%|ÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûî  | 331/439 [00:00<00:00, 557.36it/s]
+[1A
+Loading weights: 100%|ÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûêÔûê| 439/439 [00:00<00:00, 670.16it/s]
+[EMBEDDER] Backend: dinov2/facebook/dinov2-large (1024-dim) on cuda
+[DINO-TIEBREAK] DINOv2 ready.
+[EMBEDDER-TIMING] preproc=0.047s model=0.114s total=0.161s (single-crop)
+[EMBEDDER-TIMING] preproc=0.433s model=0.087s total=0.520s (single-crop)
+[EMBEDDER-TIMING] preproc=0.048s model=0.087s total=0.135s (single-crop)
+[DINO-TIEBREAK] Confirmed: ygo-MRD-095-87322377 (dino=0.9999) vs ygo-DB2-EN057-87322377 (dino=0.9999) | CLIP gap was 0.0000
+
+============================================================
+[TIMING] save+normalize:  0.77s
+[TIMING] clean+groove:    0.00s
+[TIMING] embed FRONT:     0.11s
+[TIMING] embed BACK:      0.00s
+[TIMING] matching engine: 1.28s
+[TIMING] DINOv2 tiebreak: 2.88s
+[TIMING] ÔöÇÔöÇ TOTAL:        5.03s ÔöÇÔöÇ
+============================================================
+
+WARNING:ocr_confirm:[OCR-CROP] image=813x1185 region=(0.66, 0.68, 0.95, 0.79) ÔåÆ crop=(536,805)-(772,936) size=236x131
+WARNING:ocr_confirm:[OCR-YGO] region=(0.66, 0.68, 0.95, 0.79) raw texts: ['E OF RANDOM FIRE']
+[OCR] status=no_sku_match extracted=EOFRANDOMFIR matched=None promoted=False confidence=0.00 high_confidence=False
+[PRICE_HISTORY] parent stat: uid=0 gid=0 mode=0o40755
+[PRICE_HISTORY] file stat: uid=0 gid=0 mode=0o100644
+[PRICE_HISTORY] saved 16923 bytes to /modal_data/price_history.json
+[STATS] parent stat: uid=0 gid=0 mode=0o40755
+[STATS] file stat: uid=0 gid=0 mode=0o100644
+[STATS] saved 67 bytes to /modal_data/stats.json
+[GRADE-PATH] CLIP: grade={'score': np.float64(6.9), 'label': 'Good', 'method': 'auto'}
+[SSR-FOOTER] total=864 today=16
+   POST /match -> 200 OK  (duration: 15.6 s, execution: 15.5 s)
+    GET /img/db/577f1c1c-f35f-4ca1-8cef-05aa5f982472.jpg -> 200 OK  (duration: 138.6 ms, execution: 91.4 ms)
+    GET /img/db/99fb3111-6ba8-4e34-9f31-b997db74fea4.jpg -> 200 OK  (duration: 401.1 ms, execution: 312.5 ms)
+    GET /img/db/a9997a0e-7239-4e4c-819e-24172dbd4961.jpg -> 200 OK  (duration: 404.8 ms, execution: 256.5 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 417.5 ms, execution: 325.4 ms)
+    GET /img/db/9eec5696-489b-4248-ad6e-c001b5127171.jpg -> 200 OK  (duration: 302.1 ms, execution: 79.3 ms)
+    GET /img/db/ffac83f4-4c85-44c0-8839-91ad2bda66d0.jpg -> 200 OK  (duration: 300.6 ms, execution: 66.6 ms)
+[SSR-FOOTER] total=864 today=16
+    GET /match -> 200 OK  (duration: 242.6 ms, execution: 200.7 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 326.1 ms, execution: 135.9 ms)
+    GET /sw.js -> 200 OK  (duration: 88.5 ms, execution: 33.5 ms)
+[EMBEDDER-TIMING] preproc=0.011s model=0.091s total=0.102s (single-crop)
+
+============================================================
+[TIMING] save+normalize:  0.26s
+[TIMING] clean+groove:    0.00s
+[TIMING] embed FRONT:     0.10s
+[TIMING] embed BACK:      0.00s
+[TIMING] matching engine: 1.25s
+[TIMING] DINOv2 tiebreak: 0.00s
+[TIMING] ÔöÇÔöÇ TOTAL:        1.61s ÔöÇÔöÇ
+============================================================
+
+WARNING:ocr_confirm:[OCR-CROP] image=600x825 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,660)-(330,825) size=330x165
+WARNING:ocr_confirm:[OCR-CROP] image=600x825 region=(0.0, 0.75, 0.6, 0.95) ÔåÆ crop=(0,618)-(360,783) size=360x165
+WARNING:ocr_confirm:[OCR-CROP] image=600x825 region=(0.0, 0.85, 0.5, 0.98) ÔåÆ crop=(0,701)-(300,808) size=300x107
+[OCR] status=no_text_found extracted=None matched=None promoted=False confidence=0.00 high_confidence=False
+[PRICE_HISTORY] parent stat: uid=0 gid=0 mode=0o40755
+[PRICE_HISTORY] file stat: uid=0 gid=0 mode=0o100644
+[PRICE_HISTORY] saved 16961 bytes to /modal_data/price_history.json
+[STATS] parent stat: uid=0 gid=0 mode=0o40755
+[STATS] file stat: uid=0 gid=0 mode=0o100644
+[STATS] saved 67 bytes to /modal_data/stats.json
+[GRADE-PATH] CLIP: grade={'score': np.float64(7.7), 'label': 'Near Mint', 'method': 'auto'}
+[SSR-FOOTER] total=865 today=17
+   POST /match -> 200 OK  (duration: 11.5 s, execution: 11.5 s)
+    GET /api/fx_rates -> 200 OK  (duration: 170.1 ms, execution: 129.8 ms)
+    GET /img/db/bedef656-c898-43ef-a957-c06d8a3e4e19.jpg -> 200 OK  (duration: 385.5 ms, execution: 333.9 ms)
+    GET /img/db/2df8e947-8b19-4234-9cc4-a1e4b97ab151.jpg -> 200 OK  (duration: 372.7 ms, execution: 308.1 ms)
+    GET /img/db/4b63a19c-06f0-4919-97ea-8fd512cc4414.jpg -> 200 OK  (duration: 356.1 ms, execution: 280.6 ms)
+    GET /img/db/59d837d1-d4df-4ba4-9dd5-0f941bf3031f.jpg -> 200 OK  (duration: 614.6 ms, execution: 258.5 ms)
+    GET /img/db/3f4e671c-da93-4e99-9c65-78483d043dfc.jpg -> 200 OK  (duration: 744.8 ms, execution: 355.9 ms)
+   POST /feedback -> 200 OK  (duration: 137.9 ms, execution: 96.8 ms)
+[SSR-FOOTER] total=865 today=17
+    GET /match -> 200 OK  (duration: 476.8 ms, execution: 431.8 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 175.5 ms, execution: 122.4 ms)
+    GET /sw.js -> 200 OK  (duration: 77.6 ms, execution: 16.1 ms)
+[SSR-FOOTER] total=865 today=17
+    GET /match -> 200 OK  (duration: 304.1 ms, execution: 264.9 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 183.6 ms, execution: 117.9 ms)
+    GET /sw.js -> 200 OK  (duration: 84.1 ms, execution: 32.4 ms)
+[EMBEDDER-TIMING] preproc=0.010s model=0.090s total=0.101s (single-crop)
+
+============================================================
+[TIMING] save+normalize:  0.22s
+[TIMING] clean+groove:    0.00s
+[TIMING] embed FRONT:     0.10s
+[TIMING] embed BACK:      0.00s
+[TIMING] matching engine: 1.26s
+[TIMING] DINOv2 tiebreak: 0.00s
+[TIMING] ÔöÇÔöÇ TOTAL:        1.58s ÔöÇÔöÇ
+============================================================
+
+WARNING:ocr_confirm:[OCR-CROP] image=600x825 region=(0.0, 0.8, 0.55, 1.0) ÔåÆ crop=(0,660)-(330,825) size=330x165
+WARNING:ocr_confirm:[OCR-CROP] image=600x825 region=(0.0, 0.75, 0.6, 0.95) ÔåÆ crop=(0,618)-(360,783) size=360x165
+WARNING:ocr_confirm:[OCR-CROP] image=600x825 region=(0.0, 0.85, 0.5, 0.98) ÔåÆ crop=(0,701)-(300,808) size=300x107
+[OCR] status=no_text_found extracted=None matched=None promoted=False confidence=0.00 high_confidence=False
+[PRICE_HISTORY] parent stat: uid=0 gid=0 mode=0o40755
+[PRICE_HISTORY] file stat: uid=0 gid=0 mode=0o100644
+[PRICE_HISTORY] saved 17013 bytes to /modal_data/price_history.json
+[STATS] parent stat: uid=0 gid=0 mode=0o40755
+[STATS] file stat: uid=0 gid=0 mode=0o100644
+[STATS] saved 67 bytes to /modal_data/stats.json
+[GRADE-PATH] CLIP: grade={'score': np.float64(7.8), 'label': 'Near Mint', 'method': 'auto'}
+[SSR-FOOTER] total=866 today=18
+   POST /match -> 200 OK  (duration: 11.1 s, execution: 11.0 s)
+    GET /api/fx_rates -> 200 OK  (duration: 189.0 ms, execution: 142.7 ms)
+    GET /img/db/d182300a-8dc7-4e3e-8b24-d701e8645d1b.jpg -> 200 OK  (duration: 362.2 ms, execution: 311.3 ms)
+    GET /img/db/5c537fb5-3017-420e-a74c-bc4b3cc8acc4.jpg -> 200 OK  (duration: 1.10 s, execution: 1.05 s)
+    GET /img/db/476c0a7c-d7a4-4ed0-b16e-de744ef140a2.jpg -> 200 OK  (duration: 1.09 s, execution: 698.1 ms)
+    GET /img/db/47556b3a-7b51-403c-94b4-1a0ee8dccfea.jpg -> 200 OK  (duration: 1.09 s, execution: 1.05 s)
+    GET /img/db/80a2bfa0-620c-4585-b5d2-95595bdda1dc.jpg -> 200 OK  (duration: 1.44 s, execution: 319.1 ms)
+[SSR-FOOTER] total=866 today=18
+    GET /match -> 200 OK  (duration: 306.2 ms, execution: 256.3 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 166.3 ms, execution: 122.0 ms)
+    GET /sw.js -> 200 OK  (duration: 78.5 ms, execution: 36.4 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=18
+    GET / -> 200 OK  (duration: 1.05 s, execution: 335.4 ms)
+    GET /sitemap.xml -> 200 OK  (duration: 64.0 ms, execution: 19.3 ms)
+[modal-client] 2026-05-16T17:56:07+0000 Detected 1 background thread(s) [WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loaded 135789 embeddings from SQLite in 9.58s (FRONT=135789, BACK=0)
+[CACHE] Numpy fast cache saved to /modal_data/MatchITv2_ProductMatch_Data/cards/npy_cache
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-FOOTER] total=866 today=18
+    GET /privacy -> 200 OK  (duration: 51.1 s, execution: 852.2 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.93s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=18
+    GET / -> 200 OK  (duration: 45.4 s, execution: 568.8 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.77s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+   POST // -> 405 Method Not Allowed  (duration: 27.2 s, execution: 52.9 ms)
+   POST // -> 405 Method Not Allowed  (duration: 19.4 s, execution: 51.7 ms)
+[modal-client] 2026-05-16T18:41:26+0000 Detected 2 background thread(s) [WSGI_0, WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 2 background thread(s) [WSGI_0, WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.81s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+[SSR-FOOTER] total=866 today=18
+    GET / -> 200 OK  (duration: 10.1 s, execution: 536.5 ms)
+    GET / -> 200 OK  (duration: 30.1 s, execution: 589.6 ms)
+[modal-client] 2026-05-16T18:57:51+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.35s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+[SSR-FOOTER] total=866 today=18
+    GET / -> 200 OK  (duration: 38.8 s, execution: 659.0 ms)
+    GET // -> 200 OK  (duration: 36.2 s, execution: 701.6 ms)
+[modal-client] 2026-05-16T19:19:45+0000 Detected 1 background thread(s) [WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.26s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /sitemap.xml -> 200 OK  (duration: 42.3 s, execution: 49.8 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.68s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+[SSR-FOOTER] total=866 today=18
+    GET / -> 200 OK  (duration: 24.1 s, execution: 459.5 ms)
+    GET / -> 200 OK  (duration: 4.33 s, execution: 538.0 ms)
+[modal-client] 2026-05-16T19:32:12+0000 Detected 2 background thread(s) [WSGI_0, WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 2 background thread(s) [WSGI_0, WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.51s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=18
+    GET / -> 200 OK  (duration: 25.0 s, execution: 550.1 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.26s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+   POST // -> 405 Method Not Allowed  (duration: 29.2 s, execution: 47.3 ms)
+[modal-client] 2026-05-16T21:23:58+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.73s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=18
+    GET / -> 200 OK  (duration: 25.1 s, execution: 454.4 ms)
+    GET /static/style.css -> 200 OK  (duration: 81.2 ms, execution: 37.1 ms)
+    GET /static/vendor/lucide.min.js -> 200 OK  (duration: 92.3 ms, execution: 51.5 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.97s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /static/vendor/lucide.min.js -> 200 OK  (duration: 9.18 s, execution: 180.1 ms)
+    GET /static/vendor/lucide.min.js -> 200 OK  (duration: 29.1 s, execution: 196.5 ms)
+    GET /static/assets/favicon.ico -> 200 OK  (duration: 2.36 s, execution: 54.4 ms)
+    GET /static/assets/grailsweep_favicon.png -> 200 OK  (duration: 2.48 s, execution: 309.4 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 192.9 ms, execution: 149.1 ms)
+[modal-client] 2026-05-16T21:41:50+0000 Detected 2 background thread(s) [WSGI_0, WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 2 background thread(s) [WSGI_0, WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.36s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=18
+    GET / -> 200 OK  (duration: 23.6 s, execution: 495.0 ms)
+Creating GPU memory snapshot for Function.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+Snapshot created. Restoring Function from memory snapshot.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.77s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /google-credentials.json -> 404 Not Found  (duration: 43.7 s, execution: 48.3 ms)
+    GET /sa.json -> 404 Not Found  (duration: 45.2 s, execution: 37.5 ms)
+    GET /secrets.yml -> 404 Not Found  (duration: 42.5 s, execution: 49.8 ms)
+    GET /application.properties -> 404 Not Found  (duration: 42.6 s, execution: 52.5 ms)
+    GET /config/secrets.yml -> 404 Not Found  (duration: 42.6 s, execution: 38.6 ms)
+    GET /.pypirc -> 404 Not Found  (duration: 42.5 s, execution: 53.7 ms)
+    GET /config.env -> 404 Not Found  (duration: 42.6 s, execution: 50.6 ms)
+    GET /.npmrc -> 404 Not Found  (duration: 42.5 s, execution: 45.4 ms)
+    GET /service-account.json -> 404 Not Found  (duration: 42.6 s, execution: 41.3 ms)
+    GET /keys/service-account.json -> 404 Not Found  (duration: 42.6 s, execution: 41.5 ms)
+    GET /storage/logs/laravel.log -> 404 Not Found  (duration: 42.6 s, execution: 50.0 ms)
+    GET /config/application.properties -> 404 Not Found  (duration: 42.6 s, execution: 20.3 ms)
+    GET /key.json -> 404 Not Found  (duration: 42.6 s, execution: 43.4 ms)
+    GET /credentials.json -> 404 Not Found  (duration: 42.4 s, execution: 18.4 ms)
+    GET /application.yml -> 404 Not Found  (duration: 42.6 s, execution: 43.6 ms)
+    GET /gcp-credentials.json -> 404 Not Found  (duration: 42.4 s, execution: 35.3 ms)
+    GET /api/health -> 404 Not Found  (duration: 40.9 s, execution: 34.2 ms)
+    GET /secrets.json -> 404 Not Found  (duration: 42.2 s, execution: 69.4 ms)
+    GET /settings.py -> 404 Not Found  (duration: 42.2 s, execution: 76.4 ms)
+    GET /__/firebase/init.json -> 404 Not Found  (duration: 40.8 s, execution: 47.6 ms)
+    GET /api/settings -> 404 Not Found  (duration: 40.8 s, execution: 42.2 ms)
+    GET /.well-known/jwks.json -> 404 Not Found  (duration: 40.9 s, execution: 45.5 ms)
+    GET /env.js -> 404 Not Found  (duration: 40.8 s, execution: 38.7 ms)
+    GET /firebase-config.json -> 404 Not Found  (duration: 40.8 s, execution: 37.6 ms)
+    GET /config.js -> 404 Not Found  (duration: 40.8 s, execution: 36.5 ms)
+    GET /api/env -> 404 Not Found  (duration: 40.8 s, execution: 24.3 ms)
+    GET /runtime-config.js -> 404 Not Found  (duration: 40.8 s, execution: 37.6 ms)
+    GET /env.json -> 404 Not Found  (duration: 40.9 s, execution: 24.2 ms)
+    GET /manifest.webmanifest -> 404 Not Found  (duration: 40.9 s, execution: 20.7 ms)
+    GET /api/config -> 404 Not Found  (duration: 40.9 s, execution: 36.5 ms)
+    GET /api/v2/settings -> 404 Not Found  (duration: 40.9 s, execution: 36.8 ms)
+    GET /api/v2/config -> 404 Not Found  (duration: 40.9 s, execution: 35.4 ms)
+    GET /api/v1/env -> 404 Not Found  (duration: 41.0 s, execution: 34.9 ms)
+    GET /openapi.json -> 404 Not Found  (duration: 41.0 s, execution: 19.5 ms)
+    GET /settings.json -> 404 Not Found  (duration: 40.7 s, execution: 46.7 ms)
+    GET /api/openapi.json -> 404 Not Found  (duration: 40.7 s, execution: 35.7 ms)
+    GET /api/v1/config -> 404 Not Found  (duration: 40.8 s, execution: 33.9 ms)
+    GET /api/v1/settings -> 404 Not Found  (duration: 40.8 s, execution: 48.7 ms)
+    GET /app-config.json -> 404 Not Found  (duration: 40.1 s, execution: 20.6 ms)
+    GET /__env.js -> 404 Not Found  (duration: 39.9 s, execution: 22.4 ms)
+    GET /config.json -> 404 Not Found  (duration: 41.1 s, execution: 291.4 ms)
+    GET /swagger.json -> 404 Not Found  (duration: 40.0 s, execution: 48.2 ms)
+    GET /health -> 404 Not Found  (duration: 38.2 s, execution: 42.0 ms)
+    GET /api/account -> 404 Not Found  (duration: 40.0 s, execution: 48.2 ms)
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.69s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[modal-client] 2026-05-17T00:05:54+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.93s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 48.6 s, execution: 541.0 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.65s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 24.5 s, execution: 551.7 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 478.7 ms, execution: 414.9 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.82s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /sw.js -> 200 OK  (duration: 31.3 s, execution: 41.8 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.50s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /sw.js -> 200 OK  (duration: 45.7 s, execution: 37.6 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.59s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /sw.js -> 200 OK  (duration: 26.1 s, execution: 22.1 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 548.7 ms, execution: 504.0 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.12s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+   POST // -> 405 Method Not Allowed  (duration: 31.6 s, execution: 75.4 ms)
+[modal-client] 2026-05-17T01:35:30+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.40s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 27.8 s, execution: 2.11 s)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.33s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 29.0 s, execution: 450.4 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.76s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /atom.xml -> 404 Not Found  (duration: 36.1 s, execution: 38.4 ms)
+[modal-client] 2026-05-17T02:23:12+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.49s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /sitemap_index.xml -> 404 Not Found  (duration: 23.6 s, execution: 22.7 ms)
+[modal-client] 2026-05-17T02:34:46+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.05s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 28.3 s, execution: 737.2 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.34s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 31.3 s, execution: 1.22 s)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 974.2 ms, execution: 910.3 ms)
+    GET /secrets.json -> 404 Not Found  (duration: 134.1 ms, execution: 66.9 ms)
+    GET /credentials.json -> 404 Not Found  (duration: 133.6 ms, execution: 63.6 ms)
+    GET /serviceAccountKey.json -> 404 Not Found  (duration: 126.1 ms, execution: 69.5 ms)
+    GET /static/vendor/lucide.min.js -> 200 OK  (duration: 248.3 ms, execution: 169.9 ms)
+[modal-client] 2026-05-17T03:37:49+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.29s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 36.4 s, execution: 901.9 ms)
+    GET /sw.js -> 200 OK  (duration: 93.3 ms, execution: 30.1 ms)
+    GET /static/style.css -> 200 OK  (duration: 124.2 ms, execution: 60.6 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 193.7 ms, execution: 129.0 ms)
+Creating GPU memory snapshot for Function.
+Snapshot created. Restoring Function from memory snapshot.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.78s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+    GET / -> 200 OK  (duration: 72.8 s, execution: 6.27 s)
+    GET / -> 200 OK  (duration: 50.5 s, execution: 7.17 s)
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 72.8 s, execution: 9.49 s)
+[modal-client] 2026-05-17T04:40:46+0000 Detected 1 background thread(s) [WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.90s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 29.3 s, execution: 431.5 ms)
+    GET / -> 200 OK  (duration: 30.6 s, execution: 508.4 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.91s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 6.01 s, execution: 598.6 ms)
+    GET / -> 200 OK  (duration: 25.9 s, execution: 703.0 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.77s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 31.9 s, execution: 456.9 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.25s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+   POST / -> 405 Method Not Allowed  (duration: 23.5 s, execution: 48.8 ms)
+   POST / -> 405 Method Not Allowed  (duration: 15.5 s, execution: 41.1 ms)
+[modal-client] 2026-05-17T06:45:27+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.80s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 34.7 s, execution: 488.4 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.41s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+    GET / -> 200 OK  (duration: 25.4 s, execution: 700.8 ms)
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 5.56 s, execution: 870.8 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.71s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-FOOTER] total=866 today=0
+    GET /contact -> 200 OK  (duration: 57.9 s, execution: 1.59 s)
+    GET /static/vendor/lucide.min.js -> 304 Not Modified  (duration: 225.0 ms, execution: 91.9 ms)
+    GET /static/style.css -> 200 OK  (duration: 293.7 ms, execution: 182.3 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.58s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 26.9 s, execution: 482.6 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.79s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 24.1 s, execution: 441.2 ms)
+    GET /static/style.css -> 200 OK  (duration: 88.0 ms, execution: 42.4 ms)
+    GET /static/vendor/lucide.min.js -> 200 OK  (duration: 285.4 ms, execution: 105.7 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 376.1 ms, execution: 147.4 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 461.1 ms, execution: 416.1 ms)
+    GET /static/style.css -> 200 OK  (duration: 120.8 ms, execution: 63.1 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 194.3 ms, execution: 131.7 ms)
+    GET /static/vendor/lucide.min.js -> 200 OK  (duration: 285.8 ms, execution: 109.9 ms)
+    GET /sw.js -> 200 OK  (duration: 122.2 ms, execution: 43.9 ms)
+    GET /api/stats -> 200 OK  (duration: 220.6 ms, execution: 166.4 ms)
+    GET /static/manifest.json -> 200 OK  (duration: 102.9 ms, execution: 47.6 ms)
+    GET /static/style.css -> 200 OK  (duration: 94.5 ms, execution: 43.5 ms)
+    GET /static/assets/Hero.mp4 -> 200 OK  (duration: 801.3 ms, execution: 735.9 ms)
+    GET /static/assets/icon-192.png -> 200 OK  (duration: 100.8 ms, execution: 49.7 ms)
+    GET /static/assets/grailsweep_favicon.png -> 200 OK  (duration: 280.9 ms, execution: 123.5 ms)
+    GET /static/assets/favicon.ico -> 200 OK  (duration: 98.9 ms, execution: 42.1 ms)
+    GET /static/assets/favicon.ico -> 200 OK  (duration: 136.9 ms, execution: 79.6 ms)
+    GET /static/assets/favicon.ico -> 304 Not Modified  (duration: 79.4 ms, execution: 26.9 ms)
+    GET /static/assets/grailsweep_favicon.png -> 200 OK  (duration: 144.7 ms, execution: 97.2 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 304 Not Modified  (duration: 82.6 ms, execution: 25.1 ms)
+    GET /static/assets/grailsweep_og.png -> 200 OK  (duration: 99.0 ms, execution: 49.9 ms)
+[modal-client] 2026-05-17T08:58:54+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.29s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 28.5 s, execution: 465.0 ms)
+    GET /static/vendor/lucide.min.js -> 200 OK  (duration: 141.4 ms, execution: 73.0 ms)
+    GET /static/style.css -> 200 OK  (duration: 86.0 ms, execution: 39.1 ms)
+    GET /static/assets/favicon.ico -> 200 OK  (duration: 101.4 ms, execution: 26.2 ms)
+    GET /static/assets/grailsweep_favicon.png -> 200 OK  (duration: 243.2 ms, execution: 96.6 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 145.3 ms, execution: 96.0 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.16s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /static/assets/grailsweep_app_icon.png -> 304 Not Modified  (duration: 25.1 s, execution: 64.5 ms)
+    GET /static/vendor/lucide.min.js -> 304 Not Modified  (duration: 25.1 s, execution: 62.8 ms)
+    GET /static/style.css -> 304 Not Modified  (duration: 25.2 s, execution: 65.8 ms)
+    GET /sitemap.xml.gz -> 404 Not Found  (duration: 190.2 ms, execution: 135.7 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 553.8 ms, execution: 501.2 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 472.3 ms, execution: 420.3 ms)
+    GET /static/style.css -> 200 OK  (duration: 113.1 ms, execution: 53.6 ms)
+    GET /static/vendor/lucide.min.js -> 200 OK  (duration: 123.3 ms, execution: 74.1 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 603.0 ms, execution: 90.4 ms)
+    GET /api/stats -> 200 OK  (duration: 226.7 ms, execution: 177.3 ms)
+[modal-client] 2026-05-17T09:23:41+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.04s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 39.3 s, execution: 643.5 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.02s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+    GET / -> 200 OK  (duration: 28.4 s, execution: 656.7 ms)
+    GET / -> 200 OK  (duration: 14.4 s, execution: 705.3 ms)
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 6.88 s, execution: 873.8 ms)
+    GET /static/assets/favicon.ico -> 200 OK  (duration: 103.2 ms, execution: 23.9 ms)
+    GET /static/assets/grailsweep_favicon.png -> 200 OK  (duration: 168.6 ms, execution: 107.2 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 199.4 ms, execution: 92.1 ms)
+[modal-client] 2026-05-17T10:21:12+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Creating GPU memory snapshot for Function.
+Snapshot created. Restoring Function from memory snapshot.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.43s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /admin -> 302 Found  (duration: 46.9 s, execution: 41.1 ms)
+    GET /sw.js -> 200 OK  (duration: 15.7 s, execution: 47.4 ms)
+[SSR-FOOTER] total=866 today=0
+    GET /login -> 200 OK  (duration: 459.7 ms, execution: 391.2 ms)
+    GET /static/style.css -> 304 Not Modified  (duration: 121.9 ms, execution: 27.1 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 304 Not Modified  (duration: 105.2 ms, execution: 46.1 ms)
+    GET /static/vendor/lucide.min.js -> 304 Not Modified  (duration: 95.1 ms, execution: 35.9 ms)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 234.1 ms, execution: 160.0 ms)
+    GET /static/assets/grailsweep_favicon.png -> 304 Not Modified  (duration: 109.5 ms, execution: 21.2 ms)
+    GET /static/assets/icon-192.png -> 200 OK  (duration: 233.0 ms, execution: 180.9 ms)
+    GET /sw.js -> 200 OK  (duration: 81.7 ms, execution: 24.8 ms)
+   POST /login -> 302 Found  (duration: 164.5 ms, execution: 43.4 ms)
+[SSR-FOOTER] total=866 today=0
+    GET /admin -> 200 OK  (duration: 1.55 s, execution: 1.50 s)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 72.3 ms, execution: 19.5 ms)
+    GET /sw.js -> 200 OK  (duration: 66.8 ms, execution: 19.2 ms)
+   POST /admin/run_scheduler -> 302 Found  (duration: 3.65 s, execution: 3.60 s)
+ERROR:app:Exception on /admin [GET]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/flask/app.py", line 1455, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/flask/app.py", line 869, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/flask_cors/extension.py", line 176, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+                                                ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/flask/app.py", line 867, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/flask/app.py", line 852, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app.py", line 606, in wrapper
+    return view_func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/app.py", line 2720, in admin
+    init_db()
+  File "/app/app.py", line 622, in init_db
+    db_path = get_images_db_path()
+              ^^^^^^^^^^^^^^^^^^^^
+  File "/app/app.py", line 85, in get_images_db_path
+    return os.path.join(get_data_dir(), "images.db")
+                        ^^^^^^^^^^^^^^
+  File "/app/app.py", line 80, in get_data_dir
+    os.makedirs(d, exist_ok=True)
+  File "<frozen os>", line 215, in makedirs
+  File "<frozen os>", line 225, in makedirs
+PermissionError: [Errno 1] Operation not permitted: '/modal_data/MatchITv2_ProductMatch_Data'
+    GET /admin -> 500 Internal Server Error  (duration: 96.7 ms, execution: 19.6 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 1.05 s, execution: 1.00 s)
+    GET /sw.js -> 200 OK  (duration: 97.4 ms, execution: 23.5 ms)
+    GET /sw.js -> 200 OK  (duration: 87.0 ms, execution: 33.5 ms)
+   POST /login -> 302 Found  (duration: 89.6 ms, execution: 40.7 ms)
+[SSR-FOOTER] total=866 today=0
+    GET /admin -> 200 OK  (duration: 736.7 ms, execution: 685.1 ms)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 171.6 ms, execution: 28.2 ms)
+    GET /sw.js -> 200 OK  (duration: 99.9 ms, execution: 24.6 ms)
+   POST /admin/run_scheduler_dry -> 302 Found  (duration: 3.06 s, execution: 3.00 s)
+[SSR-FOOTER] total=866 today=0
+    GET /admin -> 200 OK  (duration: 610.3 ms, execution: 525.9 ms)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 109.5 ms, execution: 20.7 ms)
+    GET /sw.js -> 200 OK  (duration: 190.9 ms, execution: 23.5 ms)
+   POST /admin/run_scheduler -> 302 Found  (duration: 3.52 s, execution: 3.46 s)
+[SSR-FOOTER] total=866 today=0
+    GET /admin -> 200 OK  (duration: 1.13 s, execution: 1.08 s)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 62.3 ms, execution: 21.6 ms)
+    GET /sw.js -> 200 OK  (duration: 163.7 ms, execution: 35.0 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.51s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 35.6 s, execution: 981.4 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.61s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+   POST / -> 405 Method Not Allowed  (duration: 5.06 s, execution: 33.7 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 25.4 s, execution: 533.8 ms)
+    GET /phpinfo -> 404 Not Found  (duration: 113.9 ms, execution: 32.5 ms)
+    GET /info -> 404 Not Found  (duration: 107.1 ms, execution: 20.1 ms)
+    GET /_profiler/phpinfo -> 404 Not Found  (duration: 70.6 ms, execution: 18.8 ms)
+    GET /_environment -> 404 Not Found  (duration: 95.3 ms, execution: 41.8 ms)
+[modal-client] 2026-05-17T10:56:32+0000 Detected 2 background thread(s) [WSGI_0, WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 2 background thread(s) [WSGI_0, WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Creating GPU memory snapshot for Function.
+Snapshot created. Restoring Function from memory snapshot.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.73s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 50.2 s, execution: 500.4 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.23s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-SUBS] no gs_access_code cookie ÔÇö guest
+[SSR-PREMIUM] code=None tier=None is_premium=False
+[SSR-FOOTER] total=866 today=0
+    GET /upgrade -> 200 OK  (duration: 36.4 s, execution: 420.8 ms)
+    GET /sw.js -> 200 OK  (duration: 140.5 ms, execution: 59.3 ms)
+    GET /static/style.css -> 304 Not Modified  (duration: 74.0 ms, execution: 24.1 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 304 Not Modified  (duration: 319.2 ms, execution: 21.0 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.72s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /apple-touch-icon.png -> 200 OK  (duration: 44.4 s, execution: 203.4 ms)
+[SSR-STATS] total=866 today=18
+    GET /apple-touch-icon-precomposed.png -> 200 OK  (duration: 44.6 s, execution: 199.9 ms)
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 45.2 s, execution: 937.7 ms)
+    GET /apple-touch-icon-precomposed.png -> 200 OK  (duration: 233.0 ms, execution: 133.8 ms)
+    GET /apple-touch-icon.png -> 200 OK  (duration: 299.6 ms, execution: 153.2 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 912.7 ms, execution: 819.6 ms)
+    GET /static/assets/grailsweep_og.png -> 200 OK  (duration: 190.2 ms, execution: 89.3 ms)
+    GET /static/assets/favicon.ico -> 200 OK  (duration: 206.4 ms, execution: 73.7 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 331.1 ms, execution: 170.4 ms)
+    GET /static/assets/grailsweep_favicon.png -> 200 OK  (duration: 379.4 ms, execution: 184.1 ms)
+[modal-client] 2026-05-17T12:49:26+0000 Detected 2 background thread(s) [WSGI_1, WSGI_2] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 2 background thread(s) [WSGI_1, WSGI_2] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.75s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /sw.js -> 200 OK  (duration: 25.2 s, execution: 57.9 ms)
+    GET /static/style.css -> 200 OK  (duration: 105.4 ms, execution: 50.7 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 173.4 ms, execution: 119.3 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.44s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=0 today=0
+[SSR-STATS] total=0 today=0
+[SSR-FOOTER] total=0 today=0
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 3.62 s, execution: 524.8 ms)
+    GET / -> 200 OK  (duration: 23.5 s, execution: 611.7 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.77s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 27.2 s, execution: 492.4 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.45s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 28.8 s, execution: 1.85 s)
+Creating GPU memory snapshot for Function.
+Snapshot created. Restoring Function from memory snapshot.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.36s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /sw.js -> 200 OK  (duration: 31.4 s, execution: 93.5 ms)
+[SSR-FOOTER] total=866 today=0
+    GET /match -> 200 OK  (duration: 32.5 s, execution: 359.9 ms)
+    GET /static/style.css -> 304 Not Modified  (duration: 82.3 ms, execution: 34.9 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 304 Not Modified  (duration: 125.1 ms, execution: 51.3 ms)
+    GET /static/vendor/lucide.min.js -> 304 Not Modified  (duration: 79.2 ms, execution: 28.6 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 275.6 ms, execution: 208.0 ms)
+[SSR-SUBS] code=GRAIL-XAJI-0Y6D tier=legacy (config)
+[SSR-PREMIUM] code=GRAIL-XAJI-0Y6D tier=legacy is_premium=True
+[SSR-COLLECTION] code=GRAIL-XAJI-0Y6D cards=138
+[SSR-FOOTER] total=866 today=0
+    GET /collection -> 200 OK  (duration: 313.9 ms, execution: 257.2 ms)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 101.5 ms, execution: 23.0 ms)
+   POST /api/referral_code -> 200 OK  (duration: 151.8 ms, execution: 56.2 ms)
+    GET /api/collection/sync -> 200 OK  (duration: 174.1 ms, execution: 67.3 ms)
+    GET /sw.js -> 200 OK  (duration: 113.8 ms, execution: 41.1 ms)
+    GET /api/v1/image/68a3e017-9457-4db5-aa75-bddd6986bc53 -> 200 OK  (duration: 548.0 ms, execution: 442.9 ms)
+    GET /api/v1/image/f7c5031a-9b7c-462a-87f7-c3c12277621e -> 200 OK  (duration: 561.7 ms, execution: 511.3 ms)
+    GET /api/v1/image/904aae98-45b8-496d-892f-6637d647b090 -> 403 Forbidden  (duration: 469.7 ms, execution: 21.9 ms)
+    GET /api/v1/image/d7ae7496-64b6-4e48-b0c5-8dba6b61fe52 -> 200 OK  (duration: 745.6 ms, execution: 477.2 ms)
+    GET /api/v1/image/3b085052-9263-4466-ae80-d3102459e8ed -> 200 OK  (duration: 482.9 ms, execution: 433.2 ms)
+    GET /api/v1/image/4846c5b8-4820-451a-a587-7abf9258ec88 -> 200 OK  (duration: 325.8 ms, execution: 272.9 ms)
+    GET /api/v1/image/6e78b089-029b-4bb2-b1ac-af659b11bb64 -> 200 OK  (duration: 508.6 ms, execution: 395.6 ms)
+    GET /api/v1/image/e9837a0c-6747-432c-9f67-c35660e258c3 -> 200 OK  (duration: 413.9 ms, execution: 353.5 ms)
+    GET /api/v1/image/a81dd1bb-0dbf-43b0-be12-c28d65bae2dc -> 200 OK  (duration: 300.9 ms, execution: 231.1 ms)
+    GET /api/v1/image/0ecebdcb-ee13-4145-a7d7-f7d2b6fa5148 -> 200 OK  (duration: 416.2 ms, execution: 277.5 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+    GET /api/v1/image/81fa8aad-6628-45bc-9e43-ed6745faef76 -> 200 OK  (duration: 7.85 s, execution: 7.79 s)
+    GET /api/v1/image/a6dfa2de-e019-4a61-b14a-407c19902281 -> 200 OK  (duration: 7.87 s, execution: 7.80 s)
+    GET /api/v1/image/ -> 404 Not Found  (duration: 7.08 s, execution: 57.2 ms)
+    GET /api/v1/image/2d891370-c7f6-4474-8936-e2cfb02ddb7a -> 200 OK  (duration: 8.21 s, execution: 8.15 s)
+    GET /api/v1/image/c57e4de8-cb3f-425c-89d6-262627041d38 -> 200 OK  (duration: 7.72 s, execution: 418.3 ms)
+    GET /api/v1/image/e0bfef01-665c-4f2f-933a-f29ccb5d9a81 -> 200 OK  (duration: 6.37 s, execution: 133.5 ms)
+    GET /api/v1/image/8a32fd0b-e41d-48a4-9c99-223ca3b9a315 -> 200 OK  (duration: 6.38 s, execution: 344.7 ms)
+    GET /api/v1/image/236a1bd8-ba70-4601-aa8b-b2b7e7e99365 -> 200 OK  (duration: 6.03 s, execution: 315.1 ms)
+    GET /api/v1/image/acec70c5-9de8-4d47-b7a3-4caccf0b667f -> 200 OK  (duration: 6.96 s, execution: 564.3 ms)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.41s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[ALERTS] Confirmation sent to c_a_buckley@outlook.com
+   POST /api/set-alert -> 200 OK  (duration: 305.4 ms, execution: 224.1 ms)
+    GET /api/v1/image/904aae98-45b8-496d-892f-6637d647b090 -> 403 Forbidden  (duration: 181.3 ms, execution: 82.8 ms)
+[SSR-FOOTER] total=866 today=0
+    GET /match -> 200 OK  (duration: 256.8 ms, execution: 206.3 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 224.6 ms, execution: 172.2 ms)
+    GET /sw.js -> 200 OK  (duration: 71.8 ms, execution: 21.5 ms)
+    GET /api/heartbeat -> 200 OK  (duration: 115.2 ms, execution: 57.0 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.78s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 26.5 s, execution: 470.8 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 507.1 ms, execution: 423.5 ms)
+    GET /static/assets/favicon.ico -> 200 OK  (duration: 101.0 ms, execution: 39.8 ms)
+    GET /sitemap.xml -> 200 OK  (duration: 94.7 ms, execution: 36.3 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 448.1 ms, execution: 376.9 ms)
+    GET /static/assets/favicon.ico -> 200 OK  (duration: 100.4 ms, execution: 39.5 ms)
+    GET /sitemap.xml -> 200 OK  (duration: 79.8 ms, execution: 27.2 ms)
+    GET /static/assets/favicon.ico -> 304 Not Modified  (duration: 90.9 ms, execution: 42.3 ms)
+    GET /static/assets/favicon.ico -> 304 Not Modified  (duration: 125.5 ms, execution: 78.3 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.69s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.62s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 27.6 s, execution: 624.5 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.58s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /_profiler/phpinfo -> 404 Not Found  (duration: 1.27 s, execution: 45.3 ms)
+    GET /_environment -> 404 Not Found  (duration: 91.3 ms, execution: 37.0 ms)
+[modal-client] 2026-05-17T14:30:57+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Creating GPU memory snapshot for Function.
+Snapshot created. Restoring Function from memory snapshot.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.56s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 32.1 s, execution: 578.7 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 485.1 ms, execution: 412.6 ms)
+    GET /sw.js -> 200 OK  (duration: 186.4 ms, execution: 129.6 ms)
+    GET /static/vendor/lucide.min.js -> 304 Not Modified  (duration: 130.1 ms, execution: 69.0 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 304 Not Modified  (duration: 149.8 ms, execution: 49.9 ms)
+    GET /static/style.css -> 304 Not Modified  (duration: 179.4 ms, execution: 65.6 ms)
+    GET /sw.js -> 200 OK  (duration: 104.1 ms, execution: 50.3 ms)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 78.5 ms, execution: 24.5 ms)
+    GET /api/stats -> 200 OK  (duration: 244.5 ms, execution: 184.7 ms)
+    GET /static/assets/Hero.mp4 -> 304 Not Modified  (duration: 107.8 ms, execution: 23.8 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 200 OK  (duration: 383.0 ms, execution: 123.4 ms)
+    GET /static/assets/Hero.mp4 -> 304 Not Modified  (duration: 152.2 ms, execution: 33.0 ms)
+    GET /sw.js -> 200 OK  (duration: 155.2 ms, execution: 90.8 ms)
+[SSR-SUBS] code=GRAIL-PL5H-B4LL tier=monthly
+[SSR-PREMIUM] code=GRAIL-PL5H-B4LL tier=monthly is_premium=True
+[SSR-COLLECTION] code=GRAIL-PL5H-B4LL cards=3
+[SSR-FOOTER] total=866 today=0
+    GET /collection -> 200 OK  (duration: 503.5 ms, execution: 445.1 ms)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 94.9 ms, execution: 46.3 ms)
+    GET /sw.js -> 200 OK  (duration: 109.5 ms, execution: 42.4 ms)
+    GET /api/collection/sync -> 200 OK  (duration: 146.1 ms, execution: 56.7 ms)
+   POST /api/referral_code -> 200 OK  (duration: 145.9 ms, execution: 89.7 ms)
+    GET /api/v1/image/a96a5a7a-c06a-4a47-b06d-b8aefaea3895 -> 200 OK  (duration: 289.3 ms, execution: 195.7 ms)
+    GET /api/v1/image/6f32f154-0f16-4dd0-bd85-ceca027e859a -> 200 OK  (duration: 556.5 ms, execution: 447.5 ms)
+    GET /api/v1/image/5f8248e0-be08-4162-9e1d-fba41b849fb7 -> 200 OK  (duration: 435.9 ms, execution: 344.6 ms)
+[ALERTS] Confirmation sent to Lewis.Buckley@live.co.uk
+   POST /api/set-alert -> 200 OK  (duration: 327.4 ms, execution: 259.2 ms)
+[modal-client] 2026-05-17T14:38:07+0000 Detected 2 background thread(s) [WSGI_0, WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 2 background thread(s) [WSGI_0, WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.77s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 33.4 s, execution: 485.7 ms)
+Creating GPU memory snapshot for Function.
+Snapshot created. Restoring Function from memory snapshot.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.97s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /static/style.css -> 304 Not Modified  (duration: 56.4 s, execution: 78.2 ms)
+    GET /static/vendor/lucide.min.js -> 304 Not Modified  (duration: 56.4 s, execution: 79.3 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 304 Not Modified  (duration: 56.4 s, execution: 104.1 ms)
+    GET /static/assets/Hero.mp4 -> 304 Not Modified  (duration: 120.2 ms, execution: 34.1 ms)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 136.8 ms, execution: 34.2 ms)
+    GET /api/stats -> 200 OK  (duration: 438.7 ms, execution: 381.4 ms)
+    GET /static/assets/grailsweep_favicon.png -> 304 Not Modified  (duration: 104.3 ms, execution: 42.0 ms)
+    GET /static/assets/icon-192.png -> 304 Not Modified  (duration: 122.5 ms, execution: 37.5 ms)
+    GET /sw.js -> 200 OK  (duration: 166.3 ms, execution: 65.5 ms)
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.68s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 47.8 s, execution: 575.5 ms)
+    GET /api/stats -> 200 OK  (duration: 237.3 ms, execution: 191.7 ms)
+    GET /api/stats -> 200 OK  (duration: 401.7 ms, execution: 334.9 ms)
+[SSR-SUBS] code=GRAIL-XAJI-0Y6D tier=legacy (config)
+[SSR-PREMIUM] code=GRAIL-XAJI-0Y6D tier=legacy is_premium=True
+[SSR-COLLECTION] code=GRAIL-XAJI-0Y6D cards=138
+[SSR-FOOTER] total=866 today=0
+    GET /collection -> 200 OK  (duration: 297.6 ms, execution: 249.8 ms)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 81.6 ms, execution: 33.6 ms)
+[COLLECTIONS] parent stat: uid=0 gid=0 mode=0o40755
+[COLLECTIONS] file stat: uid=0 gid=0 mode=0o100644
+    GET /api/collection/sync -> 200 OK  (duration: 102.2 ms, execution: 61.7 ms)
+[COLLECTIONS] saved 34029 bytes to /modal_data/collections.json
+   POST /api/referral_code -> 200 OK  (duration: 160.9 ms, execution: 100.1 ms)
+    GET /api/v1/image/904aae98-45b8-496d-892f-6637d647b090 -> 200 OK  (duration: 266.3 ms, execution: 168.3 ms)
+   POST /api/collection/sync -> 200 OK  (duration: 526.5 ms, execution: 461.0 ms)
+    GET /sw.js -> 200 OK  (duration: 97.7 ms, execution: 45.6 ms)
+[ALERTS] Confirmation sent to grailtest2026@outlook.com
+   POST /api/set-alert -> 200 OK  (duration: 328.1 ms, execution: 261.5 ms)
+[modal-client] 2026-05-17T15:11:33+0000 Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+WARNING:modal-client:Detected 1 background thread(s) [WSGI_0] still running after container exit. This will prevent runner shutdown for up to 30 seconds.
+Creating GPU memory snapshot for Function.
+Snapshot created. Restoring Function from memory snapshot.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 5.48s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+[ALERTS] Confirmation sent to grailtest2026@outlook.com
+   POST /api/set-alert -> 200 OK  (duration: 37.8 s, execution: 239.9 ms)
+[SSR-FOOTER] total=866 today=0
+    GET /match -> 200 OK  (duration: 572.3 ms, execution: 512.1 ms)
+    GET /api/fx_rates -> 200 OK  (duration: 315.3 ms, execution: 254.2 ms)
+    GET /sw.js -> 200 OK  (duration: 85.0 ms, execution: 33.2 ms)
+[SSR-FOOTER] total=866 today=0
+    GET /admin -> 200 OK  (duration: 1.46 s, execution: 1.39 s)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 103.4 ms, execution: 37.9 ms)
+    GET /sw.js -> 200 OK  (duration: 135.3 ms, execution: 56.3 ms)
+   POST /admin/run_scheduler -> 302 Found  (duration: 6.09 s, execution: 6.02 s)
+[SSR-FOOTER] total=866 today=0
+    GET /admin -> 200 OK  (duration: 1.26 s, execution: 1.20 s)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 99.1 ms, execution: 39.9 ms)
+    GET /sw.js -> 200 OK  (duration: 117.0 ms, execution: 32.9 ms)
+[SSR-STATS] total=866 today=18
+[SSR-FOOTER] total=866 today=0
+    GET / -> 200 OK  (duration: 812.5 ms, execution: 758.7 ms)

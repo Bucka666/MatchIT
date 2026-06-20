@@ -1,0 +1,191 @@
+﻿
+  app.py:4554:    if not access_code:
+> app.py:4555:        return jsonify({"error": "No access code provided"}), 400
+  app.py:4556:    ref_code = _get_or_create_ref_code(access_code)
+  app.py:4565:        if not ref_code:
+> app.py:4566:            return jsonify({"error": "Access code not found"}), 404
+  app.py:4567:    subs = _load_subs()
+  app.py:4775:    """
+> app.py:4776:    Redeem a TOPUP-XXXX-XXXX one-time scan credit code.
+  app.py:4777:
+  app.py:4789:        return jsonify({"error": "missing_code", "message": "Please provide a top-up code."}), 400
+> app.py:4790:    if not code.startswith("TOPUP-"):
+  app.py:4791:        return jsonify({"error": "invalid_format",
+> app.py:4792:                        "message": "Top-up codes start with TOPUP-. Did you mean to redeem a Pro access 
+code?"}), 400
+  app.py:4793:
+  app.py:4815:        return jsonify({"error": "wrong_code_type",
+> app.py:4816:                        "message": "This is not a top-up code. Pro access codes (GRAIL-) should be 
+redeemed on the upgrade page."}), 400
+  app.py:4817:
+  app.py:4854:
+> app.py:4855:@app.route("/api/topup-status", methods=["GET"])
+  app.py:4856:def topup_status():
+  app.py:4917:            if tier == "topup_75":
+> app.py:4918:                # One-time scan top-up — issue TOPUP- code, not GRAIL-
+  app.py:4919:                payment_intent = obj_dict.get("payment_intent")
+  app.py:4921:            else:
+> app.py:4922:                # Subscription tier — existing GRAIL- code flow
+  app.py:4923:                new_code = _issue_new_code(email, tier, subscription_id, ref_code=ref_code_used)
+  app.py:5112:    part2 = ''.join(random.choices(chars, k=4))
+> app.py:5113:    ref_code = f"GRAIL-REF-{part1}-{part2}"
+  app.py:5114:    entry["ref_code"] = ref_code
+  app.py:5327:    part2 = ''.join(random.choices(chars, k=4))
+> app.py:5328:    code = f"GRAIL-{part1}-{part2}"
+  app.py:5329:
+  app.py:5355:        msg = MIMEMultipart("alternative")
+> app.py:5356:        msg["Subject"] = "Your GrailSweep Pro Access Code"
+  app.py:5357:        msg["From"] = from_address
+  app.py:5367:
+> app.py:5368:Your access code is:
+  app.py:5369:
+  app.py:5374:2. Go to your Collection
+> app.py:5375:3. Click "Enter Access Code"
+  app.py:5376:4. Paste the code above
+  app.py:5401:    """
+> app.py:5402:    Issue a one-time top-up redemption code (TOPUP-XXXX-XXXX).
+  app.py:5403:
+  app.py:5404:    Top-up codes grant N additional scan credits when redeemed.
+> app.py:5405:    Unlike GRAIL- codes (which are tied to subscriptions and
+> app.py:5406:    validated on every scan), TOPUP- codes are one-shot: they
+  app.py:5407:    are redeemed exactly once via /api/redeem-topup, at which
+  app.py:5420:
+> app.py:5421:    # Generate TOPUP-XXXX-XXXX code (same charset as GRAIL- codes)
+  app.py:5422:    chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  app.py:5424:    part2 = ''.join(random.choices(chars, k=4))
+> app.py:5425:    code = f"TOPUP-{part1}-{part2}"
+  app.py:5426:
+  app.py:5428:    # Distinct entry shape from subscription codes:
+> app.py:5429:    #   - type: "topup" (vs absent / implicit "subscription" for GRAIL-)
+  app.py:5430:    #   - credits_total / credits_remaining track redemption state
+  app.py:5476:
+> app.py:5477:        body_html = f"""<html><body>
+  app.py:5478:<p>Thanks for your GrailSweep top-up purchase!</p>
+  app.py:5558:    Auth: code validated against subscriptions.json (mirrors push/subscribe pattern).
+> app.py:5559:    Body: {"code": "GRAIL-XXXX-XXXX", "flag": "80pct" | "transition"}
+  app.py:5560:    """
+  db.py:163:#
+> db.py:164:# Top-up credits are paid scan credits granted via TOPUP- code
+  db.py:165:# redemption. Stored in the same modal.Dict as free scan counts
+  db.py:526:        tier: resolved tier string ("legacy", "monthly", "annual", etc.) or None
+> db.py:527:        code: GRAIL-XXXX-XXXX access code (required for capped premium tiers)
+  db.py:528:        subscriptions_obj: pre-loaded dict from _load_subs() (avoids circular import)
+  db.py:692:    """
+> db.py:693:    Resolve the tier string for an access code. Never raises.
+  db.py:694:
+  matchit_modal.py:91:
+> matchit_modal.py:92:def send_email(to_address: str, subject: str, body_html: str, from_purpose: str = "noreply"):
+  matchit_modal.py:93:    """Send email via Namecheap Private Email SMTP (SSL on port 465).
+  set_scheduler.py:412:
+> set_scheduler.py:413:def _send_email(subject: str, body_html: str, body_text: str) -> bool:
+  set_scheduler.py:414:    """Send summary email via SMTP."""
+  set_scheduler.py:507:    body_html = f"""
+> set_scheduler.py:508:    <html><body style="font-family:'DM 
+Sans',Arial,sans-serif;background:#1a1830;color:#f0ecff;padding:24px;">
+  set_scheduler.py:509:    <div style="max-width:600px;margin:0 
+auto;background:#252248;border-radius:12px;padding:24px;border:1px solid rgba(177,77,255,0.2);">
+  set_scheduler.py:611:    body_html = f"""
+> set_scheduler.py:612:    <html><body style="font-family:'DM 
+Sans',Arial,sans-serif;background:#1a1830;color:#f0ecff;padding:24px;">
+  set_scheduler.py:613:    <div style="max-width:540px;margin:0 
+auto;background:#252248;border-radius:12px;padding:24px;border:1px solid rgba(177,77,255,0.2);">
+  .venv\Lib\site-packages\aiohttp\web_protocol.py:774:                message = (
+> .venv\Lib\site-packages\aiohttp\web_protocol.py:775:                    "<html><head>"
+  .venv\Lib\site-packages\aiohttp\web_protocol.py:776:                    "<title>{title}</title>"
+  .venv\Lib\site-packages\aiohttp\web_urldispatcher.py:751:        head_str = 
+f"<head>\n<title>{index_of}</title>\n</head>"
+> .venv\Lib\site-packages\aiohttp\web_urldispatcher.py:752:        html = f"<html>\n{head_str}\n{body}\n</html>"
+  .venv\Lib\site-packages\aiohttp\web_urldispatcher.py:753:
+  .venv\Lib\site-packages\bs4\diagnose.py:212:            elements.append("</%s>" % tag_name)
+> .venv\Lib\site-packages\bs4\diagnose.py:213:    return "<html>" + "\n".join(elements) + "</html>"
+  .venv\Lib\site-packages\bs4\diagnose.py:214:
+  .venv\Lib\site-packages\bs4\builder\_html5lib.py:170:        """See `TreeBuilder`."""
+> .venv\Lib\site-packages\bs4\builder\_html5lib.py:171:        return "<html><head></head><body>%s</body></html>" % 
+fragment
+  .venv\Lib\site-packages\bs4\builder\_html5lib.py:172:
+  .venv\Lib\site-packages\bs4\builder\_lxml.py:500:        """See `TreeBuilder`."""
+> .venv\Lib\site-packages\bs4\builder\_lxml.py:501:        return "<html><body>%s</body></html>" % fragment
+  .venv\Lib\site-packages\bs4\builder\__init__.py:703:
+> .venv\Lib\site-packages\bs4\builder\__init__.py:704:    #: Regular expression for seeing if string markup has an 
+<html> tag.
+  .venv\Lib\site-packages\bs4\builder\__init__.py:705:    LOOKS_LIKE_HTML: Pattern[str] = re.compile("<[^ +]html", 
+re.I)
+  .venv\Lib\site-packages\bs4\builder\__init__.py:706:
+> .venv\Lib\site-packages\bs4\builder\__init__.py:707:    #: Regular expression for seeing if byte markup has an 
+<html> tag.
+  .venv\Lib\site-packages\bs4\builder\__init__.py:708:    LOOKS_LIKE_HTML_B: Pattern[bytes] = re.compile(b"<[^ 
++]html", re.I)
+  .venv\Lib\site-packages\imageio\plugins\swf.py:327:<!DOCTYPE html>
+> .venv\Lib\site-packages\imageio\plugins\swf.py:328:<html>
+  .venv\Lib\site-packages\imageio\plugins\swf.py:329:<head>
+  .venv\Lib\site-packages\pip\_vendor\rich\_export_format.py:2:<!DOCTYPE html>
+> .venv\Lib\site-packages\pip\_vendor\rich\_export_format.py:3:<html>
+  .venv\Lib\site-packages\pip\_vendor\rich\_export_format.py:4:<head>
+  .venv\Lib\site-packages\pip\_vendor\rich\_timer.py:12:@contextlib.contextmanager
+> .venv\Lib\site-packages\pip\_vendor\rich\_timer.py:13:def timer(subject: str = "time") -> Generator[None, None, 
+None]:
+  .venv\Lib\site-packages\pip\_vendor\rich\_timer.py:14:    """print the elapsed time. (only used in debugging)"""
+  .venv\Lib\site-packages\pkg_resources\_vendor\pyparsing\diagram\__init__.py:20:<!DOCTYPE html>
+> .venv\Lib\site-packages\pkg_resources\_vendor\pyparsing\diagram\__init__.py:21:<html>
+  .venv\Lib\site-packages\pkg_resources\_vendor\pyparsing\diagram\__init__.py:22:<head>
+  .venv\Lib\site-packages\pygments\formatters\html.py:86:-->
+> .venv\Lib\site-packages\pygments\formatters\html.py:87:<html>
+  .venv\Lib\site-packages\pygments\formatters\html.py:88:<head>
+  .venv\Lib\site-packages\pygments\formatters\html.py:103:
+> .venv\Lib\site-packages\pygments\formatters\html.py:104:<html>
+  .venv\Lib\site-packages\pygments\formatters\html.py:105:<head>
+  .venv\Lib\site-packages\rich\_export_format.py:2:<!DOCTYPE html>
+> .venv\Lib\site-packages\rich\_export_format.py:3:<html>
+  .venv\Lib\site-packages\rich\_export_format.py:4:<head>
+  .venv\Lib\site-packages\rich\_timer.py:12:@contextlib.contextmanager
+> .venv\Lib\site-packages\rich\_timer.py:13:def timer(subject: str = "time") -> Generator[None, None, None]:
+  .venv\Lib\site-packages\rich\_timer.py:14:    """print the elapsed time. (only used in debugging)"""
+  .venv\Lib\site-packages\setuptools\package_index.py:1116:            tmpl = (
+> .venv\Lib\site-packages\setuptools\package_index.py:1117:                "<html><head><title>{url}</title>"
+  .venv\Lib\site-packages\setuptools\package_index.py:1118:                "</head><body>{files}</body></html>")
+  .venv\Lib\site-packages\setuptools\_vendor\pyparsing\diagram\__init__.py:20:<!DOCTYPE html>
+> .venv\Lib\site-packages\setuptools\_vendor\pyparsing\diagram\__init__.py:21:<html>
+  .venv\Lib\site-packages\setuptools\_vendor\pyparsing\diagram\__init__.py:22:<head>
+  .venv\Lib\site-packages\tokenizers\tools\visualizer.py:394:    return f"""
+> .venv\Lib\site-packages\tokenizers\tools\visualizer.py:395:    <html>
+  .venv\Lib\site-packages\tokenizers\tools\visualizer.py:396:        <head>
+  .venv\Lib\site-packages\torch\cuda\_memory_viz.py:371:<!DOCTYPE html>
+> .venv\Lib\site-packages\torch\cuda\_memory_viz.py:372:<html>
+  .venv\Lib\site-packages\torch\cuda\_memory_viz.py:373:<head>
+  .venv\Lib\site-packages\torch\profiler\_memory_profiler.py:1194:            encoded = 
+b64encode(tmp.read()).decode("utf-8")
+> .venv\Lib\site-packages\torch\profiler\_memory_profiler.py:1195:            html = f"""<html>
+  .venv\Lib\site-packages\torch\profiler\_memory_profiler.py:1196:<head><meta charset="utf-8" /><title>GPU Memory 
+Timeline HTML</title></head>
+  .venv\Lib\site-packages\torch\utils\viz\_cycles.py:348:<!DOCTYPE html>
+> .venv\Lib\site-packages\torch\utils\viz\_cycles.py:349:<html>
+  .venv\Lib\site-packages\torch\utils\viz\_cycles.py:350:<head>
+  .venv\Lib\site-packages\transformers\models\markuplm\modeling_markuplm.py:575:
+> .venv\Lib\site-packages\transformers\models\markuplm\modeling_markuplm.py:576:        >>> html_string = "<html> 
+<head> <title>Page Title</title> </head> </html>"
+  .venv\Lib\site-packages\transformers\models\markuplm\modeling_markuplm.py:577:
+  .venv\Lib\site-packages\transformers\models\markuplm\modeling_markuplm.py:684:
+> .venv\Lib\site-packages\transformers\models\markuplm\modeling_markuplm.py:685:        >>> html_string = "<html> 
+<head> <title>My name is Niels</title> </head> </html>"
+  .venv\Lib\site-packages\transformers\models\markuplm\modeling_markuplm.py:686:        >>> question = "What's his 
+name?"
+  .venv\Lib\site-packages\transformers\models\markuplm\modeling_markuplm.py:907:
+> .venv\Lib\site-packages\transformers\models\markuplm\modeling_markuplm.py:908:        >>> html_string = "<html> 
+<head> <title>Page Title</title> </head> </html>"
+  .venv\Lib\site-packages\transformers\models\markuplm\modeling_markuplm.py:909:        >>> encoding = 
+processor(html_string, return_tensors="pt")
+  .venv\Lib\site-packages\transformers\models\qwen3_omni_moe\configuration_qwen3_omni_moe.py:884:    >>> 
+print(config.text_config)  # Access text decoder configuration
+> .venv\Lib\site-packages\transformers\models\qwen3_omni_moe\configuration_qwen3_omni_moe.py:885:    >>> 
+print(config.code_predictor_config)  # Access code predictor configuration
+  .venv\Lib\site-packages\transformers\models\qwen3_omni_moe\configuration_qwen3_omni_moe.py:886:    ```"""
+  .venv\Lib\site-packages\transformers\models\qwen3_omni_moe\modular_qwen3_omni_moe.py:646:    >>> 
+print(config.text_config)  # Access text decoder configuration
+> .venv\Lib\site-packages\transformers\models\qwen3_omni_moe\modular_qwen3_omni_moe.py:647:    >>> 
+print(config.code_predictor_config)  # Access code predictor configuration
+  .venv\Lib\site-packages\transformers\models\qwen3_omni_moe\modular_qwen3_omni_moe.py:648:    ```"""
+  .venv\Lib\site-packages\urllib3\util\ssl_.py:85:        subjectAltName: tuple[tuple[str, str], ...]
+> .venv\Lib\site-packages\urllib3\util\ssl_.py:86:        subject: tuple[tuple[tuple[str, str], ...], ...]
+  .venv\Lib\site-packages\urllib3\util\ssl_.py:87:        serialNumber: str
+
+

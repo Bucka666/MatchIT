@@ -1,0 +1,13 @@
+﻿
+  set_scheduler.py:647:
+> set_scheduler.py:648:def check_price_alerts() -> None:
+  set_scheduler.py:649:    """
+  set_scheduler.py:650:    Read price_alerts.json, compute current GBP price for each alert
+  set_scheduler.py:651:    by querying profiles in CardsDB, and fire email alerts when
+  set_scheduler.py:909:    try:
+> set_scheduler.py:910:        check_price_alerts()
+  set_scheduler.py:911:    except Exception as e:
+  set_scheduler.py:912:        logger.error(f"[SCHED] Price alert check error: {e}")
+  set_scheduler.py:913:
+
+

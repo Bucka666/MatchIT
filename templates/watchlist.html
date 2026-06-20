@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="mi-card wl-page">
+
+<style>
+.wl-page { max-width: 960px; margin: 0 auto; }
+
+.wl-summary { display:flex; gap:12px; margin:16px 0 20px; flex-wrap:wrap; }
+.wl-stat { flex:1; min-width:90px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px; text-align:center; }
+.wl-stat--highlight { background:rgba(0,229,255,0.05); border-color:rgba(0,229,255,0.2); }
+.wl-stat-val { font-family:'Orbitron',monospace; font-size:1.5rem; font-weight:700; background:linear-gradient(90deg,#00e5ff,#b14dff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.wl-stat--highlight .wl-stat-val { background:linear-gradient(90deg,#00e5ff,#00ff88); -webkit-background-clip:text; background-clip:text; }
+.wl-stat-label { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--mi-muted,#aaa); margin-top:4px; }
+
+.wl-list { display:flex; flex-direction:column; gap:10px; }
+.wl-item { display:flex; align-items:center; gap:14px; padding:12px 14px; background:rgba(255,255,255,0.03); border:1px solid rgba(0,229,255,0.12); border-radius:12px; transition:border-color 0.15s; }
+.wl-item:hover { border-color:rgba(0,229,255,0.3); }
+.wl-item-img { width:56px; height:78px; border-radius:6px; object-fit:cover; border:1px solid rgba(0,229,255,0.2); flex-shrink:0; background:rgba(255,255,255,0.03); }
+.wl-item-info { flex:1; min-width:0; }
+.wl-item-name { font-size:0.88rem; font-weight:700; color:#f0ecff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.wl-item-set { font-size:0.72rem; color:#9b95b8; margin-top:2px; }
+.wl-item-meta { font-size:0.66rem; color:var(--mi-muted,#aaa); margin-top:4px; }
+.wl-item-actions { display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; }
+.wl-item-price { font-family:'Orbitron',monospace; font-size:0.9rem; font-weight:700; color:#00e5ff; }
+.wl-item-price-label { font-size:0.58rem; color:var(--mi-muted,#aaa); text-align:right; }
+.wl-remove { background:rgba(255,45,111,0.08); border:1px solid rgba(255,45,111,0.2); color:#ff2d6f; padding:4px 10px; border-radius:6px; font-size:0.7rem; font-weight:600; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.wl-remove:hover { background:rgba(255,45,111,0.2); border-color:rgba(255,45,111,0.4); }
+
+@media (max-width: 480px) {
+  .wl-item { padding:10px; gap:10px; }
+  .wl-item-img { width:44px; height:62px; }
+}
+</style>
+
+<div class="mi-card-head" style="flex-direction:column;align-items:flex-start;gap:12px;">
+  <h1 class="mi-h1">★ My Watchlist</h1>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="/match" class="mi-btn" style="background:rgba(255,255,255,0.06)!important;border:1px solid rgba(255,255,255,0.12)!important;box-shadow:none!important;color:var(--mi-muted,#aaa)!important;font-size:0.8rem!important;text-decoration:none;">← Match</a>
+    <a href="/collection" class="mi-btn" style="background:rgba(255,215,0,0.06)!important;border:1px solid rgba(255,215,0,0.2)!important;box-shadow:none!important;color:#ffd700!important;font-size:0.8rem!important;text-decoration:none;">🃏 My Collection</a>
+  </div>
+</div>
+
+<div style="font-size:0.85rem;color:var(--mi-muted,#aaa);margin:0 0 16px;">Cards you want but don't own yet. Scan any card to add it.</div>
+
+<!-- Pro gate banner — visible to free users -->
+<div id="wlProGate" style="display:none;background:rgba(177,77,255,0.08);border:1px solid rgba(177,77,255,0.3);border-radius:12px;padding:20px 24px;margin-bottom:20px;text-align:center;">
+  <div style="font-size:1.8rem;margin-bottom:10px;">★</div>
+  <div style="font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;background:linear-gradient(90deg,#b14dff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">Watchlist is a Pro Feature</div>
+  <div style="font-size:0.83rem;color:#9b95b8;margin-bottom:16px;">Upgrade to save cards to your watchlist across all your devices.</div>
+  <a href="/upgrade" style="display:inline-block;padding:10px 24px;border-radius:8px;background:linear-gradient(135deg,#b14dff,#4d8eff);color:#fff;font-weight:700;font-size:0.85rem;text-decoration:none;">⚡ Upgrade to Pro</a>
+</div>
+
+<!-- Summary bar (Pro users only) -->
+<div class="wl-summary" id="wlSummary" style="display:none;">
+  <div class="wl-stat">
+    <div class="wl-stat-val" id="wlCount">0</div>
+    <div class="wl-stat-label">Watching</div>
+  </div>
+  <div class="wl-stat wl-stat--highlight">
+    <div class="wl-stat-val" id="wlValue">£0.00</div>
+    <div class="wl-stat-label">Value at Add</div>
+  </div>
+</div>
+
+<!-- Empty state -->
+<div id="wlEmpty" style="display:none;text-align:center;padding:60px 20px;color:var(--mi-muted,#aaa);">
+  <div style="font-size:3rem;margin-bottom:16px;">☆</div>
+  <div style="font-size:1.1rem;font-weight:700;margin-bottom:8px;color:var(--mi-text,#eee);">Your watchlist is empty</div>
+  <div style="font-size:0.85rem;margin-bottom:24px;">Star a card from any scan result to add it here.</div>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+    <a href="/match" class="mi-btn" style="text-decoration:none;">📷 Upload a Photo</a>
+  </div>
+</div>
+
+<!-- Watchlist -->
+<div id="wlList" class="wl-list"></div>
+
+</div>
+
+<script>
+(function() {
+  var WL_KEY = 'matchit_watchlist_v1';
+
+  function wlIsPro() {
+    return localStorage.getItem('matchit_premium_v1') === 'unlocked';
+  }
+
+  function wlLoad() {
+    try { return JSON.parse(localStorage.getItem(WL_KEY) || '[]'); }
+    catch(_e) { return []; }
+  }
+
+  function wlSave(items) {
+    localStorage.setItem(WL_KEY, JSON.stringify(items));
+  }
+
+  function wlRemove(sku) {
+    var items = wlLoad().filter(function(i) { return i.sku !== sku; });
+    wlSave(items);
+    if (typeof gsSyncWatchlist === 'function') gsSyncWatchlist();
+    wlRender();
+  }
+
+  function wlRender() {
+    var isPro = wlIsPro();
+    var gate    = document.getElementById('wlProGate');
+    var summary = document.getElementById('wlSummary');
+    var empty   = document.getElementById('wlEmpty');
+    var list    = document.getElementById('wlList');
+
+    if (!isPro) {
+      gate.style.display = 'block';
+      summary.style.display = 'none';
+      empty.style.display = 'none';
+      list.style.display = 'none';
+      return;
+    }
+
+    gate.style.display = 'none';
+    summary.style.display = 'flex';
+
+    var items = wlLoad();
+    document.getElementById('wlCount').textContent = items.length;
+    var total = items.reduce(function(s, i) { return s + (parseFloat(i.gbp_at_add) || 0); }, 0);
+    document.getElementById('wlValue').textContent = '£' + total.toFixed(2);
+
+    if (!items.length) {
+      empty.style.display = 'block';
+      list.style.display = 'none';
+      return;
+    }
+    empty.style.display = 'none';
+    list.style.display = 'flex';
+
+    // Newest first
+    var sorted = items.slice().reverse();
+
+    list.innerHTML = sorted.map(function(item) {
+      var price    = item.gbp_at_add ? '£' + parseFloat(item.gbp_at_add).toFixed(2) : '—';
+      var dateStr  = item.added ? new Date(item.added).toLocaleDateString('en-GB') : '';
+      var safeSku  = (item.sku || '').replace(/'/g, '');
+      return '<div class="wl-item">' +
+        '<img class="wl-item-img" src="' + (item.img || '') + '" loading="lazy" onerror="this.style.opacity=\'0.15\'" alt="">' +
+        '<div class="wl-item-info">' +
+          '<div class="wl-item-name">' + (item.name || item.sku || '—') + '</div>' +
+          '<div class="wl-item-set">' + (item.set_name || '') + '</div>' +
+          '<div class="wl-item-meta">Added ' + dateStr + ' · SKU: ' + (item.sku || '') + '</div>' +
+        '</div>' +
+        '<div class="wl-item-actions">' +
+          '<div class="wl-item-price">' + price + '</div>' +
+          '<div class="wl-item-price-label">at time of add</div>' +
+          '<button class="wl-remove" onclick="wlRemoveItem(\'' + safeSku + '\')">✕ Remove</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  window.wlRemoveItem = function(sku) { wlRemove(sku); };
+
+  // Bootstrap: load from server if Pro, then render
+  function wlInit() {
+    if (!wlIsPro()) {
+      wlRender();
+      return;
+    }
+    var code = localStorage.getItem('matchit_access_code_v1');
+    if (code) {
+      fetch('/api/watchlist/sync?code=' + encodeURIComponent(code.trim().toUpperCase()), {cache: 'no-store'})
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(d) {
+          if (d && d.items && d.items.length) {
+            wlSave(d.items);
+          }
+          wlRender();
+        })
+        .catch(function() { wlRender(); });
+    } else {
+      wlRender();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', wlInit);
+  } else {
+    wlInit();
+  }
+})();
+</script>
+{% endblock %}

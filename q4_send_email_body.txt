@@ -1,0 +1,61 @@
+﻿# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+def _send_email(subject: str, body_html: str, body_text: str) -> bool:
+    """Send summary email via SMTP."""
+    email_from = CONFIG.get("email_from", "")
+    email_to   = CONFIG.get("email_to",   "")
+    password   = CONFIG.get("email_password", "")
+
+    if not all([email_from, email_to, password]):
+        logger.warning("[SCHED] Email not configured â€” skipping notification")
+        return False
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"]    = "GrailSweep <" + email_from + ">"
+        msg["To"]      = email_to
+        msg.attach(MIMEText(body_text, "plain"))
+        msg.attach(MIMEText(body_html, "html"))
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(CONFIG["smtp_host"], CONFIG["smtp_port"], context=context) as server:
+            server.login(CONFIG["smtp_user"], password)
+            server.sendmail(email_from, email_to, msg.as_string())
+
+        logger.info(f"[SCHED] Email sent to {email_to}")
+        return True
+    except Exception as e:
+        logger.error(f"[SCHED] Email failed: {e}")
+        return False
+
+
+def _build_email(run_summary: Dict) -> Tuple[str, str, str]:
+    """Build subject, HTML body and plain text body from run summary."""
+    now      = datetime.now().strftime("%d %b %Y %H:%M")
+    total_new = sum(
+        len(v.get("new_sets", []))
+        for v in run_summary.get("tcgs", {}).values()
+    )
+    subject = (
+        f"GrailSweep â€” {total_new} new set(s) added [{now}]"
+        if total_new > 0
+        else f"GrailSweep â€” No new sets found [{now}]"
+    )
+
+    # Plain text
+    lines = [f"GrailSweep Set Scheduler â€” {now}", "=" * 40, ""]
+    for tcg, data in run_summary.get("tcgs", {}).items():
+        lines.append(f"{tcg}:")
+        new_sets = data.get("new_sets", [])
+        if new_sets:
+            for s in new_sets:
+                lines.append(f"  + {s['id']} â€” {s['name']} ({s.get('total',0)} cards)")
+        else:
+            lines.append("  No new sets.")
+        lines.append("")
+
+    embed = run_summary.get("embed", {})
+    lines += [
+        f"Embeddings added: {embed.get('new_front', 0)} front",
+        f"Total in DB:      {embed.get('total_front', 0)}",

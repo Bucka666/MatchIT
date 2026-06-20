@@ -1,0 +1,22 @@
+[
+  {
+    "email": "buckleycraig1@gmail.com",
+    "sku": "ygo-LOB-003-45231177",
+    "card_name": "Flame Swordsman",
+    "target_low": 0.2,
+    "target_high": 1.5,
+    "current_gbp": 0.24,
+    "created": "2026-04-11T16:09:27.935382",
+    "triggered": false
+  },
+  {
+    "email": "buckleycraig1@gmail.com",
+    "sku": "sv3pt5-102",
+    "card_name": "Exeggcute",
+    "target_low": 0.1,
+    "target_high": 1.5,
+    "current_gbp": 0.17,
+    "created": "2026-04-11T17:06:15.152319",
+    "triggered": false
+  }
+]

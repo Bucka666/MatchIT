@@ -1,0 +1,31 @@
+﻿            logger.error(f"[SCHED] Embed error: {e}")
+            run_summary["embed"] = {"status": f"error: {e}"}
+    else:
+        run_summary["embed"] = {
+            "new_front": 0, "total_front": 0, "elapsed_s": 0,
+            "status": "skipped_no_new_sets" if not any_new else "dry_run",
+        }
+
+    run_summary["elapsed_s"] = round(time.time() - t_start, 1)
+
+    # â”€â”€ 3. Save log â”€â”€
+    _save_scheduler_log(run_summary)
+
+    # â”€â”€ 4. Send email â”€â”€
+    subject, body_html, body_text = _build_email(run_summary)
+    _send_email(subject, body_html, body_text)
+
+    # â”€â”€ 5. Check price alerts â”€â”€
+    try:
+        check_price_alerts()
+    except Exception as e:
+        logger.error(f"[SCHED] Price alert check error: {e}")
+
+    logger.info(
+        f"[SCHED] Done in {run_summary['elapsed_s']}s â€” "
+        f"any_new={any_new}, dry_run={dry_run}"
+    )
+    return run_summary
+
+
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

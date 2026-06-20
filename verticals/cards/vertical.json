@@ -1,0 +1,308 @@
+{
+  "id": "cards",
+  "name": "GrailSweep",
+  "page_title": "GrailSweep — AI Trading Card Scanner & Price Checker | Pokémon, MTG, Yu-Gi-Oh",
+  "subtitle": "AI Card Scanner & Price Reference",
+  "icon": "🃏",
+  "query_title": "Identify Your Card",
+  "image_labels": {"front": "Card Front", "back": "Card Back"},
+
+  "ui_text": {
+    "how_to_title": "How to identify your card",
+    "step1_text": "If you have a <strong>card name or set number</strong>, enter it below — or search by <strong>set name</strong>",
+    "step1_placeholder": "e.g. Charizard, base1-4, Sword & Shield…",
+    "step2_text": "Or <strong>upload / take a photo</strong> of the card front — select the card game and fill in details below for better results",
+    "progress_subtitle": "Analysing your card against the database…",
+    "guide_tips": [
+      "Fill most of the frame with the <strong>card front</strong> (crop out background).",
+      "Use good lighting — avoid glare on holos and foils.",
+      "Keep the card flat and straight — avoid angles or warping.",
+      "Select the card game above if known — this dramatically narrows the search."
+    ],
+    "feedback_correct_prompt": "Was the correct card in these results?",
+    "feedback_notfound_prompt": "Which card was it? (enter set number or leave blank if unknown)",
+    "feedback_sku_placeholder": "e.g. base1-4, swsh1-25",
+    "db_sync_title": "CardsDB Sync",
+    "db_sync_desc": "Pulls new card images from the configured API sources into MatchIT's local DB.",
+    "db_sync_button": "Sync from API",
+    "db_sync_confirm": "Fetch new card images from pokemontcg.io into the local database?"
+  },
+
+  "require_two_images": false,
+  "style_detection_enabled": false,
+  "ras_images_enabled": false,
+  "multi_crop": false,
+  "suppress_bg": false,
+  "max_side": 512,
+  "db_root": "C:\\CardsDB",
+
+  "categories": {
+  "POKEMON": {
+    "label": "Pokémon TCG",
+    "show": []
+  },
+  "MTG": {
+    "label": "Magic: The Gathering",
+    "show": []
+  },
+  "YUGIOH": {
+    "label": "Yu-Gi-Oh!",
+    "show": []
+  }
+},
+
+  "profile_fields": [
+    {
+      "id": "rarity",
+      "label": "Rarity",
+      "type": "select",
+      "options": [
+        ["", "Unknown"],
+        ["COMMON", "Common"],
+        ["UNCOMMON", "Uncommon"],
+        ["RARE", "Rare"],
+        ["RARE_HOLO", "Rare Holo"],
+        ["RARE_ULTRA", "Ultra Rare"],
+        ["RARE_SECRET", "Secret Rare"],
+        ["RARE_FULL_ART", "Full Art"],
+        ["RARE_RAINBOW", "Rainbow Rare"],
+        ["RARE_GOLD", "Gold Rare"],
+        ["PROMO", "Promo"],
+        ["MYTHIC", "Mythic Rare (MTG)"],
+        ["SUPER_RARE", "Super Rare (YGO)"],
+        ["ULTRA_RARE_YGO", "Ultra Rare (YGO)"]
+      ],
+      "default": "",
+      "penalty": 0.940,
+      "match_rule": "exact",
+      "_note": "Rarity is highly discriminating — strong penalty for mismatch"
+    },
+    {
+      "id": "energy_type",
+      "label": "Energy / Type",
+      "type": "select",
+      "options": [
+        ["", "Unknown"],
+        ["FIRE", "Fire"],
+        ["WATER", "Water"],
+        ["GRASS", "Grass"],
+        ["LIGHTNING", "Lightning"],
+        ["PSYCHIC", "Psychic"],
+        ["FIGHTING", "Fighting"],
+        ["DARKNESS", "Darkness"],
+        ["METAL", "Metal"],
+        ["FAIRY", "Fairy"],
+        ["DRAGON", "Dragon"],
+        ["COLORLESS", "Colorless"]
+      ],
+      "default": "",
+      "penalty": 0.935,
+      "match_rule": "exact",
+      "_note": "Pokémon energy type — very visible on card frame, strong filter"
+    },
+    {
+      "id": "card_supertype",
+      "label": "Card type (Pokémon)",
+      "type": "select",
+      "options": [
+        ["", "Unknown"],
+        ["POKEMON", "Pokémon"],
+        ["TRAINER", "Trainer"],
+        ["ENERGY", "Energy"]
+      ],
+      "default": "",
+      "penalty": 0.920,
+      "match_rule": "exact",
+      "_note": "Very different card layouts — heavy penalty"
+    },
+    {
+      "id": "hp_range",
+      "label": "HP range",
+      "type": "select",
+      "options": [
+        ["", "Unknown"],
+        ["HP_LOW", "30–70 HP"],
+        ["HP_MID", "80–120 HP"],
+        ["HP_HIGH", "130–200 HP"],
+        ["HP_VMAX", "200+ HP (VMAX/ex)"]
+      ],
+      "default": "",
+      "penalty": 0.975,
+      "match_rule": "exact",
+      "_note": "Coarse HP bucket — mild penalty, helps narrow large Pokémon pools"
+    },
+    {
+      "id": "set_era",
+      "label": "Set era",
+      "type": "select",
+      "options": [
+        ["", "Unknown"],
+        ["WOTC", "WotC Era (Base–Skyridge)"],
+        ["EX_ERA", "EX Era (Ruby & Sapphire–Power Keepers)"],
+        ["DP_ERA", "DP/Platinum/HGSS Era"],
+        ["BW_ERA", "Black & White Era"],
+        ["XY_ERA", "XY Era"],
+        ["SM_ERA", "Sun & Moon Era"],
+        ["SWSH_ERA", "Sword & Shield Era"],
+        ["SV_ERA", "Scarlet & Violet Era"],
+        ["MODERN_MTG", "Modern MTG (8th Ed+)"],
+        ["VINTAGE_MTG", "Vintage MTG (Alpha–7th Ed)"],
+        ["MODERN_YGO", "Modern YGO (2012+)"],
+        ["CLASSIC_YGO", "Classic YGO (2002–2011)"]
+      ],
+      "default": "",
+      "penalty": 0.955,
+      "match_rule": "exact",
+      "_note": "Era narrows the search set dramatically"
+    },
+    {
+      "id": "language",
+      "label": "Language",
+      "type": "select",
+      "options": [
+        ["", "Unknown"],
+        ["EN", "English"],
+        ["JP", "Japanese"],
+        ["KO", "Korean"],
+        ["ZH", "Chinese"],
+        ["DE", "German"],
+        ["FR", "French"],
+        ["ES", "Spanish"],
+        ["IT", "Italian"],
+        ["PT", "Portuguese"]
+      ],
+      "default": "",
+      "penalty": 0.960,
+      "match_rule": "exact"
+    },
+    {
+      "id": "edition",
+      "label": "Edition / Print",
+      "type": "select",
+      "options": [
+        ["", "Unknown"],
+        ["FIRST_ED", "1st Edition"],
+        ["UNLIMITED", "Unlimited"],
+        ["REVERSE_HOLO", "Reverse Holo"],
+        ["SHADOWLESS", "Shadowless"],
+        ["PRERELEASE", "Pre-Release"],
+        ["PROMO_STAMP", "Promo Stamped"]
+      ],
+      "default": "",
+      "penalty": 0.965,
+      "match_rule": "exact",
+      "_note": "Edition affects value hugely but doesn't change the art much"
+    },
+    {
+      "id": "mtg_color",
+      "label": "Color (MTG)",
+      "type": "select",
+      "options": [
+        ["", "Unknown"],
+        ["WHITE", "White"],
+        ["BLUE", "Blue"],
+        ["BLACK", "Black"],
+        ["RED", "Red"],
+        ["GREEN", "Green"],
+        ["MULTI", "Multicolor"],
+        ["COLORLESS", "Colorless"],
+        ["LAND", "Land"]
+      ],
+      "default": "",
+      "penalty": 0.935,
+      "match_rule": "exact"
+    },
+    {
+      "id": "mtg_card_type",
+      "label": "Card type (MTG)",
+      "type": "select",
+      "options": [
+        ["", "Unknown"],
+        ["CREATURE", "Creature"],
+        ["INSTANT", "Instant"],
+        ["SORCERY", "Sorcery"],
+        ["ENCHANTMENT", "Enchantment"],
+        ["ARTIFACT", "Artifact"],
+        ["PLANESWALKER", "Planeswalker"],
+        ["LAND", "Land"]
+      ],
+      "default": "",
+      "penalty": 0.950,
+      "match_rule": "exact"
+    },
+    {
+      "id": "ygo_card_type",
+      "label": "Card type (YGO)",
+      "type": "select",
+      "options": [
+        ["", "Unknown"],
+        ["MONSTER_NORMAL", "Normal Monster"],
+        ["MONSTER_EFFECT", "Effect Monster"],
+        ["MONSTER_FUSION", "Fusion"],
+        ["MONSTER_SYNCHRO", "Synchro"],
+        ["MONSTER_XYZ", "Xyz"],
+        ["MONSTER_LINK", "Link"],
+        ["SPELL", "Spell"],
+        ["TRAP", "Trap"]
+      ],
+      "default": "",
+      "penalty": 0.940,
+      "match_rule": "exact"
+    },
+    {
+      "id": "ygo_attribute",
+      "label": "Attribute (YGO)",
+      "type": "select",
+      "options": [
+        ["", "Unknown"],
+        ["DARK", "DARK"],
+        ["LIGHT", "LIGHT"],
+        ["EARTH", "EARTH"],
+        ["WATER", "WATER"],
+        ["FIRE", "FIRE"],
+        ["WIND", "WIND"],
+        ["DIVINE", "DIVINE"]
+      ],
+      "default": "",
+      "penalty": 0.945,
+      "match_rule": "exact"
+    }
+  ],
+
+  "category_families": {},
+
+  "silhouette_map": {},
+
+  "cross_reference_sources": {
+    "_note": "External price/listing sources for cross-referencing",
+    "tcgplayer": {
+      "label": "TCGPlayer",
+      "url_template": "https://www.tcgplayer.com/product/{tcgplayer_id}",
+      "field": "tcgplayer_id"
+    },
+    "cardmarket": {
+      "label": "Cardmarket",
+      "url_template": "https://www.cardmarket.com/en/Pokemon/Products/Singles/{set_slug}/{card_slug}",
+      "field": "cardmarket_id"
+    },
+    "pokemontcg_io": {
+      "label": "pokemontcg.io",
+      "url_template": "https://pokemontcg.io/card/{api_id}",
+      "field": "api_id"
+    }
+  },
+
+  "api_sources": {
+    "pokemon": {
+      "base_url": "https://api.pokemontcg.io/v2",
+      "rate_limit_per_sec": 3,
+      "image_field": "images.large",
+      "id_field": "id"
+    }
+  },
+
+  "disclaimer": "Trading card images, logos, and product names are trademarks of their respective owners (The Pokémon Company, Wizards of the Coast, Konami). GrailSweep is not affiliated with, endorsed by, or sponsored by any of these companies. All third-party trademarks and images are used for identification and reference purposes only.",
+
+  "guidance_text": "Card matching works best on the front face — holos and foils may vary due to lighting. Use your judgement to compare set symbols and card numbers.",
+  "guidance_feedback": "Please use the feedback bar to tell us where your card ranked — this helps the AI improve for everyone. Thank you!"
+}

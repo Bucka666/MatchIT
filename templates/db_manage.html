@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block body %}
+
+<h2>Database Manager</h2>
+
+<form method="get" action="{{ url_for('db_manage') }}" style="display:flex; gap:8px; align-items:center; margin-bottom:12px;">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search SKU / description / filename / image_id" style="flex:1; padding:8px;">
+  <button type="submit">Search</button>
+  <a href="{{ url_for('db_manage') }}" style="margin-left:6px;">Clear</a>
+</form>
+
+<p style="margin: 0 0 10px 0;">
+  Total rows: <b>{{ total }}</b> · Page <b>{{ page }}</b> / <b>{{ total_pages }}</b>
+</p>
+
+<div style="display:flex; gap:10px; margin-bottom:10px;">
+  {% if page > 1 %}
+    <a href="{{ url_for('db_manage', q=q, page=page-1) }}">← Prev</a>
+  {% endif %}
+  {% if page < total_pages %}
+    <a href="{{ url_for('db_manage', q=q, page=page+1) }}">Next →</a>
+  {% endif %}
+</div>
+
+<table style="width:100%; border-collapse:collapse;">
+  <thead>
+    <tr>
+      <th style="text-align:left; padding:6px; border-bottom:1px solid #ddd;">Image</th>
+      <th style="text-align:left; padding:6px; border-bottom:1px solid #ddd;">SKU</th>
+      <th style="text-align:left; padding:6px; border-bottom:1px solid #ddd;">Description</th>
+      <th style="text-align:left; padding:6px; border-bottom:1px solid #ddd;">Filename</th>
+      <th style="text-align:left; padding:6px; border-bottom:1px solid #ddd;">Image ID</th>
+      <th style="text-align:left; padding:6px; border-bottom:1px solid #ddd;">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td style="padding:6px; border-bottom:1px solid #eee;">
+        <img src="{{ url_for('img_db_uuid', image_id=r['image_id']) }}" style="width:80px; height:80px; object-fit:cover; border-radius:6px;">
+      </td>
+
+      <td style="padding:6px; border-bottom:1px solid #eee;">
+        <form method="post" action="{{ url_for('db_manage', q=q, page=page) }}" style="display:flex; gap:6px; align-items:center;">
+          <input type="hidden" name="image_id" value="{{ r['image_id'] }}">
+          <input type="text" name="sku" value="{{ r['sku'] or '' }}" style="width:140px; padding:6px;">
+      </td>
+
+      <td style="padding:6px; border-bottom:1px solid #eee;">
+          <input type="text" name="description" value="{{ r['description'] or '' }}" style="width:100%; padding:6px;">
+      </td>
+
+      <td style="padding:6px; border-bottom:1px solid #eee;">
+        {{ r['original_filename'] or '' }}
+      </td>
+
+      <td style="padding:6px; border-bottom:1px solid #eee; font-family:monospace; font-size:12px;">
+        {{ r['image_id'] }}
+      </td>
+
+      <td style="padding:6px; border-bottom:1px solid #eee; white-space:nowrap;">
+          <button type="submit">Save</button>
+        </form>
+
+        <form method="post"
+              action="{{ url_for('db_delete', image_id=r['image_id'], q=q, page=page) }}"
+              style="display:inline;"
+              onsubmit="return confirm('Delete this image + DB row? This cannot be undone.');">
+          <button type="submit" style="margin-left:6px;">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div style="display:flex; gap:10px; margin-top:12px;">
+  {% if page > 1 %}
+    <a href="{{ url_for('db_manage', q=q, page=page-1) }}">← Prev</a>
+  {% endif %}
+  {% if page < total_pages %}
+    <a href="{{ url_for('db_manage', q=q, page=page+1) }}">Next →</a>
+  {% endif %}
+</div>
+
+{% endblock %}

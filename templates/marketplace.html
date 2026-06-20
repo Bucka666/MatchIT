@@ -1,0 +1,781 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="mi-card">
+  <div class="mi-card-head">
+    <h1 class="mi-h1">🛒 GrailSweep Marketplace</h1>
+    <div class="mi-actions">
+      <a class="mi-pill mi-pill-ghost" href="/match">Standard Match</a>
+      {% if session.get("is_admin") %}
+      <a class="mi-pill" href="/admin">Admin</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if error %}
+  <div class="mi-flash err" style="margin:12px 0;">{{ error }}</div>
+  {% endif %}
+
+  <form class="mi-form" method="POST" enctype="multipart/form-data" action="/marketplace" id="mkForm">
+
+    <div class="mk-how-to">
+      <div class="mk-how-to-icon">🔍</div>
+      <div class="mk-how-to-title">Find it online — snap a photo, scan a barcode, or enter a code</div>
+      <div class="mk-how-to-steps">
+        <div class="mk-step">
+          <span class="mk-step-num">1</span>
+          <span>Upload a <strong>product photo</strong>, <strong>barcode</strong>, or <strong>QR code</strong> — or enter a product number below</span>
+        </div>
+        <div class="mk-step">
+          <span class="mk-step-num">2</span>
+          <span>Select category and details to refine your search (optional but helps accuracy)</span>
+        </div>
+        <div class="mk-step">
+          <span class="mk-step-num">3</span>
+          <span>Hit <strong>Search the Market</strong> — we'll find it online with prices and suppliers</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Quick search: product code / part number ── -->
+    <div class="mk-quick-search">
+      <div class="mk-quick-row">
+        <div class="mk-quick-item">
+          <label class="mk-quick-label" for="mkManualQuery">🏷️ Got a product number, EAN, or part code?</label>
+          <div class="mk-quick-input-row">
+            <input type="text" name="manual_query" id="mkManualQuery" class="mk-quick-input"
+                   placeholder="e.g. 576TY, 4006209001127, M8x50 hex bolt stainless" autocomplete="off">
+            <button class="mk-quick-btn" type="submit">Search</button>
+          </div>
+          <div class="mk-quick-hint">Works with Screwfix codes, EAN barcodes, manufacturer part numbers, or any description</div>
+        </div>
+      </div>
+      <div class="mk-divider"><span>or upload a photo / barcode image below</span></div>
+    </div>
+
+    <div class="mi-grid">
+      <div class="mi-dropzone" id="mkDrop">
+        <div class="mi-drop-inner">
+          <div class="mi-drop-title">Upload Product Photo or Barcode</div>
+
+          <div class="mi-imgpair-row">
+            <div class="mi-imgpair-col">
+              <div class="mi-imgpair-label">Product / Barcode / QR Image</div>
+              <div class="mi-btnrow">
+                <label class="mi-btn">
+                  Choose photo
+                  <input type="file" name="query_image" accept="image/*" id="mkFile1">
+                </label>
+                <label class="mi-btn">
+                  Take photo
+                  <input type="file" name="query_image" accept="image/*" capture="environment" id="mkCam1">
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="mf-panel">
+            <div class="mf-title">Product details <span class="mf-hint">(helps find better matches)</span></div>
+
+            <div class="mf-row">
+              <div class="mf-item mf-item-wide">
+                <label class="mf-lbl" for="mkKeyType">Category</label>
+                <select name="key_type" id="mkKeyType" class="mf-sel">
+                  <option value="">— Unknown —</option>
+                  {% for cat in vcategories %}
+                  <option value="{{ cat.id }}">{{ cat.label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            <div class="mf-row" id="mkFields">
+              {% for f in vfields %}
+              <div class="mf-item mf-hidden" id="mkwrap_{{ f.id }}">
+                <label class="mf-lbl" for="mkfld_{{ f.id }}">{{ f.label }}</label>
+                <select name="{{ f.id }}" id="mkfld_{{ f.id }}" class="mf-sel">
+                  {% if f.type == 'select' %}
+                    {% for opt in f.options %}
+                    <option value="{{ opt[0] }}">{{ opt[1] }}</option>
+                    {% endfor %}
+                  {% elif f.type == 'int_range' %}
+                    <option value="-1">Unknown</option>
+                    {% for n in range(f.min, f.max + 1) %}
+                    <option value="{{ n }}">{{ n }}</option>
+                    {% endfor %}
+                  {% elif f.type == 'float_select' %}
+                    <option value="-1">Unknown</option>
+                  {% endif %}
+                </select>
+              </div>
+              {% endfor %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="mi-previewcol">
+        <div class="mi-previewbox">
+          <div class="mi-preview-title">Preview</div>
+          <div class="mi-preview-grid">
+            <div class="mi-preview-item">
+              <img id="mkPrev1" class="mi-preview-img" alt="Preview" style="display:none; cursor:zoom-in;">
+              <div id="mkPrevEmpty1" class="mi-preview-empty">No image selected</div>
+            </div>
+          </div>
+          <button class="mk-submit" type="submit" id="mkSubmit" disabled>
+            🔍 Search the Market
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- ═══════════════════════════════════════
+     RESULTS (shown only if we have them)
+     ═══════════════════════════════════════ -->
+
+{% if results %}
+<div class="mi-card" style="margin-top:16px;">
+  <div class="mi-card-head">
+    <h1 class="mi-h1">Marketplace Results</h1>
+    <div class="mi-actions">
+      {% if timings %}
+      <span class="mk-timing">{{ timings.total }}s</span>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if barcode_info and barcode_info.found %}
+  <div class="mk-barcode-notice">
+    <span class="mk-barcode-icon">📊</span>
+    <span>Barcode detected: <strong>{{ barcode_info.type }}</strong> — <code>{{ barcode_info.code }}</code></span>
+  </div>
+  {% endif %}
+
+  <!-- AI Classification Card -->
+  {% if classification and classification.confidence > 0.01 %}
+  <div class="mk-ai-card">
+    <div class="mk-ai-header">
+      <span class="mk-ai-icon">🤖</span>
+      <span class="mk-ai-title">AI Product Identification</span>
+    </div>
+    <div class="mk-ai-result">
+      <span class="mk-ai-name">{{ classification.name | title }}</span>
+      <span class="mk-ai-conf
+        {%- if classification.confidence >= 0.3 %} mk-ai-conf--high
+        {%- elif classification.confidence >= 0.1 %} mk-ai-conf--mid
+        {%- else %} mk-ai-conf--low{% endif %}">
+        {{ (classification.confidence * 100) | round(0) | int }}% confident
+      </span>
+    </div>
+    {% if classification.top5 %}
+    <div class="mk-ai-alts">
+      {% for label, cat, score in classification.top5[1:4] %}
+      <span class="mk-ai-alt">{{ label | truncate(30) }} ({{ (score * 100) | round(0) | int }}%)</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <div class="mk-ai-query">Searched: "{{ search_query }}"</div>
+  </div>
+  {% endif %}
+
+  <div class="mk-results-layout">
+
+    <!-- Query image sidebar -->
+    {% if query_filename %}
+    <div class="mk-query-side">
+      <div class="mk-query-label">Your photo</div>
+      <img class="mk-query-img" src="/img/query/{{ query_filename }}" alt="Query">
+    </div>
+    {% endif %}
+
+    <!-- Result cards -->
+    <div class="mk-results-cards">
+      {% for r in results %}
+      <div class="mk-result-card {% if r.rank == 1 %}mk-result--top{% elif r.rank <= 3 %}mk-result--mid{% endif %}">
+
+        <div class="mk-result-rank">#{{ r.rank }}</div>
+
+        <div class="mk-result-thumb-wrap">
+          {% if r.thumbnail_url %}
+          <img class="mk-result-thumb" src="{{ r.thumbnail_url }}" alt="product"
+               onerror="this.style.display='none'">
+          {% else %}
+          <div class="mk-result-thumb mk-result-thumb--empty">No image</div>
+          {% endif %}
+        </div>
+
+        <div class="mk-result-info">
+          <div class="mk-result-title">{{ r.title }}</div>
+          <div class="mk-result-source">{{ r.source }}</div>
+
+          {% if r.price %}
+          <div class="mk-result-price">
+            {% if r.price is number %}£{{ "%.2f"|format(r.price) }}{% else %}{{ r.price }}{% endif %}
+          </div>
+          {% endif %}
+
+          <!-- Visual match + mode badge -->
+          <div class="mk-result-meta">
+            {% set sim = r.similarity | float %}
+            {% if sim > 0.01 %}
+              {% set strength = (((sim - 0.55) / 0.30) * 100)|round(0)|int %}
+              {% if strength > 100 %}{% set strength = 100 %}{% endif %}
+              {% if strength < 0 %}{% set strength = 0 %}{% endif %}
+              <div class="mk-result-match">
+                <span class="mk-match-label">Visual</span>
+                <div class="mk-match-track">
+                  <div class="mk-match-fill
+                    {%- if strength >= 70 %} mk-match--high
+                    {%- elif strength >= 40 %} mk-match--mid
+                    {%- else %} mk-match--low{% endif %}"
+                       style="width:{{ strength }}%"></div>
+                </div>
+                <span class="mk-match-pct
+                  {%- if strength >= 70 %} mk-match-pct--high
+                  {%- elif strength >= 40 %} mk-match-pct--mid
+                  {%- else %} mk-match-pct--low{% endif %}">{{ strength }}%</span>
+              </div>
+            {% endif %}
+            {% if r.get("search_mode") == "ai_visual" %}
+            <span class="mk-mode-badge mk-mode-lens">🤖 AI Match</span>
+            {% else %}
+            <span class="mk-mode-badge mk-mode-text">🔍 Text</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="mk-result-action">
+          {% if r.link %}
+          <a href="{{ r.link }}" target="_blank" rel="noopener" class="mk-buy-btn">View →</a>
+          {% endif %}
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+{% endif %}
+
+<!-- Progress overlay -->
+<div id="mkProgress" class="mip-desktop" style="display:none;">
+  <div class="mip-content">
+    <img src="/static/assets/grailsweep_app_icon.png" alt="GrailSweep" class="mip-logo">
+    <div class="mip-title">Searching the Market</div>
+    <div class="mip-subtitle">Uploading image to Google Lens, finding matches…</div>
+    <div class="mip-bar-track">
+      <div class="mip-bar-fill" id="mkProgressFill"></div>
+    </div>
+    <div class="mip-hint">This typically takes 5–10 seconds</div>
+  </div>
+</div>
+
+<style>
+/* ── Quick search (product code / barcode) ── */
+.mk-quick-search {
+  margin-bottom: 16px;
+}
+.mk-quick-row {
+  display: flex; gap: 12px;
+}
+.mk-quick-item { flex: 1; }
+.mk-quick-label {
+  display: block;
+  font-size: 0.88rem; font-weight: 700;
+  color: var(--mi-text, #eee);
+  margin-bottom: 8px;
+}
+.mk-quick-input-row {
+  display: flex; gap: 8px;
+}
+.mk-quick-input {
+  flex: 1; padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(30,136,199,0.4);
+  background: rgba(0,0,0,0.3);
+  color: var(--mi-text, #eee);
+  font-size: 0.9rem;
+}
+.mk-quick-input:focus {
+  outline: 2px solid #1E88C7; outline-offset: 1px;
+}
+.mk-quick-input::placeholder { color: rgba(255,255,255,0.3); }
+.mk-quick-btn {
+  padding: 10px 20px; border-radius: 8px; border: none;
+  background: linear-gradient(135deg, #1E88C7, #2dce89);
+  color: #fff; font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.mk-quick-btn:hover { opacity: 0.85; }
+.mk-quick-hint {
+  font-size: 0.72rem; color: var(--mi-muted, #aaa);
+  margin-top: 6px;
+}
+.mk-divider {
+  text-align: center; margin: 16px 0;
+  position: relative;
+}
+.mk-divider::before {
+  content: ""; position: absolute;
+  left: 0; right: 0; top: 50%;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.mk-divider span {
+  position: relative; z-index: 1;
+  background: var(--mi-card, #1e1e2e);
+  padding: 0 14px;
+  font-size: 0.78rem; color: var(--mi-muted, #aaa);
+  font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Barcode detection notice ── */
+.mk-barcode-notice {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; margin-bottom: 12px;
+  border-radius: 8px;
+  background: rgba(45,206,137,0.08);
+  border: 1px solid rgba(45,206,137,0.25);
+  font-size: 0.82rem; color: rgba(255,255,255,0.8);
+}
+.mk-barcode-icon { font-size: 1.2rem; }
+.mk-barcode-notice code {
+  background: rgba(255,255,255,0.08);
+  padding: 2px 6px; border-radius: 4px;
+  font-family: monospace; font-size: 0.85rem;
+  color: #2dce89;
+}
+
+/* ── AI Classification card ── */
+.mk-ai-card {
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(124,106,247,0.08), rgba(45,206,137,0.06));
+  border: 1px solid rgba(124,106,247,0.25);
+}
+.mk-ai-header {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 8px;
+}
+.mk-ai-icon { font-size: 1.3rem; }
+.mk-ai-title {
+  font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--mi-muted, #aaa);
+}
+.mk-ai-result {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 6px;
+}
+.mk-ai-name {
+  font-size: 1.2rem; font-weight: 800;
+  color: var(--mi-text, #eee);
+}
+.mk-ai-conf {
+  font-size: 0.82rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+}
+.mk-ai-conf--high { background: rgba(45,206,137,0.15); color: #2dce89; }
+.mk-ai-conf--mid  { background: rgba(245,166,35,0.15); color: #f5a623; }
+.mk-ai-conf--low  { background: rgba(231,76,60,0.12); color: #e74c3c; }
+.mk-ai-alts {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.mk-ai-alt {
+  font-size: 0.7rem; color: var(--mi-muted, #aaa);
+  padding: 2px 6px; border-radius: 3px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.mk-ai-query {
+  font-size: 0.72rem; color: var(--mi-muted, #aaa);
+  font-style: italic;
+}
+.mk-timing {
+  font-size: 0.72rem; font-weight: 600;
+  padding: 3px 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.06);
+  color: var(--mi-muted, #aaa);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── Search mode badges ── */
+.mk-result-meta {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 3px; flex-wrap: wrap;
+}
+.mk-mode-badge {
+  font-size: 0.65rem; font-weight: 700;
+  padding: 2px 8px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.03em;
+}
+.mk-mode-lens {
+  background: rgba(45,206,137,0.12); color: #2dce89;
+  border: 1px solid rgba(45,206,137,0.25);
+}
+.mk-mode-text {
+  background: rgba(30,136,199,0.12); color: #1E88C7;
+  border: 1px solid rgba(30,136,199,0.25);
+}
+.mk-mode-pill {
+  font-size: 0.75rem; font-weight: 600;
+  padding: 4px 10px; border-radius: 5px;
+}
+.mk-stock {
+  font-size: 0.62rem; font-weight: 700;
+  padding: 2px 6px; border-radius: 3px;
+}
+.mk-stock--yes { background: rgba(45,206,137,0.15); color: #2dce89; }
+.mk-stock--no { background: rgba(231,76,60,0.15); color: #e74c3c; }
+
+/* ── Marketplace how-to ── */
+.mk-how-to {
+  text-align: center;
+  padding: 18px 16px 20px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(30,136,199,0.08), rgba(45,206,137,0.06));
+  border: 1px solid rgba(30,136,199,0.2);
+  width: 100%; box-sizing: border-box;
+}
+.mk-how-to-icon { font-size: 2.2rem; margin-bottom: 6px; }
+.mk-how-to-title {
+  font-size: 1.05rem; font-weight: 800;
+  color: var(--mi-text, #eee);
+  margin-bottom: 14px;
+}
+.mk-how-to-steps { display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.mk-step {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.85rem; color: rgba(255,255,255,0.75);
+}
+.mk-step-num {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+  background: #1E88C7; color: #fff;
+  font-size: 0.72rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Submit button ── */
+.mk-submit {
+  width: 100%; padding: 14px 20px;
+  border: none; border-radius: 10px;
+  background: linear-gradient(135deg, #1E88C7, #2dce89);
+  color: #fff; font-size: 1rem; font-weight: 800;
+  cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  letter-spacing: 0.02em; margin-top: 12px;
+}
+.mk-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+.mk-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* ── Search query badge ── */
+.mk-query-used {
+  font-size: 0.75rem; color: var(--mi-muted, #aaa);
+  background: rgba(255,255,255,0.06); padding: 4px 10px;
+  border-radius: 5px; border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── Results layout ── */
+.mk-results-layout {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 20px;
+  align-items: start;
+  padding: 4px 0 16px;
+}
+.mk-query-side { position: sticky; top: 16px; }
+.mk-query-label {
+  font-size: 0.7rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--mi-accent, #7c6af7); margin-bottom: 6px;
+}
+.mk-query-img {
+  width: 100%; max-width: 150px;
+  border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+}
+
+/* ── Result cards ── */
+.mk-results-cards { display: flex; flex-direction: column; gap: 8px; }
+.mk-result-card {
+  display: grid;
+  grid-template-columns: 40px 80px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  transition: background 0.15s;
+}
+.mk-result-card:hover { background: rgba(255,255,255,0.06); }
+.mk-result--top {
+  border-color: #2dce89;
+  background: rgba(45,206,137,0.06);
+}
+.mk-result--mid {
+  border-color: rgba(30,136,199,0.3);
+  background: rgba(30,136,199,0.04);
+}
+
+.mk-result-rank {
+  font-size: 1rem; font-weight: 800;
+  color: var(--mi-muted, #aaa);
+  text-align: center;
+}
+.mk-result--top .mk-result-rank { color: #2dce89; }
+
+.mk-result-thumb-wrap { display: flex; align-items: center; justify-content: center; }
+.mk-result-thumb {
+  width: 72px; height: 72px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.mk-result-thumb--empty {
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; color: var(--mi-muted, #aaa);
+}
+
+.mk-result-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.mk-result-title {
+  font-size: 0.85rem; font-weight: 700;
+  color: var(--mi-text, #eee);
+  line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.mk-result-source {
+  font-size: 0.72rem; font-weight: 600;
+  color: #1E88C7;
+}
+.mk-result-price {
+  font-size: 1.1rem; font-weight: 800;
+  color: #2dce89;
+}
+
+/* ── Match strength bar ── */
+.mk-result-match {
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 2px;
+}
+.mk-match-label {
+  font-size: 0.62rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--mi-muted, #aaa); white-space: nowrap;
+}
+.mk-match-track {
+  flex: 1; height: 5px; border-radius: 3px;
+  background: rgba(255,255,255,0.08);
+  overflow: hidden; max-width: 100px;
+}
+.mk-match-fill {
+  height: 100%; border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.mk-match--high { background: linear-gradient(90deg, #1E88C7, #2dce89); }
+.mk-match--mid  { background: linear-gradient(90deg, #f5a623, #e6b800); }
+.mk-match--low  { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+.mk-match-pct {
+  font-size: 0.78rem; font-weight: 800; min-width: 32px;
+}
+.mk-match-pct--high { color: #2dce89; }
+.mk-match-pct--mid  { color: #f5a623; }
+.mk-match-pct--low  { color: #e74c3c; }
+
+/* ── Buy button ── */
+.mk-buy-btn {
+  display: inline-block;
+  padding: 7px 14px; border-radius: 7px;
+  background: rgba(30,136,199,0.15);
+  border: 1px solid rgba(30,136,199,0.3);
+  color: #1E88C7; font-size: 0.78rem; font-weight: 700;
+  text-decoration: none; white-space: nowrap;
+  transition: background 0.15s;
+}
+.mk-buy-btn:hover {
+  background: rgba(30,136,199,0.25);
+}
+
+/* ── Progress overlay ── */
+.mip-desktop {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 10000; background: rgba(10, 10, 22, 0.95);
+}
+.mip-content {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 85%; max-width: 340px; text-align: center;
+}
+.mip-logo { width: 72px; height: 72px; object-fit: contain; margin-bottom: 16px; }
+.mip-title { font-size: 1.3rem; font-weight: 800; color: #fff; margin-bottom: 6px; }
+.mip-subtitle { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 20px; }
+.mip-bar-track {
+  width: 100%; height: 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.12); overflow: hidden; position: relative;
+}
+.mip-bar-fill {
+  height: 100%; border-radius: 4px; width: 0%;
+  background: linear-gradient(90deg, #1E88C7, #2dce89);
+  position: absolute; top: 0; left: 0;
+}
+.mip-hint { font-size: 0.75rem; color: rgba(255,255,255,0.35); margin-top: 12px; }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  .mk-results-layout { grid-template-columns: 1fr; }
+  .mk-query-side { position: static; display: flex; gap: 10px; align-items: center; }
+  .mk-query-img { max-width: 80px; }
+  .mk-result-card {
+    grid-template-columns: 30px 60px 1fr !important;
+    gap: 8px !important; padding: 10px !important;
+  }
+  .mk-result-action { grid-column: 1 / -1; }
+  .mk-buy-btn { width: 100%; text-align: center; display: block; }
+  .mk-result-thumb { width: 56px !important; height: 56px !important; }
+  .mk-result-title { font-size: 0.78rem !important; }
+  .mi-grid { flex-direction: column !important; }
+}
+</style>
+
+<script>
+(function(){
+  var f1 = document.getElementById("mkFile1");
+  var c1 = document.getElementById("mkCam1");
+  var prev1 = document.getElementById("mkPrev1");
+  var empty1 = document.getElementById("mkPrevEmpty1");
+  var submit = document.getElementById("mkSubmit");
+  var form = document.getElementById("mkForm");
+  var overlay = document.getElementById("mkProgress");
+  var manualQuery = document.getElementById("mkManualQuery");
+
+  function getFile(a, b) {
+    var fa = (a && a.files && a.files[0]) ? a.files[0] : null;
+    var fb = (b && b.files && b.files[0]) ? b.files[0] : null;
+    return fa || fb;
+  }
+
+  function hasTextQuery() {
+    return manualQuery && manualQuery.value.trim().length > 0;
+  }
+
+  function refresh() {
+    var file = getFile(f1, c1);
+    if (file && prev1 && empty1) {
+      prev1.src = URL.createObjectURL(file);
+      prev1.style.display = "block";
+      empty1.style.display = "none";
+    } else if (prev1 && empty1) {
+      prev1.style.display = "none";
+      empty1.style.display = "block";
+    }
+    // Enable submit if we have an image OR a text query
+    if (submit) submit.disabled = !(file || hasTextQuery());
+  }
+
+  [f1, c1].forEach(function(inp) {
+    if (inp) { inp.addEventListener("change", refresh); inp.addEventListener("input", refresh); }
+  });
+  if (manualQuery) {
+    manualQuery.addEventListener("input", refresh);
+    manualQuery.addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        if (hasTextQuery() && form) form.submit();
+      }
+    });
+  }
+
+  if (form) {
+    form.addEventListener("submit", function(e) {
+      var file = getFile(f1, c1);
+      if (!file && !hasTextQuery()) {
+        e.preventDefault();
+        alert("Please add a product image or enter a search query.");
+        return;
+      }
+
+      if (overlay) {
+        overlay.style.display = "block";
+        var fill = document.getElementById("mkProgressFill");
+        var start = Date.now();
+        setInterval(function() {
+          var elapsed = (Date.now() - start) / 1000;
+          var pct;
+          if (elapsed < 4) pct = (elapsed / 4) * 30;
+          else if (elapsed < 10) pct = 30 + ((elapsed - 4) / 6) * 40;
+          else if (elapsed < 20) pct = 70 + ((elapsed - 10) / 10) * 20;
+          else pct = Math.min(95, 90 + (elapsed - 20) * 0.2);
+          if (fill) fill.style.width = Math.round(pct) + "%";
+        }, 200);
+      }
+    });
+  }
+
+  // ── Category field show/hide (reuse same logic as match page) ──
+  var keyType = document.getElementById("mkKeyType");
+  var CATEGORY_FIELDS = {{ vcategory_map | tojson | safe }};
+  var FLOAT_VALUES = {};
+  {% for f in vfields %}
+  {% if f.type == 'float_select' and f.values_by_category is defined %}
+  FLOAT_VALUES["{{ f.id }}"] = {{ f.values_by_category | tojson | safe }};
+  {% endif %}
+  {% endfor %}
+  var ALL_FIELDS = [{% for f in vfields %}"{{ f.id }}"{% if not loop.last %},{% endif %}{% endfor %}];
+
+  function populateFloat(fid, cat) {
+    var sel = document.getElementById("mkfld_" + fid);
+    if (!sel) return;
+    var map = FLOAT_VALUES[fid]; if (!map) return;
+    var vals = map[cat] || [];
+    var prev = sel.value;
+    sel.innerHTML = '<option value="-1">Unknown</option>';
+    for (var i = 0; i < vals.length; i++) {
+      var o = document.createElement("option");
+      o.value = vals[i]; o.textContent = vals[i];
+      sel.appendChild(o);
+    }
+    var found = false;
+    for (var j = 0; j < vals.length; j++) { if (String(vals[j]) === prev) { found = true; break; } }
+    sel.value = found ? prev : "-1";
+  }
+
+  function updateFields() {
+    var cat = keyType ? keyType.value : "";
+    var def = CATEGORY_FIELDS[cat];
+    var show = def ? (def.show || []) : [];
+    for (var i = 0; i < ALL_FIELDS.length; i++) {
+      var w = document.getElementById("mkwrap_" + ALL_FIELDS[i]);
+      var s = document.getElementById("mkfld_" + ALL_FIELDS[i]);
+      if (w) w.classList.add("mf-hidden");
+      if (s && w && w.classList.contains("mf-hidden")) s.selectedIndex = 0;
+    }
+    for (var j = 0; j < show.length; j++) {
+      var w2 = document.getElementById("mkwrap_" + show[j]);
+      if (w2) w2.classList.remove("mf-hidden");
+      if (FLOAT_VALUES[show[j]]) populateFloat(show[j], cat);
+    }
+  }
+  if (keyType) { keyType.addEventListener("change", updateFields); updateFields(); }
+
+  refresh();
+})();
+</script>
+
+<script>
+(function() {
+  var d = document.getElementById('mkProgress');
+  if (d) document.body.appendChild(d);
+})();
+</script>
+
+{% endblock %}

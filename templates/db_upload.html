@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+{% block body %}
+<h2>Database Upload</h2>
+<p class="muted">
+  Upload images, optionally a CSV to prefill SKU/Description, then review thumbnails before commit.
+</p>
+
+<div style="margin:10px 0;">
+  <a class="pill" href="/csv_template">Download CSV template</a>
+</div>
+
+<form id="uploadForm" method="POST" enctype="multipart/form-data">
+  <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;">
+    <div>
+      <label><b>Images</b></label><br>
+      <input id="photos" type="file" name="photos" accept=".jpg,.jpeg,.png,.webp" multiple required>
+      <div class="muted" style="margin-top:6px;">Pick multiple images at once</div>
+    </div>
+
+    <div>
+      <label><b>Optional CSV</b></label><br>
+      <input id="csv" type="file" name="csv" accept=".csv">
+      <div class="muted" style="margin-top:6px;">CSV columns: <code>filename,sku,description</code></div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:18px;">Preview (edit before upload)</h3>
+  <div class="muted" style="margin-bottom:8px;">
+    Upload will be blocked if any SKU or Description is blank or “unknown”.
+    Filenames are matched flexibly: <code>k1-s1</code> will match <code>k1-s1.jpg</code> or <code>k1-s1.jpeg</code>.
+  </div>
+
+  <div id="formErrors" style="margin-top:10px;"></div>
+
+  <div style="margin-top:10px;overflow-x:auto;">
+    <table class="matches" style="width:100%;border-collapse:collapse;white-space:nowrap;">
+      <thead>
+        <tr style="background:#fafafa;">
+          <th style="padding:10px;border-bottom:1px solid #eee;">Preview</th>
+          <th style="padding:10px;border-bottom:1px solid #eee;">#</th>
+          <th style="padding:10px;border-bottom:1px solid #eee;">Filename</th>
+          <th style="padding:10px;border-bottom:1px solid #eee;">SKU</th>
+          <th style="padding:10px;border-bottom:1px solid #eee;">Description</th>
+          <th style="padding:10px;border-bottom:1px solid #eee;">CSV match</th>
+        </tr>
+      </thead>
+      <tbody id="previewBody"></tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:14px;">
+    <button id="submitBtn" type="submit">Upload to Review</button>
+    <a href="/admin" style="margin-left:10px;">Back to Admin</a>
+  </div>
+</form>
+
+<!-- Lightbox (for upload preview thumbnails) -->
+<div id="lb" style="position:fixed;inset:0;display:none;z-index:9999;">
+  <div data-close style="position:absolute;inset:0;background:rgba(0,0,0,0.7);"></div>
+  <div style="position:relative;width:min(1100px, calc(100% - 24px));margin:14px auto;background:#111;border-radius:14px;overflow:hidden;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;color:#fff;border-bottom:1px solid rgba(255,255,255,.14);gap:10px;">
+      <div id="lbTitle" style="opacity:.9;">Preview</div>
+      <button data-close style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:6px 10px;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:12px;">
+      <img id="lbImg" style="width:100%;height:auto;max-height:calc(100vh - 140px);object-fit:contain;display:block;border-radius:12px;background:#000;" alt="Preview">
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const photos = document.getElementById('photos');
+  const csv = document.getElementById('csv');
+  const body = document.getElementById('previewBody');
+  const form = document.getElementById('uploadForm');
+  const errors = document.getElementById('formErrors');
+
+  // lightbox
+  const lb = document.getElementById('lb');
+  const lbImg = document.getElementById('lbImg');
+  const lbTitle = document.getElementById('lbTitle');
+
+  // Map keys are normalized to lowercase and include both stem and common extensions
+  let csvMap = {}; // key -> {sku, description}
+  let fileUrls = []; // object URLs for thumbnails (cleanup later)
+
+  function esc(s){
+    return String(s || '')
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;');
+  }
+
+  function isInvalid(v){
+    v = (v || '').trim().toLowerCase();
+    return !v || ['unknown','unk','na','n/a','none','-'].includes(v);
+  }
+
+  function splitCsvLine(line){
+    // minimal quoted-csv support
+    const out = [];
+    let cur = '';
+    let inQ = false;
+    for(let i=0;i<line.length;i++){
+      const ch = line[i];
+      if(ch === '"'){ inQ = !inQ; continue; }
+      if(ch === ',' && !inQ){ out.push(cur); cur = ''; }
+      else cur += ch;
+    }
+    out.push(cur);
+    return out.map(x => x.trim());
+  }
+
+  function normFilename(s){
+    s = (s || '').trim();
+
+    // strip surrounding quotes
+    if((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))){
+      s = s.slice(1, -1).trim();
+    }
+
+    // if path provided, keep only basename
+    s = s.replaceAll('\\','/');
+    if(s.includes('/')) s = s.split('/').pop();
+
+    return s.trim().toLowerCase();
+  }
+
+  function keysFor(filename){
+    const raw = normFilename(filename);
+    if(!raw) return [];
+
+    const dot = raw.lastIndexOf('.');
+    const stem = dot >= 0 ? raw.slice(0, dot) : raw;
+    const ext = dot >= 0 ? raw.slice(dot + 1) : '';
+
+    const set = new Set();
+    set.add(raw);
+    set.add(stem);
+
+    // If they provided an extension, add friendly alternatives
+    if(ext === 'jpg') set.add(stem + '.jpeg');
+    if(ext === 'jpeg') set.add(stem + '.jpg');
+
+    // Always add common variants so stem-only CSV rows match uploaded files
+    set.add(stem + '.jpg');
+    set.add(stem + '.jpeg');
+    set.add(stem + '.png');
+    set.add(stem + '.webp');
+
+    return Array.from(set);
+  }
+
+  function parseCsv(text){
+    const lines = text.split(/\r?\n/).filter(l => l.trim().length);
+    if(!lines.length) return {};
+
+    const header = splitCsvLine(lines[0]).map(x => x.trim().toLowerCase());
+    const iFn = header.indexOf('filename');
+    const iSku = header.indexOf('sku');
+    const iDesc = header.indexOf('description');
+
+    if(iFn < 0 || iSku < 0) return {};
+
+    const out = {};
+    for(let i=1;i<lines.length;i++){
+      const parts = splitCsvLine(lines[i]);
+      if(parts.length <= Math.max(iFn, iSku)) continue;
+
+      const fnRaw = parts[iFn] || '';
+      const sku = (parts[iSku] || '').trim();
+      const desc = (iDesc >= 0 ? (parts[iDesc] || '').trim() : '');
+
+      for(const k of keysFor(fnRaw)){
+        out[k] = { sku, description: desc };
+      }
+    }
+    return out;
+  }
+
+  async function loadCsvIfAny(){
+    csvMap = {};
+    if(!csv.files || !csv.files[0]) return;
+
+    const text = await csv.files[0].text();
+    csvMap = parseCsv(text);
+
+    // Proof in console (optional)
+    // console.log("[CSV] keys:", Object.keys(csvMap).slice(0, 20));
+  }
+
+  function cleanupUrls(){
+    fileUrls.forEach(u => {
+      try { URL.revokeObjectURL(u); } catch(e) {}
+    });
+    fileUrls = [];
+  }
+
+  function rebuildTable(){
+    cleanupUrls();
+    body.innerHTML = '';
+
+    const files = photos.files ? Array.from(photos.files) : [];
+
+    files.forEach((f, idx) => {
+      const nameLower = (f.name || '').toLowerCase();
+      const stemLower = nameLower.replace(/\.[^.]+$/, '');
+
+      const pre =
+        csvMap[nameLower] ||
+        csvMap[stemLower] ||
+        null;
+
+      const url = URL.createObjectURL(f);
+      fileUrls.push(url);
+
+      const skuVal = pre ? (pre.sku || '') : '';
+      const descVal = pre ? (pre.description || '') : '';
+      const matched = !!pre;
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="padding:10px;border-bottom:1px solid #eee;">
+          <img
+            src="${esc(url)}"
+            data-full="${esc(url)}"
+            data-label="${esc(f.name)}"
+            class="js-lightbox"
+            style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #ddd;cursor:zoom-in;"
+            alt="thumb">
+        </td>
+        <td style="padding:10px;border-bottom:1px solid #eee;">${idx+1}</td>
+        <td style="padding:10px;border-bottom:1px solid #eee;">${esc(f.name)}</td>
+        <td style="padding:10px;border-bottom:1px solid #eee;">
+          <input type="text" name="sku_${idx}" value="${esc(skuVal)}" style="width:180px;">
+        </td>
+        <td style="padding:10px;border-bottom:1px solid #eee;">
+          <input type="text" name="desc_${idx}" value="${esc(descVal)}" style="width:360px;">
+        </td>
+        <td style="padding:10px;border-bottom:1px solid #eee;">
+          <span style="padding:3px 10px;border-radius:999px;border:1px solid #ddd;opacity:.85;
+                       background:${matched ? '#eefbf0' : '#ffecec'};">
+            ${matched ? 'Matched' : 'No match'}
+          </span>
+        </td>
+      `;
+      body.appendChild(tr);
+    });
+
+    if(!files.length){
+      body.innerHTML = `<tr><td colspan="6" style="padding:12px;opacity:.75;">Select images to see preview…</td></tr>`;
+    }
+  }
+
+  // Events
+  photos.addEventListener('change', async () => {
+    await loadCsvIfAny();
+    rebuildTable();
+  });
+
+  csv.addEventListener('change', async () => {
+    await loadCsvIfAny();
+    rebuildTable();
+  });
+
+  // Validate before submit
+  form.addEventListener('submit', (e) => {
+    errors.innerHTML = '';
+    const files = photos.files ? Array.from(photos.files) : [];
+    if(!files.length){
+      e.preventDefault();
+      errors.innerHTML = '<div style="padding:10px;border:1px solid #ddd;border-radius:10px;background:#ffecec;">Select at least one image.</div>';
+      return;
+    }
+
+    let bad = [];
+    for(let i=0;i<files.length;i++){
+      const sku = form.querySelector(`[name="sku_${i}"]`)?.value || '';
+      const desc = form.querySelector(`[name="desc_${i}"]`)?.value || '';
+      if(isInvalid(sku) || isInvalid(desc)) bad.push(files[i].name);
+    }
+
+    if(bad.length){
+      e.preventDefault();
+      const msg = `Upload blocked: SKU + Description required (not blank / not "unknown"). Fix: ${bad.slice(0,6).join(', ')}${bad.length>6?' ...':''}`;
+      errors.innerHTML = `<div style="padding:10px;border:1px solid #ddd;border-radius:10px;background:#ffecec;">${esc(msg)}</div>`;
+    }
+  });
+
+  // Lightbox logic
+  function openLB(el){
+    lbImg.src = el.dataset.full || el.src;
+    lbTitle.textContent = el.dataset.label || 'Preview';
+    lb.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLB(){
+    lb.style.display = 'none';
+    lbImg.src = '';
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('click', e=>{
+    const t = e.target;
+    const trigger = t.closest && t.closest('.js-lightbox');
+    if(trigger){ e.preventDefault(); openLB(trigger); return; }
+    const closer = t.closest && t.closest('[data-close]');
+    if(closer) closeLB();
+  });
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape') closeLB();
+  });
+
+  // Initial empty state
+  rebuildTable();
+})();
+</script>
+{% endblock %}

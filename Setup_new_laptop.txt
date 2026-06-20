@@ -1,0 +1,210 @@
+═══════════════════════════════════════════════════════════
+  MATCHIT — NEW LAPTOP SETUP GUIDE
+═══════════════════════════════════════════════════════════
+
+Follow these steps IN ORDER on your new GPU laptop.
+Estimated time: 20-30 minutes.
+
+
+───────────────────────────────────────────────────────────
+ STEP 1: INSTALL SOFTWARE
+───────────────────────────────────────────────────────────
+
+Download and install these (in order):
+
+  1. Python 3.11 (IMPORTANT: must be 3.11, NOT 3.12 or 3.13)
+     https://www.python.org/downloads/release/python-3119/
+     
+     During install:
+       [x] Add Python to PATH  ← TICK THIS
+       [x] Install for all users
+     
+  2. Google Drive for Desktop (if you sync CardsDB via Drive)
+     https://www.google.com/drive/download/
+
+  3. ngrok (for mobile phone testing)
+     https://ngrok.com/download
+
+
+───────────────────────────────────────────────────────────
+ STEP 2: COPY FILES FROM USB
+───────────────────────────────────────────────────────────
+
+Plug in your USB drive. You should see a folder called:
+  MatchIT_Migration\
+
+Copy these 3 folders to the EXACT same locations:
+
+  USB: MatchIT_Migration\MatchIT\
+  TO:  C:\Users\YOUR_USERNAME\Desktop\MatchIT\
+
+  USB: MatchIT_Migration\CardsDB\
+  TO:  C:\Users\YOUR_USERNAME\My Drive\CardsDB\
+       (or wherever you want — just update config.json later)
+
+  USB: MatchIT_Migration\MatchITv2_ProductMatch_Data\
+  TO:  C:\Users\YOUR_USERNAME\AppData\Local\MatchITv2_ProductMatch_Data\
+
+  NOTE: To find AppData, press Win+R, type %localappdata% and press Enter.
+  Then just paste the MatchITv2_ProductMatch_Data folder there.
+
+  IMPORTANT: If your Windows username is different from "c_a_b" you MUST
+  update the paths in Step 4 below.
+
+
+───────────────────────────────────────────────────────────
+ STEP 3: CREATE PYTHON ENVIRONMENT
+───────────────────────────────────────────────────────────
+
+Open PowerShell (press Win, type "powershell", press Enter).
+Run these commands one at a time:
+
+  cd C:\Users\YOUR_USERNAME\Desktop\MatchIT
+
+  python -m venv .venv
+
+  .venv\Scripts\activate
+
+  pip install -r requirements.txt
+
+  This will install all the Python packages. It may take 5-10 minutes
+  as it downloads PyTorch, CLIP, Pillow, Flask, etc.
+
+  If "python" doesn't work, try "python3.11" instead:
+    python3.11 -m venv .venv
+
+  NOTE FOR GPU LAPTOP: If you want CUDA GPU acceleration for faster
+  embedding, after installing requirements.txt, also run:
+  
+    pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121 --break-system-packages
+  
+  This replaces CPU PyTorch with GPU PyTorch. Only do this if you have
+  an NVIDIA GPU. Check with: nvidia-smi (in PowerShell).
+
+
+───────────────────────────────────────────────────────────
+ STEP 4: UPDATE PATHS IN CONFIG
+───────────────────────────────────────────────────────────
+
+If your new laptop username is DIFFERENT from "c_a_b":
+
+  1. Open C:\Users\YOUR_USERNAME\Desktop\MatchIT\config.json
+  2. Find any paths containing "c_a_b" and replace with your new username
+  3. Key paths to check:
+       - data_dir (points to AppData\Local\MatchITv2_ProductMatch_Data)
+       - Any CardsDB references
+
+  4. Open C:\Users\YOUR_USERNAME\Desktop\MatchIT\verticals\cards\vertical.json
+  5. Check for any hardcoded paths and update them
+
+If your username IS "c_a_b" on the new laptop, skip this step.
+
+
+───────────────────────────────────────────────────────────
+ STEP 5: TEST IT
+───────────────────────────────────────────────────────────
+
+In PowerShell:
+
+  cd C:\Users\YOUR_USERNAME\Desktop\MatchIT
+  .venv\Scripts\activate
+  python app.py
+
+You should see:
+  [VERTICAL] Loaded: MatchIT - CARDS
+  [CACHE] Fast loaded ... (from numpy cache)
+  [EMBEDDER] Backend: clip/ViT-L-14/...
+  * Running on http://127.0.0.1:5000
+
+Open browser to http://localhost:5000 — you should see MatchIT.
+
+If you see "[CACHE] Fast loaded" — the numpy cache worked and startup
+should be under 30 seconds. If it says "Loaded from SQLite" that's fine
+too, just slower first time (it will create the numpy cache for next time).
+
+
+───────────────────────────────────────────────────────────
+ STEP 6: TEST SCANNER ON PHONE
+───────────────────────────────────────────────────────────
+
+  1. Open new PowerShell window
+  2. Run: ngrok http 5000
+  3. Copy the https://xxxxx.ngrok-free.dev URL
+  4. On phone, open: https://xxxxx.ngrok-free.dev/static/scanner.html
+  5. Enter API key in Setup (check config.json for the key)
+  6. Test scan a card
+
+
+───────────────────────────────────────────────────────────
+ STEP 7: GPU CHECK (OPTIONAL BUT RECOMMENDED)
+───────────────────────────────────────────────────────────
+
+To verify the GPU is being used:
+
+  cd C:\Users\YOUR_USERNAME\Desktop\MatchIT
+  .venv\Scripts\activate
+  python -c "import torch; print('CUDA:', torch.cuda.is_available()); print('Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')"
+
+If it says "CUDA: True" and shows your GPU name, you're on GPU.
+This means:
+  - Embedding will be 5-10x faster
+  - Match speed will be under 1 second
+  - Scanner will work much better on fast mode
+
+If it says "CUDA: False", you need to install GPU PyTorch (see Step 3).
+
+
+───────────────────────────────────────────────────────────
+ TROUBLESHOOTING
+───────────────────────────────────────────────────────────
+
+Problem: "Module not found" errors
+Fix: Make sure venv is activated (.venv\Scripts\activate)
+     Then: pip install -r requirements.txt
+
+Problem: App starts but says "cache empty" or "0 embeddings"
+Fix: Check the AppData folder was copied correctly.
+     Path: C:\Users\YOUR_USERNAME\AppData\Local\MatchITv2_ProductMatch_Data\cards\
+     Should contain: embeddings.db, npy_cache\ folder
+
+Problem: "Python not found"
+Fix: Reinstall Python 3.11 with "Add to PATH" ticked.
+     Or use full path: C:\Python311\python.exe -m venv .venv
+
+Problem: Cards database not found
+Fix: Check config.json data_dir path points to correct location.
+
+Problem: Scanner shows "Camera denied"
+Fix: In Chrome: Settings → Privacy → Site Settings → Camera → Allow
+
+Problem: ngrok says "tunnel not found"
+Fix: Sign up at ngrok.com and run: ngrok config add-authtoken YOUR_TOKEN
+
+
+───────────────────────────────────────────────────────────
+ KEY FILES REFERENCE
+───────────────────────────────────────────────────────────
+
+Project code:     C:\Users\YOUR_USERNAME\Desktop\MatchIT\
+Card images:      C:\Users\YOUR_USERNAME\My Drive\CardsDB\
+Embeddings:       C:\Users\YOUR_USERNAME\AppData\Local\MatchITv2_ProductMatch_Data\
+Config:           MatchIT\config.json
+API routes:       MatchIT\api_routes.py
+Main app:         MatchIT\app.py
+Scanner:          MatchIT\static\scanner.html
+Landing page:     MatchIT\static\landing.html
+Demo widget:      MatchIT\static\demo_widget_lighter.html
+Card vertical:    MatchIT\verticals\cards\vertical.json
+Scrapers:         MatchIT\scrape_pokemon_tcg.py
+                  MatchIT\scrape_mtg.py
+                  MatchIT\scrape_yugioh.py
+
+API key:          Check config.json → "api_keys" section
+Scanner URL:      http://localhost:5000/static/scanner.html
+Admin panel:      http://localhost:5000/admin
+
+
+═══════════════════════════════════════════════════════════
+  You're all set! With a GPU laptop, embedding and matching
+  will be MUCH faster. Enjoy!
+═══════════════════════════════════════════════════════════

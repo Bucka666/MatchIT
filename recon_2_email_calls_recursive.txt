@@ -1,0 +1,243 @@
+﻿
+  app.py:4206:
+  app.py:4207:def _send_alert_confirmation(email, card_name, target_low, target_high):
+> app.py:4208:    import smtplib
+  app.py:4209:    import ssl
+> app.py:4210:    from email.mime.text import MIMEText
+> app.py:4211:    from email.mime.multipart import MIMEMultipart
+  app.py:4212:
+> app.py:4213:    smtp_host = os.environ["SMTP_HOST"]
+  app.py:4214:    smtp_port = int(os.environ["SMTP_PORT"])
+> app.py:4215:    smtp_user = os.environ["SMTP_USER"]
+  app.py:4216:    smtp_pass = os.environ["SMTP_PASS"]
+> app.py:4217:    from_address = os.environ.get("SMTP_FROM_NOREPLY", smtp_user)
+  app.py:4218:
+> app.py:4219:    msg = MIMEMultipart("alternative")
+  app.py:4220:    msg["Subject"] = f"🔔 Price Alert Set — {card_name}"
+  app.py:4221:    msg["From"] = from_address
+  app.py:4249:    """
+  app.py:4250:
+> app.py:4251:    msg.attach(MIMEText(html, "html"))
+  app.py:4252:
+  app.py:4253:    try:
+  app.py:4254:        context = ssl.create_default_context()
+> app.py:4255:        with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context) as server:
+> app.py:4256:            server.login(smtp_user, smtp_pass)
+> app.py:4257:            server.sendmail(from_address, email, msg.as_string())
+  app.py:4258:        print(f"[ALERTS] Confirmation sent to {email}")
+  app.py:4259:    except Exception as e:
+  app.py:5318:
+  app.py:5319:def _issue_new_code(email, tier, subscription_id, ref_code=""):
+> app.py:5320:    import random, smtplib, ssl, json as _json
+  app.py:5321:    from datetime import datetime, timedelta
+> app.py:5322:    from email.mime.text import MIMEText
+> app.py:5323:    from email.mime.multipart import MIMEMultipart
+  app.py:5324:
+  app.py:5325:    chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  app.py:5348:    # Send email
+  app.py:5349:    try:
+> app.py:5350:        smtp_host = os.environ["SMTP_HOST"]
+  app.py:5351:        smtp_port = int(os.environ["SMTP_PORT"])
+> app.py:5352:        smtp_user = os.environ["SMTP_USER"]
+  app.py:5353:        smtp_pass = os.environ["SMTP_PASS"]
+> app.py:5354:        from_address = os.environ.get("SMTP_FROM_NOREPLY", smtp_user)
+> app.py:5355:        msg = MIMEMultipart("alternative")
+  app.py:5356:        msg["Subject"] = "Your GrailSweep Pro Access Code"
+  app.py:5357:        msg["From"] = from_address
+  app.py:5384:— The GrailSweep Team
+  app.py:5385:"""
+> app.py:5386:        msg.attach(MIMEText(body, "plain"))
+  app.py:5387:        context = ssl.create_default_context()
+> app.py:5388:        with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context) as server:
+> app.py:5389:            server.login(smtp_user, smtp_pass)
+> app.py:5390:            server.sendmail(from_address, email, msg.as_string())
+  app.py:5391:    except Exception as e:
+  app.py:5392:        print(f"[EMAIL ERROR] {e}")
+  app.py:5414:        payment_intent_id: Stripe payment_intent ID for traceability
+  app.py:5415:    """
+> app.py:5416:    import random, smtplib, ssl
+  app.py:5417:    from datetime import datetime
+> app.py:5418:    from email.mime.text import MIMEText
+> app.py:5419:    from email.mime.multipart import MIMEMultipart
+  app.py:5420:
+  app.py:5421:    # Generate TOPUP-XXXX-XXXX code (same charset as GRAIL- codes)
+  app.py:5447:    # Send email — same SMTP path as _issue_new_code
+  app.py:5448:    try:
+> app.py:5449:        smtp_host = os.environ["SMTP_HOST"]
+  app.py:5450:        smtp_port = int(os.environ["SMTP_PORT"])
+> app.py:5451:        smtp_user = os.environ["SMTP_USER"]
+  app.py:5452:        smtp_pass = os.environ["SMTP_PASS"]
+> app.py:5453:        from_address = os.environ.get("SMTP_FROM_NOREPLY", smtp_user)
+  app.py:5454:
+> app.py:5455:        msg = MIMEMultipart("alternative")
+  app.py:5456:        msg["Subject"] = f"Your GrailSweep top-up: {credits} scans"
+  app.py:5457:        msg["From"] = from_address
+  app.py:5489:</body></html>"""
+  app.py:5490:
+> app.py:5491:        msg.attach(MIMEText(body_text, "plain"))
+> app.py:5492:        msg.attach(MIMEText(body_html, "html"))
+  app.py:5493:
+  app.py:5494:        context = ssl.create_default_context()
+> app.py:5495:        with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context) as server:
+> app.py:5496:            server.login(smtp_user, smtp_pass)
+> app.py:5497:            server.sendmail(from_address, email, msg.as_string())
+  app.py:5498:
+  app.py:5499:        print(f"[TOPUP] Issued code {code} to {email} ({credits} credits)", flush=True)
+  matchit_modal.py:1:import modal
+  matchit_modal.py:2:import os
+> matchit_modal.py:3:import smtplib
+  matchit_modal.py:4:import ssl
+  matchit_modal.py:5:import sys
+> matchit_modal.py:6:from email.mime.multipart import MIMEMultipart
+> matchit_modal.py:7:from email.mime.text import MIMEText
+  matchit_modal.py:8:
+  matchit_modal.py:9:sys.path.insert(0, "/app")
+  matchit_modal.py:90:
+  matchit_modal.py:91:
+> matchit_modal.py:92:def send_email(to_address: str, subject: str, body_html: str, from_purpose: str = "noreply"):
+  matchit_modal.py:93:    """Send email via Namecheap Private Email SMTP (SSL on port 465).
+  matchit_modal.py:94:
+  matchit_modal.py:95:    from_purpose: "noreply" | "contact" | "info" | "support" — selects SMTP_FROM_* env var.
+  matchit_modal.py:96:    """
+> matchit_modal.py:97:    smtp_host = os.environ["SMTP_HOST"]
+  matchit_modal.py:98:    smtp_port = int(os.environ["SMTP_PORT"])
+> matchit_modal.py:99:    smtp_user = os.environ["SMTP_USER"]
+  matchit_modal.py:100:    smtp_pass = os.environ["SMTP_PASS"]
+  matchit_modal.py:101:
+> matchit_modal.py:102:    from_address = os.environ.get(f"SMTP_FROM_{from_purpose.upper()}", smtp_user)
+  matchit_modal.py:103:
+> matchit_modal.py:104:    msg = MIMEMultipart("alternative")
+  matchit_modal.py:105:    msg["Subject"] = subject
+  matchit_modal.py:106:    msg["From"] = from_address
+  matchit_modal.py:107:    msg["To"] = to_address
+> matchit_modal.py:108:    msg.attach(MIMEText(body_html, "html"))
+  matchit_modal.py:109:
+  matchit_modal.py:110:    context = ssl.create_default_context()
+> matchit_modal.py:111:    with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context) as server:
+> matchit_modal.py:112:        server.login(smtp_user, smtp_pass)
+> matchit_modal.py:113:        server.sendmail(from_address, to_address, msg.as_string())
+  matchit_modal.py:114:
+  matchit_modal.py:115:
+  set_scheduler.py:37:import os
+  set_scheduler.py:38:import re
+> set_scheduler.py:39:import smtplib
+  set_scheduler.py:40:import ssl
+  set_scheduler.py:41:import sqlite3
+  set_scheduler.py:43:import time
+  set_scheduler.py:44:from datetime import datetime
+> set_scheduler.py:45:from email.mime.multipart import MIMEMultipart
+> set_scheduler.py:46:from email.mime.text import MIMEText
+  set_scheduler.py:47:from pathlib import Path
+  set_scheduler.py:48:from typing import Dict, List, Optional, Set, Tuple
+  set_scheduler.py:56:CONFIG = {
+  set_scheduler.py:57:    # Email settings
+> set_scheduler.py:58:    "email_from":     os.environ.get("SMTP_FROM_NOREPLY", os.environ.get("SMTP_USER", "")),
+  set_scheduler.py:59:    "email_to":       os.environ.get("MATCHIT_EMAIL_TO", "craig@grailsweep.com"),
+  set_scheduler.py:60:    "email_password": os.environ.get("SMTP_PASS", ""),
+> set_scheduler.py:61:    "smtp_user":      os.environ.get("SMTP_USER", ""),
+> set_scheduler.py:62:    "smtp_host":      os.environ.get("SMTP_HOST", "mail.privateemail.com"),
+  set_scheduler.py:63:    "smtp_port":  int(os.environ.get("SMTP_PORT", "465")),
+  set_scheduler.py:64:
+  set_scheduler.py:411:# ─────────────────────────────────────────────────────────────
+  set_scheduler.py:412:
+> set_scheduler.py:413:def _send_email(subject: str, body_html: str, body_text: str) -> bool:
+  set_scheduler.py:414:    """Send summary email via SMTP."""
+  set_scheduler.py:415:    email_from = CONFIG.get("email_from", "")
+  set_scheduler.py:422:
+  set_scheduler.py:423:    try:
+> set_scheduler.py:424:        msg = MIMEMultipart("alternative")
+  set_scheduler.py:425:        msg["Subject"] = subject
+  set_scheduler.py:426:        msg["From"]    = "GrailSweep <" + email_from + ">"
+  set_scheduler.py:427:        msg["To"]      = email_to
+> set_scheduler.py:428:        msg.attach(MIMEText(body_text, "plain"))
+> set_scheduler.py:429:        msg.attach(MIMEText(body_html, "html"))
+  set_scheduler.py:430:
+  set_scheduler.py:431:        context = ssl.create_default_context()
+> set_scheduler.py:432:        with smtplib.SMTP_SSL(CONFIG["smtp_host"], CONFIG["smtp_port"], context=context) as 
+server:
+> set_scheduler.py:433:            server.login(CONFIG["smtp_user"], password)
+> set_scheduler.py:434:            server.sendmail(email_from, email_to, msg.as_string())
+  set_scheduler.py:435:
+  set_scheduler.py:436:        logger.info(f"[SCHED] Email sent to {email_to}")
+  set_scheduler.py:640:
+  set_scheduler.py:641:    try:
+> set_scheduler.py:642:        msg = MIMEMultipart("alternative")
+  set_scheduler.py:643:        msg["Subject"] = subject
+  set_scheduler.py:644:        msg["From"]    = "GrailSweep <" + email_from + ">"
+  set_scheduler.py:645:        msg["To"]      = email_to
+> set_scheduler.py:646:        msg.attach(MIMEText(body_text, "plain"))
+> set_scheduler.py:647:        msg.attach(MIMEText(body_html, "html"))
+  set_scheduler.py:648:
+  set_scheduler.py:649:        context = ssl.create_default_context()
+> set_scheduler.py:650:        with smtplib.SMTP_SSL(CONFIG["smtp_host"], CONFIG["smtp_port"], context=context) as 
+server:
+> set_scheduler.py:651:            server.login(CONFIG["smtp_user"], password)
+> set_scheduler.py:652:            server.sendmail(email_from, email_to, msg.as_string())
+  set_scheduler.py:653:
+  set_scheduler.py:654:        logger.info(f"[ALERTS] Alert email sent to {email_to} for {sku}")
+  set_scheduler.py:915:    # ── 4. Send email ──
+  set_scheduler.py:916:    subject, body_html, body_text = _build_email(run_summary)
+> set_scheduler.py:917:    _send_email(subject, body_html, body_text)
+  set_scheduler.py:918:
+  set_scheduler.py:919:    # ── 5. Check price alerts ──
+  .venv\Lib\site-packages\packaging\licenses\_spdx.py:603:    'scea': {'id': 'SCEA', 'deprecated': False},
+  .venv\Lib\site-packages\packaging\licenses\_spdx.py:604:    'schemereport': {'id': 'SchemeReport', 'deprecated': 
+False},
+> .venv\Lib\site-packages\packaging\licenses\_spdx.py:605:    'sendmail': {'id': 'Sendmail', 'deprecated': False},
+> .venv\Lib\site-packages\packaging\licenses\_spdx.py:606:    'sendmail-8.23': {'id': 'Sendmail-8.23', 'deprecated': 
+False},
+> .venv\Lib\site-packages\packaging\licenses\_spdx.py:607:    'sendmail-open-source-1.1': {'id': 
+'Sendmail-Open-Source-1.1', 'deprecated': False},
+  .venv\Lib\site-packages\packaging\licenses\_spdx.py:608:    'sgi-b-1.0': {'id': 'SGI-B-1.0', 'deprecated': False},
+  .venv\Lib\site-packages\packaging\licenses\_spdx.py:609:    'sgi-b-1.1': {'id': 'SGI-B-1.1', 'deprecated': False},
+  .venv\Lib\site-packages\pip\_vendor\packaging\licenses\_spdx.py:603:    'scea': {'id': 'SCEA', 'deprecated': False},
+  .venv\Lib\site-packages\pip\_vendor\packaging\licenses\_spdx.py:604:    'schemereport': {'id': 'SchemeReport', 
+'deprecated': False},
+> .venv\Lib\site-packages\pip\_vendor\packaging\licenses\_spdx.py:605:    'sendmail': {'id': 'Sendmail', 'deprecated': 
+False},
+> .venv\Lib\site-packages\pip\_vendor\packaging\licenses\_spdx.py:606:    'sendmail-8.23': {'id': 'Sendmail-8.23', 
+'deprecated': False},
+> .venv\Lib\site-packages\pip\_vendor\packaging\licenses\_spdx.py:607:    'sendmail-open-source-1.1': {'id': 
+'Sendmail-Open-Source-1.1', 'deprecated': False},
+  .venv\Lib\site-packages\pip\_vendor\packaging\licenses\_spdx.py:608:    'sgi-b-1.0': {'id': 'SGI-B-1.0', 
+'deprecated': False},
+  .venv\Lib\site-packages\pip\_vendor\packaging\licenses\_spdx.py:609:    'sgi-b-1.1': {'id': 'SGI-B-1.1', 
+'deprecated': False},
+  .venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:297:    MovedModule("email_mime_base", "email.MIMEBase", 
+"email.mime.base"),
+  .venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:298:    MovedModule("email_mime_image", 
+"email.MIMEImage", "email.mime.image"),
+> .venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:299:    MovedModule("email_mime_multipart", 
+"email.MIMEMultipart", "email.mime.multipart"),
+  .venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:300:    MovedModule(
+  .venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:301:        "email_mime_nonmultipart", 
+"email.MIMENonMultipart", "email.mime.nonmultipart"
+  .venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:302:    ),
+> .venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:303:    MovedModule("email_mime_text", "email.MIMEText", 
+"email.mime.text"),
+  .venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:304:    MovedModule("BaseHTTPServer", "BaseHTTPServer", 
+"http.server"),
+  .venv\Lib\site-packages\pip\_vendor\urllib3\packages\six.py:305:    MovedModule("CGIHTTPServer", "CGIHTTPServer", 
+"http.server"),
+  .venv\Lib\site-packages\pygments\lexers\matlab.py:2210:                        "semilogx",
+  .venv\Lib\site-packages\pygments\lexers\matlab.py:2211:                        "semilogy",
+> .venv\Lib\site-packages\pygments\lexers\matlab.py:2212:                        "sendmail",
+  .venv\Lib\site-packages\pygments\lexers\matlab.py:2213:                        "serialport",
+  .venv\Lib\site-packages\pygments\lexers\matlab.py:2214:                        "serialportlist",
+  .venv\Lib\site-packages\pygments\lexers\_mql_builtins.py:240:    'Seconds',
+  .venv\Lib\site-packages\pygments\lexers\_mql_builtins.py:241:    'SendFTP',
+> .venv\Lib\site-packages\pygments\lexers\_mql_builtins.py:242:    'SendMail',
+  .venv\Lib\site-packages\pygments\lexers\_mql_builtins.py:243:    'SendNotification',
+  .venv\Lib\site-packages\pygments\lexers\_mql_builtins.py:244:    'SeriesInfoInteger',
+  .venv\Lib\site-packages\torch\package\_stdlib.py:182:    "site",
+  .venv\Lib\site-packages\torch\package\_stdlib.py:183:    "smtpd",
+> .venv\Lib\site-packages\torch\package\_stdlib.py:184:    "smtplib",
+  .venv\Lib\site-packages\torch\package\_stdlib.py:185:    "sndhdr",
+  .venv\Lib\site-packages\torch\package\_stdlib.py:186:    "socket",
+  .venv\Lib\site-packages\torch\package\_stdlib.py:398:    "site",
+  .venv\Lib\site-packages\torch\package\_stdlib.py:399:    "smtpd",
+> .venv\Lib\site-packages\torch\package\_stdlib.py:400:    "smtplib",
+  .venv\Lib\site-packages\torch\package\_stdlib.py:401:    "sndhdr",
+  .venv\Lib\site-packages\torch\package\_stdlib.py:402:    "socket",
+
+

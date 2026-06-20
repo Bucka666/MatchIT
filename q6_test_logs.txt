@@ -1,0 +1,36 @@
+﻿Creating GPU memory snapshot for Function.
+Snapshot created. Restoring Function from memory snapshot.
+Restoring Function from memory snapshot.
+Fixed image paths for Modal
+[STARTUP] API keys loaded from env: 2 key(s) ÔÇö ['grailsweep_scanner', 'internal_admin']
+[VERTICAL] Loaded: GrailSweep (11 profile fields, 3 categories)
+[EMBEDDER] Backend: clip/ViT-L-14/laion2b_s32b_b82k (768-dim) on cuda
+[CACHE] Loading from numpy fast cache...
+[CACHE] Fast loaded 135789 FRONT + 0 BACK in 6.44s
+[WARMUP] All models loaded ÔÇö container ready for snapshot
+    GET /static/vendor/lucide.min.js.map -> 404 Not Found  (duration: 45.0 s, execution: 81.4 ms)
+    GET /static/manifest.json -> 304 Not Modified  (duration: 45.0 s, execution: 81.9 ms)
+[SSR-FOOTER] total=866 today=0
+    GET /admin -> 200 OK  (duration: 2.34 s, execution: 774.7 ms)
+    GET /static/assets/grailsweep_app_icon.png -> 304 Not Modified  (duration: 101.2 ms, execution: 53.3 ms)
+    GET /static/style.css -> 304 Not Modified  (duration: 112.8 ms, execution: 51.6 ms)
+    GET /static/vendor/lucide.min.js -> 304 Not Modified  (duration: 104.4 ms, execution: 54.0 ms)
+    GET /static/vendor/lucide.min.js.map -> 404 Not Found  (duration: 97.9 ms, execution: 38.7 ms)
+    GET /static/manifest.json -> 200 OK  (duration: 106.1 ms, execution: 26.7 ms)
+    GET /static/assets/grailsweep_favicon.png -> 304 Not Modified  (duration: 75.6 ms, execution: 28.9 ms)
+    GET /static/assets/favicon.ico -> 304 Not Modified  (duration: 80.5 ms, execution: 21.6 ms)
+[STEP6-TEST] Calling _issue_new_code(email=grailtest2026@outlook.com, tier=monthly)
+[SUBS] parent stat: uid=0 gid=0 mode=0o40755
+[SUBS] file stat: uid=0 gid=0 mode=0o100644
+[SUBS] saved 1448 bytes to /modal_data/subscriptions.json
+[RESEND] Sent to grailtest2026@outlook.com subject='Your GrailSweep Pro Monthly access code' id=fd64790e-7b9b-42af-ba6a-aef00cb9fac1
+[ISSUE] Sent code GRAIL-XRGG-QEYA to grailtest2026@outlook.com tier=monthly
+[STEP6-TEST] Calling _issue_new_topup_code(email=grailtest2026@outlook.com, credits=75)
+[SUBS] parent stat: uid=0 gid=0 mode=0o40755
+[SUBS] file stat: uid=0 gid=0 mode=0o100644
+[SUBS] saved 1807 bytes to /modal_data/subscriptions.json
+[RESEND] Sent to grailtest2026@outlook.com subject='Your GrailSweep top-up: 75 scans' id=1e6db831-fe71-4f84-abc3-86368540d7f1
+[TOPUP] Issued code TOPUP-UWMF-G28M to grailtest2026@outlook.com (75 credits)
+   POST /admin/test_email_paths -> 302 Found  (duration: 444.9 ms, execution: 397.1 ms)
+[SSR-FOOTER] total=866 today=0
+    GET /admin -> 200 OK  (duration: 2.48 s, execution: 2.43 s)

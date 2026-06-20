@@ -1,0 +1,18 @@
+@app.route("/")
+def index():
+    return "HOME FROM EDITED APP.PY"
+
+
+{% extends "base.html" %}
+{% block body %}
+<p><b>Database images:</b> {{ count }}</p>
+<p><b>Data folder:</b> {{ data_dir }}</p>
+<p><b>DB path:</b> {{ db_path }}</p>
+
+
+<p>Workflow: Upload product photos → Review auto SKUs → Match a new photo → Get closest SKU.</p>
+
+<form method="POST" action="/reset_db" onsubmit="return confirm('Reset DB records? (keeps image files)');">
+  <button>Reset DB Records</button>
+</form>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="mi-card" style="max-width:800px;margin:0 auto;padding:32px;">
+  <h1 class="mi-h1" style="font-size:1.6rem;margin-bottom:8px;">Terms of Service</h1>
+  <p style="color:var(--mi-muted,#aaa);font-size:0.8rem;margin-bottom:32px;">Last updated: May 2026</p>
+
+  <div class="legal-section">
+    <h2 id="acceptance">1. Acceptance of Terms</h2>
+    <p>By using GrailSweep, you agree to these Terms of Service. If you do not agree, please do not use the service.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="service">2. Description of Service</h2>
+    <p>GrailSweep is an AI-powered trading card identification and price reference tool. We provide:</p>
+    <ul>
+      <li>Visual card matching using AI technology</li>
+      <li>Price reference data from third-party sources</li>
+      <li>Collection tracking tools</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="accuracy">3. Accuracy Disclaimer</h2>
+    <p>GrailSweep uses AI technology to identify cards and provide price estimates. While we strive for accuracy, we cannot guarantee that all identifications or prices are correct. Price data is sourced from third-party marketplaces and may not reflect current market conditions.</p>
+    <p><strong>GrailSweep is a reference tool only. Do not rely solely on our prices for buying or selling decisions.</strong></p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="free-tier">4. Free Tier</h2>
+    <p>Free users receive 25 scans per calendar month. The counter resets at 00:00 UTC on the first day of each month. Once the limit is reached, you can either wait for the next month's reset, purchase a one-time scan top-up, or upgrade to a Pro subscription.</p>
+    <p>Free scans are tracked server-side using a combination of device identifiers and request characteristics. Attempting to circumvent the free tier limit (for example by repeatedly clearing browser data) is prohibited under Section 8 (Acceptable Use).</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="pro-subscription">5. Pro Subscription &amp; Top-Ups</h2>
+    <p>Pro subscriptions are billed monthly or annually via Stripe and auto-renew unless cancelled. You can cancel at any time from your account; cancellation takes effect at the end of your current billing period.</p>
+    <p>Scan top-ups are one-time purchases that add a fixed number of paid scans to your account. Paid scans do not expire and roll over indefinitely. Free scans are consumed first; paid scans are only used once free scans are exhausted.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="fair-usage">6. Fair Usage Policy</h2>
+    <p>Pro subscriptions are sold on the basis of fair, personal use. To prevent abuse and maintain service quality for all users, all plans (including Pro tiers marketed as "unlimited") are subject to fair usage limits.</p>
+    <p>Current fair usage limits per Pro account:</p>
+    <ul>
+      <li><strong>Monthly Pro:</strong> up to 1,000 scans per calendar month</li>
+      <li><strong>Annual Pro:</strong> up to 1,200 scans per calendar month</li>
+      <li><strong>Founder Yearly:</strong> up to 1,200 scans per calendar month</li>
+    </ul>
+    <p>If you approach these limits, you may receive a friendly notification. If you sustainably exceed them, scan response speed may be reduced, and in extreme cases scans may be temporarily blocked. Genuine power users who legitimately need higher limits should contact us at <a href="mailto:support@grailsweep.com" style="color:#b14dff;">support@grailsweep.com</a> &mdash; we'd love to hear from you.</p>
+    <p>We reserve the right to adjust fair usage limits with reasonable notice. Limits exist primarily to prevent automated abuse and bulk commercial use; they are set well above the needs of individual collectors.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="cancellation">7. Cancellation &amp; Refunds</h2>
+    <p><strong>Subscriptions:</strong> You can cancel a Pro subscription at any time. Cancellation stops future renewals; you retain Pro access until the end of your current billing period. We do not provide partial refunds for unused portions of a billing period.</p>
+    <p><strong>Statutory cancellation rights (UK/EU):</strong> Under the Consumer Contracts Regulations 2013, you normally have 14 days to cancel digital content purchases. By making your first paid scan or activating a Pro subscription, <strong>you expressly consent to immediate performance of the contract and acknowledge that you lose your statutory right of cancellation</strong>. This is standard for digital services where the product is delivered immediately.</p>
+    <p><strong>Top-up scans:</strong> Scan top-ups are non-refundable digital goods. Once purchased, they are credited to your account and cannot be returned.</p>
+    <p><strong>Discretionary refunds:</strong> Outside of the above, we may offer refunds on a case-by-case basis where there has been a clear technical fault on our side or where consumption has been minimal. Contact <a href="mailto:support@grailsweep.com" style="color:#b14dff;">support@grailsweep.com</a> with your purchase details.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="acceptable-use">8. Acceptable Use</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>Use GrailSweep for any unlawful purpose</li>
+      <li>Attempt to reverse engineer, scrape, or replicate our AI systems or card database</li>
+      <li>Share access codes with others or use a single Pro account across multiple users</li>
+      <li>Use automated tools, scripts, or bots to scan cards</li>
+      <li>Attempt to circumvent the free tier limit by clearing browser data, switching devices, or any similar means</li>
+      <li>Use the service for bulk commercial inventory digitisation without prior written agreement</li>
+    </ul>
+    <p>Breach of acceptable use may result in suspension or termination of your account without refund.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="access-codes">9. Access Codes</h2>
+    <p>Access codes are issued upon successful payment and are non-transferable. Each code is intended for personal use by a single individual. Sharing access codes constitutes a breach of these terms.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="intellectual-property">10. Intellectual Property</h2>
+    <p>Trading card images and names are the property of their respective owners (Nintendo/Pok&eacute;mon, Konami, Wizards of the Coast, etc.). GrailSweep does not claim ownership of any card artwork or names.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="liability">11. Limitation of Liability</h2>
+    <p>GrailSweep is provided "as is" without warranty of any kind. To the maximum extent permitted by law, we are not liable for any direct, indirect, incidental, or consequential losses arising from your use of the service, including (but not limited to) financial decisions made based on our price data or card identifications.</p>
+    <p>Nothing in these terms limits or excludes our liability for fraud, fraudulent misrepresentation, death or personal injury caused by negligence, or any other liability that cannot lawfully be excluded.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="pricing">12. Pricing &amp; Promotions</h2>
+    <p>We may offer founder pricing, promotional discounts, or limited-time offers. Where a price is described as "locked in" or similar (for example, founder rate yearly subscriptions), that price applies to renewals of the same subscription for as long as it remains continuously active. If a subscription lapses or is cancelled, the locked-in price is forfeited and the then-current standard pricing will apply on any new purchase.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="changes">13. Changes to Terms</h2>
+    <p>We may update these terms from time to time. Material changes will be communicated via the service or by email where we hold one. Continued use of GrailSweep after changes are posted constitutes acceptance of the updated terms.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="governing-law">14. Governing Law</h2>
+    <p>These terms are governed by the laws of England and Wales. Any disputes shall be subject to the exclusive jurisdiction of the courts of England and Wales.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2 id="contact">15. Contact</h2>
+    <p>For any questions about these terms, contact us at <a href="mailto:support@grailsweep.com" style="color:#b14dff;">support@grailsweep.com</a>.</p>
+  </div>
+</div>
+
+<style>
+.legal-section { margin-bottom: 28px; }
+.legal-section h2 { font-size: 1rem; font-weight: 700; color: var(--mi-text,#eee); margin-bottom: 10px; font-family: 'DM Sans', sans-serif; }
+.legal-section p { font-size: 0.88rem; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 8px; }
+.legal-section ul { font-size: 0.88rem; color: rgba(255,255,255,0.75); line-height: 1.7; padding-left: 20px; }
+.legal-section li { margin-bottom: 4px; }
+</style>
+{% endblock %}

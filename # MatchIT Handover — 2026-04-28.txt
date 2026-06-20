@@ -1,0 +1,50 @@
+# MatchIT Handover — 2026-04-28
+
+## Outstanding (priority order)
+
+### 1. Credentials masking — resume mid-flow
+- Inventory file: `C:\MatchIT\_secrets_inventory.tmp.txt` — KEEP until full rotation verified
+- Modal secrets needed (none currently exist): `stripe-credentials`, `gmail-credentials`, `google-vision-credentials`, `vapid-credentials`, `app-credentials`
+- Approach: ONE `modal secret create` command at a time, edit each in Notepad with real values, paste separately into PowerShell. No multi-step scripts.
+- Generate fresh Flask secret key (current value is placeholder `CHANGE_ME_TO_RANDOM`)
+- Then: update code to read `os.environ` everywhere, strip `config.json` of secret fields, create `.gitignore` + `config.example.json`
+- `vision_ocr_patch.py` has a config.json fallback that needs removing (inconsistency vs `ocr_confirm.py`)
+
+### 2. Key rotations (after masking, no rush)
+- Stripe live secret key + webhook secret
+- Gmail app password (grailsweep)
+- Google Vision API key — add API restrictions (Cloud Vision only) + daily quota cap
+- Rotation = new value → `modal secret create --force` → redeploy
+
+
+### 3. Tier threshold sense check (carried over from 2026-04-25)
+- 15min real-scan session with collection
+- Tune the 4 constants at top of price reveal script if bands feel off (£1 / £10 / £50 / £200)
+
+### 4. Aaron Clarke follow-up
+- IG DM sent 2026-04-25
+- Follow-up window opens ~30 April. If no reply by then: single follow-up. If still nothing by ~5 May: move on / try alternate UK grading partner.
+
+### 5. Microsoft Store submission (parked)
+- Waiting on launch date confirmation with business partner
+- Account verification = 3-14 day bottleneck; submission itself is fast
+- Realistic timeline once started: 2-3 weeks
+
+## Key identifiers
+- Modal workspace: `c-a-buckley` · Modal app: `matchit-api`
+- Live URL: `https://grailsweep.com`
+- Test code: `GRAIL-XAJI-0Y6D`
+- Deploy: `PYTHONIOENCODING=utf-8 modal deploy matchit_modal.py`
+- Project root: `C:\MatchIT`
+
+## Standing context
+- Free tier: 30 scans/month with monthly refresh (deployed 2026-04-27)
+- Pro pricing: £2.99/month
+- Modal Starter plan ($30/mo credit, 10 GPU concurrency cap)
+- Team plan break-even: ~90 Pro subscribers
+- Not eligible for Modal startup credits (VC-only programme)
+
+## Notes for next chat
+- KEYS.md incident: confirmed local-only, no breach, file deleted + Recycle Bin emptied
+- Garbage Modal secrets from failed Part 1 attempt have been cleaned (verified empty `modal secret list`)
+- Production unchanged — running on existing config.json reads, fully functional

@@ -1,0 +1,67 @@
+{
+  "id": "/",
+  "name": "GrailSweep",
+  "short_name": "GrailSweep",
+  "description": "AI-Powered Trading Card Identification & Price Reference",
+  "lang": "en-GB",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0f0f1a",
+  "theme_color": "#0f0f1a",
+  "orientation": "any",
+  "prefer_related_applications": false,
+  "categories": ["productivity", "utilities", "lifestyle"],
+  "icons": [
+    {
+      "src": "/static/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/assets/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/static/assets/screenshot-wide-1.png",
+      "sizes": "1749x984",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "AI card identification with live pricing across Pokémon, Yu-Gi-Oh and Magic: The Gathering"
+    },
+    {
+      "src": "/static/assets/screenshot-wide-2.png",
+      "sizes": "1920x931",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "100% confidence card matches with multi-source pricing from TCGPlayer and Cardmarket"
+    },
+    {
+      "src": "/static/assets/screenshot-narrow-1.png",
+      "sizes": "750x1529",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "AI condition grading with per-attribute breakdown: centering, corners, edges, surface"
+    },
+    {
+      "src": "/static/assets/screenshot-narrow-2.png",
+      "sizes": "750x1504",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Track your full collection value across all three TCGs in one place"
+    }
+  ]  
+  } 

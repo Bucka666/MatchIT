@@ -1,0 +1,1943 @@
+{% extends "base.html" %}
+{% block body %}
+
+{# Precision for close ties #}
+{% set score_diff = 1.0 %}
+{% set sim_diff   = 1.0 %}
+{% if results and (results|length) > 1 %}
+  {% set score_diff = (results[0].score|float - results[1].score|float) | abs %}
+  {% set sim_diff   = (results[0].similarity|float - results[1].similarity|float) | abs %}
+{% endif %}
+
+<div class="mi-card res-page-wrap">
+  <div class="mi-card-head">
+    <h1 class="mi-h1">Top matches</h1>
+    <a class="mi-pill mi-pill-ghost" href="/match">New match</a>
+  </div>
+
+  <div class="res-col-actions">
+    <button type="button" class="res-col-add-btn" onclick="colAddCard()">⭐ Add to Collection</button>
+    <a href="/collection" class="res-col-view-btn">🃏 My Collection</a>
+    <button class="res-col-add-btn" onclick="showPriceAlertModal()" style="background:rgba(255,165,0,0.1);border-color:rgba(255,165,0,0.3);color:#ffa500;">🔔 Set Price Alert</button>
+    <button type="button" class="res-col-add-btn" id="gsWatchlistBtn" onclick="gsWatchlistToggle()" style="background:rgba(0,229,255,0.08);border-color:rgba(0,229,255,0.3);color:#00e5ff;">☆ Watchlist</button>
+  </div>
+
+  {# ── Scan status / paywall notification (Task 9c Phase B) ── #}
+  {% if paywall_triggered %}
+  <div class="mi-flash err res-paywall-banner" style="margin:0 0 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <span style="flex:1;min-width:200px;">
+      🔒 <strong>Scan limit reached.</strong> You've used all 25 free scans this month.
+      Buy a top-up pack or upgrade to Pro to keep scanning.
+    </span>
+    <button class="mi-btn mi-btn-primary" style="white-space:nowrap;" onclick="gsTopupModalOpen()">Get more scans</button>
+    <a class="mi-btn" style="white-space:nowrap;background:rgba(177,77,255,0.15);border-color:#b14dff;color:#b14dff;" href="/upgrade">Upgrade to Pro</a>
+  </div>
+  {% elif scans_remaining is defined and scans_remaining is not none and scans_remaining == 0 and gs_scan_state.topup_remaining and gs_scan_state.topup_remaining > 0 %}
+  <div class="mi-flash" style="margin:0 0 14px;background:rgba(177,77,255,0.12);border-color:rgba(177,77,255,0.3);color:#b14dff;">
+    ⚡ <strong>{{ gs_scan_state.topup_remaining }} top-up scan{{ '' if gs_scan_state.topup_remaining == 1 else 's' }} remaining</strong> ·
+    <a href="#" onclick="gsTopupModalOpen();return false;" style="color:#b14dff;text-decoration:underline;font-weight:700;">Get more scans</a>
+  </div>
+  {% elif scans_remaining is defined and scans_remaining is not none and scans_remaining > 0 and scans_remaining <= 3 %}
+  <div class="mi-flash res-scans-low-banner" style="margin:0 0 14px;background:rgba(255,215,0,0.08);border-color:rgba(255,215,0,0.35);color:#ffd700;">
+    ⚡ <strong>{{ scans_remaining }} free scan{{ '' if scans_remaining == 1 else 's' }} left</strong> this month.
+    <a href="#" onclick="gsTopupModalOpen();return false;" style="color:#ffd700;text-decoration:underline;">Get a top-up</a> or
+    <a href="/upgrade" style="color:#ffd700;text-decoration:underline;">upgrade to Pro</a>.
+  </div>
+  {% endif %}
+
+  <div class="res-layout">
+
+    <!-- ── Query panel ── -->
+    <div class="res-query">
+      <div class="res-section-title">Query image</div>
+      <div class="res-qimgs">
+        <div class="res-qimg-wrap">
+          <div class="res-qlabel">{{ vbrand.image_labels.front }}</div>
+          <img class="res-qimg" src="{{ query_image_b64 if query_image_b64 else '/img/query/' + query_filename }}"
+               alt="Query" onclick="miOpen(this)" title="Click to enlarge"
+               onerror="imgRetry(this)">
+        </div>
+        {% if query_filename_2 %}
+        <div class="res-qimg-wrap">
+          <div class="res-qlabel">{{ vbrand.image_labels.back }}</div>
+          <img class="res-qimg" src="/img/query/{{ query_filename_2 }}"
+               alt="Query 2" onclick="miOpen(this)" title="Click to enlarge"
+               onerror="imgRetry(this)">
+        </div>
+        {% endif %}
+      </div>
+      <div class="res-qhint">Click image to enlarge</div>
+
+      {% if low_cert %}
+      <div class="mi-flash err res-lowcert">
+        ⚠ Low certainty — results may be ambiguous. Try a cleaner photo.
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="res-right-col">
+    {% set r1 = results[0] if results else none %}
+    {% if r1 and ocr_status in ('promoted', 'rank1_confirmed', 'direct_lookup', 'ocr_direct_first') %}
+    <div class="res-instant-answer">
+      <div class="res-ia-badge">✅ IDENTIFIED</div>
+      <div class="res-ia-name">{{ r1.profile.name if r1.profile else r1.sku }}</div>
+      {% if r1.profile and r1.profile.set_name %}
+      <div class="res-ia-set">{{ r1.profile.set_name }}{% if r1.profile.number %} · #{{ r1.profile.number }}{% endif %}</div>
+      {% endif %}
+      {% if r1.profile and r1.profile.prices %}
+      {% set _tcg = r1.profile.prices.tcgplayer if r1.profile.prices.tcgplayer else {} %}
+      {% set _cm = r1.profile.prices.cardmarket if r1.profile.prices.cardmarket else {} %}
+      {% set _tcg_lbl = {'normal':'Normal','reverseHolofoil':'Reverse Holo','holofoil':'Holo','1stEdition':'1st Ed','unlimited':'Unlimited','1stEditionHolofoil':'1st Ed Holo','unlimitedHolofoil':'Unlimited Holo'} %}
+      {% set _cm_avg = _cm.avg_sell|float if _cm.avg_sell else 0 %}
+      {% if _cm_avg > 0 %}
+      <div class="res-ia-best">
+        <div class="res-ia-best-lbl">BEST ESTIMATE</div>
+        <div class="res-ia-best-val">£{{ "%.2f"|format(_cm_avg * 0.86) }}</div>
+        <div class="res-ia-best-sub">Cardmarket avg sell</div>
+      </div>
+      {% endif %}
+      <div class="res-ia-price-cols">
+        <div class="res-ia-price-col">
+          <div class="res-ia-src-hdr">TCGPlayer</div>
+          {% for vk, vd in _tcg.items() %}
+            {% if vd is mapping %}{% set pr = (vd.market or vd.mid or vd.low or 0)|float %}{% else %}{% set pr = vd|float %}{% endif %}
+            {% if pr > 0 %}<div class="res-ia-price">£{{ "%.2f"|format(pr * 0.79) }} <small>{{ _tcg_lbl.get(vk, vk) }}</small></div>{% endif %}
+          {% endfor %}
+        </div>
+        <div class="res-ia-price-col">
+          <div class="res-ia-src-hdr">Cardmarket</div>
+          {% for fk, flbl in [('avg_sell','Avg Sell'),('low','Low'),('trend','Trend')] %}
+            {% set fv = _cm[fk] if fk in _cm else 0 %}
+            {% if fv and fv|float > 0 %}<div class="res-ia-price">£{{ "%.2f"|format(fv|float * 0.86) }} <small>{{ flbl }}</small></div>{% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      <div class="res-ia-actions">
+        {% if r1.profile and r1.profile.tcgplayer_url %}
+        <a href="{{ r1.profile.tcgplayer_url }}" target="_blank" class="res-ia-btn res-ia-btn--buy">Buy</a>
+        {% endif %}
+        {% if r1.profile and r1.profile.cardmarket_url %}
+        <a href="{{ r1.profile.cardmarket_url }}" target="_blank" class="res-ia-btn res-ia-btn--sell">Sell</a>
+        {% endif %}
+        <a href="#top5" class="res-ia-btn res-ia-btn--more">See all results ↓</a>
+      </div>
+
+      {% if results %}
+      <div class="res-price-history" id="resPriceHistory">
+        <div class="res-ph-header">
+          <span class="res-ph-title">📈 30 Day Price History</span>
+          <span class="res-ph-badge">PRO</span>
+        </div>
+        <div id="resPriceHistoryInner">
+          <canvas id="resPriceChart" height="120"></canvas>
+        </div>
+        <div id="resPriceHistoryLocked" class="gs-hidden">
+          <div class="res-ph-locked">
+            <span>🔒 Price history is a Pro feature</span>
+            <a href="/upgrade" class="res-ph-upgrade">Upgrade to Pro</a>
+          </div>
+        </div>
+        <div id="resPriceHistoryEmpty" class="gs-hidden">
+          <div class="res-ph-empty">Not enough data yet — check back tomorrow</div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+    {% endif %}
+
+    {% if grade %}
+    <div class="res-grade" id="resGrade">
+      <div class="res-grade-header">
+        <span class="res-grade-title">📋 Condition Grade</span>
+        <span class="res-grade-badge res-grade-badge--auto" id="resGradeBadge">Est. Grade</span>
+      </div>
+      <div class="res-grade-row">
+        <span class="res-grade-score" id="resGradeScore">{{ grade.score }}–{{ grade.score_high }}</span>
+        <span class="res-grade-label" id="resGradeLabel">{{ grade.label }}</span>
+      </div>
+      <p class="grade-photo-note">Visual estimate — lighting conditions may affect accuracy. Use AI Deep Analysis for a full PSA-aligned assessment.</p>
+      <div class="res-grade-bars gs-hidden" id="resGradeBars"></div>
+      <div class="res-grade-summary gs-hidden" id="resGradeSummary"></div>
+      <button type="button" class="res-grade-deep-btn" id="resDeepGradeBtn" onclick="gsDeepGrade()">🔬 AI Deep Analysis (Pro)</button>
+      <p class="grade-limit-note" id="gradeRemainingNote"></p>
+      <div class="res-grade-loading gs-hidden" id="resGradeLoading">Analysing with Claude Vision…</div>
+    </div>
+    {% endif %}
+
+    <!-- ── Results cards ── -->
+    <div class="res-cards" id="top5">
+      {% if results|length > 1 %}<div class="res-section-title">Top {{ [results|length, 5]|min }} matches</div>{% endif %}
+
+      {% if vbrand.guidance_text %}
+      <div class="res-guidance">
+        <div class="res-guidance-text">{{ vbrand.guidance_text }}</div>
+        {% if vbrand.guidance_feedback %}
+        <div class="res-guidance-feedback">{{ vbrand.guidance_feedback }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% for r in results %}
+      {% if r.rank <= 5 %}
+      <div class="res-card {% if r.rank == 1 %}res-card--top{% elif r.rank in [2,3] %}res-card--mid{% else %}res-card--low{% endif %}">
+
+        <!-- Rank badge -->
+        <div class="res-rank">
+          <span class="res-rank-num">#{{ r.rank }}</span>
+          {% if r.rank == 1 %}
+            <span class="res-trophy">🏆</span>
+            <div class="res-rank-best">Best match</div>
+          {% endif %}
+        </div>
+
+        <!-- Thumbnails -->
+        <div class="res-thumbs">
+          <div class="res-thumb-wrap">
+            {% if vbrand and vbrand.id in ('keys', 'hardware', 'remotes') %}
+            <img class="res-thumb res-thumb--ras" src="/img/ras/{{ r.sku }}.jpg"
+                 alt="illustration" onclick="miOpen(this)" title="Click to enlarge"
+                 onerror="this.parentElement.style.display='none'">
+            {% endif %}
+            <div class="res-thumb-lbl">Ref</div>
+          </div>
+          <div class="res-thumb-wrap">
+            <img class="res-thumb" src="/img/db/{{ r.image_id_front or r.image_id }}.jpg"
+                 alt="front" onclick="miOpen(this)" title="Click to enlarge"
+                 onerror="imgRetry(this)">
+            <div class="res-thumb-lbl">{{ vbrand.image_labels.front }}</div>
+          </div>
+          {% if r.image_id_back %}
+          <div class="res-thumb-wrap">
+            <img class="res-thumb" src="/img/db/{{ r.image_id_back }}.jpg"
+                 alt="back" onclick="miOpen(this)" title="Click to enlarge"
+                 onerror="imgRetry(this)">
+            <div class="res-thumb-lbl">{{ vbrand.image_labels.back }}</div>
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- SKU + metrics -->
+        <div class="res-info">
+          <div class="res-sku">{{ r.sku }}</div>
+          {% if r.manufacturer %}
+          <div class="res-manufacturer">{{ r.manufacturer }}</div>
+          {% endif %}
+          <div class="res-imgcount">{{ r.sku_img_count }} catalogue images</div>
+
+          <!-- ── Confidence (rank-relative, not raw similarity) ── -->
+          {% set raw_sim = r.similarity|float %}
+          {% set abs_strength = (((raw_sim - 0.65) / 0.30) * 100)|round(0)|int %}
+          {% if abs_strength > 100 %}{% set abs_strength = 100 %}{% endif %}
+          {% if abs_strength < 0 %}{% set abs_strength = 0 %}{% endif %}
+          {# Scale down by rank so #1 always visually leads — 6pts per rank step #}
+          {% if r.rank == 1 %}
+            {% set strength = abs_strength %}
+          {% else %}
+            {% set rank_penalty = (r.rank - 1) * 6 %}
+            {% set strength = abs_strength - rank_penalty %}
+            {% if strength < 0 %}{% set strength = 0 %}{% endif %}
+          {% endif %}
+
+          <div class="res-conf">
+            <div class="res-conf-header">
+              <span class="res-conf-label">Confidence</span>
+              <span class="res-conf-val
+                {%- if strength >= 75 %} res-conf-val--high
+                {%- elif strength >= 45 %} res-conf-val--mid
+                {%- else %} res-conf-val--low{% endif %}">{{ strength }}%</span>
+            </div>
+            <div class="res-conf-track">
+              <div class="res-conf-fill
+                {%- if strength >= 75 %} res-conf-fill--high
+                {%- elif strength >= 45 %} res-conf-fill--mid
+                {%- else %} res-conf-fill--low{% endif %}"
+                   style="width:{{ strength }}%"></div>
+            </div>
+            {% if r.rank == 1 and results|length > 1 %}
+              {% set gap = ((results[0].similarity|float - results[1].similarity|float) * 1000)|round(1) %}
+              {% if gap > 0.5 %}
+              <div class="res-conf-lead
+                {%- if gap >= 10 %} res-conf-lead--strong
+                {%- elif gap >= 3 %} res-conf-lead--moderate
+                {%- else %} res-conf-lead--slim{% endif %}">
+                Lead over #2: {{ gap|round(1) }} pts
+              </div>
+              {% endif %}
+            {% endif %}
+          </div>
+
+          <!-- Card profile data -->
+          {% if r.profile %}
+            {% if r.profile.name %}
+            <div class="res-card-name">{{ r.profile.name }}</div>
+            {% endif %}
+            {% if r.profile.set_name %}
+            <div class="res-card-set">{{ r.profile.set_name }}{% if r.profile.card_number %} #{{ r.profile.card_number }}{% endif %}</div>
+            {% endif %}
+
+            {% set p = r.profile %}
+            {% set detail_fields = [] %}
+            {% if p.rarity %}{% set _ = detail_fields.append(p.rarity|replace('_',' ')) %}{% endif %}
+            {% if p.energy_type %}{% set _ = detail_fields.append(p.energy_type|replace('_',' ')) %}{% endif %}
+            {% if p.mtg_color %}{% set _ = detail_fields.append(p.mtg_color|replace('_',' ')) %}{% endif %}
+            {% if p.ygo_card_type %}{% set _ = detail_fields.append(p.ygo_card_type|replace('_',' ')) %}{% endif %}
+            {% if p.set_era %}{% set _ = detail_fields.append(p.set_era|replace('_',' ')) %}{% endif %}
+            {% if p.hp %}{% set _ = detail_fields.append(p.hp ~ ' HP') %}{% endif %}
+            {% if p.type_line %}{% set _ = detail_fields.append(p.type_line) %}{% endif %}
+            {% if detail_fields %}
+            <div class="res-card-details">{{ detail_fields|join(' · ') }}</div>
+            {% endif %}
+
+            <!-- Prices -->
+            {% if p.prices %}
+            {% set _tcg = p.prices.tcgplayer if p.prices.tcgplayer else {} %}
+            {% set _cm = p.prices.cardmarket if p.prices.cardmarket else {} %}
+            {% set _tcg_lbl = {'normal':'Normal','reverseHolofoil':'Reverse Holo','holofoil':'Holo','1stEdition':'1st Ed','unlimited':'Unlimited','1stEditionHolofoil':'1st Ed Holo','unlimitedHolofoil':'Unlimited Holo'} %}
+            <div class="res-price-sections">
+              {% if _tcg %}
+              <div class="res-price-section">
+                <div class="res-price-section-hdr">TCGPlayer</div>
+                <div class="res-price-section-body">
+                {% for vk, vd in _tcg.items() %}
+                  {% if vd is mapping %}{% set pr = (vd.market or vd.mid or vd.low or 0)|float %}{% else %}{% set pr = vd|float %}{% endif %}
+                  {% if pr > 0 %}
+                  <div class="res-price-entry">
+                    <span class="res-price-gbp">£{{ "%.2f"|format(pr * 0.79) }}</span>
+                    <span class="res-price-secondary">${{ "%.2f"|format(pr) }}</span>
+                    <span class="res-price-lbl">{{ _tcg_lbl.get(vk, vk) }}</span>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+              {% if _cm %}
+              <div class="res-price-section">
+                <div class="res-price-section-hdr">Cardmarket</div>
+                <div class="res-price-section-body">
+                {% for fk, flbl in [('avg_sell','Avg Sell'),('low','Low'),('trend','Trend')] %}
+                  {% set fv = _cm[fk] if fk in _cm else 0 %}
+                  {% if fv and fv|float > 0 %}
+                  <div class="res-price-entry">
+                    <span class="res-price-gbp">£{{ "%.2f"|format(fv|float * 0.86) }}</span>
+                    <span class="res-price-secondary">€{{ "%.2f"|format(fv|float) }}</span>
+                    <span class="res-price-lbl">{{ flbl }}</span>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+              {% if _cm.avg_1d or _cm.avg_7d or _cm.avg_30d %}
+              <div class="res-price-section res-price-section--trend">
+                <div class="res-price-section-hdr">Price Trend</div>
+                <div class="res-price-section-body">
+                {% for fk, flbl in [('avg_1d','1d'),('avg_7d','7d'),('avg_30d','30d')] %}
+                  {% set fv = _cm[fk] if fk in _cm else 0 %}
+                  {% if fv and fv|float > 0 %}
+                  <div class="res-price-entry">
+                    <span class="res-price-gbp res-price-gbp--sm">£{{ "%.2f"|format(fv|float * 0.86) }}</span>
+                    <span class="res-price-secondary">€{{ "%.2f"|format(fv|float) }}</span>
+                    <span class="res-price-lbl">{{ flbl }}</span>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+                </div>
+              </div>
+              {% endif %}
+            </div>
+            {% endif %}
+          {% endif %}
+
+          <!-- Cross references -->
+          {% if r.crossrefs or (r.profile and r.profile.crossrefs) %}
+          {% set xrefs = r.crossrefs or r.profile.crossrefs %}
+          <div class="res-xrefs">
+            <div class="res-xref-title">Cross references</div>
+            <div class="res-xref-list">
+              {% for x in xrefs %}
+              <a class="res-xref-item res-xref-link"
+                 href="{% if x.brand|lower == 'hd' %}https://www.davenport-burgess.com/search/{{ x.code|urlencode }}{% elif x.brand|lower == 'jma' %}https://jma-uk.co.uk/catalogsearch/result/?q={{ x.code|urlencode }}{% elif x.brand|lower == 'silca' %}https://www.aldridgesecurity.co.uk/catalogsearch/result/?q={{ x.code|urlencode }}{% else %}https://www.google.com/search?q={{ x.brand }}+{{ x.code|urlencode }}+key+blank{% endif %}"
+                 target="_blank" title="Search {{ x.brand|upper }}">
+                <span class="res-xref-brand">{% if x.brand|lower == 'hd' %}HD (Davenport){% else %}{{ x.brand|upper }}{% endif %}</span>
+                <span class="res-xref-code">{{ x.code }}</span>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Marketplace links -->
+          {% if r.profile and r.profile.name %}
+          {% set search_term = (r.profile.name ~ ' ' ~ (r.profile.set_name or '') ~ ' ' ~ (r.profile.card_number or ''))|trim %}
+          <div class="res-marketplace">
+            <div class="res-xref-title">Buy / Sell / Trade</div>
+            <div class="res-marketplace-links">
+              <a class="res-mp-link res-mp-buy" href="https://www.google.com/search?q=site:bigorbitcards.co.uk+{{ search_term|urlencode }}" target="_blank">🇬🇧 Big Orbit</a>
+              <a class="res-mp-link res-mp-sell" href="https://www.google.com/search?q=site:bigorbitcards.co.uk+sell+{{ search_term|urlencode }}" target="_blank">💷 Sell</a>
+              {% if r.profile.tcgplayer_url %}
+              <a class="res-mp-link res-mp-buy" href="{{ r.profile.tcgplayer_url }}" target="_blank">🇺🇸 TCGPlayer</a>
+              {% else %}
+              <a class="res-mp-link res-mp-buy" href="https://www.tcgplayer.com/search/all/product?q={{ search_term|urlencode }}" target="_blank">🇺🇸 TCGPlayer</a>
+              {% endif %}
+              {% if r.profile.cardmarket_url %}
+              <a class="res-mp-link res-mp-buy" href="{{ r.profile.cardmarket_url }}" target="_blank">🇪🇺 Cardmarket</a>
+              {% else %}
+              <a class="res-mp-link res-mp-buy" href="https://www.cardmarket.com/en/Pokemon/Products/Search?searchString={{ search_term|urlencode }}" target="_blank">🇪🇺 Cardmarket</a>
+              {% endif %}
+              <a class="res-mp-link res-mp-buy" href="https://www.google.com/search?q=site:cardtrader.com+{{ search_term|urlencode }}" target="_blank">🔄 CardTrader</a>
+              <a class="res-mp-link res-mp-buy" href="https://totalcards.net/search?q={{ search_term|urlencode }}" target="_blank">🇬🇧 Total Cards</a>
+              <a class="res-mp-link res-mp-buy" href="https://www.miniaturemarket.com/searchresults?q={{ search_term|urlencode }}" target="_blank">🇺🇸 Miniature Market</a>
+            </div>
+          </div>
+          {% endif %}
+
+        </div><!-- /res-info -->
+      </div><!-- /res-card -->
+      {% endif %}
+      {% endfor %}
+    </div><!-- /res-cards -->
+    </div><!-- /res-right-col -->
+  </div><!-- /res-layout -->
+
+  <!-- ── Feedback ── -->
+  {% if feedback_token %}
+  <div class="res-feedback" id="resFeedback">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+      <div class="res-fb-title" style="margin:0;">{{ ui_text.feedback_correct_prompt | default("Was the correct card in these results?") }}</div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <label style="display:flex; align-items:center; gap:5px; font-size:0.75rem; color:var(--mi-muted,#aaa); cursor:pointer;">
+          <input type="checkbox" id="resFbIsTest" style="cursor:pointer;"> This is a test
+        </label>
+        <button onclick="document.getElementById('resFeedback').style.display='none'" style="background:none;border:none;color:var(--mi-muted,#aaa);font-size:1.1rem;cursor:pointer;padding:0 4px;">✕</button>
+      </div>
+    </div>
+    <div class="res-fb-row">
+      <button class="res-fb-btn res-fb-yes" onclick="resFeedback('correct', '{{ results[0].sku }}', 1)">
+        👍 Yes — #1 is correct
+      </button>
+      <div class="res-fb-picks">
+        {% for r in results %}
+        {% if r.rank <= 5 and r.rank > 1 %}
+        <button class="res-fb-pick" onclick="resFeedback('correct', '{{ r.sku }}', {{ r.rank }})">
+          #{{ r.rank }} {{ r.sku }}
+        </button>
+        {% endif %}
+        {% endfor %}
+      </div>
+      <button class="res-fb-btn res-fb-no" onclick="resFbNotFound()">
+        👎 Not in results
+      </button>
+    </div>
+  </div>
+  <div class="res-fb-followup" id="resFbFollowup" style="display:none;">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+      <div class="res-fb-title" style="margin:0;">{{ ui_text.feedback_notfound_prompt | default("Which card was it? (enter set number or leave blank if unknown)") }}</div>
+      <button onclick="document.getElementById('resFbFollowup').style.display='none'; document.getElementById('resFeedback').style.display='flex';" style="background:none;border:none;color:var(--mi-muted,#aaa);font-size:1.1rem;cursor:pointer;padding:0 4px;">✕</button>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <input id="resFbSkuInput" type="text" placeholder="{{ ui_text.feedback_sku_placeholder | default('e.g. SKU code') }}" autocomplete="off" autocapitalize="characters"
+        style="padding:7px 12px; border-radius:7px; border:1px solid rgba(255,255,255,0.2);
+               background:rgba(255,255,255,0.06); color:var(--mi-text,#eee);
+               font-size:0.85rem; width:160px; outline:none;">
+      <button class="res-fb-btn res-fb-no" onclick="resFbSubmitNotFound()">Submit</button>
+      <button class="res-fb-btn" onclick="resFbSubmitNotFound()" style="background:rgba(255,255,255,0.06);color:var(--mi-muted,#aaa);border:1px solid rgba(255,255,255,0.15);">Skip — don't know</button>
+    </div>
+  </div>
+  <div class="res-fb-thanks" id="resFbThanks" style="display:none;">
+    ✅ Thanks — your feedback helps improve accuracy.
+  </div>
+  {% endif %}
+
+<div id="priceAlertModal"
+     data-sku="{{ r1.sku if results else '' }}"
+     data-card-name="{{ (r1.profile.name if r1.profile else r1.sku)|default('')|e if results else '' }}"
+     style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(26,24,48,0.95);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="max-width:440px;width:100%;background:#252248;border:1px solid rgba(177,77,255,0.3);border-radius:20px;padding:32px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h3 style="font-family:'Orbitron',monospace;color:#ffd700;font-size:1rem;margin:0;">🔔 Set Price Alert</h3>
+      <button onclick="closePriceAlertModal()" style="background:none;border:none;color:#9b95b8;font-size:1.2rem;cursor:pointer;">✕</button>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:12px;margin-bottom:20px;">
+      <div style="font-weight:700;color:#f0ecff;font-size:0.9rem;">{{ (r1.profile.name if r1.profile else r1.sku) if results else "" }}</div>
+      <div style="color:#00e5ff;font-size:0.78rem;margin-top:2px;">{{ (r1.profile.set_name if r1.profile and r1.profile.set_name else "") if results else "" }}</div>
+      <div style="color:#00ff88;font-weight:700;font-size:1rem;margin-top:4px;" id="alertCurrentPrice">Current: £<span id="alertPriceVal">0.00</span></div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <label style="font-size:0.8rem;color:#9b95b8;display:block;margin-bottom:6px;">Your email address</label>
+      <input id="alertEmail" type="email" placeholder="you@example.com"
+             style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#f0ecff;font-size:0.9rem;outline:none;box-sizing:border-box;">
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+      <div>
+        <label style="font-size:0.8rem;color:#9b95b8;display:block;margin-bottom:6px;">🟢 Alert when below £</label>
+        <input id="alertLow" type="number" step="0.01" min="0" placeholder="e.g. 5.00"
+               style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(0,255,136,0.2);background:rgba(0,255,136,0.05);color:#f0ecff;font-size:0.9rem;outline:none;box-sizing:border-box;">
+        <div style="font-size:0.7rem;color:#9b95b8;margin-top:4px;">Good for buyers</div>
+      </div>
+      <div>
+        <label style="font-size:0.8rem;color:#9b95b8;display:block;margin-bottom:6px;">🔴 Alert when above £</label>
+        <input id="alertHigh" type="number" step="0.01" min="0" placeholder="e.g. 20.00"
+               style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,45,111,0.2);background:rgba(255,45,111,0.05);color:#f0ecff;font-size:0.9rem;outline:none;box-sizing:border-box;">
+        <div style="font-size:0.7rem;color:#9b95b8;margin-top:4px;">Good for sellers</div>
+      </div>
+    </div>
+
+    <div id="alertError" style="display:none;color:#ff2d6f;font-size:0.78rem;margin-bottom:12px;"></div>
+    <div id="alertSuccess" style="display:none;color:#00ff88;font-size:0.78rem;margin-bottom:12px;"></div>
+
+    <button onclick="submitPriceAlert()"
+            style="width:100%;padding:12px;border-radius:8px;border:none;background:linear-gradient(135deg,#b14dff,#4d8eff);color:white;font-weight:700;font-size:0.9rem;cursor:pointer;">
+      Set Alert
+    </button>
+
+    <div style="text-align:center;margin-top:12px;font-size:0.72rem;color:#9b95b8;">
+      Pro feature — alerts checked weekly and sent by email
+    </div>
+  </div>
+</div>
+
+</div><!-- /mi-card -->
+
+<style>
+.res-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  padding: 4px 0 16px;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .res-layout {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+}
+.res-section-title {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--mi-muted,#aaa); margin-bottom: 10px;
+}
+
+/* Query */
+.res-query { position: sticky; top: 16px; }
+.res-qimgs { display: flex; flex-direction: column; gap: 10px; }
+.res-qimg-wrap { display: flex; flex-direction: column; gap: 4px; }
+.res-qlabel { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--mi-accent,#7c6af7); }
+.res-qimg {
+  width: 100%; max-width: 210px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1); cursor: zoom-in; transition: opacity 0.15s;
+}
+.res-qimg:hover { opacity: 0.85; }
+.res-qhint { font-size: 0.7rem; color: var(--mi-muted,#aaa); margin-top: 6px; }
+.res-lowcert { margin-top: 12px; font-size: 0.82rem; }
+
+/* Guidance */
+.res-guidance {
+  padding: 12px 16px; border-radius: 8px;
+  background: rgba(30,136,199,0.08); border: 1px solid rgba(30,136,199,0.2); margin-bottom: 12px;
+}
+.res-guidance-text { font-size: 0.82rem; line-height: 1.5; color: rgba(255,255,255,0.75); }
+.res-guidance-feedback { font-size: 0.78rem; line-height: 1.5; color: #1E88C7; font-weight: 600; margin-top: 8px; }
+
+/* Sparkles on #1 */
+.res-card { position: relative; overflow: visible; }
+.res-card--top::after {
+  content: '✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧ ✦ ✧';
+  position: absolute; top: -2px; left: 0; right: 0;
+  text-align: center; font-size: 0.7rem; letter-spacing: 0.5rem;
+  color: rgba(255,215,0,0.6);
+  animation: sparkleFloat 3s ease-in-out infinite;
+  pointer-events: none; z-index: 2;
+}
+@keyframes sparkleFloat {
+  0%,100% { opacity: 0.4; transform: translateY(0); }
+  25%      { opacity: 1;   transform: translateY(-3px); }
+  50%      { opacity: 0.6; transform: translateY(1px); }
+  75%      { opacity: 1;   transform: translateY(-2px); }
+}
+.res-trophy::after {
+  content: '✨'; margin-left: 4px;
+  animation: starSpin 2s ease-in-out infinite; display: inline-block;
+}
+@keyframes starSpin {
+  0%,100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+  50%      { transform: scale(1.3) rotate(20deg); opacity: 1; }
+}
+
+/* Cards list */
+.res-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.res-card {
+  display: grid;
+  grid-template-columns: 56px auto 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+
+@media (max-width: 600px) {
+  .res-card {
+    grid-template-columns: 44px auto 1fr;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+}
+.res-card:hover { background: rgba(255,255,255,0.07); }
+.res-card--top { border-color: #2dce89; background: rgba(45,206,137,0.07); }
+.res-card--mid { border-color: #f5a623; background: rgba(245,166,35,0.06); }
+.res-card--low { border-color: #e74c3c; background: rgba(231,76,60,0.05); }
+
+/* Rank */
+.res-rank { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.res-rank-num { font-size: 1.1rem; font-weight: 800; color: var(--mi-text,#eee); }
+.res-card--top .res-rank-num { color: #2dce89; }
+.res-card--mid .res-rank-num { color: #f5a623; }
+.res-card--low .res-rank-num { color: #e74c3c; }
+.res-trophy { font-size: 1rem; }
+.res-rank-best {
+  font-size: 0.52rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: #2dce89; white-space: nowrap; margin-top: 1px;
+}
+
+/* Thumbs */
+.res-thumbs { display: flex; gap: 8px; align-items: flex-start; }
+.res-thumb-wrap { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.res-thumb {
+  width: 80px; height: 80px; object-fit: contain; border-radius: 6px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  cursor: zoom-in; transition: transform 0.15s, opacity 0.15s;
+}
+.res-thumb--ras {
+  width: 100px; height: 100px; background: #fff;
+  border-color: rgba(255,255,255,0.25); border-radius: 8px;
+}
+.res-thumb:hover { transform: scale(1.06); opacity: 0.9; }
+.res-thumb-lbl { font-size: 0.62rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--mi-muted,#aaa); }
+
+/* Info */
+.res-info { display: flex; flex-direction: column; gap: 4px; }
+.res-sku { font-size: 1.4rem; font-weight: 800; letter-spacing: 0.02em; color: var(--mi-text,#eee); line-height: 1.1; }
+.res-card--top .res-sku { color: #2dce89; }
+.res-imgcount { font-size: 0.72rem; color: var(--mi-muted,#aaa); margin-bottom: 2px; }
+.res-manufacturer { font-size: 0.78rem; font-weight: 600; color: var(--mi-accent,#7c6af7); margin-bottom: 2px; }
+
+/* Confidence bar */
+.res-conf { margin: 4px 0 8px; max-width: 260px; }
+.res-conf-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+.res-conf-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--mi-muted,#aaa); }
+.res-conf-val { font-size: 1.05rem; font-weight: 800; }
+.res-conf-val--high { color: #2dce89; }
+.res-conf-val--mid  { color: #f5a623; }
+.res-conf-val--low  { color: #e74c3c; }
+.res-conf-track { width: 100%; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; }
+.res-conf-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease-out; }
+.res-conf-fill--high { background: linear-gradient(90deg, #1E88C7, #2dce89, #43B44A); }
+.res-conf-fill--mid  { background: linear-gradient(90deg, #f5a623, #e6b800); }
+.res-conf-fill--low  { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+.res-conf-lead { font-size: 0.7rem; font-weight: 700; margin-top: 4px; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+.res-conf-lead--strong   { background: rgba(45,206,137,0.12);  color: #2dce89; }
+.res-conf-lead--moderate { background: rgba(30,136,199,0.12);  color: #1E88C7; }
+.res-conf-lead--slim     { background: rgba(245,166,35,0.12);  color: #f5a623; }
+
+/* Card profile */
+.res-card-name { font-size: 1rem; font-weight: 700; color: var(--mi-text,#eee); margin-top: 4px; }
+.res-card-set { font-size: 0.78rem; color: var(--mi-accent,#7c6af7); font-weight: 600; }
+.res-card-details { font-size: 0.75rem; color: var(--mi-muted,#aaa); margin-top: 2px; }
+.res-card-prices { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.res-price-tag { font-size: 0.72rem; font-weight: 700; color: #2dce89; padding: 2px 8px; border-radius: 4px; background: rgba(45,206,137,0.1); border: 1px solid rgba(45,206,137,0.2); }
+
+/* Cross refs */
+.res-xrefs { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.07); }
+.res-xref-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--mi-muted,#aaa); margin-bottom: 6px; }
+.res-xref-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.res-xref-item { display: flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 4px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); font-size: 0.78rem; }
+.res-xref-brand { color: var(--mi-muted,#aaa); font-weight: 500; }
+.res-xref-code { color: var(--mi-text,#eee); font-weight: 700; }
+.res-xref-link { text-decoration: none; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.res-xref-link:hover { background: rgba(124,106,247,0.15); border-color: rgba(124,106,247,0.4); }
+
+/* Marketplace */
+.res-marketplace { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.07); }
+.res-marketplace-links { display: flex; flex-wrap: wrap; gap: 6px; }
+.res-mp-link { font-size: 0.75rem; font-weight: 600; padding: 4px 10px; border-radius: 5px; text-decoration: none; transition: background 0.15s; }
+.res-mp-buy  { color: #2dce89; background: rgba(45,206,137,0.08); border: 1px solid rgba(45,206,137,0.25); }
+.res-mp-buy:hover  { background: rgba(45,206,137,0.18); }
+.res-mp-sell { color: #f5a623; background: rgba(245,166,35,0.08); border: 1px solid rgba(245,166,35,0.25); }
+.res-mp-sell:hover { background: rgba(245,166,35,0.18); }
+
+/* Feedback */
+.res-feedback { position: fixed; bottom:0; left:0; right:0; z-index:9999; padding:12px 20px; background:#252248; border-top:1px solid rgba(177,77,255,0.3); box-shadow:0 -4px 20px rgba(0,0,0,0.6); }
+.res-fb-title { font-size:0.82rem; font-weight:700; color:#f0ecff; margin-bottom:8px; }
+.res-fb-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.res-fb-btn { padding:7px 14px; border-radius:8px; border:none; font-size:0.82rem; font-weight:700; cursor:pointer; transition:opacity 0.15s; }
+.res-fb-yes { background:rgba(0,255,136,0.15); color:#00ff88; border:1px solid rgba(0,255,136,0.3); }
+.res-fb-no  { background:rgba(255,45,111,0.1); color:#ff2d6f; border:1px solid rgba(255,45,111,0.2); }
+.res-fb-btn:hover { opacity:0.8; }
+.res-fb-picks { display:flex; flex-wrap:wrap; gap:6px; }
+.res-fb-pick { padding:5px 11px; border-radius:7px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.06); color:#f0ecff; font-size:0.78rem; font-weight:600; cursor:pointer; transition:background 0.15s; }
+.res-fb-pick:hover { background:rgba(177,77,255,0.2); border-color:rgba(177,77,255,0.4); }
+.res-fb-thanks { position:fixed; bottom:0; left:0; right:0; z-index:9999; padding:14px 20px; background:#252248; border-top:1px solid rgba(0,255,136,0.3); box-shadow:0 -4px 20px rgba(0,0,0,0.6); color:#00ff88; font-size:0.88rem; font-weight:600; }
+.res-fb-followup { position:fixed; bottom:0; left:0; right:0; z-index:9999; padding:12px 20px; background:#252248; border-top:1px solid rgba(255,45,111,0.3); box-shadow:0 -4px 20px rgba(0,0,0,0.6); }
+.mi-card { padding-bottom: 80px; }
+
+/* Rank #1 holographic shimmer */
+.res-card--top .res-thumb-wrap { position: relative; overflow: hidden; }
+.res-card--top .res-thumb-wrap::after {
+  content: ''; position: absolute; inset: 0; border-radius: 8px;
+  background: linear-gradient(115deg, transparent 20%, rgba(255,255,255,0.12) 42%, rgba(255,215,0,0.20) 50%, rgba(177,77,255,0.14) 58%, transparent 80%);
+  background-size: 300% 100%;
+  animation: resHoloShimmer 3.5s ease-in-out infinite;
+  pointer-events: none; z-index: 3;
+}
+@keyframes resHoloShimmer {
+  0%   { background-position: -100% 0; opacity: 0.5; }
+  50%  { background-position:  200% 0; opacity: 1;   }
+  100% { background-position: -100% 0; opacity: 0.5; }
+}
+
+/* Rank #1 crown pulse */
+.res-card--top .res-rank-num { animation: resCrownPulse 2.2s ease-in-out infinite; }
+@keyframes resCrownPulse {
+  0%,100% { text-shadow: 0 0 14px rgba(255,215,0,0.65), 0 0 28px rgba(255,215,0,0.3); }
+  50%      { text-shadow: 0 0 24px rgba(255,215,0,1), 0 0 48px rgba(255,215,0,0.5), 0 0 72px rgba(177,77,255,0.3); }
+}
+
+/* Rank #1 card glow */
+.res-card--top { animation: resCardGlow 3s ease-in-out infinite; }
+@keyframes resCardGlow {
+  0%,100% { box-shadow: 0 0 16px rgba(255,215,0,0.08), 0 4px 18px rgba(0,0,0,0.3); }
+  50%      { box-shadow: 0 0 36px rgba(255,215,0,0.22), 0 0 70px rgba(177,77,255,0.10), 0 4px 28px rgba(0,0,0,0.4); }
+}
+
+/* Sparkle burst canvas */
+#res-sparkle-canvas { position: fixed; inset: 0; z-index: 9998; pointer-events: none; }
+
+.res-page-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .res-page-wrap {
+    margin: 0 auto;
+    width: calc(100vw - 24px);
+    max-width: 100%;
+  }
+}
+
+.res-right-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.res-instant-answer {
+  background: linear-gradient(135deg, rgba(0,255,136,0.06), rgba(0,229,255,0.04));
+  border: 1px solid rgba(0,255,136,0.25);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+.res-ia-badge {
+  display: inline-block;
+  background: rgba(0,255,136,0.15);
+  color: #00ff88;
+  border: 1px solid rgba(0,255,136,0.3);
+  border-radius: 20px;
+  padding: 4px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+.res-ia-name {
+  font-family: 'Orbitron', monospace;
+  font-size: 1.3rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #ffd700, #ffe566);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4px;
+}
+.res-ia-set {
+  color: #00e5ff;
+  font-size: 0.82rem;
+  margin-bottom: 14px;
+}
+.res-ia-price-label {
+  color: #9b95b8;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.res-ia-prices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.res-ia-price {
+  background: rgba(0,255,136,0.08);
+  border: 1px solid rgba(0,255,136,0.2);
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: #00ff88;
+  font-weight: 700;
+  font-size: 1rem;
+}
+.res-ia-price small {
+  color: #9b95b8;
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+/* Best estimate headline */
+.res-ia-best { text-align:center; margin-bottom:10px; }
+.res-ia-best-lbl { font-size:0.6rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#9b95b8; margin-bottom:2px; }
+.res-ia-best-val { font-size:1.6rem; font-weight:900; color:#00ff88; font-family:'Orbitron',monospace; line-height:1.1; }
+.res-ia-best-sub { font-size:0.65rem; color:#9b95b8; margin-top:2px; }
+/* Two-column source layout */
+.res-ia-price-cols { display:flex; gap:12px; justify-content:center; margin-bottom:16px; }
+.res-ia-price-col { flex:1; min-width:90px; }
+.res-ia-src-hdr { font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9b95b8; margin-bottom:5px; padding-bottom:3px; border-bottom:1px solid rgba(255,255,255,0.08); }
+/* Per-card detail price sections */
+.res-price-sections { display:flex; flex-direction:column; gap:8px; margin-top:4px; }
+.res-price-section { }
+.res-price-section--trend { opacity:0.72; }
+.res-price-section-hdr { font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9b95b8; margin-bottom:4px; }
+.res-price-section-body { display:flex; flex-wrap:wrap; gap:5px; }
+.res-price-entry { display:flex; flex-direction:column; padding:4px 9px; background:rgba(45,206,137,0.08); border:1px solid rgba(45,206,137,0.18); border-radius:5px; min-width:52px; }
+.res-price-gbp { font-size:0.82rem; font-weight:800; color:#2dce89; font-family:'Orbitron',monospace; }
+.res-price-gbp--sm { font-size:0.72rem; }
+.res-price-secondary { font-size:0.58rem; color:#9b95b8; line-height:1.2; }
+.res-price-lbl { font-size:0.52rem; text-transform:uppercase; letter-spacing:0.07em; color:#9b95b8; margin-top:2px; }
+.res-ia-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.res-ia-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: 1px solid;
+  transition: all 0.15s;
+}
+.res-ia-btn--buy {
+  background: rgba(0,255,136,0.1);
+  border-color: rgba(0,255,136,0.3);
+  color: #00ff88;
+}
+.res-ia-btn--buy:hover { background: rgba(0,255,136,0.2); }
+.res-ia-btn--sell {
+  background: rgba(255,215,0,0.1);
+  border-color: rgba(255,215,0,0.3);
+  color: #ffd700;
+}
+.res-ia-btn--sell:hover { background: rgba(255,215,0,0.2); }
+.res-ia-btn--more {
+  background: rgba(177,77,255,0.1);
+  border-color: rgba(177,77,255,0.3);
+  color: #b14dff;
+}
+.res-ia-btn--more:hover { background: rgba(177,77,255,0.2); }
+.res-ia-btn--collect { background:rgba(255,215,0,0.1); border-color:rgba(255,215,0,0.3); color:#ffd700; cursor:pointer; }
+.res-ia-btn--collect:hover { background:rgba(255,215,0,0.2); }
+.res-ia-btn--col-link { background:rgba(177,77,255,0.08); border-color:rgba(177,77,255,0.2); color:#b14dff; font-size:0.75rem; }
+.res-ia-btn--col-link:hover { background:rgba(177,77,255,0.15); }
+.res-col-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 16px 0 8px;
+  flex-wrap: wrap;
+}
+.res-col-add-btn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,215,0,0.3);
+  background: rgba(255,215,0,0.1);
+  color: #ffd700;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.res-col-add-btn:hover { background: rgba(255,215,0,0.2); }
+.res-col-view-btn {
+  padding: 10px 24px;
+  border-radius: 10px;
+  border: 1px solid rgba(177,77,255,0.3);
+  background: rgba(177,77,255,0.08);
+  color: #b14dff;
+  font-weight: 700;
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.res-col-view-btn:hover { background: rgba(177,77,255,0.15); }
+
+@media (max-width: 768px) {
+  .res-fb-row { flex-direction: column; align-items: stretch; }
+  .res-fb-btn { text-align: center; }
+  .res-query { position: static; }
+  .res-qimgs { flex-direction: row !important; gap: 12px !important; }
+  .res-qimg { max-width: 140px !important; }
+  .res-card { grid-template-columns: 1fr !important; gap: 10px !important; padding: 12px !important; }
+  .res-rank { flex-direction: row !important; align-items: center !important; gap: 8px !important; }
+  .res-rank-num { font-size: 1rem !important; }
+  .res-thumb { width: 60px !important; height: 60px !important; }
+  .res-thumb--ras { width: 70px !important; height: 70px !important; }
+  .res-thumbs { gap: 6px !important; }
+  .res-sku { font-size: 1.1rem !important; }
+  .res-conf { max-width: 100%; }
+}
+
+/* ── Visibility helper ── */
+.gs-hidden { display: none !important; }
+
+/* ── Price history graph ── */
+.res-price-history {
+  margin-top: 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(177,77,255,0.2);
+  border-radius: 12px;
+  padding: 14px;
+}
+.res-ph-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.res-ph-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.8);
+}
+.res-ph-badge {
+  background: linear-gradient(90deg, #b14dff, #00e5ff);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'DM Sans', sans-serif;
+}
+.res-ph-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.4);
+}
+.res-ph-upgrade {
+  background: linear-gradient(90deg, #b14dff, #00e5ff);
+  color: #000;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 8px 16px;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-family: 'DM Sans', sans-serif;
+}
+.res-ph-empty {
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.3);
+  padding: 16px 0;
+}
+#resPriceChart { width: 100% !important; }
+
+/* ── Condition grade ── */
+.res-grade { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; margin-top: 14px; }
+.res-grade-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.res-grade-title { font-size: 0.78rem; font-weight: 700; color: var(--mi-muted,#aaa); text-transform: uppercase; letter-spacing: 0.05em; }
+.res-grade-badge { font-size: 0.65rem; padding: 2px 7px; border-radius: 999px; font-weight: 700; }
+.res-grade-badge--auto { background: rgba(0,229,255,0.15); color: #00e5ff; }
+.res-grade-badge--deep { background: rgba(177,77,255,0.2); color: #b14dff; }
+.res-grade-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.res-grade-score { font-size: 2.4rem; font-weight: 900; color: #00e5ff; line-height: 1; font-family: 'Orbitron', sans-serif; }
+.res-grade-label { font-size: 1rem; font-weight: 700; color: var(--mi-text,#eee); }
+.res-grade-bars { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.res-grade-bar-row { display: flex; align-items: center; gap: 8px; font-size: 0.72rem; }
+.res-grade-bar-label { width: 70px; color: var(--mi-muted,#aaa); flex-shrink: 0; }
+.res-grade-bar-track { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.res-grade-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+.res-grade-bar-val { width: 55px; color: var(--mi-text,#eee); text-align: right; font-weight: 600; }
+.res-grade-summary { font-size: 0.78rem; color: var(--mi-muted,#aaa); line-height: 1.5; margin-bottom: 10px; }
+.res-grade-deep-btn { width: 100%; padding: 9px; background: rgba(177,77,255,0.12); border: 1px solid rgba(177,77,255,0.35); border-radius: 8px; color: #b14dff; font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: background 0.2s; font-family: 'DM Sans', sans-serif; }
+.res-grade-deep-btn:hover { background: rgba(177,77,255,0.22); }
+.res-grade-loading { font-size: 0.78rem; color: var(--mi-muted,#aaa); text-align: center; padding: 8px 0; font-family: 'DM Sans', sans-serif; }
+.grade-photo-note { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; color: rgba(255,255,255,0.35); margin-top: 6px; margin-bottom: 0; font-style: italic; }
+.grade-limit-note { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; color: rgba(255,255,255,0.35); text-align: center; margin-top: 4px; font-style: italic; }
+
+/* ── Duplicate detection modal ── */
+.dup-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.dup-modal-overlay.is-open {
+  display: flex;
+}
+.dup-modal {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 24px 20px;
+  max-width: 320px;
+  width: 100%;
+  border: 1px solid rgba(177,77,255,0.4);
+  text-align: center;
+}
+.dup-modal-icon { font-size: 2rem; margin-bottom: 8px; }
+.dup-modal-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
+  color: #ffd700;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.dup-modal-msg {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+.dup-modal-btns { display: flex; gap: 10px; justify-content: center; }
+.dup-btn-cancel {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.dup-btn-add {
+  background: linear-gradient(90deg, #b14dff, #00e5ff);
+  border: none;
+  color: #000;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+</style>
+
+<!-- Lightbox -->
+<div class="mi-lightbox" id="miLight" onclick="miClose()" style="display:none;">
+  <img id="miLightImg" alt="full">
+</div>
+
+<script>
+// ── Image helpers ──
+function imgRetry(img, attempt) {
+  attempt = attempt || 1;
+  if (attempt > 4) { img.style.opacity = '0.15'; img.onerror = null; return; }
+  var originalSrc = img.dataset.src || img.src.split('?')[0];
+  img.dataset.src = originalSrc;
+  setTimeout(function() {
+    img.src = originalSrc + '?r=' + attempt + '&t=' + Date.now();
+    img.onerror = function() { imgRetry(img, attempt + 1); };
+  }, attempt * 700);
+}
+
+function miOpen(imgEl) {
+  if (!imgEl.complete || !imgEl.naturalWidth) {
+    var clean = (imgEl.dataset.src || imgEl.src).split('?')[0];
+    var tmp = new Image();
+    tmp.onload = function() {
+      document.getElementById("miLightImg").src = clean;
+      document.getElementById("miLight").style.display = "flex";
+    };
+    tmp.src = clean + '?t=' + Date.now();
+    return;
+  }
+  var clean = (imgEl.dataset.src || imgEl.src).split('?')[0];
+  document.getElementById("miLightImg").src = clean;
+  document.getElementById("miLight").style.display = "flex";
+}
+
+function miClose() {
+  document.getElementById("miLightImg").src = "";
+  document.getElementById("miLight").style.display = "none";
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") miClose();
+});
+
+// ── Feedback ──
+function resFbNotFound() {
+  document.getElementById("resFeedback").style.display = "none";
+  document.getElementById("resFbFollowup").style.display = "block";
+  setTimeout(function() {
+    var inp = document.getElementById("resFbSkuInput");
+    if (inp) inp.focus();
+  }, 100);
+}
+
+function resFbSubmitNotFound() {
+  var sku = (document.getElementById("resFbSkuInput").value || "").trim().toUpperCase();
+  resFeedback("incorrect", sku, 0);
+  document.getElementById("resFbFollowup").style.display = "none";
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  var inp = document.getElementById("resFbSkuInput");
+  if (inp) inp.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") resFbSubmitNotFound();
+  });
+});
+
+function resFeedback(verdict, sku, rank) {
+  var box    = document.getElementById("resFeedback");
+  var thanks = document.getElementById("resFbThanks");
+  if (!box) return;
+  fetch("/feedback", {
+    method: "POST",
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: new URLSearchParams({
+      token: "{{ feedback_token|default('') }}",
+      verdict: verdict,
+      confirmed_sku: sku,
+      confirmed_rank: rank,
+      is_test: document.getElementById("resFbIsTest") && document.getElementById("resFbIsTest").checked ? "1" : "0"
+    })
+  }).then(function() {
+    box.style.display = "none";
+    if (thanks) {
+      thanks.style.display = "block";
+      setTimeout(function() { thanks.style.display = "none"; }, 3000);
+    }
+  }).catch(function() {
+    box.style.display = "none";
+  });
+}
+</script>
+
+<script>
+// Move feedback + lightbox to body root so they aren't clipped by any parent
+document.addEventListener("DOMContentLoaded", function() {
+  ["resFeedback","resFbFollowup","resFbThanks","miLight"].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) document.body.appendChild(el);
+  });
+  _gsUpdateGradeNote();
+});
+</script>
+
+{% set gbp_val = 0 %}
+{% if results %}
+{% set r1 = results[0] %}
+{% if r1.profile and r1.profile.prices %}
+  {% for source, sdata in r1.profile.prices.items() %}
+    {% if 'ebay' not in source.lower() and 'amazon' not in source.lower() %}
+    {% if sdata is mapping %}
+      {% for variant, vdata in sdata.items() %}
+        {% if vdata is mapping %}
+          {% set price = vdata.market or vdata.mid or vdata.trend or vdata.avg_sell %}
+          {% if price and gbp_val == 0 %}
+            {% if 'cardmarket' in source %}
+              {% set gbp_val = (price|float * 0.86)|round(2) %}
+            {% else %}
+              {% set gbp_val = (price|float * 0.79)|round(2) %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+{% endif %}
+{% if results %}
+{% set r1 = results[0] %}
+<script>
+window._cardGbpValue = 0;
+window._cardGrade = {{ (grade | tojson | safe) if grade else 'null' }};
+window._rawPrices = {{ (r1.profile.prices if r1 and r1.profile and r1.profile.prices else {}) | tojson | safe }};
+(function() {
+  var EUR_RATE = 0.86, USD_RATE = 0.79;
+  // Fetch live rates, fall back to hardcoded
+  fetch('/api/fx_rates')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && d.rates) {
+        USD_RATE = d.rates.GBP || USD_RATE;
+        EUR_RATE = (d.rates.GBP / (d.rates.EUR || 1)) || EUR_RATE;
+      }
+    })
+    .catch(function(){})
+    .finally(function(){
+      var best = 0;
+      var prices = window._rawPrices || {};
+      Object.keys(prices).forEach(function(src) {
+        if (src.toLowerCase().indexOf('ebay') >= 0) return;
+        if (src.toLowerCase().indexOf('amazon') >= 0) return;
+        var sdata = prices[src];
+        if (!sdata || typeof sdata !== 'object') return;
+        Object.keys(sdata).forEach(function(vk) {
+          var vdata = sdata[vk], pr = 0;
+          if (vdata && typeof vdata === 'object')
+            pr = vdata.market || vdata.trend || vdata.avg_sell || vdata.mid || 0;
+          else if (typeof vdata === 'number') pr = vdata;
+          if (pr > 0) {
+            var mult = src.toLowerCase().indexOf('cardmarket') >= 0 ? EUR_RATE : USD_RATE;
+            var gbp = pr * mult;
+            if (gbp > best) best = gbp;
+          }
+        });
+      });
+      window._cardGbpValue = Math.round(best * 100) / 100;
+    });
+})();
+</script>
+<script type="application/json" id="resCardData">{"sku":{{ (r1.sku if results else "") | tojson }},"name":{{ ((r1.profile.name if r1.profile else r1.sku) if results else "") | tojson }},"set_name":{{ ((r1.profile.set_name if r1.profile and r1.profile.set_name else "") if results else "") | tojson }},"card_number":{{ ((r1.profile.card_number if r1.profile and r1.profile.card_number else "") if results else "") | tojson }},"img":{{ ('/img/db/' + ((r1.image_id_front or r1.image_id) | string) + '.jpg' if results else "") | tojson }},"query_filename":{{ (query_filename if query_filename else "") | tojson }}}</script>
+{% endif %}
+<canvas id="res-sparkle-canvas"></canvas>
+<script>
+function _gsGradeMonthKey() {
+  var d = new Date();
+  return 'gs_deep_grades_' + d.getFullYear() + '-' + (d.getMonth() + 1);
+}
+function gsGetDeepGradeLimit() {
+  var tier = localStorage.getItem('matchit_tier_v1') || 'monthly';
+  if (tier === 'lifetime' || tier === 'founder_yearly') return 40;
+  if (tier === 'annual') return 20;
+  return 10;
+}
+function _gsUpdateGradeNote() {
+  var deepGradeLimit = gsGetDeepGradeLimit();
+  var used = parseInt(localStorage.getItem(_gsGradeMonthKey()) || '0');
+  var remaining = Math.max(0, deepGradeLimit - used);
+  var noteEl = document.getElementById('gradeRemainingNote');
+  if (!noteEl) return;
+  if (remaining === 0) {
+    noteEl.textContent = 'Monthly limit reached — resets 1st of next month';
+    noteEl.style.color = '#ff4466';
+  } else {
+    noteEl.textContent = remaining + ' of ' + deepGradeLimit + ' deep grades remaining this month';
+    noteEl.style.color = '';
+  }
+}
+function showGradeError(msg) {
+  var loading = document.getElementById('resGradeLoading');
+  var btn = document.getElementById('resDeepGradeBtn');
+  if (loading) { loading.textContent = msg; loading.style.color = '#ff4466'; loading.classList.remove('gs-hidden'); }
+  if (btn) btn.classList.remove('gs-hidden');
+}
+
+function gsDeepGrade() {
+  var isPremium = localStorage.getItem('gs_premium') === '1' || localStorage.getItem('matchit_premium_v1') === 'unlocked';
+  if (!isPremium) { window.location.href = '/upgrade?reason=deepgrade'; return; }
+  var deepGradeLimit = gsGetDeepGradeLimit();
+  var monthKey = _gsGradeMonthKey();
+  var used = parseInt(localStorage.getItem(monthKey) || '0');
+  if (used >= deepGradeLimit) {
+    var noteEl = document.getElementById('gradeRemainingNote');
+    if (noteEl) { noteEl.textContent = 'Monthly limit reached — resets 1st of next month'; noteEl.style.color = '#ff4466'; }
+    return;
+  }
+  var rc = JSON.parse(document.getElementById('resCardData').textContent || '{}');
+  var cardName = rc.name || 'Unknown card';
+  var qfn = rc.query_filename || '';
+  if (!qfn) { alert('No query image available for grading.'); return; }
+  var btn = document.getElementById('resDeepGradeBtn');
+  var loading = document.getElementById('resGradeLoading');
+  btn.classList.add('gs-hidden');
+  loading.classList.remove('gs-hidden');
+  fetch('/api/deep_grade', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({image_path: 'query/' + qfn, card_name: cardName})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    loading.classList.add('gs-hidden');
+    if (d.error) { showGradeError('Deep grade temporarily unavailable. Please try again shortly.'); return; }
+    // Increment monthly counter
+    var _mk = _gsGradeMonthKey();
+    localStorage.setItem(_mk, (parseInt(localStorage.getItem(_mk) || '0') + 1).toString());
+    _gsUpdateGradeNote();
+    window._cardGrade = d;
+    document.getElementById('resGradeScore').textContent = d.score_high ? (d.score + '–' + d.score_high) : d.score;
+    document.getElementById('resGradeLabel').textContent = d.label;
+    var badge = document.getElementById('resGradeBadge');
+    badge.textContent = 'AI Deep Analysis';
+    badge.classList.remove('res-grade-badge--auto');
+    badge.classList.add('res-grade-badge--deep');
+    var ratings = {Centering: d.centering, Corners: d.corners, Edges: d.edges, Surface: d.surface};
+    var valMap = {Poor: 25, Fair: 50, Good: 75, Excellent: 100};
+    var colMap = {Poor: '#e74c3c', Fair: '#f5a623', Good: '#00ff88', Excellent: '#b14dff'};
+    var barsDiv = document.getElementById('resGradeBars');
+    barsDiv.innerHTML = '';
+    Object.keys(ratings).forEach(function(key) {
+      var val = ratings[key] || 'Good';
+      var pct = valMap[val] || 75;
+      var col = colMap[val] || '#b14dff';
+      var row = document.createElement('div');
+      row.className = 'res-grade-bar-row';
+      row.innerHTML = '<span class="res-grade-bar-label">' + key + '</span>' +
+        '<div class="res-grade-bar-track"><div class="res-grade-bar-fill" style="width:' + pct + '%;background:' + col + '"></div></div>' +
+        '<span class="res-grade-bar-val">' + val + '</span>';
+      barsDiv.appendChild(row);
+    });
+    barsDiv.classList.remove('gs-hidden');
+    if (d.summary) {
+      var sumEl = document.getElementById('resGradeSummary');
+      sumEl.textContent = d.summary;
+      sumEl.classList.remove('gs-hidden');
+    }
+  })
+  .catch(function() {
+    loading.classList.add('gs-hidden');
+    btn.classList.remove('gs-hidden');
+    showGradeError('Deep grade temporarily unavailable. Please try again shortly.');
+  });
+}
+
+function colAddCard() {
+  if (localStorage.getItem('matchit_premium_v1') !== 'unlocked') {
+    window.location.href = '/collection';
+    return;
+  }
+
+  var _rc = JSON.parse(document.getElementById('resCardData').textContent || '{}');
+  var item = {
+    sku:          _rc.sku || '',
+    name:         _rc.name || '',
+    set_name:     _rc.set_name || '',
+    card_number:  _rc.card_number || '',
+    gbp:          window._cardGbpValue || 0,
+    img:          _rc.img || '',
+    added:        new Date().toLocaleDateString('en-GB'),
+    grade:        window._cardGrade || null
+  };
+
+  gsDupCheck(item.name, item.set_name, function() {
+    var col = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+    col.push(item);
+    localStorage.setItem('matchit_collection_v1', JSON.stringify(col));
+    gsSyncCollection();
+    localStorage.removeItem('grailsweep_sets_cache_v1');
+
+    var btn = document.querySelector('.res-col-add-btn');
+    if (btn) {
+      btn.textContent = '\u2705 Added!';
+      btn.disabled = true;
+      setTimeout(function() {
+        btn.textContent = '\u2b50 Add to Collection';
+        btn.disabled = false;
+      }, 2000);
+    }
+  });
+}
+
+// ── Watchlist toggle ──────────────────────────────────────────────────────────
+(function() {
+  var _rc = JSON.parse(document.getElementById('resCardData').textContent || '{}');
+  var _sku = _rc.sku || '';
+
+  function _wlSetState(watching) {
+    var btn = document.getElementById('gsWatchlistBtn');
+    if (!btn) return;
+    btn.textContent = (watching ? '★' : '☆') + ' Watchlist';
+  }
+
+  window.gsWatchlistToggle = function() {
+    var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
+    if (!isPro) {
+      var btn = document.getElementById('gsWatchlistBtn');
+      if (btn) {
+        var orig = btn.textContent;
+        btn.textContent = 'Watchlist is a Pro feature';
+        btn.disabled = true;
+        setTimeout(function() { btn.textContent = orig; btn.disabled = false; }, 2000);
+      }
+      return;
+    }
+    if (!_sku) return;
+    if (gsIsWatchlisted(_sku)) {
+      gsRemoveFromWatchlist(_sku);
+      _wlSetState(false);
+    } else {
+      gsAddToWatchlist({
+        sku:        _sku,
+        name:       _rc.name || '',
+        set_name:   _rc.set_name || '',
+        img:        _rc.img || '',
+        gbp_at_add: window._cardGbpValue || 0
+      });
+      _wlSetState(true);
+    }
+  };
+
+  // Set initial button state once page is ready
+  if (_sku && typeof gsIsWatchlisted === 'function' && gsIsWatchlisted(_sku)) {
+    _wlSetState(true);
+  }
+})();
+
+function gsCountCopies(cardName, setName) {
+  try {
+    var collection = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+    return collection.filter(function(item) {
+      return (item.name || item.set_name) &&
+        (item.name || '').trim().toLowerCase() === cardName.trim().toLowerCase() &&
+        (item.set_name || item.set || '').trim().toLowerCase() === setName.trim().toLowerCase();
+    }).length;
+  } catch(e) { return 0; }
+}
+
+var _gsDupPendingFn = null;
+
+function gsDupCheck(cardName, setName, proceedFn) {
+  var copies = gsCountCopies(cardName, setName);
+  if (copies === 0) { proceedFn(); return; }
+  var copyWord = copies === 1 ? 'copy' : 'copies';
+  document.getElementById('dupModalMsg').innerHTML =
+    'You already have <strong>' + copies + ' ' + copyWord + '</strong> of <strong>' +
+    cardName + '</strong> (' + setName + ') in your collection.<br><br>' +
+    'Do you want to add another copy?';
+  _gsDupPendingFn = proceedFn;
+  document.getElementById('dupModal').classList.add('is-open');
+}
+
+function gsDupConfirm() {
+  document.getElementById('dupModal').classList.remove('is-open');
+  if (_gsDupPendingFn) { _gsDupPendingFn(); _gsDupPendingFn = null; }
+}
+
+function gsDupCancel() {
+  document.getElementById('dupModal').classList.remove('is-open');
+  _gsDupPendingFn = null;
+}
+
+function _getAudioCtx() {
+    if (!window._gsAudioCtx) {
+        window._gsAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (window._gsAudioCtx.state === 'suspended') {
+        window._gsAudioCtx.resume();
+    }
+    return window._gsAudioCtx;
+}
+
+function _playCardSound(gbpValue) {
+    try {
+        const ctx = _getAudioCtx();
+        const _doPlay = () => {
+            if (gbpValue >= 150) {
+                _playJackpot(ctx);
+            } else if (gbpValue >= 50) {
+                _playBigWin(ctx);
+            } else if (gbpValue >= 10) {
+                _playGoodFind(ctx);
+            } else if (gbpValue >= 2) {
+                _playChime(ctx);
+            } else {
+                _playPing(ctx);
+            }
+        };
+        if (ctx.state === 'suspended') {
+            ctx.resume().then(_doPlay).catch(() => {});
+        } else {
+            _doPlay();
+        }
+    } catch(e) { /* Audio not supported */ }
+}
+
+function _playPing(ctx) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.frequency.setValueAtTime(880, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
+    g.gain.setValueAtTime(0.3, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    o.start(); o.stop(ctx.currentTime + 0.3);
+}
+
+function _playChime(ctx) {
+    [[523,0],[659,0.1],[784,0.2],[1047,0.3]].forEach(([freq, delay]) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        g.gain.setValueAtTime(0, ctx.currentTime + delay);
+        g.gain.linearRampToValueAtTime(0.25, ctx.currentTime + delay + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.4);
+        o.start(ctx.currentTime + delay);
+        o.stop(ctx.currentTime + delay + 0.4);
+    });
+}
+
+function _playGoodFind(ctx) {
+    [[523,0],[659,0.08],[784,0.16],[1047,0.24],[1319,0.32],[1568,0.40]].forEach(([freq, delay]) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        g.gain.setValueAtTime(0, ctx.currentTime + delay);
+        g.gain.linearRampToValueAtTime(0.3, ctx.currentTime + delay + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.5);
+        o.start(ctx.currentTime + delay);
+        o.stop(ctx.currentTime + delay + 0.5);
+    });
+}
+
+function _playBigWin(ctx) {
+    [[392,0,'sawtooth'],[494,0,'sawtooth'],[587,0,'sawtooth'],
+     [784,0.15,'sine'],[988,0.15,'sine'],[1175,0.15,'sine'],
+     [1568,0.35,'sine'],[1976,0.35,'sine']].forEach(([freq, delay, type]) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = type;
+        o.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        g.gain.setValueAtTime(0, ctx.currentTime + delay);
+        g.gain.linearRampToValueAtTime(0.2, ctx.currentTime + delay + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.6);
+        o.start(ctx.currentTime + delay);
+        o.stop(ctx.currentTime + delay + 0.6);
+    });
+}
+
+function _playJackpot(ctx) {
+    // Phase 1: Rapid coin shower (0 - 0.8s)
+    for (let i = 0; i < 20; i++) {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'square';
+        const t = ctx.currentTime + i * 0.04;
+        const freq = 600 + Math.random() * 800;
+        o.frequency.setValueAtTime(freq, t);
+        o.frequency.exponentialRampToValueAtTime(freq * 0.5, t + 0.05);
+        g.gain.setValueAtTime(0.18, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+        o.start(t); o.stop(t + 0.06);
+    }
+
+    // Phase 2: Cash register "ching" at 0.5s
+    [1200, 2400, 3600].forEach((freq, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'triangle';
+        const t = ctx.currentTime + 0.5 + i * 0.03;
+        o.frequency.setValueAtTime(freq, t);
+        g.gain.setValueAtTime(0.3, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        o.start(t); o.stop(t + 0.4);
+    });
+
+    // Phase 3: Money pouring sound (0.7s - 1.5s) — rapid descending noise
+    for (let i = 0; i < 30; i++) {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sawtooth';
+        const t = ctx.currentTime + 0.7 + i * 0.03;
+        o.frequency.setValueAtTime(400 + Math.random() * 600, t);
+        o.frequency.exponentialRampToValueAtTime(100 + Math.random() * 200, t + 0.08);
+        g.gain.setValueAtTime(0.08, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+        o.start(t); o.stop(t + 0.08);
+    }
+
+    // Phase 4: Triumphant fanfare (1.6s)
+    [
+        [523, 1.6], [659, 1.7], [784, 1.8],
+        [1047, 1.9], [1319, 2.0], [1568, 2.1],
+        [2093, 2.2], [2093, 2.3], [2093, 2.4]
+    ].forEach(([freq, delay]) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+        g.gain.setValueAtTime(0.28, ctx.currentTime + delay);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.5);
+        o.start(ctx.currentTime + delay);
+        o.stop(ctx.currentTime + delay + 0.5);
+    });
+
+    // Phase 5: Final chord burst (2.5s)
+    [523, 659, 784, 1047, 1319, 1568].forEach(freq => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(freq, ctx.currentTime + 2.5);
+        g.gain.setValueAtTime(0.3, ctx.currentTime + 2.5);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3.2);
+        o.start(ctx.currentTime + 2.5);
+        o.stop(ctx.currentTime + 3.2);
+    });
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Unlock audio context on first user interaction (required for mobile)
+    window._gsAudioCtx = null;
+
+    const _unlockAudio = () => {
+        try {
+            const ctx = _getAudioCtx();
+            const buf = ctx.createBuffer(1, 1, 22050);
+            const src = ctx.createBufferSource();
+            src.buffer = buf; src.connect(ctx.destination); src.start(0);
+            ctx.resume().then(function() {
+                _playCardSound(window._cardGbpValue || 0);
+            });
+        } catch(e) {
+            _playCardSound(window._cardGbpValue || 0);
+        }
+    };
+    document.addEventListener('touchstart', _unlockAudio, { once: true });
+    document.addEventListener('click',      _unlockAudio, { once: true });
+
+    // Query image slides in immediately (visible on load)
+    if (typeof gsap !== 'undefined') {
+        gsap.from('.res-query', { x: -24, opacity: 0, duration: 0.5, ease: 'power2.out' });
+    }
+
+    // Use IntersectionObserver so animations fire when scrolled into view
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const el = entry.target;
+
+            // Card entrance animation
+            if (el.classList.contains('res-card')) {
+                if (typeof gsap !== 'undefined') {
+                    gsap.from(el, { y: 32, opacity: 0, duration: 0.55, ease: 'power2.out' });
+                } else {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }
+                // Sparkle burst on rank 1 card
+                if (el.classList.contains('res-card--top')) {
+                    var _isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                    setTimeout(() => {
+                        _sparkleBurst(el);
+                        if (!_isiOS) _playCardSound(window._cardGbpValue || 0);
+                    }, 400);
+                }
+                observer.unobserve(el);
+            }
+        });
+    }, { threshold: 0.15 });
+
+    // Set initial state and observe all cards
+    document.querySelectorAll('.res-card').forEach(card => {
+        if (typeof gsap === 'undefined') {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(32px)';
+            card.style.transition = 'opacity 0.55s ease, transform 0.55s ease';
+        }
+        observer.observe(card);
+    });
+
+    // Fire sparkle on rank 1 card — delay longer if instant answer panel is present
+    const topCard = document.querySelector('.res-card--top');
+    const hasInstantAnswer = document.querySelector('.res-instant-answer') !== null;
+    if (topCard) {
+        const delay = hasInstantAnswer ? 1200 : 600;
+        setTimeout(() => {
+            const rect = topCard.getBoundingClientRect();
+            const inView = rect.top < window.innerHeight && rect.bottom > 0;
+            var _isiOS2 = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+            if (inView) {
+                _sparkleBurst(topCard);
+                if (!_isiOS2) _playCardSound(window._cardGbpValue || 0);
+            } else if (!hasInstantAnswer) {
+                // Card not in view yet — let the IntersectionObserver handle it
+                observer.observe(topCard);
+            }
+        }, delay);
+    }
+
+    // If OCR active and card below fold, trigger on first scroll
+    if (hasInstantAnswer && topCard) {
+        const onScroll = () => {
+            const rect = topCard.getBoundingClientRect();
+            if (rect.top < window.innerHeight) {
+                _sparkleBurst(topCard);
+                var _isiOS3 = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                if (!_isiOS3) _playCardSound(window._cardGbpValue || 0);
+                window.removeEventListener('scroll', onScroll);
+            }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+    }
+
+    // Extract highest GBP price from the page for sound selection
+    function _getGBPValue() {
+        let best = 0;
+        document.querySelectorAll('.res-ia-price, .res-ia-best-val, .res-price-gbp').forEach(el => {
+            const m = el.textContent.match(/£([\d,]+\.?\d*)/);
+            if (m) {
+                const v = parseFloat(m[1].replace(',', ''));
+                if (v > best) best = v;
+            }
+        });
+        return best;
+    }
+
+    // Sparkle burst function
+    function _sparkleBurst(topCard) {
+        const canvas = document.getElementById('res-sparkle-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let thumb = null;
+        const thumbs = topCard.querySelectorAll('.res-thumb');
+        for (const t of thumbs) {
+            const r = t.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) { thumb = t; break; }
+        }
+        const rect = (thumb || topCard).getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+
+        const particles = Array.from({ length: 40 }, () => ({
+            x: cx, y: cy,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
+            life: 1,
+            decay: 0.018 + Math.random() * 0.018,
+            size: 2 + Math.random() * 5,
+            isCard: Math.random() > 0.6,
+            color: 'hsl(' + (45 + Math.random() * 30) + ', 100%, ' + (60 + Math.random() * 20) + '%)',
+        }));
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let alive = false;
+            particles.forEach(p => {
+                if (p.life <= 0) return;
+                alive = true;
+                p.x += p.vx; p.y += p.vy;
+                p.vy += 0.12;
+                p.life -= p.decay;
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.fillStyle = p.color;
+                if (p.isCard) {
+                    ctx.fillRect(p.x, p.y, p.size * 1.5, p.size * 2);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+            ctx.globalAlpha = 1;
+            if (alive) requestAnimationFrame(draw);
+            else ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        draw();
+    }
+});
+
+function showPriceAlertModal() {
+    if (localStorage.getItem('matchit_premium_v1') !== 'unlocked') {
+        window.location.href = '/upgrade';
+        return;
+    }
+    const modal = document.getElementById('priceAlertModal');
+    modal.style.display = 'flex';
+    document.getElementById('alertPriceVal').textContent = (window._cardGbpValue || 0).toFixed(2);
+}
+
+function closePriceAlertModal() {
+    document.getElementById('priceAlertModal').style.display = 'none';
+    document.getElementById('alertError').style.display = 'none';
+    document.getElementById('alertSuccess').style.display = 'none';
+}
+
+async function submitPriceAlert() {
+    const email      = document.getElementById('alertEmail').value.trim();
+    const targetLow  = document.getElementById('alertLow').value;
+    const targetHigh = document.getElementById('alertHigh').value;
+    const error      = document.getElementById('alertError');
+    const success    = document.getElementById('alertSuccess');
+
+    error.style.display = 'none';
+    success.style.display = 'none';
+
+    if (!email) { error.textContent = 'Please enter your email address.'; error.style.display = 'block'; return; }
+    if (!targetLow && !targetHigh) { error.textContent = 'Please set at least one price target.'; error.style.display = 'block'; return; }
+
+    try {
+        const resp = await fetch('/api/set-alert', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                email,
+                code:        localStorage.getItem('matchit_access_code_v1') || '',
+                sku:         document.getElementById('priceAlertModal').dataset.sku || '',
+                card_name:   document.getElementById('priceAlertModal').dataset.cardName || '',
+                target_low:  targetLow ? parseFloat(targetLow) : null,
+                target_high: targetHigh ? parseFloat(targetHigh) : null,
+                current_gbp: window._cardGbpValue || 0
+            })
+        });
+        const data = await resp.json();
+        if (data.status === 'ok') {
+            success.textContent = '✅ Alert set! We\'ll email you when the price hits your target.';
+            success.style.display = 'block';
+            setTimeout(closePriceAlertModal, 3000);
+        } else {
+            error.textContent = data.error || 'Could not set alert.';
+            error.style.display = 'block';
+        }
+    } catch(e) {
+        error.textContent = 'Connection error. Please try again.';
+        error.style.display = 'block';
+    }
+}
+</script>
+
+<div id="dupModal" class="dup-modal-overlay" onclick="if(event.target===this)gsDupCancel()">
+  <div class="dup-modal">
+    <div class="dup-modal-icon">📋</div>
+    <div class="dup-modal-title">Already in Collection</div>
+    <div class="dup-modal-msg" id="dupModalMsg"></div>
+    <div class="dup-modal-btns">
+      <button type="button" class="dup-btn-cancel" onclick="gsDupCancel()">Skip</button>
+      <button type="button" class="dup-btn-add" onclick="gsDupConfirm()">Add Another Copy</button>
+    </div>
+  </div>
+</div>
+
+{% if results %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function() {
+  var sku = (JSON.parse(document.getElementById('resCardData').textContent || '{}').sku) || '';
+  var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
+
+  if (!isPro) {
+    document.getElementById('resPriceHistoryInner').classList.add('gs-hidden');
+    document.getElementById('resPriceHistoryLocked').classList.remove('gs-hidden');
+    return;
+  }
+
+  if (!sku) {
+    document.getElementById('resPriceHistory').classList.add('gs-hidden');
+    return;
+  }
+
+  fetch('/api/price_history?sku=' + encodeURIComponent(sku))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var history = data.history || [];
+
+      if (history.length < 2) {
+        document.getElementById('resPriceHistoryInner').classList.add('gs-hidden');
+        document.getElementById('resPriceHistoryEmpty').classList.remove('gs-hidden');
+        return;
+      }
+
+      var labels = history.map(function(h) {
+        var d = new Date(h.date);
+        return d.getDate() + '/' + (d.getMonth() + 1);
+      });
+      var prices = history.map(function(h) { return h.gbp; });
+
+      var ctx = document.getElementById('resPriceChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'GBP Price',
+            data: prices,
+            borderColor: '#b14dff',
+            backgroundColor: 'rgba(177,77,255,0.1)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointBackgroundColor: '#b14dff',
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(c) { return '\u00a3' + c.parsed.y.toFixed(2); }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 }, maxTicksLimit: 7 },
+              grid:  { color: 'rgba(255,255,255,0.05)' }
+            },
+            y: {
+              ticks: {
+                color: 'rgba(255,255,255,0.4)',
+                font:  { size: 10 },
+                callback: function(v) { return '\u00a3' + v.toFixed(2); }
+              },
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            }
+          }
+        }
+      });
+    })
+    .catch(function() {
+      document.getElementById('resPriceHistory').classList.add('gs-hidden');
+    });
+})();
+</script>
+{% endif %}
+
+{% endblock %}

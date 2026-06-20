@@ -1,0 +1,75 @@
+﻿# ============================================
+# Secrets — NEVER commit
+# ============================================
+config.json
+config.json.bak*
+_secrets_inventory.tmp.txt
+KEYS.md
+*.env
+.env
+
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+
+# ============================================
+# Modal / build artefacts
+# ============================================
+*.log
+
+# ============================================
+# OS / editor
+# ============================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/
+*.swp
+*~
+
+# ============================================
+# Cloudflare Wrangler local dev state (R2 emulator blobs, etc — not source)
+# ============================================
+.wrangler/
+
+# ============================================
+# Project-specific
+# ============================================
+query/
+*.tmp
+.cf-proxy-secret*
+tester_codes.csv
+
+# ============================================
+# Local databases / embedding caches (large, regeneratable, not source)
+# ============================================
+*.npy
+images.db
+images_temp.db
+.upload_state.json
+
+# ============================================
+# Scratch / dev / test dirs — not referenced at runtime (P-3/P-12 recon)
+# ============================================
+.cache_mobileclip_test/
+fp16_drift_run/
+ondevice_index_v1/
+ondevice_index_v1_test/
+regression_queries/
+test_queries/
+web_spike/
+_snapshots/
+store-submission/
+
+# Misc scratch
+q3_secrets_usage.txt
+
+# Unread — possible relic of the dead door-keys vertical, Craig to review
+MatchIT Key Ref File.xlsx

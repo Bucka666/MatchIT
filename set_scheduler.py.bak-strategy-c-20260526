@@ -1,0 +1,989 @@
+"""
+set_scheduler.py — Automatic new set detection and ingestion for MatchIT
+=========================================================================
+Detects new sets for all three TCGs, downloads new card images,
+runs incremental embedding, and sends an email summary.
+
+Can be run:
+    1. Manually:   python set_scheduler.py
+    2. As a Modal cron job (see matchit_modal.py integration below)
+    3. Per-TCG:    python set_scheduler.py --tcg POKEMON
+
+Configuration:
+    Edit the CONFIG block below, or set environment variables.
+
+Modal integration (add to matchit_modal.py):
+
+    @app.function(
+        image=image,
+        gpu="T4",
+        volumes={"/modal_data": vol},
+        schedule=modal.Cron("0 3 * * 1"),  # Every Monday at 3am UTC
+        timeout=1800,
+    )
+    def scheduled_set_check():
+        import os, sys
+        os.chdir("/app")
+        sys.path.insert(0, "/app")
+        os.environ["LOCALAPPDATA"] = "/modal_data"
+        from set_scheduler import run_scheduler
+        run_scheduler()
+"""
+
+import argparse
+import importlib
+import json
+import logging
+from log_config import configure_logging
+configure_logging()
+import os
+import re
+import ssl
+import sqlite3
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple
+from email_sender import gs_send_email
+
+logger = logging.getLogger(__name__)
+
+# ─────────────────────────────────────────────────────────────
+# CONFIG — edit these or set as environment variables
+# ─────────────────────────────────────────────────────────────
+
+CONFIG = {
+    # Email settings
+    "email_to":       os.environ.get("MATCHIT_EMAIL_TO", "craig@grailsweep.com"),
+
+    # DB root — where card images are stored
+    "db_root": os.environ.get(
+        "MATCHIT_DB_ROOT",
+        str(Path(os.environ.get("LOCALAPPDATA", "/modal_data")) /
+            "MatchITv2_ProductMatch_Data" / "cards"),
+    ),
+
+    # Pokémon TCG API key (optional — free tier works without)
+    "pokemon_api_key": os.environ.get("POKEMONTCG_API_KEY", ""),
+
+    # TCGs to check
+    "tcgs_enabled": ["POKEMON", "MTG", "YUGIOH"],
+
+    # MTG set types to include (Scryfall types)
+    "mtg_set_types": ["core", "expansion", "masters", "draft_innovation"],
+
+    # Pokémon sets known to be unavailable without paid API key
+    "pokemon_known_unavailable": ["mcd14", "mcd15", "mcd17", "mcd18"],
+}
+
+
+# FX conversion rates for alert price calculation.
+# Hardcoded to keep scheduler runs independent of frankfurter.app availability.
+# Matches templates/results.html fallback defaults; FX drift is well below typical alert threshold noise.
+USD_RATE = 0.79
+EUR_RATE = 0.86
+
+
+# ─────────────────────────────────────────────────────────────
+# Path helpers
+# ─────────────────────────────────────────────────────────────
+
+def _get_data_dir() -> Path:
+    localappdata = os.environ.get("LOCALAPPDATA", "/modal_data")
+    return Path(localappdata) / "MatchITv2_ProductMatch_Data" / "cards"
+
+
+def _get_images_db_path() -> Path:
+    return _get_data_dir() / "images.db"
+
+
+def _get_scheduler_log_path() -> Path:
+    """JSON log of all scheduler runs — used for admin summary page."""
+    return _get_data_dir() / "scheduler_log.json"
+
+
+# ─────────────────────────────────────────────────────────────
+# DB helpers
+# ─────────────────────────────────────────────────────────────
+
+def _get_existing_skus(prefix: Optional[str] = None) -> Set[str]:
+    """Return all SKUs in images.db, optionally filtered by prefix."""
+    db_path = _get_images_db_path()
+    if not db_path.exists():
+        return set()
+    conn = sqlite3.connect(str(db_path))
+    if prefix:
+        rows = conn.execute(
+            "SELECT DISTINCT sku FROM images WHERE sku LIKE ?",
+            (f"{prefix}%",)
+        ).fetchall()
+    else:
+        rows = conn.execute("SELECT DISTINCT sku FROM images").fetchall()
+    conn.close()
+    return {row[0] for row in rows if row[0]}
+
+
+def _get_existing_set_codes(tcg: str) -> Set[str]:
+    skus = _get_existing_skus(
+        prefix={"POKEMON": None, "MTG": "mtg-", "YUGIOH": "ygo-"}[tcg]
+    )
+    codes = set()
+    for sku in skus:
+        if tcg == "POKEMON":
+            # SKU format: {set_id}-{card_number}
+            # set_id never contains hyphens, card_number can be digits or alphanumeric
+            # e.g. sv3pt5-123, basep-1, bwp-BW004, swsh9tg-TG01
+            if "-" in sku:
+                codes.add(sku.split("-")[0].lower())
+        elif tcg == "MTG":
+            parts = sku.split("-")
+            if len(parts) >= 3:
+                codes.add(parts[1].lower())
+        elif tcg == "YUGIOH":
+            # ygo-25LP-EN010-46396218 → parts[1] = 25LP
+            parts = sku.split("-")
+            if len(parts) >= 2:
+                codes.add(parts[1].lower())
+    return codes
+
+
+# ─────────────────────────────────────────────────────────────
+# New set detection — per TCG
+# ─────────────────────────────────────────────────────────────
+
+def _detect_new_pokemon_sets() -> List[Dict]:
+    """
+    Detect new Pokémon sets by comparing pokemontcg.io set list
+    against what's already in the DB — without needing an API key.
+    Uses the public unauthenticated endpoint with a browser User-Agent.
+    """
+    import urllib.request
+    try:
+        req = urllib.request.Request(
+            "https://api.pokemontcg.io/v2/sets?select=id,name,releaseDate,total",
+            headers={"User-Agent": "Mozilla/5.0"}
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read())
+        sets = data.get("data", [])
+    except Exception as e:
+        logger.error(f"[SCHED-PKM] API error: {e}")
+        return []
+
+    existing = _get_existing_set_codes("POKEMON")
+    new_sets = []
+    for s in sets:
+        set_id = s.get("id", "").lower()
+        if set_id and set_id not in existing:
+            new_sets.append({
+                "id":    s["id"],
+                "name":  s.get("name", s["id"]),
+                "date":  s.get("releaseDate", ""),
+                "total": s.get("total", 0),
+            })
+    # Suppress known unavailable sets
+    unavailable = set(CONFIG.get("pokemon_known_unavailable", []))
+    new_sets = [s for s in new_sets if s["id"].lower() not in unavailable]
+    new_sets.sort(key=lambda x: x["date"])
+    logger.info(f"[SCHED-PKM] {len(new_sets)} new sets detected")
+    return new_sets
+
+
+def _detect_new_mtg_sets() -> List[Dict]:
+    """Compare Scryfall set list against DB. Return new sets."""
+    import urllib.request
+    try:
+        import urllib.request
+        req = urllib.request.Request(
+            "https://api.scryfall.com/sets",
+            headers={
+                "User-Agent": "MatchIT/1.0 contact@matchit.app",
+                "Accept": "application/json",
+            }
+        )
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.loads(resp.read())
+        sets = data.get("data", [])
+    except Exception as e:
+        logger.error(f"[SCHED-MTG] Scryfall API error: {e}")
+        return []
+
+    existing  = _get_existing_set_codes("MTG")
+    allowed   = set(CONFIG.get("mtg_set_types", []))
+    new_sets  = []
+
+    for s in sets:
+        set_code  = s.get("code", "").lower()
+        set_type  = s.get("set_type", "")
+        set_date  = s.get("released_at", "")
+        card_count = s.get("card_count", 0)
+
+        if not set_code:
+            continue
+        if allowed and set_type not in allowed:
+            continue
+        if card_count == 0:
+            continue
+        if set_code not in existing:
+            new_sets.append({
+                "id":    s["code"],
+                "name":  s.get("name", s["code"]),
+                "date":  set_date,
+                "total": card_count,
+                "type":  set_type,
+            })
+
+    new_sets.sort(key=lambda x: x["date"])
+    logger.info(f"[SCHED-MTG] {len(new_sets)} new sets detected")
+    return new_sets
+
+
+def _detect_new_yugioh_sets() -> List[Dict]:
+    import subprocess
+    try:
+        result = subprocess.run(
+            [sys.executable, "scrape_yugioh.py", "--list-sets"],
+            capture_output=True, text=True, timeout=60,
+            cwd=Path(__file__).parent,
+        )
+        lines = result.stdout.strip().splitlines()
+    except Exception as e:
+        logger.error(f"[SCHED-YGO] list-sets error: {e}")
+        return []
+
+    existing  = _get_existing_set_codes("YUGIOH")
+    new_sets  = []
+
+    # YGO set codes are 2-6 uppercase alphanumeric chars
+    # e.g. MRD, MGED, 25LP, LOB2, WC4
+    # They appear as a standalone token surrounded by spaces in the line
+    set_code_re = re.compile(r'\b([A-Z0-9]{2,6})\b')
+
+    for line in lines:
+        line = line.strip()
+        # Skip header, divider, summary lines
+        if not line or line.startswith('-') or line.startswith('Name') \
+                or 'sets,' in line.lower() or 'total' in line.lower():
+            continue
+
+        # Find date at the end — format YYYY-MM-DD or ?
+        date_match = re.search(r'(\d{4}-\d{2}-\d{2}|\?)\s*$', line)
+        tcg_date   = date_match.group(1) if date_match else ""
+
+        # Find all uppercase alphanumeric tokens — the set code will be
+        # the last one before the date (or end of line)
+        line_no_date = line[:date_match.start()].strip() if date_match else line
+        tokens = set_code_re.findall(line_no_date)
+
+        if not tokens:
+            continue
+
+        # The set code is the last uppercase token before the date
+        set_code  = tokens[-1]
+        base_code = set_code.lower()
+
+        # Skip if it looks like a card count (pure digits)
+        if set_code.isdigit():
+            continue
+
+        # Skip if already in DB
+        if base_code in existing:
+            continue
+
+        # Set name is everything before the set code token
+        code_pos  = line_no_date.rfind(set_code)
+        set_name  = line_no_date[:code_pos].strip()
+
+        # Try to get card count — digit sequence after set code
+        after_code = line_no_date[code_pos + len(set_code):].strip()
+        count_match = re.search(r'(\d+)', after_code)
+        total = int(count_match.group(1)) if count_match else 0
+
+        new_sets.append({
+            "id":    set_code,
+            "name":  set_name,
+            "date":  tcg_date,
+            "total": total,
+        })
+
+    new_sets.sort(key=lambda x: x["date"] or "9999")
+    logger.info(f"[SCHED-YGO] {len(new_sets)} new sets detected")
+    return new_sets
+
+
+# ─────────────────────────────────────────────────────────────
+# Scraper invocation — per TCG
+# ─────────────────────────────────────────────────────────────
+
+def _scrape_pokemon(new_sets: List[Dict], db_root: str) -> Dict:
+    """Download new Pokémon sets via scrape_pokemon_tcg.py."""
+    result = {"downloaded": 0, "failed": 0, "sets": []}
+    if not new_sets:
+        return result
+
+    set_ids = ",".join(s["id"] for s in new_sets)
+    logger.info(f"[SCHED-PKM] Scraping sets: {set_ids}")
+
+    try:
+        # Import and call directly
+        import scrape_pokemon_tcg
+        old_argv = sys.argv[:]
+        args = ["scrape_pokemon_tcg.py",
+                "--db-root", db_root,
+                "--set", set_ids,
+                "--resume"]
+        api_key = CONFIG.get("pokemon_api_key", "")
+        if api_key:
+            args += ["--api-key", api_key]
+        sys.argv = args
+        try:
+            scrape_pokemon_tcg.main()
+            result["sets"] = [s["id"] for s in new_sets]
+            result["downloaded"] = sum(s.get("total", 0) for s in new_sets)
+        finally:
+            sys.argv = old_argv
+    except Exception as e:
+        logger.error(f"[SCHED-PKM] Scrape error: {e}")
+        result["failed"] = len(new_sets)
+
+    return result
+
+
+def _scrape_mtg(new_sets: List[Dict], db_root: str) -> Dict:
+    """Download new MTG sets via scrape_mtg.py."""
+    result = {"downloaded": 0, "failed": 0, "sets": []}
+    if not new_sets:
+        return result
+
+    set_codes = ",".join(s["id"] for s in new_sets)
+    logger.info(f"[SCHED-MTG] Scraping sets: {set_codes}")
+
+    try:
+        import scrape_mtg
+        old_argv = sys.argv[:]
+        sys.argv = ["scrape_mtg.py",
+                    "--db-root", db_root,
+                    "--set", set_codes,
+                    "--resume"]
+        try:
+            scrape_mtg.main()
+            result["sets"] = [s["id"] for s in new_sets]
+            result["downloaded"] = sum(s.get("total", 0) for s in new_sets)
+        finally:
+            sys.argv = old_argv
+    except Exception as e:
+        logger.error(f"[SCHED-MTG] Scrape error: {e}")
+        result["failed"] = len(new_sets)
+
+    return result
+
+
+def _scrape_yugioh(new_sets: List[Dict], db_root: str) -> Dict:
+    """Download new YGO sets via scrape_yugioh.py."""
+    result = {"downloaded": 0, "failed": 0, "sets": []}
+    if not new_sets:
+        return result
+
+    set_codes = ",".join(s["id"] for s in new_sets)
+    logger.info(f"[SCHED-YGO] Scraping sets: {set_codes}")
+
+    try:
+        import scrape_yugioh
+        old_argv = sys.argv[:]
+        sys.argv = ["scrape_yugioh.py",
+                    "--db-root", db_root,
+                    "--set", set_codes,
+                    "--resume"]
+        try:
+            scrape_yugioh.main()
+            result["sets"] = [s["id"] for s in new_sets]
+            result["downloaded"] = sum(s.get("total", 0) for s in new_sets)
+        finally:
+            sys.argv = old_argv
+    except Exception as e:
+        logger.error(f"[SCHED-YGO] Scrape error: {e}")
+        result["failed"] = len(new_sets)
+
+    return result
+
+
+# ─────────────────────────────────────────────────────────────
+# Email notification
+# ─────────────────────────────────────────────────────────────
+
+def _send_email(subject: str, body_html: str, body_text: str) -> bool:
+    """Send summary email via Resend."""
+    email_to = CONFIG.get("email_to", "")
+    if not email_to:
+        logger.warning("[SCHED] No email_to configured — skipping notification")
+        return False
+    if not os.environ.get("RESEND_API_KEY"):
+        logger.warning("[SCHED] RESEND_API_KEY not set — skipping notification")
+        return False
+    try:
+        gs_send_email(
+            to=email_to,
+            subject=subject,
+            html=body_html,
+            text=body_text,
+        )
+        logger.info(f"[SCHED] Email sent to {email_to}")
+        return True
+    except Exception as e:
+        logger.error(f"[SCHED] Email failed: {e}")
+        return False
+
+
+def _build_email(run_summary: Dict) -> Tuple[str, str, str]:
+    """Build subject, HTML body and plain text body from run summary."""
+    now      = datetime.now().strftime("%d %b %Y %H:%M")
+    total_new = sum(
+        len(v.get("new_sets", []))
+        for v in run_summary.get("tcgs", {}).values()
+    )
+    subject = (
+        f"GrailSweep — {total_new} new set(s) added [{now}]"
+        if total_new > 0
+        else f"GrailSweep — No new sets found [{now}]"
+    )
+
+    # Plain text
+    lines = [f"GrailSweep Set Scheduler — {now}", "=" * 40, ""]
+    for tcg, data in run_summary.get("tcgs", {}).items():
+        lines.append(f"{tcg}:")
+        new_sets = data.get("new_sets", [])
+        if new_sets:
+            for s in new_sets:
+                lines.append(f"  + {s['id']} — {s['name']} ({s.get('total',0)} cards)")
+        else:
+            lines.append("  No new sets.")
+        lines.append("")
+
+    embed = run_summary.get("embed", {})
+    lines += [
+        f"Embeddings added: {embed.get('new_front', 0)} front",
+        f"Total in DB:      {embed.get('total_front', 0)}",
+        f"Elapsed:          {embed.get('elapsed_s', 0)}s",
+    ]
+
+    _any_sets = any(data.get("new_sets") for data in run_summary.get("tcgs", {}).values())
+    if _any_sets and embed.get("new_front", 0) == 0:
+        lines += ["", "⚠️  WARNING: sets detected but no embeddings added — investigate registration step"]
+
+    body_text = "\n".join(lines)
+
+    # HTML
+    _any_sets_html = any(data.get("new_sets") for data in run_summary.get("tcgs", {}).values())
+    warning_html = (
+        '<div style="background:rgba(255,160,0,0.08);border:1px solid rgba(255,160,0,0.4);'
+        'border-radius:8px;padding:12px 16px;margin-top:16px;font-size:0.85rem;color:#ffb300;">'
+        '⚠️ <strong>Sets detected but no embeddings added.</strong> '
+        'The registration step may have failed — check Modal logs and re-run '
+        '<code>backfill_scraped_cards.py</code> if needed.'
+        '</div>'
+    ) if (_any_sets_html and embed.get("new_front", 0) == 0) else ""
+
+    rows = ""
+    for tcg, data in run_summary.get("tcgs", {}).items():
+        new_sets = data.get("new_sets", [])
+        colour = "#00c853" if new_sets else "#9e9e9e"
+        badge  = f'<span style="color:{colour};font-weight:700;">{len(new_sets)} new</span>'
+        rows  += f"<tr><td style='padding:6px 12px;font-weight:700;'>{tcg}</td><td style='padding:6px 12px;'>{badge}</td><td style='padding:6px 12px;'>"
+        if new_sets:
+            rows += "<ul style='margin:0;padding-left:16px;'>"
+            for s in new_sets:
+                rows += f"<li>{s['id']} — {s['name']} ({s.get('total',0)} cards)</li>"
+            rows += "</ul>"
+        else:
+            rows += "No new sets."
+        rows += "</td></tr>"
+
+    body_html = f"""
+    <html><body style="font-family:'DM Sans',Arial,sans-serif;background:#1a1830;color:#f0ecff;padding:24px;">
+    <div style="max-width:600px;margin:0 auto;background:#252248;border-radius:12px;padding:24px;border:1px solid rgba(177,77,255,0.2);">
+      <h2 style="font-family:monospace;background:linear-gradient(90deg,#b14dff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-top:0;">
+        GrailSweep — Set Scheduler
+      </h2>
+      <p style="color:#9b95b8;font-size:0.85rem;">{now}</p>
+      <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+          <th style="text-align:left;padding:6px 12px;color:#9b95b8;font-size:0.75rem;text-transform:uppercase;">TCG</th>
+          <th style="text-align:left;padding:6px 12px;color:#9b95b8;font-size:0.75rem;text-transform:uppercase;">Status</th>
+          <th style="text-align:left;padding:6px 12px;color:#9b95b8;font-size:0.75rem;text-transform:uppercase;">Sets</th>
+        </tr>
+        {rows}
+      </table>
+      <div style="background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.15);border-radius:8px;padding:12px 16px;margin-top:16px;">
+        <div style="font-size:0.8rem;color:#9b95b8;">Embeddings added: <strong style="color:#00ff88;">{embed.get('new_front',0)}</strong></div>
+        <div style="font-size:0.8rem;color:#9b95b8;">Total in DB: <strong style="color:#00e5ff;">{embed.get('total_front',0):,}</strong></div>
+        <div style="font-size:0.8rem;color:#9b95b8;">Elapsed: <strong style="color:#ffd700;">{embed.get('elapsed_s',0)}s</strong></div>
+      </div>
+      {warning_html}
+    </div>
+    </body></html>
+    """
+    return subject, body_html, body_text
+
+
+# ─────────────────────────────────────────────────────────────
+# Price alert checking
+# ─────────────────────────────────────────────────────────────
+
+def _send_alert_push(alert: Dict, current_gbp: float, reason: str) -> None:
+    """Fire a Web Push notification for a price alert."""
+    code = alert.get("code", "").strip().upper()
+    if not code:
+        return
+    try:
+        import json as _json
+        push_subs_path = Path(os.environ.get("LOCALAPPDATA", "/modal_data")) / "push_subscriptions.json"
+        if not push_subs_path.exists():
+            push_subs_path = Path("/modal_data/push_subscriptions.json")
+        if not push_subs_path.exists():
+            return
+        with open(push_subs_path, "r") as f:
+            all_subs = _json.load(f)
+        subs = all_subs.get(code, [])
+        if not subs:
+            return
+
+        import json as _cj
+        with open(Path(__file__).parent / "config.json") as _cf:
+            cfg = _cj.load(_cf)
+        vapid_private = cfg.get("vapid_private_key", "")
+        if not vapid_private:
+            return
+        if vapid_private.startswith("-----"):
+            import base64 as _b64
+            from cryptography.hazmat.primitives.serialization import load_pem_private_key
+            from cryptography.hazmat.backends import default_backend as _dbe
+            _key = load_pem_private_key(vapid_private.encode(), password=None, backend=_dbe())
+            _raw = _key.private_numbers().private_value.to_bytes(32, "big")
+            vapid_private = _b64.urlsafe_b64encode(_raw).rstrip(b"=").decode()
+
+        from pywebpush import webpush, WebPushException
+        card_name = alert.get("card_name", alert.get("sku", "Your card"))
+        direction = "dropped below" if reason == "low" else "risen above"
+        threshold = alert.get("target_low") if reason == "low" else alert.get("target_high")
+        payload = _cj.dumps({
+            "title": f"GrailSweep Price Alert 💰",
+            "body":  f"{card_name} has {direction} £{threshold:.2f} — now £{current_gbp:.2f}",
+            "url":   "/collection"
+        })
+        vapid_claims = {"sub": "mailto:grailsweep@gmail.com"}
+        for sub in subs:
+            try:
+                webpush(
+                    subscription_info=sub,
+                    data=payload,
+                    vapid_private_key=vapid_private,
+                    vapid_claims=vapid_claims,
+                )
+            except WebPushException:
+                pass
+        logger.info(f"[ALERTS] Push sent to {len(subs)} device(s) for {code}")
+    except Exception as e:
+        logger.error(f"[ALERTS] Push failed: {e}")
+
+
+def _send_alert_email(alert: Dict, current_gbp: float, reason: str) -> None:
+    """Send a price alert email to the user via Resend."""
+    email_to = alert.get("email", CONFIG.get("email_to", ""))
+
+    if not email_to:
+        logger.warning("[ALERTS] No recipient email — skipping alert")
+        return
+    if not os.environ.get("RESEND_API_KEY"):
+        logger.warning("[ALERTS] RESEND_API_KEY not set — skipping alert")
+        return
+
+    card_name = alert.get("card_name", alert.get("sku", "Unknown card"))
+    sku       = alert.get("sku", "")
+    direction = "dropped below" if reason == "low" else "risen above"
+    threshold = alert.get("target_low") if reason == "low" else alert.get("target_high")
+    subject   = f"Price alert: {card_name} is now £{current_gbp:.2f}"
+
+    body_html = f"""
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#1a1830;background:#ffffff;">
+        <h1 style="color:#1a1830;font-size:1.3rem;font-weight:600;margin:0 0 16px 0;">Price alert triggered</h1>
+        <p style="margin:0 0 16px 0;line-height:1.5;"><strong>{card_name}</strong> has {direction} your target of £{threshold:.2f}.</p>
+        <div style="background:#f6f4fb;border-left:3px solid #b14dff;border-radius:4px;padding:16px 20px;margin:20px 0;">
+            <div style="font-size:1.4rem;font-weight:600;color:#1a1830;">£{current_gbp:.2f}</div>
+            <div style="font-size:0.85rem;color:#5f5e5a;margin-top:4px;">Current market price</div>
+        </div>
+        <p style="margin:20px 0;">
+            <a href="https://grailsweep.com/match" style="display:inline-block;background:#7c3aed;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-weight:500;font-size:0.9rem;">View on GrailSweep</a>
+        </p>
+        <p style="color:#5f5e5a;font-size:0.9rem;line-height:1.5;margin:16px 0;">
+            To manage your alerts, visit <a href="https://grailsweep.com" style="color:#7c3aed;text-decoration:none;">grailsweep.com</a>.
+        </p>
+        <hr style="border:none;border-top:1px solid #e5e2ed;margin:24px 0 16px 0;">
+        <p style="font-size:0.8rem;color:#888780;margin:0;">
+            GrailSweep — Trading card scanner and price reference<br>
+            <a href="https://grailsweep.com" style="color:#7c3aed;text-decoration:none;">grailsweep.com</a>
+        </p>
+    </div>
+    """
+
+    body_text = (
+        f"Price alert triggered\n\n"
+        f"{card_name} has {direction} your target of £{threshold:.2f}.\n"
+        f"Current market price: £{current_gbp:.2f}\n\n"
+        f"View on GrailSweep: https://grailsweep.com/match\n\n"
+        f"To manage your alerts, visit https://grailsweep.com\n"
+    )
+
+    try:
+        gs_send_email(
+            to=email_to,
+            subject=subject,
+            html=body_html,
+            text=body_text,
+        )
+        logger.info(f"[ALERTS] Alert email sent to {email_to} for {sku}")
+    except Exception as e:
+        logger.error(f"[ALERTS] Failed to send alert email: {e}")
+
+
+def check_price_alerts() -> None:
+    """
+    Read price_alerts.json, compute current GBP price for each alert
+    by querying profiles in CardsDB, and fire email alerts when
+    target_low or target_high thresholds are crossed.
+    """
+    alerts_path = Path("/modal_data/price_alerts.json") if Path("/modal_data").exists() else Path(__file__).parent / "price_alerts.json"
+    if not alerts_path.exists():
+        logger.info("[ALERTS] No price_alerts.json found — skipping")
+        return
+
+    try:
+        with open(alerts_path, "r", encoding="utf-8") as f:
+            alerts: List[Dict] = json.load(f)
+    except Exception as e:
+        logger.error(f"[ALERTS] Could not read price_alerts.json: {e}")
+        return
+
+    if not alerts:
+        return
+
+    # CardsDB root — same convention as the rest of the scheduler
+    localappdata = os.environ.get("LOCALAPPDATA", "/modal_data")
+    cards_db_root = Path(localappdata) / "CardsDB"
+    # Modal fallback
+    if not cards_db_root.exists():
+        cards_db_root = Path("/modal_data/CardsDB")
+
+    triggered: List[int] = []
+
+    for i, alert in enumerate(alerts):
+        sku = alert.get("sku", "")
+        if not sku:
+            continue
+
+        # Resolve profile.json — path convention: CardsDB/{game}/{sku}/profile.json
+        # Determine game prefix
+        if sku.startswith("mtg-"):
+            game = "mtg"
+        elif sku.startswith("ygo-"):
+            game = "yugioh"
+        else:
+            game = "pokemon"
+
+        profile_path = cards_db_root / game / sku / "profile.json"
+        if not profile_path.exists():
+            logger.debug(f"[ALERTS] No profile for {sku} at {profile_path}")
+            continue
+
+        try:
+            with open(profile_path, "r", encoding="utf-8") as pf:
+                profile = json.load(pf)
+        except Exception:
+            continue
+
+        # Compute best GBP price from the profile.
+        # Mirrors the scanner logic in templates/results.html — iterates every source,
+        # picks max across all variants/price-points, skips ebay/amazon.
+        # Handles two shapes: source.variant.{market,trend,avg_sell,mid} (nested) and
+        # source.{price_point} (flat — Pokémon cardmarket).
+        prices = profile.get("prices", {})
+        best_gbp: float = 0.0
+
+        for src, sdata in prices.items():
+            src_lower = src.lower()
+            if "ebay" in src_lower or "amazon" in src_lower:
+                continue
+            if not isinstance(sdata, dict):
+                continue
+            rate = EUR_RATE if "cardmarket" in src_lower else USD_RATE
+
+            for variant, vdata in sdata.items():
+                pr = 0.0
+                if isinstance(vdata, dict):
+                    pr = (vdata.get("market") or vdata.get("trend")
+                          or vdata.get("avg_sell") or vdata.get("mid") or 0)
+                elif isinstance(vdata, (int, float)):
+                    pr = vdata
+                if pr and pr > 0:
+                    gbp_candidate = float(pr) * rate
+                    if gbp_candidate > best_gbp:
+                        best_gbp = gbp_candidate
+
+        gbp: Optional[float] = round(best_gbp, 2) if best_gbp > 0 else None
+        logger.info(f"[ALERT-PRICE] sku={sku} gbp={gbp}")
+
+        if gbp is None:
+            logger.debug(f"[ALERTS] No price data for {sku}")
+            continue
+
+        reason: Optional[str] = None
+        target_low  = alert.get("target_low")
+        target_high = alert.get("target_high")
+
+        if target_low is not None and gbp <= float(target_low):
+            reason = "low"
+        elif target_high is not None and gbp >= float(target_high):
+            reason = "high"
+
+        if reason:
+            logger.info(f"[ALERTS] Triggering {reason} alert for {sku} @ £{gbp}")
+            _send_alert_email(alert, gbp, reason)
+            _send_alert_push(alert, gbp, reason)
+            triggered.append(i)
+
+    # Remove one-shot triggered alerts (keep repeating ones if flagged)
+    if triggered:
+        remaining = [a for j, a in enumerate(alerts) if j not in triggered]
+        try:
+            with open(alerts_path, "w", encoding="utf-8") as f:
+                json.dump(remaining, f, indent=2)
+            logger.info(f"[ALERTS] {len(triggered)} alert(s) fired and removed")
+        except Exception as e:
+            logger.error(f"[ALERTS] Could not save updated alerts: {e}")
+
+
+# ─────────────────────────────────────────────────────────────
+# Scheduler log (for admin summary page)
+# ─────────────────────────────────────────────────────────────
+
+def _save_scheduler_log(run_summary: Dict) -> None:
+    """Append this run to the scheduler log JSON."""
+    log_path = _get_scheduler_log_path()
+    history  = []
+    if log_path.exists():
+        try:
+            with open(log_path, "r", encoding="utf-8") as f:
+                history = json.load(f)
+        except Exception:
+            history = []
+
+    history.append(run_summary)
+    # Keep last 100 runs
+    history = history[-100:]
+
+    with open(log_path, "w", encoding="utf-8") as f:
+        json.dump(history, f, indent=2)
+    logger.info(f"[SCHED] Scheduler log saved to {log_path}")
+
+
+def load_scheduler_log() -> List[Dict]:
+    """Load scheduler run history — used by admin summary page."""
+    log_path = _get_scheduler_log_path()
+    if not log_path.exists():
+        return []
+    try:
+        with open(log_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+# ─────────────────────────────────────────────────────────────
+# Main scheduler run
+# ─────────────────────────────────────────────────────────────
+
+def run_scheduler(
+    tcgs:     Optional[List[str]] = None,
+    dry_run:  bool = False,
+    db_root:  Optional[str] = None,
+) -> Dict:
+    """
+    Full scheduler run:
+    1. Detect new sets per TCG
+    2. Download new images
+    3. Run incremental embed
+    4. Send email + save log
+
+    Args:
+        tcgs:    List of TCGs to check e.g. ['POKEMON', 'MTG'].
+                 Defaults to CONFIG['tcgs_enabled'].
+        dry_run: If True, detect only — don't download or embed.
+        db_root: Override DB root path.
+
+    Returns:
+        run_summary dict.
+    """
+    t_start  = time.time()
+    run_at   = datetime.now().isoformat()
+    tcgs     = tcgs or CONFIG["tcgs_enabled"]
+    db_root  = db_root or CONFIG["db_root"]
+
+    run_summary: Dict = {
+        "run_at":  run_at,
+        "dry_run": dry_run,
+        "tcgs":    {},
+        "embed":   {},
+        "status":  "ok",
+    }
+
+    logger.info(f"[SCHED] Starting scheduler run at {run_at} — TCGs: {tcgs}")
+
+    any_new = False
+
+    # ── 1. Detect + download per TCG ──
+    for tcg in tcgs:
+        tcg = tcg.upper()
+        logger.info(f"[SCHED] Checking {tcg}...")
+        tcg_result: Dict = {"new_sets": [], "downloaded": 0, "failed": 0}
+
+        try:
+            if tcg == "POKEMON":
+                new_sets = _detect_new_pokemon_sets()
+            elif tcg == "MTG":
+                new_sets = _detect_new_mtg_sets()
+            elif tcg == "YUGIOH":
+                new_sets = _detect_new_yugioh_sets()
+            else:
+                logger.warning(f"[SCHED] Unknown TCG: {tcg}")
+                continue
+
+            tcg_result["new_sets"] = new_sets
+
+            if new_sets and not dry_run:
+                if tcg == "POKEMON":
+                    dl = _scrape_pokemon(new_sets, db_root)
+                elif tcg == "MTG":
+                    dl = _scrape_mtg(new_sets, db_root)
+                elif tcg == "YUGIOH":
+                    dl = _scrape_yugioh(new_sets, db_root)
+                else:
+                    dl = {}
+                tcg_result.update(dl)
+
+                # Register newly scraped images into images.db so
+                # incremental_embed can find them in the next step
+                try:
+                    from backfill_scraped_cards import register_scraped_cards
+                    reg = register_scraped_cards(
+                        tcg=tcg.lower(),
+                        sets=[s["id"] for s in new_sets],
+                    )
+                    tcg_result["registered"] = reg.get(tcg.lower(), {})
+                except Exception as _reg_err:
+                    logger.error(f"[SCHED] Registration error for {tcg}: {_reg_err}")
+                    tcg_result["registered"] = {"error": str(_reg_err)}
+
+                any_new = True
+
+        except Exception as e:
+            logger.error(f"[SCHED] {tcg} error: {e}")
+            tcg_result["error"] = str(e)
+
+        run_summary["tcgs"][tcg] = tcg_result
+
+    # ── 2. Incremental embed ──
+    if any_new and not dry_run:
+        logger.info("[SCHED] Running incremental embed...")
+        try:
+            from incremental_embed import run_incremental_embed
+            embed_result = run_incremental_embed(hot_reload=True)
+            run_summary["embed"] = embed_result
+        except Exception as e:
+            logger.error(f"[SCHED] Embed error: {e}")
+            run_summary["embed"] = {"status": f"error: {e}"}
+    else:
+        run_summary["embed"] = {
+            "new_front": 0, "total_front": 0, "elapsed_s": 0,
+            "status": "skipped_no_new_sets" if not any_new else "dry_run",
+        }
+
+    run_summary["elapsed_s"] = round(time.time() - t_start, 1)
+
+    # ── 3. Save log ──
+    _save_scheduler_log(run_summary)
+
+    # ── 4. Send email ──
+    subject, body_html, body_text = _build_email(run_summary)
+    _send_email(subject, body_html, body_text)
+
+    # ── 5. Check price alerts ──
+    try:
+        check_price_alerts()
+    except Exception as e:
+        logger.error(f"[SCHED] Price alert check error: {e}")
+
+    logger.info(
+        f"[SCHED] Done in {run_summary['elapsed_s']}s — "
+        f"any_new={any_new}, dry_run={dry_run}"
+    )
+    return run_summary
+
+
+# ─────────────────────────────────────────────────────────────
+# CLI entry point
+# ─────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+    )
+
+    parser = argparse.ArgumentParser(
+        description="MatchIT new set scheduler"
+    )
+    parser.add_argument(
+        "--tcg",
+        help="Comma-separated TCGs to check e.g. POKEMON,MTG (default: all)",
+        default=None,
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Detect new sets only — don't download or embed",
+    )
+    parser.add_argument(
+        "--db-root",
+        help="Override DB root path",
+        default=None,
+    )
+    # Email config overrides
+    parser.add_argument("--email-from",     default=None)
+    parser.add_argument("--email-to",       default=None)
+    parser.add_argument("--email-password", default=None)
+
+    args = parser.parse_args()
+
+    # Apply CLI overrides to CONFIG
+    if args.email_from:     CONFIG["email_from"]     = args.email_from
+    if args.email_to:       CONFIG["email_to"]       = args.email_to
+    if args.email_password: CONFIG["email_password"] = args.email_password
+
+    tcgs = [t.strip().upper() for t in args.tcg.split(",")] if args.tcg else None
+
+    result = run_scheduler(
+        tcgs=tcgs,
+        dry_run=args.dry_run,
+        db_root=args.db_root,
+    )
+
+    print("\n=== Scheduler Run Summary ===")
+    for tcg, data in result.get("tcgs", {}).items():
+        new = data.get("new_sets", [])
+        print(f"  {tcg}: {len(new)} new set(s)")
+        for s in new:
+            print(f"    + {s['id']} — {s['name']}")
+    embed = result.get("embed", {})
+    print(f"\n  Embeddings added: {embed.get('new_front', 0)}")
+    print(f"  Total in DB:      {embed.get('total_front', 0)}")
+    print(f"  Elapsed:          {result.get('elapsed_s', 0)}s")

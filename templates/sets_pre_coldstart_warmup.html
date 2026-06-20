@@ -1,0 +1,693 @@
+{% extends "base.html" %}
+{% block title %}Set Completion — GrailSweep{% endblock %}
+
+{% block body %}
+<style>
+.sets-page { max-width: 1100px; margin: 0 auto; padding: 24px 16px 60px; }
+.sets-page h1 { font-family: 'Orbitron', monospace; font-size: 1.4rem; color: #00e5ff; margin: 0 0 6px; }
+.sets-page .sets-subtitle { font-size: 0.85rem; color: #aaa; margin: 0 0 24px; }
+
+/* Filter bar */
+.sets-filter-bar { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+.sets-filter-btn {
+  padding: 6px 16px; border-radius: 20px; border: 1px solid #333;
+  background: rgba(255,255,255,0.04); color: #aaa; cursor: pointer;
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.03em;
+  transition: all 0.15s;
+}
+.sets-filter-btn:hover { border-color: #555; color: #ddd; }
+.sets-filter-btn--active { background: rgba(0,229,255,0.12); border-color: rgba(0,229,255,0.4); color: #00e5ff; }
+
+/* Set grid */
+.sets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.sets-card {
+  background: rgba(255,255,255,0.03); border: 1px solid #2a2a2a;
+  border-radius: 12px; padding: 14px 16px; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.sets-card:hover { border-color: #444; background: rgba(255,255,255,0.05); }
+.sets-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.sets-card-name { font-size: 0.9rem; font-weight: 700; color: #eee; line-height: 1.3; }
+.sets-card-badges { display: flex; gap: 5px; align-items: center; flex-shrink: 0; }
+.sets-tcg-badge {
+  display: inline-block; font-size: 0.58rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 2px 7px; border-radius: 4px;
+}
+.sets-tcg-badge--pokemon { background: rgba(255,203,5,0.15); color: #ffcb05; }
+.sets-tcg-badge--mtg     { background: rgba(0,229,255,0.15);  color: #00e5ff; }
+.sets-tcg-badge--ygo     { background: rgba(177,77,255,0.15); color: #b14dff; }
+.sets-badge-complete {
+  display: inline-block; font-size: 0.58rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  padding: 2px 7px; border-radius: 4px;
+  background: rgba(255,215,0,0.15); color: #ffd700;
+}
+.sets-progress-wrap { margin-bottom: 6px; }
+.sets-progress-bar {
+  width: 100%; height: 6px; border-radius: 3px;
+  background: rgba(255,255,255,0.08); overflow: hidden; margin-bottom: 5px;
+}
+.sets-progress-fill { height: 100%; border-radius: 3px; background: #00e5ff; transition: width 0.3s; }
+.sets-progress-label { font-size: 0.76rem; color: #999; }
+.sets-progress-label span { color: #ccc; font-weight: 600; }
+
+/* Empty / gate */
+.sets-empty { text-align: center; padding: 60px 20px; color: #888; }
+.sets-empty p { font-size: 0.9rem; line-height: 1.6; }
+.sets-gate-banner {
+  background: rgba(177,77,255,0.08); border: 1px solid rgba(177,77,255,0.25);
+  border-radius: 12px; padding: 28px 24px; text-align: center; margin-bottom: 24px;
+}
+.sets-gate-banner h2 { font-family: 'Orbitron', monospace; font-size: 1rem; color: #b14dff; margin: 0 0 8px; }
+.sets-gate-banner p { font-size: 0.85rem; color: #aaa; margin: 0 0 16px; }
+.sets-gate-btn {
+  display: inline-block; padding: 9px 22px; border-radius: 20px;
+  background: linear-gradient(135deg, #b14dff, #7a1dcc);
+  color: #fff; font-weight: 700; font-size: 0.85rem; text-decoration: none;
+}
+
+/* Modal overlay */
+.sets-modal-overlay {
+  position: fixed;
+  top: 0; right: 0; bottom: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85);
+  z-index: 9999;
+  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px 12px;
+  box-sizing: border-box;
+}
+.sets-modal-overlay.gs-hidden { display: none; }
+.sets-modal-inner {
+  background: #141414; border: 1px solid #2a2a2a; border-radius: 16px;
+  width: 100%; max-width: 860px; padding: 24px;
+  position: relative; z-index: 10000;
+  min-height: 60vh; max-height: 90vh; overflow-y: auto;
+  margin: 5vh auto;
+  box-sizing: border-box;
+}
+.sets-modal-close {
+  position: absolute; top: 14px; right: 16px;
+  background: none; border: none; color: #888; font-size: 1.4rem;
+  cursor: pointer; line-height: 1; padding: 4px 8px; border-radius: 6px;
+}
+.sets-modal-close:hover { color: #fff; background: rgba(255,255,255,0.07); }
+.sets-modal-title { font-family: 'Orbitron', monospace; font-size: 1rem; color: #00e5ff; margin: 0 0 4px; padding-right: 36px; }
+.sets-modal-meta { font-size: 0.8rem; color: #888; margin: 0 0 20px; }
+.sets-modal-section-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #666; margin: 0 0 12px; }
+.sets-modal-section-title span { color: #00ff88; }
+.sets-modal-section-title.missing-title span { color: #888; }
+
+/* Loading spinner */
+.sets-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: #00e5ff;
+  border-radius: 50%;
+  animation: sets-spin 0.8s linear infinite;
+}
+@keyframes sets-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Card thumbnail grid */
+.sets-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.sets-card-thumb {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: default;
+}
+.sets-card-thumb img {
+  width: 70px; height: 98px; object-fit: contain; border-radius: 5px;
+  border: 2px solid transparent;
+}
+.sets-card-thumb--owned img  { border-color: #00ff88; }
+.sets-card-thumb--missing img { border-color: #333; opacity: 0.45; filter: grayscale(0.6); }
+.sets-card-thumb-num { font-size: 0.6rem; color: #888; text-align: center; }
+.sets-card-thumb-name { font-size: 0.58rem; color: #aaa; text-align: center; line-height: 1.3; max-width: 74px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+.sets-modal-loading { text-align: center; padding: 40px; color: #888; font-size: 0.9rem; }
+
+@media (max-width: 600px) {
+  .sets-grid { grid-template-columns: 1fr; }
+  .sets-card-grid { grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); }
+  .sets-card-thumb img { width: 60px; height: 84px; }
+}
+
+/* Lightbox zoom overlay */
+.sets-card-grid img { cursor: pointer; }
+#gs-zoom-overlay {
+  position: fixed; inset: 0; z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+}
+#gs-zoom-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.85);
+}
+#gs-zoom-content {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  max-width: 90vw; max-height: 90vh;
+}
+#gs-zoom-img {
+  max-width: min(340px, 88vw); max-height: 75vh;
+  border-radius: 10px; object-fit: contain;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+}
+#gs-zoom-label {
+  color: #fff; font-size: 0.95rem; text-align: center;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+}
+#gs-zoom-close {
+  position: absolute; top: -36px; right: 0;
+  background: rgba(255,255,255,0.15); border: none;
+  color: #fff; font-size: 1.1rem;
+  width: 32px; height: 32px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+</style>
+
+<div class="sets-page">
+  <h1>Set Completion</h1>
+  <p class="sets-subtitle">Track how close you are to completing each set in your collection.</p>
+
+  <!-- Pro gate (hidden if Pro) -->
+  <div id="setsGateBanner" class="sets-gate-banner gs-hidden">
+    <h2>Pro Feature</h2>
+    <p>Set completion tracking is available to GrailSweep Pro subscribers.</p>
+    <a href="/upgrade" class="sets-gate-btn">⚡ Upgrade to Pro</a>
+  </div>
+
+  <!-- Filter bar -->
+  <div id="setsFilterBar" class="sets-filter-bar gs-hidden">
+    <button class="sets-filter-btn sets-filter-btn--active" data-filter="all">All</button>
+    <button class="sets-filter-btn" data-filter="POKEMON">Pokémon</button>
+    <button class="sets-filter-btn" data-filter="MTG">MTG</button>
+    <button class="sets-filter-btn" data-filter="YUGIOH">Yu-Gi-Oh</button>
+  </div>
+
+  <!-- Set grid -->
+  <div id="setsGrid" class="sets-grid gs-hidden"></div>
+
+  <!-- Empty state -->
+  <div id="setsEmpty" class="sets-empty gs-hidden">
+    <p>No sets found.<br>Add cards to your collection to track set completion.</p>
+  </div>
+
+  <!-- Error state (fetch failed / timed out) -->
+  <div id="setsError" class="gs-hidden" style="
+    text-align:center; padding:40px 20px; color:#aaa;">
+    <div style="font-size:2rem; margin-bottom:12px;">⚠️</div>
+    <div style="color:#fff; font-weight:600;
+      margin-bottom:8px;">Failed to load set data</div>
+    <div style="font-size:0.85rem; margin-bottom:20px;">
+      This can happen on first load or after a period of
+      inactivity. Your collection is safe.
+    </div>
+    <button type="button" onclick="location.reload()" style="
+      background:#00e5ff; color:#000; border:none;
+      border-radius:8px; padding:10px 24px;
+      font-weight:600; cursor:pointer; font-size:0.9rem;">
+      Try Again
+    </button>
+  </div>
+
+  <!-- Page loading state (visible by default, hidden when data arrives) -->
+  <div id="setsPageLoading" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:40vh;gap:16px;">
+    <div class="sets-spinner"></div>
+    <div id="setsPageLoadingMsg" style="color:#aaa;font-size:0.9rem;text-align:center;max-width:280px;line-height:1.5;">
+      Loading your set data...
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var COL_KEY = 'matchit_collection_v1';
+  var PREM_KEY = 'matchit_premium_v1';
+  var CODE_KEY = 'matchit_access_code_v1';
+
+  var activeFilter = 'all';
+  var allSets = [];
+  var currentSetId = null;
+
+  function isPro() {
+    return localStorage.getItem(PREM_KEY) === 'unlocked';
+  }
+  function getCode() {
+    return localStorage.getItem(CODE_KEY) || '';
+  }
+  function getCollection() {
+    try { return JSON.parse(localStorage.getItem(COL_KEY) || '[]'); } catch(e) { return []; }
+  }
+
+  function show(id) { document.getElementById(id).classList.remove('gs-hidden'); }
+  function hide(id) { document.getElementById(id).classList.add('gs-hidden'); }
+
+  function tcgBadgeClass(game) {
+    if (game === 'POKEMON') return 'sets-tcg-badge--pokemon';
+    if (game === 'MTG')     return 'sets-tcg-badge--mtg';
+    return 'sets-tcg-badge--ygo';
+  }
+  function tcgLabel(game) {
+    if (game === 'POKEMON') return 'Pokémon';
+    if (game === 'MTG')     return 'MTG';
+    return 'Yu-Gi-Oh';
+  }
+
+  function renderSets(sets) {
+    setsStopPageMessages();
+    hide('setsPageLoading');
+    var grid = document.getElementById('setsGrid');
+    var filtered = activeFilter === 'all' ? sets : sets.filter(function(s) { return s.game === activeFilter; });
+
+    if (!filtered.length) {
+      grid.innerHTML = '';
+      hide('setsGrid');
+      show('setsEmpty');
+      return;
+    }
+    hide('setsEmpty');
+    show('setsGrid');
+
+    grid.innerHTML = filtered.map(function(s) {
+      var pctNum = s.pct != null ? s.pct : null;
+      var progressHtml = '';
+      if (s.total) {
+        progressHtml =
+          '<div class="sets-progress-wrap">' +
+          '<div class="sets-progress-bar"><div class="sets-progress-fill" style="width:' + Math.min(pctNum || 0, 100) + '%"></div></div>' +
+          '<div class="sets-progress-label"><span>' + s.owned + ' / ' + s.total + '</span> cards</div>' +
+          '</div>';
+      } else {
+        progressHtml =
+          '<div class="sets-progress-label"><span>' + s.owned + '</span> cards owned</div>';
+      }
+      var completeBadge = (pctNum === 100)
+        ? '<span class="sets-badge-complete">✓ Complete</span>'
+        : '';
+      return (
+        '<div class="sets-card" data-set-id="' + s.set_id + '" data-game="' + s.game + '">' +
+        '<div class="sets-card-header">' +
+        '<div class="sets-card-name">' + escHtml(s.name) + '</div>' +
+        '<div class="sets-card-badges">' +
+        completeBadge +
+        '<span class="sets-tcg-badge ' + tcgBadgeClass(s.game) + '">' + tcgLabel(s.game) + '</span>' +
+        '</div>' +
+        '</div>' +
+        progressHtml +
+        '</div>'
+      );
+    }).join('');
+
+    grid.querySelectorAll('.sets-card').forEach(function(el) {
+      el.addEventListener('click', function() {
+        openSetModal(el.dataset.setId, el.dataset.game);
+      });
+    });
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Filter buttons ────────────────────────────────────────────────────────
+  document.querySelectorAll('.sets-filter-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.sets-filter-btn').forEach(function(b) {
+        b.classList.remove('sets-filter-btn--active');
+      });
+      btn.classList.add('sets-filter-btn--active');
+      activeFilter = btn.dataset.filter;
+      renderSets(allSets);
+    });
+  });
+
+  // ── Page-level loading message rotator ───────────────────────────────────
+  var _setsPageMsgs = [
+    "Loading your set data...",
+    "Checking your collection across all sets...",
+    "Calculating set completion...",
+    "This can take a moment on first load...",
+    "Counting owned cards per set...",
+    "Server is waking up from sleep — almost ready...",
+    "First load after inactivity takes longer — hang tight..."
+  ];
+  var _setsPageInterval = null;
+  var _setsPageMsgIdx = 0;
+
+  function setsStartPageMessages() {
+    _setsPageMsgIdx = 0;
+    var el = document.getElementById('setsPageLoadingMsg');
+    if (el) el.textContent = _setsPageMsgs[0];
+    _setsPageInterval = setInterval(function() {
+      _setsPageMsgIdx = (_setsPageMsgIdx + 1) % _setsPageMsgs.length;
+      var el = document.getElementById('setsPageLoadingMsg');
+      if (el) el.textContent = _setsPageMsgs[_setsPageMsgIdx];
+    }, 3000);
+  }
+
+  function setsStopPageMessages() {
+    if (_setsPageInterval) {
+      clearInterval(_setsPageInterval);
+      _setsPageInterval = null;
+    }
+  }
+
+  // ── Card-fetch loading message rotator ────────────────────────────────────
+  var _setsCardMsgs = [
+    "Fetching cards from the database...",
+    "This can take a moment for large sets...",
+    "Sorting owned and missing cards...",
+    "Large sets have 200+ cards to check...",
+    "Almost there..."
+  ];
+  var _setsCardInterval = null;
+  var _setsCardMsgIdx = 0;
+
+  function setsStartCardMessages() {
+    _setsCardMsgIdx = 0;
+    var el = document.getElementById('setsLoadingMsg');
+    if (el) el.textContent = _setsCardMsgs[0];
+    _setsCardInterval = setInterval(function() {
+      _setsCardMsgIdx = (_setsCardMsgIdx + 1) % _setsCardMsgs.length;
+      var el = document.getElementById('setsLoadingMsg');
+      if (el) el.textContent = _setsCardMsgs[_setsCardMsgIdx];
+    }, 3000);
+  }
+
+  function setsStopCardMessages() {
+    if (_setsCardInterval) {
+      clearInterval(_setsCardInterval);
+      _setsCardInterval = null;
+    }
+  }
+
+  // ── Modal ─────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', function() {
+    var _setsCloseBtn = document.getElementById('setsModalClose');
+    if (_setsCloseBtn) {
+      _setsCloseBtn.addEventListener('click', closeModal);
+    }
+    var _setsModalEl = document.getElementById('setsModal');
+    if (_setsModalEl) {
+      _setsModalEl.addEventListener('click', function(e) {
+        if (e.target === _setsModalEl) closeModal();
+      });
+      _setsModalEl.addEventListener('click', function(e) {
+        var t = e.target;
+        if (t.tagName === 'IMG' && t.closest && t.closest('.sets-card-grid')) {
+          var thumb = t.closest('.sets-card-thumb');
+          var numEl  = thumb && thumb.querySelector('.sets-card-thumb-num');
+          var nameEl = thumb && thumb.querySelector('.sets-card-thumb-name');
+          var num    = numEl  ? numEl.textContent.trim()  : '';
+          var name   = nameEl ? nameEl.textContent.trim() : '';
+          var parts  = [num, name].filter(Boolean);
+          openZoom(t.src, parts.join(' — '));
+        }
+      });
+    }
+    var _backdropEl  = document.getElementById('gs-zoom-backdrop');
+    if (_backdropEl)  _backdropEl.addEventListener('click', closeZoom);
+    var _zoomCloseEl = document.getElementById('gs-zoom-close');
+    if (_zoomCloseEl) _zoomCloseEl.addEventListener('click', closeZoom);
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      var zo = document.getElementById('gs-zoom-overlay');
+      if (zo && zo.style.display !== 'none') { closeZoom(); }
+      else { closeModal(); }
+    }
+  });
+
+  function closeModal() {
+    setsStopCardMessages();
+    hide('setsModal');
+    currentSetId = null;
+  }
+
+  function openSetModal(setId, game) {
+    currentSetId = setId;
+    var meta = allSets.find(function(s) { return s.set_id === setId; }) || {};
+    document.getElementById('setsModalTitle').textContent = meta.name || setId;
+    document.getElementById('setsModalMeta').innerHTML =
+      '<span class="sets-tcg-badge ' + tcgBadgeClass(game) + '">' + tcgLabel(game) + '</span>';
+
+    var loadingSubtitle = meta.total
+      ? (meta.owned + ' owned &nbsp;·&nbsp; ' + meta.total + ' total')
+      : (meta.owned ? meta.owned + ' cards owned' : '');
+
+    document.getElementById('setsModalBody').innerHTML =
+      '<div id="setsModalLoading" style="min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">' +
+      (loadingSubtitle ? '<div style="font-size:0.78rem;color:#666;text-align:center;">' + loadingSubtitle + '</div>' : '') +
+      '<div class="sets-spinner"></div>' +
+      '<div id="setsLoadingMsg" style="color:#aaa;font-size:0.9rem;text-align:center;max-width:260px;line-height:1.5;"></div>' +
+      '</div>';
+    show('setsModal');
+    setsStartCardMessages();
+
+    var code = getCode();
+    var CARD_CACHE_KEY    = 'gs_set_cards_' + setId;
+    var CARD_CACHE_TS_KEY = 'gs_set_cards_' + setId + '_ts';
+    var CARD_CACHE_TTL    = 15 * 60 * 1000;
+    try {
+      var cachedStr = localStorage.getItem(CARD_CACHE_KEY);
+      var cachedTs  = localStorage.getItem(CARD_CACHE_TS_KEY);
+      if (cachedStr && cachedTs && Date.now() - Number(cachedTs) < CARD_CACHE_TTL) {
+        setsStopCardMessages();
+        if (currentSetId === setId) renderModalCards(JSON.parse(cachedStr), meta);
+        return;
+      }
+    } catch(e) {}
+    fetch('/api/sets/' + encodeURIComponent(setId) + '/cards?code=' + encodeURIComponent(code))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setsStopCardMessages();
+        if (currentSetId !== setId) return;
+        try {
+          localStorage.setItem(CARD_CACHE_KEY, JSON.stringify(data));
+          localStorage.setItem(CARD_CACHE_TS_KEY, String(Date.now()));
+        } catch(e) {}
+        renderModalCards(data, meta);
+      })
+      .catch(function() {
+        setsStopCardMessages();
+        if (currentSetId !== setId) return;
+        document.getElementById('setsModalBody').innerHTML =
+          '<div class="sets-modal-loading">Failed to load cards.</div>';
+      });
+  }
+
+  function renderModalCards(data, meta) {
+    var cards = data.cards || [];
+    var col = getCollection();
+    var game = data.game;
+    var setId = data.set_id;
+
+    // Build owned sets filtered to this specific set only
+    var ownedSkus = new Set();
+    var ownedNames = new Set();
+    if (game === 'MTG') {
+      col.filter(function(item) {
+           return item.sku && (
+             item.sku.startsWith('mtg-' + setId + '-') ||
+             item.sku.startsWith(setId + '-')
+           );
+         })
+         .forEach(function(item) {
+           if (item.sku) ownedSkus.add(item.sku);
+           if (item.name) ownedNames.add(item.name.toLowerCase().trim());
+         });
+    } else {
+      var skuPrefix = game === 'YUGIOH' ? 'ygo-' + setId + '-' : setId + '-';
+      col.filter(function(item) { return item.sku && item.sku.startsWith(skuPrefix); })
+         .forEach(function(item) { if (item.sku) ownedSkus.add(item.sku); });
+    }
+
+    var owned = [], missing = [];
+    cards.forEach(function(c) {
+      var isOwned;
+      if (game === 'MTG') {
+        isOwned = ownedSkus.has(c.sku) ||
+                  ownedNames.has((c.name || '').toLowerCase().trim());
+      } else {
+        isOwned = ownedSkus.has(c.sku);
+      }
+      (isOwned ? owned : missing).push(c);
+    });
+
+    var secretRares = [];
+    if (data.game === 'POKEMON' && data.printed_total) {
+      var printedTotal = data.printed_total;
+      missing = missing.filter(function(card) {
+        var num = parseInt(card.card_number, 10);
+        return isNaN(num) || num <= printedTotal;
+      });
+      secretRares = cards.filter(function(card) {
+        var num = parseInt(card.card_number, 10);
+        return !isNaN(num) && num > printedTotal && !ownedSkus.has(card.sku);
+      });
+    }
+
+
+    var pct = meta.pct != null ? meta.pct + '%' : '—';
+    document.getElementById('setsModalMeta').innerHTML =
+      '<span class="sets-tcg-badge ' + tcgBadgeClass(data.game) + '">' + tcgLabel(data.game) + '</span>' +
+      '&nbsp;&nbsp;' + owned.length + ' / ' + (meta.total || cards.length) + ' cards' +
+      (meta.pct != null ? ' &nbsp;·&nbsp; ' + pct + ' complete' : '');
+
+    function thumbHtml(c, cls) {
+      var imgSrc = c.img_url || '';
+      return (
+        '<div class="sets-card-thumb ' + cls + '">' +
+        '<img src="' + escHtml(imgSrc) + '" loading="lazy" onerror="this.style.opacity=\'0.1\'" alt="">' +
+        '<div class="sets-card-thumb-num">#' + escHtml(c.card_number || '?') + '</div>' +
+        '<div class="sets-card-thumb-name" title="' + escHtml(c.name || '') + '">' + escHtml(c.name || '') + '</div>' +
+        '</div>'
+      );
+    }
+
+    var html = data.truncated
+      ? '<div style="font-size:0.76rem;color:#888;margin-bottom:14px;">Showing first 200 of ' + data.total_in_db + ' cards in database.</div>'
+      : '';
+    if (owned.length) {
+      html += '<div class="sets-modal-section-title">Owned (<span>' + owned.length + '</span>)</div>';
+      html += '<div class="sets-card-grid">' + owned.map(function(c) { return thumbHtml(c, 'sets-card-thumb--owned'); }).join('') + '</div>';
+    }
+    if (secretRares.length) {
+      html += '<details style="margin-top:16px;">';
+      html += '<summary style="cursor:pointer;color:#888;font-size:0.8rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;padding:4px 0;user-select:none;">Secret Rares (' + secretRares.length + ')</summary>';
+      html += '<div class="sets-card-grid" style="margin-top:10px;">' + secretRares.map(function(c) { return thumbHtml(c, 'sets-card-thumb--missing'); }).join('') + '</div>';
+      html += '</details>';
+    }
+    if (missing.length) {
+      html += '<div class="sets-modal-section-title missing-title">Missing (<span>' + missing.length + '</span>)</div>';
+      html += '<div class="sets-card-grid">' + missing.map(function(c) { return thumbHtml(c, 'sets-card-thumb--missing'); }).join('') + '</div>';
+    }
+    if (!owned.length && !missing.length && !secretRares.length) {
+      html = '<div class="sets-modal-loading">No card data available.</div>';
+    }
+    document.getElementById('setsModalBody').innerHTML = html;
+  }
+
+  // ── Boot ──────────────────────────────────────────────────────────────────
+  function init() {
+    try {
+      if (!isPro()) {
+        hide('setsPageLoading');
+        show('setsGateBanner');
+        return;
+      }
+      var col = getCollection();
+      if (!col.length) {
+        hide('setsPageLoading');
+        show('setsEmpty');
+        show('setsFilterBar');
+        return;
+      }
+
+      show('setsFilterBar');
+
+      var SETS_CACHE_KEY = 'grailsweep_sets_cache_v1';
+      var SETS_CACHE_TTL = 3600000;
+      try {
+        var cached = localStorage.getItem(SETS_CACHE_KEY);
+        if (cached) {
+          var c = JSON.parse(cached);
+          if (Date.now() - c.ts < SETS_CACHE_TTL) {
+            allSets = c.data.sets || [];
+            if (allSets.length) { renderSets(allSets); return; }
+          }
+        }
+      } catch(e) {}
+
+      setsStartPageMessages();
+
+      var code = getCode();
+      var setsAbortCtrl = new AbortController();
+      var setsTimeout = setTimeout(function() {
+        setsAbortCtrl.abort();
+      }, 90000);
+
+      fetch('/api/sets/completion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code, items: col }),
+        signal: setsAbortCtrl.signal
+      })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          clearTimeout(setsTimeout);
+          allSets = data.sets || [];
+          if (!allSets.length) {
+            setsStopPageMessages();
+            hide('setsPageLoading');
+            show('setsEmpty');
+            return;
+          }
+          try { localStorage.setItem(SETS_CACHE_KEY, JSON.stringify({data: data, ts: Date.now()})); } catch(e) {}
+          renderSets(allSets);
+        })
+        .catch(function(e) {
+          clearTimeout(setsTimeout);
+          console.error('[sets] completion fetch failed:', e);
+          setsStopPageMessages();
+          hide('setsPageLoading');
+          show('setsError');
+        });
+    } catch(e) {
+      console.error('[sets] init error:', e);
+      hide('setsPageLoading');
+      document.getElementById('setsError') && show('setsError');
+    }
+  }
+
+  function openZoom(src, label) {
+    document.getElementById('gs-zoom-img').src = src;
+    document.getElementById('gs-zoom-label').textContent = label || '';
+    document.getElementById('gs-zoom-overlay').style.display = 'flex';
+  }
+
+  function closeZoom() {
+    document.getElementById('gs-zoom-overlay').style.display = 'none';
+    document.getElementById('gs-zoom-img').src = '';
+  }
+
+  init();
+})();
+</script>
+{% endblock %}
+
+{% block page_modals %}
+<!-- Card detail modal — outside mi-shell-main to avoid z-index stacking context -->
+<div id="setsModal" class="sets-modal-overlay gs-hidden">
+  <div class="sets-modal-inner">
+    <button class="sets-modal-close" id="setsModalClose">✕</button>
+    <div class="sets-modal-title" id="setsModalTitle"></div>
+    <div class="sets-modal-meta" id="setsModalMeta"></div>
+    <div id="setsModalBody"></div>
+  </div>
+</div>
+
+<div id="gs-zoom-overlay" style="display:none;">
+  <div id="gs-zoom-backdrop"></div>
+  <div id="gs-zoom-content">
+    <button id="gs-zoom-close" type="button">✕</button>
+    <img id="gs-zoom-img" src="" alt="">
+    <div id="gs-zoom-label"></div>
+  </div>
+</div>
+{% endblock %}

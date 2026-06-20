@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="mi-card">
+  <div class="mi-card-head">
+    <h1 class="mi-h1">Reference search</h1>
+    <a class="mi-pill mi-pill-ghost" href="/match">Image match</a>
+  </div>
+
+  <!-- Search bar -->
+  <form method="GET" action="/xref-search" class="xr-form">
+    <div class="xr-input-wrap">
+      <input type="text" name="q" value="{{ query }}"
+             placeholder="Key Reference — e.g. AL-2, ADG2S, ADE1, or Manufacturer name…"
+             class="xr-input" autofocus autocomplete="off">
+      <button type="submit" class="xr-btn">Search</button>
+    </div>
+  </form>
+
+  {% if query and not results %}
+    <div class="xr-empty">No matches found for <strong>{{ query }}</strong> — try a brand name or reference code.</div>
+  {% endif %}
+
+  {% if results %}
+  <div class="xr-results">
+    {% for r in results %}
+    <div class="xr-card {% if r.match_source == 'manufacturer' %}xr-card--mfr{% else %}xr-card--{{ r.match_type|lower }}{% endif %}">
+
+      <!-- Image -->
+      <div class="xr-imgwrap">
+        <!-- Raster illustration first, larger -->
+        <div class="xr-ras-wrap">
+          <img class="xr-ras" src="/img/ras/{{ r.sku }}.jpg"
+               alt="illustration" onclick="xrOpen(this.src)" title="Click to enlarge"
+               onerror="this.parentElement.style.display='none'">
+        </div>
+        {% if r.front_img_id %}
+          <img class="xr-img" src="/img/db/{{ r.front_img_id }}.jpg"
+               alt="{{ r.sku }}" onclick="xrOpen(this.src)" title="Click to enlarge">
+        {% else %}
+          <div class="xr-noimg">No image</div>
+        {% endif %}
+      </div>
+
+      <!-- Info -->
+      <div class="xr-info">
+        <div class="xr-sku-row">
+          <span class="xr-sku">{{ r.sku }}</span>
+          {% if r.match_source == 'manufacturer' %}
+          <span class="xr-badge xr-badge--mfr">{{ r.manufacturer }}</span>
+          {% else %}
+          <span class="xr-badge xr-badge--{{ r.match_type|lower }}">{{ r.match_type }} match</span>
+          {% endif %}
+        </div>
+        {% if r.manufacturer and r.match_source != 'manufacturer' %}
+        <div class="xr-manufacturer">{{ r.manufacturer }}</div>
+        {% endif %}
+
+        <!-- Cross refs -->
+        <div class="xr-refs">
+          {% for x in r.crossrefs %}
+          <div class="xr-ref-item {% if x.brand|lower in query|lower or x.code|lower in query|lower %}xr-ref-item--hit{% endif %}">
+            <span class="xr-ref-brand">{{ x.brand }}</span>
+            <span class="xr-ref-code">{{ x.code }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Action -->
+      <div class="xr-actions">
+        <a class="xr-action-btn" href="/match">
+          📷 Image match
+        </a>
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Lightbox -->
+<div id="xrLight" onclick="xrClose()" style="display:none;position:fixed;inset:0;
+     background:rgba(0,0,0,0.88);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out;">
+  <img id="xrLightImg" alt="full" style="max-width:92vw;max-height:92vh;border-radius:8px;
+       box-shadow:0 8px 40px rgba(0,0,0,0.7);object-fit:contain;pointer-events:none;">
+  <div onclick="xrClose()" style="position:fixed;top:18px;right:24px;color:#fff;
+       font-size:1.8rem;cursor:pointer;">✕</div>
+</div>
+
+<style>
+/* Search form */
+.xr-form { margin: 16px 0 24px; }
+.xr-input-wrap {
+  display: flex; gap: 8px; max-width: 600px;
+}
+.xr-input {
+  flex: 1; padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: var(--mi-input-bg, #1a1a2e);
+  color: var(--mi-text, #eee);
+  font-size: 0.95rem;
+}
+.xr-input:focus {
+  outline: 2px solid var(--mi-accent, #7c6af7);
+  outline-offset: 1px;
+}
+.xr-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--mi-accent, #7c6af7);
+  color: #fff; font-size: 0.95rem;
+  font-weight: 600; cursor: pointer;
+  transition: opacity 0.15s;
+}
+.xr-btn:hover { opacity: 0.85; }
+.xr-empty {
+  color: var(--mi-muted, #aaa);
+  padding: 20px 0; font-size: 0.95rem;
+}
+
+/* Result cards */
+.xr-results { display: flex; flex-direction: column; gap: 10px; }
+.xr-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px; align-items: center;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+.xr-card:hover { background: rgba(255,255,255,0.07); }
+.xr-card--exact   { border-color: #2dce89; background: rgba(45,206,137,0.07); }
+.xr-card--close   { border-color: #f5a623; background: rgba(245,166,35,0.06); }
+.xr-card--partial { border-color: rgba(255,255,255,0.12); }
+.xr-card--mfr     { border-color: #5bc8f5; background: rgba(91,200,245,0.05); }
+
+/* Image */
+.xr-imgwrap {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+.xr-ras-wrap { display: flex; }
+.xr-ras {
+  width: 100px; height: 100px;
+  object-fit: contain;
+  border-radius: 7px;
+  background: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  cursor: zoom-in;
+  transition: transform 0.15s;
+}
+.xr-ras:hover { transform: scale(1.05); }
+.xr-img {
+  width: 80px; height: 80px;
+  object-fit: contain; border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  cursor: zoom-in;
+  transition: transform 0.15s;
+}
+.xr-img:hover { transform: scale(1.05); }
+.xr-noimg {
+  width: 80px; height: 80px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; background: rgba(255,255,255,0.04);
+  border: 1px dashed rgba(255,255,255,0.15);
+  color: var(--mi-muted, #aaa); font-size: 0.75rem;
+}
+
+/* Info */
+.xr-info { display: flex; flex-direction: column; gap: 8px; }
+.xr-sku-row { display: flex; align-items: center; gap: 10px; }
+.xr-sku {
+  font-size: 1.5rem; font-weight: 800;
+  color: var(--mi-text, #eee);
+}
+.xr-card--exact .xr-sku { color: #2dce89; }
+.xr-badge {
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 3px 8px; border-radius: 4px;
+}
+.xr-badge--exact  { background: rgba(45,206,137,0.2);  color: #2dce89; }
+.xr-badge--close  { background: rgba(245,166,35,0.2);  color: #f5a623; }
+.xr-badge--partial{ background: rgba(255,255,255,0.1); color: #aaa; }
+.xr-badge--mfr    { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.12); }
+
+.xr-manufacturer {
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--mi-accent, #7c6af7);
+  margin-bottom: 4px;
+}
+.xr-refs { display: flex; flex-wrap: wrap; gap: 5px; }
+.xr-ref-item {
+  display: flex; gap: 4px; align-items: center;
+  padding: 3px 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.78rem;
+}
+.xr-ref-item--hit {
+  background: rgba(124,106,247,0.15);
+  border-color: rgba(124,106,247,0.4);
+}
+.xr-ref-brand { color: var(--mi-muted, #aaa); font-weight: 500; }
+.xr-ref-code  { color: var(--mi-text, #eee);  font-weight: 700; }
+
+/* Action */
+.xr-actions { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.xr-action-btn {
+  padding: 8px 14px; border-radius: 7px;
+  background: rgba(124,106,247,0.15);
+  border: 1px solid rgba(124,106,247,0.3);
+  color: var(--mi-accent, #7c6af7);
+  font-size: 0.82rem; font-weight: 600;
+  text-decoration: none; white-space: nowrap;
+  transition: background 0.15s;
+}
+.xr-action-btn:hover { background: rgba(124,106,247,0.28); }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  /* Card stacks vertically */
+  .xr-card {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+  /* Images side by side, smaller */
+  .xr-imgwrap { gap: 8px !important; }
+  .xr-ras, .xr-img {
+    width: 60px !important;
+    height: 60px !important;
+  }
+  /* Action button full width */
+  .xr-actions {
+    align-items: stretch !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+  }
+  .xr-action-btn {
+    text-align: center !important;
+    flex: 1 !important;
+  }
+  /* Search input full width */
+  .xr-input-wrap {
+    max-width: 100% !important;
+    flex-direction: row !important;
+  }
+  .xr-input {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 !important;
+  }
+  /* SKU row wraps */
+  .xr-sku-row { flex-wrap: wrap !important; }
+  /* Ref pills smaller */
+  .xr-ref-item { font-size: 0.72rem !important; padding: 2px 6px !important; }
+}
+</style>
+
+<script>
+function xrOpen(src){
+  document.getElementById("xrLightImg").src = src;
+  document.getElementById("xrLight").style.display = "flex";
+}
+function xrClose(){
+  document.getElementById("xrLightImg").src = "";
+  document.getElementById("xrLight").style.display = "none";
+}
+document.addEventListener("keydown", function(e){
+  if (e.key === "Escape") xrClose();
+});
+</script>
+
+{% endblock %}

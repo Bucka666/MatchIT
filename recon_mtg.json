@@ -1,0 +1,45 @@
+{
+  "api_id": "7a5cd03c-4227-4551-aa4b-7d119f0468b5",
+  "name": "Ancestor's Chosen",
+  "card_number": "1",
+  "set_id": "10e",
+  "set_name": "Tenth Edition",
+  "category": "MTG",
+  "rarity": "UNCOMMON",
+  "mtg_color": "WHITE",
+  "mtg_card_type": "CREATURE",
+  "set_era": "MODERN_MTG",
+  "language": "EN",
+  "edition": "",
+  "scryfall_id": "7a5cd03c-4227-4551-aa4b-7d119f0468b5",
+  "scryfall_url": "https://scryfall.com/card/10e/1/ancestors-chosen?utm_source=api",
+  "tcgplayer_id": "15032",
+  "cardmarket_id": "16165",
+  "prices": {
+    "tcgplayer": {
+      "normal": {
+        "market": 0.14
+      },
+      "foil": {
+        "market": null
+      }
+    },
+    "cardmarket": {
+      "normal": {
+        "trend": 0.12
+      },
+      "foil": {
+        "trend": null
+      }
+    }
+  },
+  "tcgplayer_url": "https://partner.tcgplayer.com/c/4931599/1830156/21018?subId1=api&u=https%3A%2F%2Fwww.tcgplayer.com%2Fproduct%2F15032%3Fpage%3D1",
+  "cardmarket_url": "https://www.cardmarket.com/en/Magic/Products?idProduct=16165&referrer=scryfall&utm_campaign=card_prices&utm_medium=text&utm_source=scryfall",
+  "artist": "Pete Venters",
+  "type_line": "Creature — Human Cleric",
+  "mana_cost": "{5}{W}{W}",
+  "oracle_text": "First strike (This creature deals combat damage before creatures without first strike.)\nWhen this creature enters, you gain 1 life for each card in your graveyard.",
+  "power": "4",
+  "toughness": "4",
+  "cmc": 7.0
+}

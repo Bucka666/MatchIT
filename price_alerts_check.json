@@ -1,0 +1,13 @@
+[
+  {
+    "email": "grailtest2026@outlook.com",
+    "code": "GRAIL-XAJI-0Y6D",
+    "sku": "swsh6-18",
+    "card_name": "Rillaboom",
+    "target_low": 0.2,
+    "target_high": 0.3,
+    "current_gbp": 0.25,
+    "created": "2026-05-22T16:37:05.238284",
+    "triggered": false
+  }
+]

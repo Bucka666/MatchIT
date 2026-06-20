@@ -1,0 +1,115 @@
+CLAUDE_HANDOVER_2026-04-25.md
+Last session: 2026-04-24 (long day, lots of progress)
+Last deploy: 2026-04-24 ~17:40 UTC
+Site status: Live at grailsweep.com, fully functional
+Scanner: Working across Pokémon, YGO, MTG
+RECENT MAJOR WINS
+YGO Scanner Fixed
+Card measurements provided by user (59x86mm), OCR regions calculated precisely. YGO cards now match correctly via set code OCR. Passcode fallback added for older cards.
+Region coordinates in ocr_confirm.py:
+pythonregions = [
+    (0.66, 0.68, 0.95, 0.79),   # right side set code - measured
+    (0.00, 0.80, 0.70, 0.92),   # fallback older cards
+    (0.00, 0.88, 0.50, 1.00),   # bottom-left fallback
+]
+passcode_region = (0.02, 0.93, 0.22, 1.00)
+Pricing Fixed
+
+eBay and Amazon excluded from price calculation in templates/match.html (line ~1476)
+They had massively inflated asking prices ($999+ for £0.10 cards)
+
+Stats Counter Working
+
+Was failing because Volume.from_name("matchit-data-v2", version=2) — the version=2 parameter was silently breaking commit/reload
+Removed version=2 from _save_stats and _load_stats in app.py
+Added vol.reload() to _load_stats so all containers see latest data
+Added cache-control headers to /api/stats endpoint
+
+Collection Sync Fixed
+
+Was throwing PermissionError on /modal_data/collections.json
+Deleted corrupted file and re-uploaded backup
+All saves now succeeding
+
+Photo Match Grade Saved to Collection
+
+templates/results.html colAddCard now includes grade: window._cardGrade || null
+Server-rendered grade exposed via window._cardGrade JSON
+
+Cloudflare Improvements
+
+Cache rule for / and /robots.txt fixed (was malformed expression — was wrapped in contains operator)
+Now caches at edge for 30 minutes
+AI Labyrinth enabled
+Bot blocking expanded: /wp-admin, /wp-includes, /xmlrpc, /wordpress, /.git, /sites/, /index.php, /admin, /wp-login
+
+STILL TO ADD TO CLOUDFLARE BLOCK RULE
+
+/.env — seen in overnight logs
+/wp-login.php — occasional probes still getting through
+
+Edit expression at: Cloudflare → Security → Security Rules → Block scanner bots
+OUTSTANDING ISSUES
+1. Stats Counter Display
+
+Backend stat counter works
+Frontend on landing page only updates on refresh
+Added retry logic for failed /api/stats fetch (2 second delay)
+cards scanned today counts every API request including OCR retries — this is expected behaviour, label is accurate
+
+2. Grade Not Always Displayed on Photo Match
+
+_rule_based_grade returns None on error
+Added detailed traceback logging in app.py (deployed)
+Next time grade fails, check Modal logs for [GRADE] entries
+
+3. "Top 5" Text Removed
+
+Was in verticals/cards/vertical.json line 306 as guidance_text
+Updated to remove "Top 5 closest matches are listed below" prefix
+
+4. Session Panel Header Tappable
+
+Set z-index: 9999, top: 80px, opaque background
+Should now be reachable above page header
+
+MODAL COSTS
+
+Currently ~£1/day average (down from £4.77 before optimisation)
+Cloudflare caching is the biggest win
+Overnight bots cost roughly £0.05-£0.10
+Total spend tracking: $116ish at last check
+
+KEY FILES
+
+C:\MatchIT\app.py — main Flask app
+C:\MatchIT\api_routes.py — scanner API
+C:\MatchIT\ocr_confirm.py — OCR regions and matching
+C:\MatchIT\templates\match.html — scanner page
+C:\MatchIT\templates\results.html — photo match results
+C:\MatchIT\templates\collection.html — collection page
+C:\MatchIT\verticals\cards\vertical.json — TCG vertical config
+C:\MatchIT\config.json — main config (admin password, low_cert_prob_gap=0.08, VAPID keys)
+
+KEY IDENTIFIERS
+
+Modal workspace: c-a-buckley
+Modal app: matchit-api
+Modal volume: matchit-data-v2
+Live URL: https://grailsweep.com
+Test code: GRAIL-XAJI-0Y6D
+Deploy: PYTHONIOENCODING=utf-8 modal deploy matchit_modal.py
+
+TODAY'S PRIORITIES
+
+Add /.env and /wp-login to Cloudflare bot block
+Test session panel buttons accessible
+Reach out to Aaron Clarke (The Grading Club) via Instagram or LinkedIn DM — partnership for professional grading referrals
+Test stats display on landing page after fixes
+
+BUSINESS NOTES
+
+The Grading Club Manchester — UK CGC/PSA/BGS authorised dealer
+Aaron Clarke is director, on LinkedIn
+Pre-launch beta status — be transparent in outreach
+App not yet on App Store or Google Play — PWA only currently

@@ -1,0 +1,446 @@
+{
+  "id": "hardware",
+  "name": "MatchIT - HARDWARE 🔩",
+  "page_title": "MatchIT – HARDWARE",
+  "subtitle": "AI Guided Hardware Matching and Cross-Referencing Program. ©",
+  "icon": "🔩",
+  "query_title": "Identify Your Fastener / Fitting",
+  "image_labels": {"front": "Top / Head", "back": "Side / Thread"},
+
+  "ui_text": {
+    "how_to_title": "How to identify your product",
+    "step1_text": "If you have a <strong>product code</strong> or <strong>part number</strong>, enter it below — or search by <strong>brand name</strong>",
+    "step1_placeholder": "e.g. 1234XYZ, M6x40, Fischer, Rawlplug…",
+    "step2_text": "Or <strong>upload / take a photo</strong> of the product — fill in the product details below for better results",
+    "progress_subtitle": "Analysing your product against the database…",
+    "guide_tips": [
+      "Fill most of the frame with the <strong>product</strong> (avoid lots of background).",
+      "Use good lighting — avoid heavy shadows or glare.",
+      "Keep the product flat and straight if possible.",
+      "Set size, material, and type above if known — this significantly narrows the search."
+    ],
+    "feedback_correct_prompt": "Was the correct product in these results?",
+    "feedback_notfound_prompt": "Which product was it? (enter SKU or leave blank if unknown)",
+    "feedback_sku_placeholder": "e.g. M6-40-BZP",
+    "db_sync_title": "Product DB Sync",
+    "db_sync_desc": "Imports new product images from your synced product database folder into MatchIT's local DB.",
+    "db_sync_button": "Sync from Product DB",
+    "db_sync_confirm": "Sync new images from Product DB into MatchIT database?"
+  },
+  "require_two_images": false,
+  "style_detection_enabled": false,
+  "ras_images_enabled": false,
+
+  "db_root": "C:\\Users\\c_a_b\\My Drive\\HardwareDB",
+
+  "categories": {
+    "WOOD_SCREW":       {"label": "Wood Screw",         "show": ["head_type","drive_type","material","finish","diameter","length_mm","thread_type"]},
+    "MACHINE_SCREW":    {"label": "Machine Screw",      "show": ["head_type","drive_type","material","finish","diameter","length_mm","thread_type"]},
+    "SELF_TAPPING":     {"label": "Self-Tapping Screw",  "show": ["head_type","drive_type","material","finish","diameter","length_mm","point_type"]},
+    "COACH_SCREW":      {"label": "Coach Screw / Lag",   "show": ["head_type","material","finish","diameter","length_mm"]},
+    "HEX_BOLT":         {"label": "Hex Bolt",            "show": ["material","finish","diameter","length_mm","thread_type","thread_coverage"]},
+    "CARRIAGE_BOLT":    {"label": "Carriage Bolt",       "show": ["material","finish","diameter","length_mm","thread_type"]},
+    "STUD_BOLT":        {"label": "Stud / Threaded Rod", "show": ["material","finish","diameter","length_mm","thread_type"]},
+    "HEX_NUT":          {"label": "Hex Nut",             "show": ["material","finish","diameter","thread_type","nut_variant"]},
+    "LOCK_NUT":         {"label": "Lock Nut (Nyloc)",    "show": ["material","finish","diameter","thread_type"]},
+    "WING_NUT":         {"label": "Wing Nut",            "show": ["material","finish","diameter","thread_type"]},
+    "ROUND_NAIL":       {"label": "Round Wire Nail",     "show": ["material","finish","diameter","length_mm","shank_type"]},
+    "OVAL_NAIL":        {"label": "Oval Wire Nail",      "show": ["material","finish","diameter","length_mm"]},
+    "PANEL_PIN":        {"label": "Panel Pin",           "show": ["material","finish","diameter","length_mm"]},
+    "MASONRY_NAIL":     {"label": "Masonry Nail",        "show": ["material","finish","diameter","length_mm"]},
+    "FLAT_WASHER":      {"label": "Flat Washer (Form A/B/C)", "show": ["material","finish","diameter","washer_form"]},
+    "SPRING_WASHER":    {"label": "Spring Washer",       "show": ["material","finish","diameter"]},
+    "PENNY_WASHER":     {"label": "Penny / Repair Washer","show": ["material","finish","diameter"]},
+    "WALL_PLUG":        {"label": "Wall Plug / Anchor",  "show": ["material","diameter","length_mm","anchor_type"]},
+    "COMPRESSION":      {"label": "Compression Fitting", "show": ["material","finish","pipe_diameter","fitting_shape"]},
+    "PUSH_FIT":         {"label": "Push-Fit Fitting",    "show": ["material","pipe_diameter","fitting_shape"]},
+    "SOLDERED":         {"label": "Solder / End Feed",   "show": ["material","pipe_diameter","fitting_shape"]},
+    "THREADED_FITTING": {"label": "Threaded Pipe Fitting","show": ["material","finish","pipe_diameter","thread_type","fitting_shape"]},
+    "BLIND_RIVET":      {"label": "Blind / Pop Rivet",   "show": ["head_type","material","finish","diameter","length_mm","mandrel_material","grip_range"]},
+    "SOLID_RIVET":      {"label": "Solid Rivet",         "show": ["head_type","material","finish","diameter","length_mm"]},
+    "STRUCTURAL_RIVET": {"label": "Structural Rivet",    "show": ["head_type","material","finish","diameter","length_mm","mandrel_material","grip_range"]},
+    "RIVET_NUT":        {"label": "Rivet Nut / Nutsert", "show": ["head_type","material","finish","diameter","thread_type","grip_range"]}
+  },
+
+  "profile_fields": [
+    {
+      "id": "head_type",
+      "label": "Head type",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["COUNTERSUNK","Countersunk (CSK)"],
+        ["PAN","Pan"],
+        ["ROUND","Round"],
+        ["HEX","Hex"],
+        ["FLANGE","Flange"],
+        ["BUTTON","Button"],
+        ["CAP","Cap / Socket"],
+        ["CHEESE","Cheese"],
+        ["DOME","Dome"],
+        ["FLAT","Flat"],
+        ["LARGE_FLANGE","Large Flange"]
+      ],
+      "default": "",
+      "penalty": 0.955,
+      "match_rule": "exact"
+    },
+    {
+      "id": "drive_type",
+      "label": "Drive type",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["POZI","Pozi (PZ)"],
+        ["PHILLIPS","Phillips (PH)"],
+        ["SLOTTED","Slotted"],
+        ["TORX","Torx (TX / Star)"],
+        ["HEX_SOCKET","Hex Socket (Allen)"],
+        ["SQUARE","Square (Robertson)"],
+        ["COMBO","Combi / Combination"]
+      ],
+      "default": "",
+      "penalty": 0.960,
+      "match_rule": "exact"
+    },
+    {
+      "id": "material",
+      "label": "Material",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["MILD_STEEL","Mild Steel"],
+        ["STAINLESS_A2","Stainless Steel A2 (304)"],
+        ["STAINLESS_A4","Stainless Steel A4 (316)"],
+        ["BRASS","Brass"],
+        ["COPPER","Copper"],
+        ["NYLON","Nylon / Plastic"],
+        ["ALUMINIUM","Aluminium"],
+        ["HIGH_TENSILE","High Tensile (Grade 8.8+)"]
+      ],
+      "default": "",
+      "penalty": 0.950,
+      "match_rule": "exact"
+    },
+    {
+      "id": "finish",
+      "label": "Finish / Coating",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["BZP","Bright Zinc Plated (BZP)"],
+        ["GALVANISED","Hot Dip Galvanised"],
+        ["SELF_COLOUR","Self Colour (Plain)"],
+        ["STAINLESS","Stainless (Uncoated)"],
+        ["YELLOW_ZINC","Yellow Zinc Plated (YZP)"],
+        ["BRASS","Brass"],
+        ["CHROME","Chrome"],
+        ["SHERARDISED","Sherardised"],
+        ["BLACK","Black Oxide / Japanned"],
+        ["PHOSPHATE","Phosphate"]
+      ],
+      "default": "",
+      "penalty": 0.965,
+      "match_rule": "exact"
+    },
+    {
+      "id": "diameter",
+      "label": "Diameter / Size",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["M3","M3"],
+        ["M4","M4"],
+        ["M5","M5"],
+        ["M6","M6"],
+        ["M8","M8"],
+        ["M10","M10"],
+        ["M12","M12"],
+        ["M16","M16"],
+        ["M20","M20"],
+        ["M24","M24"],
+        ["G6","No. 6 (3.5mm)"],
+        ["G8","No. 8 (4.0mm)"],
+        ["G10","No. 10 (4.8mm)"],
+        ["G12","No. 12 (5.5mm)"],
+        ["G14","No. 14 (6.3mm)"],
+        ["R2.4","2.4mm (Rivet)"],
+        ["R3.0","3.0mm (Rivet)"],
+        ["R3.2","3.2mm (Rivet)"],
+        ["R4.0","4.0mm (Rivet)"],
+        ["R4.8","4.8mm (Rivet)"],
+        ["R5.0","5.0mm (Rivet)"],
+        ["R6.0","6.0mm (Rivet)"],
+        ["R6.4","6.4mm (Rivet)"]
+      ],
+      "default": "",
+      "penalty": 0.940,
+      "match_rule": "exact"
+    },
+    {
+      "id": "length_mm",
+      "label": "Length (mm)",
+      "type": "float_select",
+      "values_by_category": {
+        "WOOD_SCREW":       [10,12,16,20,25,30,35,40,45,50,60,70,75,80,90,100,120,150],
+        "MACHINE_SCREW":    [6,8,10,12,16,20,25,30,40,50,60,70,80,100],
+        "SELF_TAPPING":     [6,8,10,12,16,19,25,30,38,45,50],
+        "COACH_SCREW":      [25,30,40,50,60,70,80,100,120,150,200],
+        "HEX_BOLT":         [10,12,16,20,25,30,35,40,45,50,55,60,65,70,80,90,100,120,150,200],
+        "CARRIAGE_BOLT":    [20,25,30,40,50,60,75,100,120,150],
+        "STUD_BOLT":        [50,100,150,200,300,500,1000],
+        "ROUND_NAIL":       [25,30,40,50,65,75,100,125,150],
+        "OVAL_NAIL":        [25,30,40,50,65,75],
+        "PANEL_PIN":        [15,20,25,30,40],
+        "MASONRY_NAIL":     [25,30,40,50,60,75,100],
+        "WALL_PLUG":        [25,30,35,40,50,60,70],
+        "BLIND_RIVET":      [4,5,6,8,10,12,14,16,18,20,22,25,30],
+        "SOLID_RIVET":      [4,5,6,8,10,12,16,20,25,30],
+        "STRUCTURAL_RIVET": [6,8,10,12,14,16,18,20,22,25]
+      },
+      "default": -1,
+      "penalty": 0.945,
+      "match_rule": "exact_float"
+    },
+    {
+      "id": "thread_type",
+      "label": "Thread standard",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["METRIC_COARSE","Metric Coarse"],
+        ["METRIC_FINE","Metric Fine"],
+        ["UNC","UNC (Unified Coarse)"],
+        ["UNF","UNF (Unified Fine)"],
+        ["BSW","BSW (Whitworth)"],
+        ["BSP","BSP (Pipe Thread)"],
+        ["BA","BA"]
+      ],
+      "default": "",
+      "penalty": 0.955,
+      "match_rule": "exact"
+    },
+    {
+      "id": "thread_coverage",
+      "label": "Thread coverage",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["FULL","Full Thread"],
+        ["PART","Part Thread"]
+      ],
+      "default": "",
+      "penalty": 0.975,
+      "match_rule": "exact"
+    },
+    {
+      "id": "point_type",
+      "label": "Point type",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["SHARP","Sharp / Gimlet"],
+        ["BLUNT","Blunt"],
+        ["DRILL","Drill / Tek"],
+        ["NEEDLE","Needle"]
+      ],
+      "default": "",
+      "penalty": 0.970,
+      "match_rule": "exact"
+    },
+    {
+      "id": "shank_type",
+      "label": "Shank type",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["SMOOTH","Smooth"],
+        ["RING","Ring Shank"],
+        ["TWIST","Twist / Helical"],
+        ["BARBED","Barbed"]
+      ],
+      "default": "",
+      "penalty": 0.965,
+      "match_rule": "exact"
+    },
+    {
+      "id": "nut_variant",
+      "label": "Nut variant",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["FULL","Full Nut"],
+        ["HALF","Half Nut (Jam / Lock)"],
+        ["FLANGED","Flanged"],
+        ["DOME","Dome / Acorn"],
+        ["COUPLING","Coupling Nut"],
+        ["T_NUT","T-Nut"],
+        ["CAGE","Cage Nut"]
+      ],
+      "default": "",
+      "penalty": 0.955,
+      "match_rule": "exact"
+    },
+    {
+      "id": "washer_form",
+      "label": "Washer form",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["FORM_A","Form A (Standard)"],
+        ["FORM_B","Form B (Narrow)"],
+        ["FORM_C","Form C (Wide / Mudguard)"],
+        ["FORM_G","Form G (BS4320)"]
+      ],
+      "default": "",
+      "penalty": 0.960,
+      "match_rule": "exact"
+    },
+    {
+      "id": "anchor_type",
+      "label": "Anchor / Plug type",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["STANDARD","Standard Plug"],
+        ["HEAVY_DUTY","Heavy Duty"],
+        ["FRAME","Frame Fixing"],
+        ["PLASTERBOARD","Plasterboard / Cavity"],
+        ["HAMMER","Hammer-In"],
+        ["CHEMICAL","Chemical Resin"],
+        ["TOGGLE","Toggle / Spring"]
+      ],
+      "default": "",
+      "penalty": 0.950,
+      "match_rule": "exact"
+    },
+    {
+      "id": "pipe_diameter",
+      "label": "Pipe diameter",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["8MM","8mm"],
+        ["10MM","10mm"],
+        ["15MM","15mm"],
+        ["22MM","22mm"],
+        ["28MM","28mm"],
+        ["35MM","35mm"],
+        ["42MM","42mm"],
+        ["54MM","54mm"],
+        ["0.5_BSP","½″ BSP"],
+        ["0.75_BSP","¾″ BSP"],
+        ["1_BSP","1″ BSP"],
+        ["1.25_BSP","1¼″ BSP"],
+        ["1.5_BSP","1½″ BSP"],
+        ["2_BSP","2″ BSP"]
+      ],
+      "default": "",
+      "penalty": 0.935,
+      "match_rule": "exact"
+    },
+    {
+      "id": "fitting_shape",
+      "label": "Fitting shape",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["STRAIGHT","Straight Coupler"],
+        ["ELBOW_90","Elbow 90°"],
+        ["ELBOW_45","Elbow 45°"],
+        ["TEE","Tee"],
+        ["REDUCER","Reducer"],
+        ["CAP","Stop End / Cap"],
+        ["UNION","Union"],
+        ["ADAPTOR","Adaptor / Converter"],
+        ["CROSS","Cross"]
+      ],
+      "default": "",
+      "penalty": 0.945,
+      "match_rule": "exact"
+    },
+    {
+      "id": "mandrel_material",
+      "label": "Mandrel / Pin material",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["STEEL","Steel"],
+        ["STAINLESS","Stainless Steel"],
+        ["ALUMINIUM","Aluminium"],
+        ["COPPER","Copper"],
+        ["MONEL","Monel"]
+      ],
+      "default": "",
+      "penalty": 0.960,
+      "match_rule": "exact"
+    },
+    {
+      "id": "grip_range",
+      "label": "Grip range (mm)",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["0.5_3.0","0.5 – 3.0mm"],
+        ["1.0_5.0","1.0 – 5.0mm"],
+        ["1.5_6.5","1.5 – 6.5mm"],
+        ["2.0_8.0","2.0 – 8.0mm"],
+        ["3.0_10.0","3.0 – 10.0mm"],
+        ["4.0_12.0","4.0 – 12.0mm"],
+        ["5.0_14.0","5.0 – 14.0mm"],
+        ["6.0_16.0","6.0 – 16.0mm"],
+        ["8.0_20.0","8.0 – 20.0mm"],
+        ["10.0_25.0","10.0 – 25.0mm"]
+      ],
+      "default": "",
+      "penalty": 0.945,
+      "match_rule": "exact"
+    }
+  ],
+
+  "category_families": {
+    "SCREW": ["WOOD_SCREW","MACHINE_SCREW","SELF_TAPPING","COACH_SCREW"],
+    "BOLT": ["HEX_BOLT","CARRIAGE_BOLT","STUD_BOLT"],
+    "NUT": ["HEX_NUT","LOCK_NUT","WING_NUT"],
+    "NAIL": ["ROUND_NAIL","OVAL_NAIL","PANEL_PIN","MASONRY_NAIL"],
+    "WASHER": ["FLAT_WASHER","SPRING_WASHER","PENNY_WASHER"],
+    "PLUMBING": ["COMPRESSION","PUSH_FIT","SOLDERED","THREADED_FITTING"],
+    "RIVET": ["BLIND_RIVET","SOLID_RIVET","STRUCTURAL_RIVET","RIVET_NUT"]
+  },
+
+  "silhouette_map": {
+    "WOOD_SCREW": "SCREW",
+    "MACHINE_SCREW": "SCREW",
+    "SELF_TAPPING": "SCREW",
+    "COACH_SCREW": "SCREW",
+    "HEX_BOLT": "BOLT",
+    "CARRIAGE_BOLT": "BOLT",
+    "STUD_BOLT": "BOLT",
+    "HEX_NUT": "NUT",
+    "LOCK_NUT": "NUT",
+    "WING_NUT": "NUT",
+    "ROUND_NAIL": "NAIL",
+    "OVAL_NAIL": "NAIL",
+    "PANEL_PIN": "NAIL",
+    "MASONRY_NAIL": "NAIL",
+    "FLAT_WASHER": "WASHER",
+    "SPRING_WASHER": "WASHER",
+    "PENNY_WASHER": "WASHER",
+    "WALL_PLUG": "ANCHOR",
+    "COMPRESSION": "FITTING",
+    "PUSH_FIT": "FITTING",
+    "SOLDERED": "FITTING",
+    "THREADED_FITTING": "FITTING",
+    "BLIND_RIVET": "RIVET",
+    "SOLID_RIVET": "RIVET",
+    "STRUCTURAL_RIVET": "RIVET",
+    "RIVET_NUT": "RIVET"
+  },
+
+  "target_retailers": ["Screwfix", "Toolstation", "B&Q", "Kingfisher Group"],
+
+  "disclaimer": "Product images, brand names, and cross-reference codes (including but not limited to Screwfix, Toolstation, B&Q, Kingfisher, Fischer, Rawlplug, Timco, and Forgefix) remain the property of their respective owners. MatchIT is not affiliated with, endorsed by, or sponsored by any of these companies. All third-party trademarks and images are used for identification and reference purposes only.",
+
+  "guidance_text": "The top 5 closest matches are listed below. If your product isn't ranked #1, please check ranks 2–5 — the correct match is almost always within the top 5. Use product specifications (size, material, finish) to verify against your query.",
+  "guidance_feedback": "Please use the feedback bar at the bottom to tell us where your product ranked — this directly helps the AI improve its accuracy. Thank you!"
+}

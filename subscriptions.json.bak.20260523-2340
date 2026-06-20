@@ -1,0 +1,88 @@
+{
+  "GRAIL-PL5H-B4LL": {
+    "email": "leatherfacelew@hotmail.com",
+    "tier": "monthly",
+    "stripe_subscription_id": "sub_1TLhEcFl8aS11Hhgtkz9A288",
+    "created_at": "2026-04-13T16:41:58.333275",
+    "expires_at": "2026-05-15T16:41:58.333335",
+    "status": "active",
+    "devices": [
+      "ac7d65b797bad219",
+      "81ccaf9f5869bf61"
+    ],
+    "ref_code": "GRAIL-REF-5DU4-B6AK",
+    "ref_count": 0,
+    "ref_max": 10,
+    "tier_warned_80pct": false,
+    "tier_transition_warned": false
+  },
+  "GRAIL-NBB3-9KV6": {
+    "email": "leatherfacelew@hotmail.com",
+    "tier": "monthly",
+    "stripe_subscription_id": "sub_1TLhEcFl8aS11Hhgtkz9A288",
+    "created_at": "2026-04-15T05:22:16.236832",
+    "expires_at": "2026-05-17T05:22:15.655871",
+    "status": "active",
+    "devices": [
+      "ac7d65b797bad219"
+    ],
+    "ref_code": "GRAIL-REF-5DU4-B6AK",
+    "ref_count": 0,
+    "ref_max": 10
+  },
+  "GRAIL-XAJI-0Y6D": {
+    "email": "legacy",
+    "tier": "legacy",
+    "stripe_subscription_id": null,
+    "created_at": "2026-04-16T06:01:45.244572",
+    "expires_at": null,
+    "status": "active",
+    "ref_code": "GRAIL-REF-SQ3S-RDT8",
+    "ref_count": 0,
+    "ref_max": 10
+  },
+  "GRAIL-XRGG-QEYA": {
+    "email": "grailtest2026@outlook.com",
+    "tier": "monthly",
+    "stripe_subscription_id": "sub_test_1779034737",
+    "created_at": "2026-05-17T16:18:57.802583",
+    "expires_at": "2026-06-18T16:18:57.801967",
+    "status": "active"
+  },
+  "TOPUP-UWMF-G28M": {
+    "type": "topup",
+    "email": "grailtest2026@outlook.com",
+    "credits_total": 75,
+    "credits_remaining": 75,
+    "stripe_payment_intent_id": "pi_test_1779034737",
+    "created_at": "2026-05-17T16:18:57.997336",
+    "status": "unredeemed",
+    "redeemed_at": null,
+    "redeemed_by_device": null,
+    "redeemed_by_fp": null
+  },
+  "TOPUP-3F7X-ZYK4": {
+    "type": "topup",
+    "email": "grailtest2026@outlook.com",
+    "credits_total": 75,
+    "credits_remaining": 0,
+    "stripe_payment_intent_id": "pi_3TaAPyFl8aS11Hhg0wnriyop",
+    "created_at": "2026-05-23T11:49:32.617515",
+    "status": "redeemed",
+    "redeemed_at": "2026-05-23T12:05:25.812517",
+    "redeemed_by_device": "681a7f5f-44d5-467b-aa44-eedd8d0fe0dc",
+    "redeemed_by_fp": "5f34886769a9967c74ac6eeee454fdfd"
+  },
+  "TOPUP-ZPJ7-MWUJ": {
+    "type": "topup",
+    "email": "grailtest2026@outlook.com",
+    "credits_total": 75,
+    "credits_remaining": 75,
+    "stripe_payment_intent_id": "pi_3TaAPyFl8aS11Hhg0wnriyop",
+    "created_at": "2026-05-23T22:12:42.251750",
+    "status": "unredeemed",
+    "redeemed_at": null,
+    "redeemed_by_device": null,
+    "redeemed_by_fp": null
+  }
+}

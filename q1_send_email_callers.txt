@@ -1,0 +1,12 @@
+﻿
+  matchit_modal.py:91:
+> matchit_modal.py:92:def send_email(to_address: str, subject: str, body_html: str, from_purpose: str = "noreply"):
+  matchit_modal.py:93:    """Send email via Namecheap Private Email SMTP (SSL on port 465).
+  set_scheduler.py:412:
+> set_scheduler.py:413:def _send_email(subject: str, body_html: str, body_text: str) -> bool:
+  set_scheduler.py:414:    """Send summary email via SMTP."""
+  set_scheduler.py:916:    subject, body_html, body_text = _build_email(run_summary)
+> set_scheduler.py:917:    _send_email(subject, body_html, body_text)
+  set_scheduler.py:918:
+
+

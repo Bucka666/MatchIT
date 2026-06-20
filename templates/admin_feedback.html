@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="mi-card">
+  <div class="mi-card-head">
+    <h1 class="mi-h1">Match Feedback</h1>
+    <a class="mi-pill mi-pill-ghost" href="/admin">← Admin</a>
+  </div>
+
+  <!-- Date filter + Clear -->
+  <div class="fb-controls">
+    <form method="GET" action="/admin/feedback" class="fb-filter-form">
+      <label class="fb-filter-lbl">Show results since:</label>
+      <input type="date" name="since" value="{{ since or '' }}" class="fb-filter-date">
+      <button type="submit" class="fb-filter-btn">Filter</button>
+      {% if since %}
+      <a href="/admin/feedback" class="fb-filter-btn fb-filter-clear">Show all</a>
+      {% endif %}
+    </form>
+
+    <form method="POST" action="/admin/feedback/clear" class="fb-clear-form"
+          onsubmit="return confirm('Clear ALL feedback data? This cannot be undone.');">
+      <button type="submit" class="fb-clear-btn">Clear all feedback</button>
+    </form>
+  </div>
+
+  {% if since %}
+  <div class="fb-filter-tag">
+    Showing results since <strong>{{ since }}</strong>
+  </div>
+  {% endif %}
+
+  <!-- Summary stats -->
+  <div class="fb-stats">
+    <div class="fb-stat">
+      <div class="fb-stat-val">{{ total }}</div>
+      <div class="fb-stat-lbl">Total Responses</div>
+    </div>
+    <div class="fb-stat fb-stat--good">
+      <div class="fb-stat-val">{{ correct }}</div>
+      <div class="fb-stat-lbl">Correct</div>
+    </div>
+    <div class="fb-stat fb-stat--bad">
+      <div class="fb-stat-val">{{ wrong }}</div>
+      <div class="fb-stat-lbl">Incorrect</div>
+    </div>
+    {% if total > 0 %}
+    <div class="fb-stat fb-stat--pct">
+      <div class="fb-stat-val">{{ ((correct / total) * 100)|round(1) }}%</div>
+      <div class="fb-stat-lbl">Accuracy</div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if confirmed_skus %}
+  <div class="fb-section">
+    <div class="fb-section-title">Most confirmed SKUs (correct matches)</div>
+    <div class="fb-pills">
+      {% for row in confirmed_skus %}
+      <div class="fb-pill fb-pill--good">{{ row[0] }} <span>{{ row[1] }}×</span></div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if confused %}
+  <div class="fb-section">
+    <div class="fb-section-title">Correct but not rank #1 — tuning candidates</div>
+    <div class="fb-confused">
+      {% for item in confused %}
+      <div class="fb-confused-row">
+        <span class="fb-confused-sku">{{ item.sku }}</span>
+        <div class="fb-confused-detail">
+          <span class="fb-confused-rank1">
+            rank #1: {{ item.rank1_count }}/{{ item.total_tests }} tests
+          </span>
+          {% if item.incorrect_count > 0 %}
+          <span class="fb-confused-miss">{{ item.incorrect_count }}× not found</span>
+          {% endif %}
+          <span class="fb-confused-avg">avg rank when not #1: #{{ item.avg_rank }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not_found_count > 0 %}
+  <div class="fb-section">
+    <div class="fb-section-title">Keys not found in results at all</div>
+    <div style="padding:10px 14px; border-radius:8px; background:rgba(231,76,60,0.07); border:1px solid rgba(231,76,60,0.2); font-size:0.85rem; color:var(--mi-text,#eee);">
+      {{ not_found_count }} search{{ 'es' if not_found_count != 1 else '' }} returned no correct match —
+      these likely represent SKUs not yet in the database.
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Recent responses -->
+  <div class="fb-section">
+    <div class="fb-section-title">Recent responses (last 500)</div>
+    {% if rows %}
+    <div class="fb-table-wrap">
+      <table class="fb-table">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Verdict</th>
+            <th>Confirmed SKU</th>
+            <th>Rank</th>
+            <th>Results shown</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr class="{{ 'fb-row--good' if row['verdict'] == 'correct' else 'fb-row--bad' }}">
+            <td>{{ row['submitted_at'][:16].replace('T',' ') }}</td>
+            <td>
+              {% if row['verdict'] == 'correct' %}
+              <span class="fb-badge fb-badge--good">✓ Correct</span>
+              {% else %}
+              <span class="fb-badge fb-badge--bad">✗ Not found</span>
+              {% endif %}
+            </td>
+            <td>{{ row['confirmed_sku'] or '—' }}</td>
+            <td>{{ row['confirmed_rank'] or '—' }}</td>
+            <td class="fb-skus">{{ row['result_skus'] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="fb-empty">No feedback received yet. Feedback buttons appear on the results page after each match.</div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+/* ── Filter controls ── */
+.fb-controls {
+  display: flex; flex-wrap: wrap; gap: 12px;
+  align-items: center; justify-content: space-between;
+  margin: 12px 0 8px;
+}
+.fb-filter-form {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.fb-filter-lbl {
+  font-size: 0.78rem; font-weight: 600;
+  color: var(--mi-muted, #aaa);
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.fb-filter-date {
+  padding: 6px 10px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: var(--mi-input-bg, #1a1a2e);
+  color: var(--mi-text, #eee);
+  font-size: 0.85rem;
+}
+.fb-filter-btn {
+  padding: 6px 14px; border-radius: 6px; border: none;
+  background: var(--mi-accent, #7c6af7); color: #fff;
+  font-size: 0.8rem; font-weight: 700; cursor: pointer;
+  text-decoration: none; display: inline-block;
+}
+.fb-filter-btn:hover { opacity: 0.85; }
+.fb-filter-clear {
+  background: rgba(255,255,255,0.1);
+  color: var(--mi-text, #eee);
+}
+.fb-clear-form { margin-left: auto; }
+.fb-clear-btn {
+  padding: 6px 14px; border-radius: 6px; border: none;
+  background: rgba(231,76,60,0.2); color: #e74c3c;
+  font-size: 0.8rem; font-weight: 700; cursor: pointer;
+  border: 1px solid rgba(231,76,60,0.3);
+}
+.fb-clear-btn:hover { background: rgba(231,76,60,0.35); }
+.fb-filter-tag {
+  font-size: 0.82rem; color: var(--mi-accent, #7c6af7);
+  padding: 6px 12px; border-radius: 6px;
+  background: rgba(124,106,247,0.08);
+  border: 1px solid rgba(124,106,247,0.2);
+  margin-bottom: 8px; display: inline-block;
+}
+
+/* ── Stats ── */
+.fb-stats {
+  display: flex; flex-wrap: wrap; gap: 16px;
+  margin: 20px 0 24px;
+}
+.fb-stat {
+  flex: 1; min-width: 100px;
+  padding: 16px 20px; border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  text-align: center;
+}
+.fb-stat--good { border-color: rgba(45,206,137,0.4); background: rgba(45,206,137,0.07); }
+.fb-stat--bad  { border-color: rgba(231,76,60,0.4);  background: rgba(231,76,60,0.07); }
+.fb-stat--pct  { border-color: rgba(124,106,247,0.4); background: rgba(124,106,247,0.07); }
+.fb-stat-val { font-size: 2rem; font-weight: 800; color: var(--mi-text, #eee); }
+.fb-stat--good .fb-stat-val { color: #2dce89; }
+.fb-stat--bad  .fb-stat-val { color: #e74c3c; }
+.fb-stat--pct  .fb-stat-val { color: #7c6af7; }
+.fb-stat-lbl { font-size: 0.75rem; color: var(--mi-muted, #aaa); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+.fb-section { margin-bottom: 28px; }
+.fb-section-title {
+  font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--mi-muted, #aaa); margin-bottom: 12px;
+}
+.fb-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.fb-pill {
+  padding: 4px 12px; border-radius: 6px;
+  font-size: 0.82rem; font-weight: 700;
+  background: rgba(255,255,255,0.06); color: var(--mi-text, #eee);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.fb-pill--good { background: rgba(45,206,137,0.12); border-color: rgba(45,206,137,0.3); color: #2dce89; }
+.fb-pill span { font-weight: 400; opacity: 0.7; margin-left: 4px; }
+
+.fb-confused { display: flex; flex-direction: column; gap: 6px; }
+.fb-confused-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 7px;
+  background: rgba(255,165,0,0.06); border: 1px solid rgba(255,165,0,0.2);
+  font-size: 0.82rem;
+}
+.fb-confused-sku {
+  color: var(--mi-text,#eee); font-weight: 700;
+  min-width: 80px;
+}
+.fb-confused-detail {
+  display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
+  flex: 1;
+}
+.fb-confused-rank1 {
+  color: #2dce89; font-weight: 600;
+}
+.fb-confused-miss {
+  color: #e74c3c; font-weight: 700;
+  padding: 1px 8px; border-radius: 4px;
+  background: rgba(231,76,60,0.12);
+}
+.fb-confused-avg {
+  color: #ffa500; font-weight: 600;
+  margin-left: auto;
+}
+
+.fb-table-wrap { overflow-x: auto; }
+.fb-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.fb-table th {
+  text-align: left; padding: 8px 12px;
+  font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--mi-muted,#aaa);
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.fb-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  color: var(--mi-text,#eee);
+}
+.fb-row--good { background: rgba(45,206,137,0.03); }
+.fb-row--bad  { background: rgba(231,76,60,0.03); }
+.fb-badge {
+  padding: 2px 8px; border-radius: 4px;
+  font-size: 0.75rem; font-weight: 700;
+}
+.fb-badge--good { background: rgba(45,206,137,0.2); color: #2dce89; }
+.fb-badge--bad  { background: rgba(231,76,60,0.15); color: #e74c3c; }
+.fb-skus { font-size: 0.75rem; color: var(--mi-muted,#aaa); max-width: 300px; }
+.fb-empty { color: var(--mi-muted,#aaa); font-size: 0.88rem; padding: 20px 0; }
+</style>
+
+{% endblock %}

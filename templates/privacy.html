@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="mi-card" style="max-width:800px;margin:0 auto;padding:32px;">
+
+  <h1 class="mi-h1" style="font-size:1.6rem;margin-bottom:8px;">Privacy Policy</h1>
+  <p style="color:var(--mi-muted,#aaa);font-size:0.8rem;margin-bottom:32px;">Last updated: May 2026</p>
+
+  <div class="legal-section">
+    <h2>1. Who We Are</h2>
+    <p>GrailSweep is an AI-powered trading card identification and price reference tool, operated from the United Kingdom. We are committed to protecting your privacy and being transparent about how we handle your data. This policy is governed by UK GDPR and the Data Protection Act 2018.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>2. What Data We Collect</h2>
+    <p><strong>Images you upload:</strong> Card photos you submit for identification are processed by our AI matching system. Cropped regions containing card text (set codes, card numbers) are also processed by Google Cloud Vision for optical character recognition. Images are temporarily retained for processing and brief operational purposes (e.g. error diagnostics, image quality verification) and are routinely deleted thereafter.</p>
+    <p><strong>Camera access:</strong> When you use our live scanner feature, GrailSweep accesses your device's camera to capture card images for identification. The camera stream is processed within your browser; only individual frames you choose to scan are transmitted to our servers, and these are handled the same as uploaded images. We do not record video.</p>
+    <p><strong>Device identifiers and abuse-prevention data:</strong> To prevent misuse of our free tier, we generate and store a device identifier in your browser (cookie and localStorage) and compute a server-side identifier from your request data (browser type, language preference, and the first portion of your IP address, hashed together). These identifiers let us count scans against fair-tier limits without requiring an account. They are not used for advertising, profiling, or any purpose other than preventing abuse of the free service.</p>
+    <p><strong>Scan counters:</strong> The number of free scans you have used in the current calendar month is recorded against the identifiers above. These counters reset at 00:00 UTC on the first day of each month.</p>
+    <p><strong>Usage data:</strong> We collect aggregated usage statistics (total scan counts, match accuracy feedback, scan timing) to improve the service. Aggregated statistics are not linked to individual users. Note that the scan counters described above are pseudonymous rather than anonymous, since they are tied to device identifiers.</p>
+    <p><strong>Payment data:</strong> If you subscribe to GrailSweep Pro or purchase a top-up, payments are processed by Stripe. We do not store your card details &mdash; Stripe handles all payment information securely under PCI DSS compliance.</p>
+    <p><strong>Collection data:</strong> Your card collection is stored locally on your device using browser localStorage. A copy is also synchronised to our servers (via your access code) so it can be restored across devices and browser refreshes. We do not link this data to other personal identifiers beyond your access code.</p>
+    <p><strong>Email address:</strong> If you purchase a Pro subscription or top-up, we collect your email address to send your access code, transactional updates, and important service notices.</p>
+    <p><strong>Access codes:</strong> Pro subscriptions are validated via unique access codes (e.g. GRAIL-XXXX-XXXX). These are stored on our servers to verify subscription status.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>3. How We Use Your Data</h2>
+    <ul>
+      <li>To identify trading cards and return match results</li>
+      <li>To process payments and deliver access codes</li>
+      <li>To improve the accuracy of our AI matching engine</li>
+      <li>To send transactional emails (access codes, subscription updates, service notices)</li>
+      <li>To synchronise your collection across devices</li>
+      <li>To enforce free-tier limits and prevent abuse of the service</li>
+      <li>To diagnose technical issues and improve service reliability</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <h2>4. Lawful Basis for Processing</h2>
+    <p>Under UK GDPR, all processing of personal data must have a lawful basis. The bases we rely on are set out below for each purpose:</p>
+    <ul>
+      <li><strong>Performance of a contract</strong> &mdash; processing card images, returning match results, syncing your collection, processing payments, and delivering access codes. These are services you have contracted with us to provide.</li>
+      <li><strong>Legitimate interest</strong> &mdash; storing device identifiers and scan counters to prevent abuse of the free tier, and retaining aggregated usage statistics to improve the service. We have assessed these interests as proportionate and necessary, and they do not override your rights or freedoms.</li>
+      <li><strong>Consent</strong> &mdash; accessing your camera (granted via your browser's permission prompt) and any future use of your email address for non-transactional communications such as product updates or marketing. You can withdraw consent at any time.</li>
+      <li><strong>Legal obligation</strong> &mdash; retaining payment records and responding to lawful requests from regulators or law enforcement.</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <h2>5. Data Sharing</h2>
+    <p>We do not sell your personal data. We share data only with the following processors, who act on our behalf under data-processing agreements:</p>
+    <ul>
+      <li><strong>Stripe</strong> &mdash; for payment processing</li>
+      <li><strong>Google Cloud Vision</strong> &mdash; for optical character recognition on cropped card-image regions (set codes and card numbers)</li>
+      <li><strong>Modal</strong> &mdash; our cloud infrastructure provider, where image processing, AI matching, and scan counter storage occur</li>
+      <li><strong>Cloudflare</strong> &mdash; for content delivery, security, and DDoS protection (Cloudflare sees inbound requests but does not access processed data)</li>
+      <li><strong>Namecheap Private Email</strong> &mdash; for delivering transactional emails such as access codes and subscription notices</li>
+    </ul>
+  </div>
+
+  <div class="legal-section">
+    <h2>6. Data Retention</h2>
+    <ul>
+      <li><strong>Card images:</strong> retained briefly during processing and for short-term operational purposes, then deleted</li>
+      <li><strong>Email addresses:</strong> retained for as long as your subscription is active, plus 30 days after cancellation for support purposes</li>
+      <li><strong>Collection data:</strong> retained while your access code remains active; deleted on request</li>
+      <li><strong>Device identifiers and scan counters:</strong> retained for as long as the legitimate interest in abuse prevention persists, with periodic review. These records are pseudonymous (not linked to your name or email) and are not used for any other purpose.</li>
+      <li><strong>Usage statistics:</strong> retained in aggregated, anonymised form indefinitely</li>
+      <li><strong>Payment records:</strong> retained by Stripe per their policies; we do not retain card details ourselves</li>
+    </ul>
+    <p>You may request deletion of your data at any time by contacting us.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>7. International Data Transfers</h2>
+    <p>Some of our processors (notably Google Cloud Vision, Stripe, and Modal) may process data outside the United Kingdom and European Economic Area, primarily in the United States. Where this occurs, we rely on Standard Contractual Clauses, the UK Addendum to the EU SCCs, or equivalent safeguards approved under UK GDPR.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>8. Children</h2>
+    <p>GrailSweep is intended for users aged 13 and over. We do not knowingly collect personal data from children under 13.</p>
+    <p>If you are a parent or guardian and believe a child under 13 has provided us with personal data, please contact us at <a href="mailto:support@grailsweep.com" style="color:#b14dff;">support@grailsweep.com</a> and we will delete the account and associated data promptly.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>9. Your Rights</h2>
+    <p>Under UK GDPR, you have the right to:</p>
+    <ul>
+      <li>Access the personal data we hold about you</li>
+      <li>Request correction of inaccurate data</li>
+      <li>Request deletion of your data ("right to erasure")</li>
+      <li>Restrict or object to processing</li>
+      <li>Data portability (receive your data in a transferable format)</li>
+      <li>Withdraw consent at any time, where consent is the lawful basis we rely on</li>
+      <li>Object to processing carried out on the basis of legitimate interest</li>
+    </ul>
+    <p>To exercise these rights, contact us at <a href="mailto:support@grailsweep.com" style="color:#b14dff;">support@grailsweep.com</a>. We will respond within 30 days.</p>
+    <p>You also have the right to lodge a complaint with the UK Information Commissioner's Office at <a href="https://ico.org.uk" target="_blank" rel="noopener noreferrer" style="color:#b14dff;">ico.org.uk</a> if you believe we have not handled your data appropriately.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>10. Cookies and Local Storage</h2>
+    <p>GrailSweep uses browser localStorage and a small number of essential cookies. We do not use tracking cookies, analytics cookies, or advertising cookies. The cookies we set are:</p>
+    <ul>
+      <li><code style="font-family:monospace;font-size:0.82em;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;">gs_access_code</code> &mdash; stores your Pro access code so you remain signed in across visits. Set when you redeem an access code.</li>
+      <li><code style="font-family:monospace;font-size:0.82em;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;">matchit_device_id_v1</code> &mdash; a randomly generated device identifier used to enforce free-tier scan limits. Mirrored to localStorage to maintain continuity if cookies are cleared.</li>
+    </ul>
+    <p>localStorage is also used to store your local card collection, scan history, and various interface preferences. This data stays on your device and is only synchronised to our servers in the cases described in Section 2.</p>
+    <p>Because all of the above are essential to the operation of the service, they are exempt from the consent requirement under PECR (Privacy and Electronic Communications Regulations).</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>11. Security</h2>
+    <p>We use industry-standard security measures including:</p>
+    <ul>
+      <li>HTTPS encryption for all data in transit</li>
+      <li>Cloudflare DDoS protection and bot mitigation</li>
+      <li>Secure storage of access codes on our servers</li>
+      <li>Stripe PCI DSS compliance for payment handling</li>
+      <li>Restricted access controls on our internal systems</li>
+    </ul>
+    <p>While we take security seriously, no method of transmission over the internet is 100% secure. We commit to notifying affected users within 72 hours if a personal data breach occurs that poses a risk to their rights.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>12. Changes to This Policy</h2>
+    <p>We may update this policy from time to time. Material changes will be notified via the website or via email to active subscribers. The "Last updated" date at the top reflects the most recent revision.</p>
+  </div>
+
+  <div class="legal-section">
+    <h2>13. Contact</h2>
+    <p>For any privacy-related queries, including data access requests, deletion requests, or complaints, contact us at:</p>
+    <p><a href="mailto:support@grailsweep.com" style="color:#b14dff;">support@grailsweep.com</a></p>
+  </div>
+
+</div>
+
+<style>
+.legal-section { margin-bottom: 28px; }
+.legal-section h2 { font-size: 1rem; font-weight: 700; color: var(--mi-text,#eee); margin-bottom: 10px; font-family: 'DM Sans', sans-serif; }
+.legal-section p { font-size: 0.88rem; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 8px; }
+.legal-section ul { font-size: 0.88rem; color: rgba(255,255,255,0.75); line-height: 1.7; padding-left: 20px; margin-bottom: 8px; }
+.legal-section li { margin-bottom: 4px; }
+</style>
+{% endblock %}

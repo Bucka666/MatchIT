@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MatchIT — AI-Powered Trading Card Identification</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script src="/static/vendor/lucide.min.js?v=1"></script>
+<style>
+  :root {
+    --bg: #0e0c1a;
+    --surface: #1a1830;
+    --card: #252248;
+    --text: #f0ecff;
+    --muted: #9b95b8;
+    --violet: #b14dff;
+    --cyan: #00e5ff;
+    --emerald: #00ff88;
+    --gold: #ffd700;
+    --ruby: #ff2d6f;
+    --sapphire: #4d8eff;
+    --font-display: 'Orbitron', monospace;
+    --font-body: 'DM Sans', -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: var(--font-body); background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+  /* ── Animated background ── */
+  .bg-fixed {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: linear-gradient(135deg, #0e0c1a, #1a1830, #0e0c1a);
+  }
+  .bg-fixed::before {
+    content: ''; position: absolute; width: 200%; height: 200%; top: -50%; left: -50%;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(177,77,255,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 60%, rgba(0,229,255,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 90%, rgba(0,255,136,0.06) 0%, transparent 40%);
+    animation: bgDrift 25s ease-in-out infinite alternate;
+  }
+  @keyframes bgDrift { 0% { transform: translate(0,0); } 100% { transform: translate(-3%,-2%); } }
+
+  .content { position: relative; z-index: 1; }
+
+  /* ── Nav ── */
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 40px; max-width: 1200px; margin: 0 auto;
+  }
+  .nav-logo { font-family: var(--font-display); font-size: 1.4rem; font-weight: 900; background: linear-gradient(90deg, #b14dff, #00e5ff, #00ff88); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+  .nav-links { display: flex; gap: 32px; align-items: center; }
+  .nav-link { color: var(--muted); text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: color 0.2s; }
+  .nav-link:hover { color: var(--text); }
+  .nav-cta {
+    padding: 10px 24px; border-radius: 10px; font-weight: 700; font-size: 0.85rem;
+    text-decoration: none; background: linear-gradient(135deg, var(--violet), var(--cyan));
+    color: white; transition: all 0.3s; box-shadow: 0 4px 20px rgba(177,77,255,0.3);
+  }
+  .nav-cta:hover { box-shadow: 0 6px 30px rgba(177,77,255,0.5); transform: translateY(-2px); }
+
+  /* ── Hero ── */
+  .hero {
+    max-width: 1200px; margin: 0 auto; padding: 80px 40px 60px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+  }
+  .hero-badge {
+    display: inline-block; font-size: 0.6rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.2em; color: var(--gold); background: rgba(255,215,0,0.08);
+    border: 1px solid rgba(255,215,0,0.2); padding: 4px 14px; border-radius: 20px;
+    margin-bottom: 20px;
+  }
+  .hero h1 {
+    font-family: var(--font-display); font-size: 3.2rem; font-weight: 900;
+    line-height: 1.1; margin-bottom: 20px; letter-spacing: -0.02em;
+  }
+  .hero h1 .gradient { background: linear-gradient(90deg, var(--violet), var(--cyan), var(--emerald)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero-sub { font-size: 1.15rem; color: var(--muted); line-height: 1.7; margin-bottom: 36px; max-width: 480px; }
+  .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+  .btn-primary {
+    padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 0.95rem;
+    text-decoration: none; background: linear-gradient(135deg, var(--violet), var(--sapphire), var(--cyan));
+    color: white; font-family: var(--font-display); letter-spacing: 0.05em;
+    box-shadow: 0 4px 25px rgba(177,77,255,0.35); transition: all 0.3s; border: none; cursor: pointer;
+  }
+  .btn-primary:hover { box-shadow: 0 8px 40px rgba(177,77,255,0.55); transform: translateY(-3px); }
+  .btn-secondary {
+    padding: 14px 32px; border-radius: 12px; font-weight: 700; font-size: 0.95rem;
+    text-decoration: none; background: rgba(255,255,255,0.04); color: var(--text);
+    border: 1px solid rgba(255,255,255,0.12); transition: all 0.3s; cursor: pointer;
+  }
+  .btn-secondary:hover { background: rgba(177,77,255,0.08); border-color: rgba(177,77,255,0.3); }
+
+  /* Hero visual */
+  .hero-visual { position: relative; display: flex; justify-content: center; }
+  .hero-phone {
+    width: 280px; height: 560px; background: #1a1830; border-radius: 36px;
+    border: 3px solid rgba(177,77,255,0.3); position: relative; overflow: hidden;
+    box-shadow: 0 20px 80px rgba(177,77,255,0.15), 0 0 120px rgba(0,229,255,0.08);
+  }
+  .phone-notch { width: 120px; height: 28px; background: var(--bg); border-radius: 0 0 16px 16px; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 2; }
+  .phone-screen { padding: 36px 16px 16px; height: 100%; display: flex; flex-direction: column; gap: 10px; }
+  .phone-header { display: flex; justify-content: space-between; align-items: center; }
+  .phone-logo { font-family: var(--font-display); font-size: 0.55rem; font-weight: 900; background: linear-gradient(90deg, #b14dff, #00e5ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .phone-badge { font-size: 0.4rem; color: var(--cyan); background: rgba(0,229,255,0.1); padding: 2px 6px; border-radius: 3px; }
+  .phone-camera { flex: 1; background: rgba(0,0,0,0.4); border-radius: 12px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+  .phone-guide { width: 60%; aspect-ratio: 2.5/3.5; border: 2px solid rgba(177,77,255,0.4); border-radius: 8px; position: relative; }
+  .phone-guide::after { content: ''; position: absolute; left: 10%; right: 10%; height: 2px; background: linear-gradient(90deg, transparent, var(--cyan), transparent); top: 30%; animation: phoneScan 2s ease-in-out infinite; }
+  @keyframes phoneScan { 0% { top: 15%; } 50% { top: 85%; } 100% { top: 15%; } }
+  .phone-result {
+    background: rgba(37,34,72,0.9); border-radius: 10px; padding: 10px;
+    display: flex; gap: 10px; align-items: center; border: 1px solid rgba(0,255,136,0.2);
+    animation: resultPop 0.3s ease-out;
+  }
+  @keyframes resultPop { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  .pr-color { width: 36px; height: 50px; background: linear-gradient(135deg, #ff6b35, #ffd700); border-radius: 4px; flex-shrink: 0; }
+  .pr-name { font-size: 0.6rem; font-weight: 700; color: var(--gold); }
+  .pr-set { font-size: 0.45rem; color: var(--cyan); }
+  .pr-price { font-family: var(--font-display); font-size: 0.7rem; font-weight: 900; color: var(--emerald); margin-left: auto; }
+
+  /* Floating cards decoration */
+  .float-card {
+    position: absolute; width: 60px; height: 84px; border-radius: 6px;
+    border: 1px solid rgba(177,77,255,0.2); background: linear-gradient(135deg, rgba(37,34,72,0.8), rgba(20,18,36,0.8));
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  }
+  .fc-1 { top: -20px; left: -30px; transform: rotate(-12deg); animation: floatA 6s ease-in-out infinite; background: linear-gradient(135deg, #ffd700, #ff8c00); opacity: 0.7; }
+  .fc-2 { bottom: 40px; right: -20px; transform: rotate(8deg); animation: floatB 7s ease-in-out infinite; background: linear-gradient(135deg, #00e5ff, #4d8eff); opacity: 0.6; }
+  .fc-3 { top: 60%; left: -40px; transform: rotate(-5deg); animation: floatA 8s ease-in-out infinite; background: linear-gradient(135deg, #ff2d6f, #b14dff); opacity: 0.5; }
+  @keyframes floatA { 0%, 100% { transform: rotate(-12deg) translateY(0); } 50% { transform: rotate(-8deg) translateY(-15px); } }
+  @keyframes floatB { 0%, 100% { transform: rotate(8deg) translateY(0); } 50% { transform: rotate(12deg) translateY(-12px); } }
+
+  /* ── Stats strip ── */
+  .stats-strip {
+    max-width: 1200px; margin: 0 auto; padding: 0 40px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;
+  }
+  .stat-box {
+    text-align: center; padding: 24px 16px; border-radius: 14px;
+    background: rgba(37,34,72,0.5); border: 1px solid rgba(255,255,255,0.05);
+  }
+  .stat-num { font-family: var(--font-display); font-size: 2rem; font-weight: 900; margin-bottom: 4px; }
+  .stat-num.v { color: var(--violet); }
+  .stat-num.c { color: var(--cyan); }
+  .stat-num.e { color: var(--emerald); }
+  .stat-num.g { color: var(--gold); }
+  .stat-txt { font-size: 0.75rem; color: var(--muted); }
+  /* Stat box staggered entrance */
+  .stat-box { animation: statFadeIn 0.6s ease-out both; }
+  .stats-strip .stat-box:nth-child(1) { animation-delay: 0.3s; }
+  .stats-strip .stat-box:nth-child(2) { animation-delay: 0.45s; }
+  .stats-strip .stat-box:nth-child(3) { animation-delay: 0.6s; }
+  .stats-strip .stat-box:nth-child(4) { animation-delay: 0.75s; }
+  @keyframes statFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  /* Floating card suit symbols */
+  .float-symbols { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .float-sym { position: absolute; opacity: 0; animation: floatUp linear infinite; user-select: none; }
+  @keyframes floatUp {
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    8% { opacity: 1; }
+    90% { opacity: 0.5; }
+    100% { transform: translateY(-100px) rotate(540deg); opacity: 0; }
+  }
+
+  /* ── Features ── */
+  .features { max-width: 1200px; margin: 0 auto; padding: 100px 40px; }
+  .section-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2em; color: var(--cyan); margin-bottom: 12px; }
+  .section-title { font-family: var(--font-display); font-size: 2rem; font-weight: 900; margin-bottom: 16px; }
+  .section-sub { font-size: 1rem; color: var(--muted); max-width: 600px; margin-bottom: 50px; line-height: 1.7; }
+  .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .feature-card {
+    padding: 28px 24px; border-radius: 16px; background: rgba(37,34,72,0.4);
+    border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s;
+  }
+  .feature-card:hover { border-color: rgba(177,77,255,0.2); background: rgba(37,34,72,0.6); transform: translateY(-4px); }
+  .fc-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: rgba(177,77,255,0.1); border: 1px solid rgba(177,77,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px; color: #b14dff; transition: all 0.3s;
+  }
+  .feature-card:hover .fc-icon { background: rgba(177,77,255,0.2); border-color: rgba(0,229,255,0.4); color: #00e5ff; }
+  .fc-icon svg { width: 24px; height: 24px; }
+  .fc-title { font-family: var(--font-display); font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; letter-spacing: 0.03em; }
+  .fc-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── How it works ── */
+  .how { max-width: 1200px; margin: 0 auto; padding: 60px 40px 100px; }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 50px; }
+  .step { text-align: center; position: relative; }
+  .step-num {
+    font-family: var(--font-display); font-size: 3rem; font-weight: 900;
+    background: linear-gradient(135deg, var(--violet), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0.3;
+    margin-bottom: 8px;
+  }
+  .step-icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .step-title { font-family: var(--font-display); font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; }
+  .step-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.6; max-width: 260px; margin: 0 auto; }
+
+  /* ── Pricing / API ── */
+  .pricing { max-width: 1200px; margin: 0 auto; padding: 60px 40px 100px; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 50px; }
+  .price-card {
+    padding: 32px 28px; border-radius: 16px; background: rgba(37,34,72,0.4);
+    border: 1px solid rgba(255,255,255,0.06); transition: all 0.3s; position: relative;
+  }
+  .price-card:hover { border-color: rgba(177,77,255,0.2); transform: translateY(-4px); }
+  .price-card.featured { border-color: rgba(177,77,255,0.3); background: linear-gradient(135deg, rgba(177,77,255,0.06), rgba(0,229,255,0.03)); }
+  .price-card.featured::before {
+    content: 'POPULAR'; position: absolute; top: -10px; right: 20px;
+    font-size: 0.5rem; font-weight: 800; letter-spacing: 0.15em;
+    background: linear-gradient(90deg, var(--violet), var(--cyan)); color: white;
+    padding: 3px 12px; border-radius: 4px;
+  }
+  .pc-name { font-family: var(--font-display); font-size: 0.85rem; font-weight: 700; margin-bottom: 6px; }
+  .pc-price { font-family: var(--font-display); font-size: 2.2rem; font-weight: 900; margin-bottom: 4px; }
+  .pc-price span { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+  .pc-desc { font-size: 0.78rem; color: var(--muted); margin-bottom: 20px; }
+  .pc-features { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+  .pc-features li { font-size: 0.8rem; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .pc-features li::before { content: '✓'; color: var(--emerald); font-weight: 800; font-size: 0.7rem; }
+  .pc-btn {
+    display: block; width: 100%; text-align: center; margin-top: 24px;
+    padding: 12px; border-radius: 10px; text-decoration: none; font-weight: 700; font-size: 0.85rem;
+    transition: all 0.3s;
+  }
+  .pc-btn.primary { background: linear-gradient(135deg, var(--violet), var(--cyan)); color: white; }
+  .pc-btn.secondary { background: rgba(255,255,255,0.04); color: var(--text); border: 1px solid rgba(255,255,255,0.12); }
+
+  /* ── TCG logos strip ── */
+  .tcg-strip {
+    max-width: 1200px; margin: 0 auto; padding: 40px; text-align: center;
+  }
+  .tcg-strip-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 20px; }
+  .tcg-logos { display: flex; justify-content: center; gap: 50px; align-items: center; flex-wrap: wrap; }
+  .tcg-logo { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; opacity: 0.4; transition: opacity 0.3s; }
+  .tcg-logo:hover { opacity: 0.8; }
+  .tcg-logo.poke { color: #ffd700; }
+  .tcg-logo.mtg { color: #c0c0c0; }
+  .tcg-logo.ygo { color: #ff6b35; }
+
+  /* ── Footer ── */
+  .footer {
+    max-width: 1200px; margin: 0 auto; padding: 40px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+  }
+  .footer-brand { font-family: var(--font-display); font-size: 0.8rem; font-weight: 900; background: linear-gradient(90deg, #b14dff, #00e5ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .footer-copy { font-size: 0.7rem; color: var(--muted); }
+  .footer-links { display: flex; gap: 20px; }
+  .footer-links a { color: var(--muted); text-decoration: none; font-size: 0.75rem; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--violet); }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; text-align: center; padding: 50px 24px 40px; gap: 40px; }
+    .hero-sub { margin: 0 auto 30px; }
+    .hero-actions { justify-content: center; }
+    .hero-visual { order: -1; }
+    .hero-phone { width: 220px; height: 440px; }
+    .float-card { display: none; }
+    .stats-strip { grid-template-columns: repeat(2, 1fr); padding: 0 24px; }
+    .features, .how, .pricing, .tcg-strip { padding-left: 24px; padding-right: 24px; }
+    .features-grid, .steps, .pricing-grid { grid-template-columns: 1fr; }
+    .nav { padding: 16px 24px; }
+    .nav-links { gap: 16px; }
+    .hero h1 { font-size: 2.2rem; }
+    .section-title { font-size: 1.5rem; }
+  }
+  @media (max-width: 600px) {
+    .nav-link { display: none; }
+    .stats-strip { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-num { font-size: 1.4rem; }
+    .hero h1 { font-size: 1.8rem; }
+    .btn-primary, .btn-secondary { padding: 12px 24px; font-size: 0.85rem; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-fixed"></div>
+<div class="float-symbols" id="floatSymbols"></div>
+<div class="content">
+
+  <!-- Nav -->
+  <nav class="nav">
+    <a href="#" class="nav-logo">MATCHIT</a>
+    <div class="nav-links">
+      <a href="#features" class="nav-link">Features</a>
+      <a href="#how" class="nav-link">How It Works</a>
+      <a href="#pricing" class="nav-link">API Pricing</a>
+      <a href="#" class="nav-cta">Try Scanner</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div>
+      <div class="hero-badge">🃏 Now Identifying 44,000+ Cards</div>
+      <h1>Scan any card.<br><span class="gradient">Know everything.</span></h1>
+      <p class="hero-sub">AI-powered trading card identification across Pokemon, Magic: The Gathering, and Yu-Gi-Oh. Instant matching, real-time pricing, and marketplace links — all from your phone camera.</p>
+      <div class="hero-actions">
+        <a href="/static/scanner.html" class="btn-primary">⚡ Launch Scanner</a>
+        <a href="#pricing" class="btn-secondary">API Access →</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="float-card fc-1"></div>
+      <div class="float-card fc-2"></div>
+      <div class="float-card fc-3"></div>
+      <div class="hero-phone">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="phone-header">
+            <span class="phone-logo">MATCHIT</span>
+            <span class="phone-badge">LIVE</span>
+          </div>
+          <div class="phone-camera">
+            <div class="phone-guide"></div>
+          </div>
+          <div class="phone-result">
+            <div class="pr-color"></div>
+            <div><div class="pr-name">Charizard ex</div><div class="pr-set">Obsidian Flames #223</div></div>
+            <div class="pr-price">£42.50</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-strip">
+    <div class="stat-box"><div class="stat-num v">44K+</div><div class="stat-txt">Cards in Database</div></div>
+    <div class="stat-box"><div class="stat-num c">3</div><div class="stat-txt">TCG Games Supported</div></div>
+    <div class="stat-box"><div class="stat-num e">~5s</div><div class="stat-txt">Match Speed</div></div>
+    <div class="stat-box"><div class="stat-num g">7</div><div class="stat-txt">Marketplace Links</div></div>
+  </div>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything a collector needs</h2>
+    <p class="section-sub">From instant identification to price tracking and marketplace links — built for serious collectors who want speed and accuracy across all major TCGs.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="fc-icon"><i data-lucide="camera"></i></div>
+        <div class="fc-title">Live Camera Scanner</div>
+        <div class="fc-desc">Point your phone at any card. Auto-detects, identifies, and prices in seconds. Works with scanner stands for bulk cataloguing.</div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon"><i data-lucide="cpu"></i></div>
+           <div class="fc-title">Advanced Visual AI</div>
+           <div class="fc-desc">Proprietary multi-model AI that matches artwork, not text. Handles worn cards, different printings, and real-world photo conditions.</div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon"><i data-lucide="pound-sterling"></i></div>
+        <div class="fc-title">Instant GBP Pricing</div>
+        <div class="fc-desc">Market prices from TCGPlayer, Cardmarket, and more — automatically converted to pounds. Know what any card is worth instantly.</div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon"><i data-lucide="shopping-cart"></i></div>
+        <div class="fc-title">7 Marketplace Links</div>
+        <div class="fc-desc">One-tap links to buy or sell on Big Orbit Cards, TCGPlayer, Cardmarket, CardTrader, Total Cards, and Miniature Market.</div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon"><i data-lucide="bar-chart-2"></i></div>
+        <div class="fc-title">Batch Scanning Sessions</div>
+        <div class="fc-desc">Scan your entire collection in one session. Running total, best card alert, CSV export, duplicate detection, and rarity breakdown.</div>
+      </div>
+      <div class="feature-card">
+        <div class="fc-icon"><i data-lucide="plug"></i></div>
+<div class="fc-title">Developer API</div>
+<div class="fc-desc">Integrate card identification into your own app, website, or till system. Send a photo, get back the match — simple to plug into any platform.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="how" id="how">
+    <div class="section-label">How It Works</div>
+    <h2 class="section-title">Three steps. That's it.</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-icon">📱</div>
+        <div class="step-title">Point Camera</div>
+        <div class="step-desc">Open the scanner on your phone. Place a card in the frame — the guide overlay helps you position it perfectly.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-icon">⚡</div>
+        <div class="step-title">Instant Match</div>
+        <div class="step-desc">Our AI compares the card artwork against 44,000+ reference images. Top match returned in seconds.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-icon">💰</div>
+        <div class="step-title">Price + Buy/Sell</div>
+        <div class="step-desc">See current market prices in GBP. One tap to buy from any of 7 marketplaces, or list for sale instantly.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TCG support -->
+  <div class="tcg-strip">
+    <div class="tcg-strip-label">Supporting all major trading card games</div>
+    <div class="tcg-logos">
+      <span class="tcg-logo poke">POKEMON TCG</span>
+      <span class="tcg-logo mtg">MAGIC: THE GATHERING</span>
+      <span class="tcg-logo ygo">YU-GI-OH!</span>
+    </div>
+  </div>
+
+  <!-- Pricing -->
+  <section class="pricing" id="pricing">
+    <div class="section-label">API Pricing</div>
+    <h2 class="section-title">Build with MatchIT</h2>
+    <p class="section-sub">License our visual identification engine for your own products. From hobby projects to enterprise card-grading platforms.</p>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <div class="pc-name">Starter</div>
+        <div class="pc-price">£199<span>/mo</span></div>
+        <div class="pc-desc">For hobby projects and MVPs</div>
+        <ul class="pc-features">
+          <li>1,000 identifications/day</li>
+          <li>All 3 TCG games</li>
+          <li>Price data included</li>
+          <li>JSON API + webhooks</li>
+          <li>Email support</li>
+        </ul>
+        <a href="#" class="pc-btn secondary">Get Started</a>
+      </div>
+      <div class="price-card featured">
+        <div class="pc-name">Pro</div>
+        <div class="pc-price">£499<span>/mo</span></div>
+        <div class="pc-desc">For apps and marketplaces</div>
+        <ul class="pc-features">
+          <li>10,000 identifications/day</li>
+          <li>All 3 TCG games</li>
+          <li>Price data + historical</li>
+          <li>Priority matching queue</li>
+          <li>White-label scanner widget</li>
+          <li>Dedicated support</li>
+        </ul>
+        <a href="#" class="pc-btn primary">Contact Sales</a>
+      </div>
+      <div class="price-card">
+        <div class="pc-name">Enterprise</div>
+        <div class="pc-price">Custom</div>
+        <div class="pc-desc">For grading companies and large platforms</div>
+        <ul class="pc-features">
+          <li>Unlimited identifications</li>
+          <li>Custom verticals</li>
+          <li>On-premise deployment</li>
+          <li>SLA guarantee</li>
+          <li>Custom model training</li>
+          <li>Account manager</li>
+        </ul>
+        <a href="#" class="pc-btn secondary">Talk to Us</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div>
+      <div class="footer-brand">MATCHIT</div>
+      <div class="footer-copy">© <script>document.write(new Date().getFullYear())</script> MatchIT. All rights reserved.</div>
+    </div>
+    <div class="footer-links">
+      <a href="#">API Docs</a>
+      <a href="#">Terms</a>
+      <a href="#">Privacy</a>
+      <a href="#">Contact</a>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+// Floating card suit symbols background
+(function() {
+  var symbols = ['\u2660', '\u2665', '\u2666', '\u2663', '\u2605', '\u2736'];
+  var colors = ['rgba(177,77,255,0.5)', 'rgba(0,229,255,0.4)', 'rgba(255,215,0,0.4)', 'rgba(0,255,136,0.35)', 'rgba(255,45,111,0.4)'];
+  var container = document.getElementById('floatSymbols');
+  if (!container) return;
+  for (var i = 0; i < 26; i++) {
+    var s = document.createElement('span');
+    s.className = 'float-sym';
+    s.textContent = symbols[i % symbols.length];
+    s.style.left = (Math.random() * 100) + '%';
+    s.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+    s.style.animationDuration = (20 + Math.random() * 25) + 's';
+    s.style.animationDelay = (-Math.random() * 40) + 's';
+    s.style.color = colors[i % colors.length];
+    container.appendChild(s);
+  }
+})();
+if (typeof lucide !== 'undefined') lucide.createIcons();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+﻿
+  set_scheduler.py:415:    email_from = CONFIG.get("email_from", "")
+> set_scheduler.py:416:    email_to   = CONFIG.get("email_to",   "")
+  set_scheduler.py:417:    password   = CONFIG.get("email_password", "")
+  set_scheduler.py:597:    email_from = CONFIG.get("email_from", "")
+> set_scheduler.py:598:    email_to   = alert.get("email", CONFIG.get("email_to", ""))
+  set_scheduler.py:599:    password   = CONFIG.get("email_password", "")
+
+

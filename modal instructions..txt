@@ -1,0 +1,10 @@
+modal run upload_to_modal.py             run 1st, then either/all of the below
+modal run upload_to_modal.py --images
+modal run upload_profiles.py             uploads new profile.json
+modal deploy matchit_modal.py            deploys the modal (any changes to app.py,api_routes, UI/UX, etc.)
+
+
+use below in powershell for redeploys.
+
+$env:PYTHONIOENCODING="utf-8"
+modal deploy matchit_modal.py

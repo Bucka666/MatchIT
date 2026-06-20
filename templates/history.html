@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="mi-card">
+  <div class="mi-card-head">
+    <h1 class="mi-h1">Match History</h1>
+    <a class="mi-pill mi-pill-ghost" href="/match">New match</a>
+  </div>
+
+  {% if not entries %}
+  <div class="mh-empty">
+    <div class="mh-empty-icon">🔍</div>
+    <div class="mh-empty-text">No matches yet. <a href="/match">Run your first match</a> to see history here.</div>
+  </div>
+  {% else %}
+
+  <div class="mh-list">
+    {% for e in entries %}
+    <div class="mh-entry {% if e.low_cert %}mh-entry--lowcert{% endif %}">
+
+      <div class="mh-thumbs">
+        <img class="mh-thumb" src="/img/query/{{ e.query_filename }}" alt="front"
+             onerror="this.style.display='none'">
+        {% if e.query_filename_2 %}
+        <img class="mh-thumb" src="/img/query/{{ e.query_filename_2 }}" alt="back"
+             onerror="this.style.display='none'">
+        {% endif %}
+      </div>
+
+      <div class="mh-info">
+        <div class="mh-top-row">
+          <span class="mh-sku">{{ e.top_sku }}</span>
+          {% set conf = e.top_confidence|round(1) %}
+          <span class="mh-conf
+            {%- if conf >= 70 %} mh-conf--high
+            {%- elif conf >= 40 %} mh-conf--mid
+            {%- else %} mh-conf--low{% endif %}">{{ conf }}%</span>
+        </div>
+        <div class="mh-time">{{ e.matched_at[:16].replace('T', ' ') }}</div>
+        {% if e.result_skus_list and e.result_skus_list|length > 1 %}
+        <div class="mh-also">
+          Also: {{ e.result_skus_list[1:4]|join(', ') }}
+        </div>
+        {% endif %}
+        {% if e.low_cert %}
+        <div class="mh-lowcert-tag">⚠ Low certainty</div>
+        {% endif %}
+      </div>
+
+      <div class="mh-ras">
+        <img class="mh-ras-img" src="/img/ras/{{ e.top_sku }}.jpg" alt=""
+             onerror="this.style.display='none'">
+      </div>
+
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<style>
+.mh-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--mi-muted, #aaa);
+}
+.mh-empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.mh-empty-text { font-size: 0.9rem; }
+.mh-empty-text a { color: var(--mi-accent, #7c6af7); text-decoration: none; font-weight: 600; }
+.mh-empty-text a:hover { text-decoration: underline; }
+
+.mh-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0 16px;
+}
+
+.mh-entry {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: background 0.15s;
+}
+.mh-entry:hover { background: rgba(255,255,255,0.07); }
+.mh-entry--lowcert { border-color: rgba(245,166,35,0.25); }
+
+.mh-thumbs {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.mh-thumb {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.mh-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.mh-top-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.mh-sku {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--mi-text, #eee);
+}
+.mh-conf {
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 4px;
+}
+.mh-conf--high { background: rgba(45,206,137,0.15); color: #2dce89; }
+.mh-conf--mid  { background: rgba(245,166,35,0.15); color: #f5a623; }
+.mh-conf--low  { background: rgba(231,76,60,0.15);  color: #e74c3c; }
+
+.mh-time {
+  font-size: 0.72rem;
+  color: var(--mi-muted, #aaa);
+}
+.mh-also {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mh-lowcert-tag {
+  font-size: 0.7rem;
+  color: #f5a623;
+  font-weight: 600;
+}
+
+.mh-ras {
+  flex-shrink: 0;
+}
+.mh-ras-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+@media (max-width: 600px) {
+  .mh-entry { gap: 10px; padding: 10px; }
+  .mh-thumb { width: 40px; height: 40px; }
+  .mh-ras-img { width: 44px; height: 44px; }
+  .mh-sku { font-size: 0.95rem; }
+}
+</style>
+
+{% endblock %}

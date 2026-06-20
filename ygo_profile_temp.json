@@ -1,0 +1,46 @@
+{
+  "api_id": "73580471",
+  "name": "Black Rose Dragon",
+  "card_number": "RA04-EN057",
+  "set_id": "RA04",
+  "set_name": "Quarter Century Stampede",
+  "category": "YUGIOH",
+  "rarity": "RARE_SECRET",
+  "ygo_card_type": "MONSTER_SYNCHRO",
+  "ygo_attribute": "FIRE",
+  "set_era": "MODERN_YGO",
+  "language": "EN",
+  "edition": "",
+  "ygoprodeck_id": "73580471",
+  "tcgplayer_url": "https://www.tcgplayer.com/search/yugioh/product?q=Black Rose Dragon",
+  "cardmarket_url": "https://www.cardmarket.com/en/YuGiOh/Products/Search?searchString=Black Rose Dragon",
+  "prices": {
+    "tcgplayer": {
+      "normal": {
+        "market": 0.13
+      }
+    },
+    "cardmarket": {
+      "normal": {
+        "trend": 0.19
+      }
+    },
+    "ebay": {
+      "normal": {
+        "market": 999.99
+      }
+    },
+    "amazon": {
+      "normal": {
+        "market": 0.39
+      }
+    }
+  },
+  "type_line": "Synchro Monster",
+  "race": "Dragon",
+  "atk": 2400,
+  "def": 1800,
+  "level": 7,
+  "desc": "1 Tuner + 1+ non-Tuner monsters\r\nWhen this card is Synchro Summoned: You can destroy all cards on the field. Once per turn: You can banish 1 Plant monster from your GY, then target 1 Defense Position monster your opponent controls; change that target to face-up Attack Position, and if you do, its ATK becomes 0 until the end of this turn.",
+  "archetype": "Rose Dragon"
+}

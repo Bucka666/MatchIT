@@ -1,0 +1,144 @@
+{
+  "id": "kitchen_tools",
+  "name": "MatchIT - KITCHEN UTENSILS",
+  "page_title": "MatchIT – KITCHEN UTENSILS",
+  "subtitle": "AI Guided Kitchen Utensils Identification",
+  "icon": "🔍",
+  "query_title": "Identify Your Kitchen Utensils",
+  "image_labels": {
+    "front": "Image 1",
+    "back": "Image 2"
+  },
+  "ui_text": {
+    "how_to_title": "How to identify your kitchen utensils",
+    "step1_text": "Enter a <strong>product code</strong> or <strong>name</strong> if known",
+    "step1_placeholder": "e.g. product code, name…",
+    "step2_text": "Or <strong>upload / take a photo</strong> of the kitchen utensils",
+    "progress_subtitle": "Analysing against the database…",
+    "guide_tips": [
+      "Fill most of the frame with the <strong>product</strong>.",
+      "Use good lighting — avoid heavy shadows or glare.",
+      "Keep the item flat and straight."
+    ],
+    "feedback_correct_prompt": "Was the correct product in these results?",
+    "feedback_notfound_prompt": "Which product was it? (enter code or leave blank)",
+    "feedback_sku_placeholder": "e.g. product code"
+  },
+  "require_two_images": false,
+  "style_detection_enabled": false,
+  "ras_images_enabled": false,
+  "multi_crop": false,
+  "suppress_bg": true,
+  "db_root": "",
+  "categories": {
+    "DEFAULT": {
+      "label": "All Products",
+      "show": []
+    }
+  },
+  "profile_fields": [
+    {
+      "id": "manufacturer",
+      "label": "Manufacturer",
+      "type": "select",
+      "options": [
+        [
+          "",
+          "Unknown"
+        ]
+      ],
+      "default": "",
+      "penalty": 0.96,
+      "match_rule": "exact"
+    },
+    {
+      "id": "material",
+      "label": "Material",
+      "type": "select",
+      "options": [
+        [
+          "",
+          "Unknown"
+        ]
+      ],
+      "default": "",
+      "penalty": 0.96,
+      "match_rule": "exact"
+    },
+    {
+      "id": "category",
+      "label": "Category",
+      "type": "select",
+      "options": [
+        [
+          "",
+          "Unknown"
+        ]
+      ],
+      "default": "",
+      "penalty": 0.96,
+      "match_rule": "exact"
+    },
+    {
+      "id": "size",
+      "label": "Size",
+      "type": "select",
+      "options": [
+        [
+          "",
+          "Unknown"
+        ]
+      ],
+      "default": "",
+      "penalty": 0.96,
+      "match_rule": "exact"
+    },
+    {
+      "id": "color",
+      "label": "Color",
+      "type": "select",
+      "options": [
+        [
+          "",
+          "Unknown"
+        ]
+      ],
+      "default": "",
+      "penalty": 0.96,
+      "match_rule": "exact"
+    },
+    {
+      "id": "handle_type",
+      "label": "Handle Type",
+      "type": "select",
+      "options": [
+        [
+          "",
+          "Unknown"
+        ]
+      ],
+      "default": "",
+      "penalty": 0.96,
+      "match_rule": "exact"
+    },
+    {
+      "id": "use_type",
+      "label": "Use Type",
+      "type": "select",
+      "options": [
+        [
+          "",
+          "Unknown"
+        ]
+      ],
+      "default": "",
+      "penalty": 0.96,
+      "match_rule": "exact"
+    }
+  ],
+  "category_families": {},
+  "silhouette_map": {},
+  "disclaimer": "Product images and brand names remain the property of their respective owners. Used for identification purposes only.",
+  "guidance_text": "The top 5 closest matches are listed below.",
+  "guidance_feedback": "Please use the feedback bar to tell us how accurate the results were."
+}

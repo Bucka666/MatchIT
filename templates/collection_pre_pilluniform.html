@@ -1,0 +1,2305 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="mi-card col-page">
+
+<!-- Premium Gate Overlay -->
+<div id="premiumGate" style="display:{% if ssr_is_premium %}none{% else %}flex{% endif %};position:fixed;inset:0;z-index:9000;background:rgba(20,18,38,0.96);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:1rem;">
+  <div style="max-width:480px;width:100%;background:#252248;border:1px solid rgba(177,77,255,0.3);border-radius:20px;padding:32px;text-align:center;box-shadow:0 0 80px rgba(177,77,255,0.15);position:relative;">
+
+    <button type="button" onclick="document.getElementById('premiumGate').style.display='none';document.body.style.overflow='';" style="position:absolute;top:12px;right:16px;background:none;border:none;color:#9b95b8;font-size:1.4rem;cursor:pointer;line-height:1;padding:4px;">✕</button>
+
+    <div style="font-size:3rem;margin-bottom:16px;">⭐</div>
+
+    <div style="font-family:'Orbitron',monospace;font-size:1.3rem;font-weight:700;background:linear-gradient(90deg,#ffd700,#b14dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;">
+      Premium Feature
+    </div>
+
+    <div style="color:#9b95b8;font-size:0.85rem;margin-bottom:24px;">
+      Unlock the full GrailSweep experience
+    </div>
+
+    <!-- Benefits list -->
+    <div style="text-align:left;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:24px;">
+      <div class="prem-benefit">⭐ Save unlimited cards to your collection</div>
+      <div class="prem-benefit">📊 Track total value across all 3 TCGs</div>
+      <div class="prem-benefit">📥 Export to Excel with full breakdown</div>
+      <div class="prem-benefit">🔔 Price alerts (Pro feature)</div>
+      <div class="prem-benefit">🃏 Collection history & stats</div>
+    </div>
+
+    <!-- Code entry -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:0.8rem;color:#9b95b8;margin-bottom:8px;">Enter your access code to unlock:</div>
+      <div style="display:flex;gap:8px;">
+        <input id="premCodeInput" type="text"
+               placeholder="GRAIL-XXXX-XXXX"
+               autocomplete="off" autocapitalize="characters" spellcheck="false"
+               style="flex:1;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#f0ecff;font-size:0.9rem;font-family:monospace;outline:none;text-transform:uppercase;"
+               oninput="this.value=this.value.toUpperCase()">
+        <button type="button" onclick="premValidate()"
+                style="padding:10px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,#b14dff,#4d8eff);color:white;font-weight:700;font-size:0.85rem;cursor:pointer;">
+          Unlock
+        </button>
+      </div>
+      <div id="premError" style="display:none;color:#ff2d6f;font-size:0.78rem;margin-top:8px;">
+        ❌ Invalid code. Please check and try again.
+      </div>
+    </div>
+
+    <div style="font-size:0.75rem;color:#9b95b8;">
+      Don't have a code? <a href="mailto:support@grailsweep.com" style="color:#b14dff;">Contact us</a> to get early access.
+    </div>
+  </div>
+</div>
+
+<style>
+.prem-benefit {
+    padding: 7px 0;
+    font-size: 0.85rem;
+    color: #f0ecff;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.prem-benefit:last-child { border-bottom: none; }
+</style>
+
+  <div class="mi-card-head" style="flex-direction:column;align-items:flex-start;gap:12px;">
+    <h1 class="mi-h1">My Collection</h1>
+    <button id="gsEnablePushBtn" onclick="gsSubscribePush()" style="display:none;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid rgba(177,77,255,0.4);background:rgba(177,77,255,0.1);color:#b14dff;font-size:0.75rem;font-weight:600;cursor:pointer;">🔔 Enable Price Alerts via Notifications</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
+      <a href="/match" class="mi-btn" style="background:rgba(255,255,255,0.06)!important;border:1px solid rgba(255,255,255,0.12)!important;box-shadow:none!important;color:var(--mi-muted,#aaa)!important;font-size:0.8rem!important;">← Match</a>
+      <button class="mi-btn" onclick="colExportCSV()">📥 Export Excel</button>
+      <button class="col-csv-export-btn" onclick="gsExportCSV()">📤 Export CSV</button>
+      <button class="col-import-btn" onclick="gsShowImport()">📥 Import CSV <span class="pro-badge">PRO</span></button>
+      <button class="mi-btn" onclick="colClearAll()" style="background:rgba(255,45,111,0.15)!important;border:1px solid rgba(255,45,111,0.3)!important;color:#ff2d6f!important;box-shadow:none!important;">🗑 Clear All</button>
+    </div>
+  </div>
+
+  <!-- Overall summary bar -->
+  <div class="col-summary">
+    <div class="col-stat" style="cursor:pointer;" onclick="document.getElementById('colList').scrollIntoView({behavior:'smooth'})">
+      <div class="col-stat-val" id="colCount">0</div>
+      <div class="col-stat-label">Total Cards</div>
+    </div>
+    <div class="col-stat col-stat--highlight" style="cursor:pointer;" onclick="document.getElementById('colList').scrollIntoView({behavior:'smooth'})">
+      <div class="col-stat-val" id="colValue">£0.00</div>
+      <div class="col-stat-label">Total Value</div>
+    </div>
+    <div class="col-stat" style="cursor:pointer;" onclick="document.getElementById('colList').scrollIntoView({behavior:'smooth'})">
+      <div class="col-stat-val" id="colSets">0</div>
+      <div class="col-stat-label">Sets</div>
+    </div>
+  </div>
+
+  <!-- Portfolio value chart (Pro only) -->
+  <div id="colValueChartWrap" style="display:none;margin-bottom:20px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:16px 18px;">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px;">
+      <span style="font-family:'Orbitron',monospace;font-size:0.8rem;font-weight:700;color:#f0ecff;letter-spacing:0.05em;">Portfolio Value</span>
+      <span style="font-size:0.68rem;color:#9b95b8;">GBP · 30 days · Pro</span>
+    </div>
+    <div style="position:relative;height:160px;">
+      <canvas id="colValueChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Referral box (Pro only) -->
+  <div class="col-referral-box gs-hidden" id="colReferralBox">
+    <div class="col-referral-header">
+      <span class="col-referral-title">🎁 Refer a Friend</span>
+      <span class="col-referral-sub">Share your code — they get first month at £2.99, you get 30 days free</span>
+    </div>
+    <div class="col-referral-code-row">
+      <span class="col-referral-code" id="colRefCode">Loading...</span>
+      <button type="button" class="col-referral-copy" onclick="gsColCopyRef()">📋 Copy</button>
+      <button type="button" class="col-referral-share" onclick="gsColShareRef()">📤 Share</button>
+    </div>
+    <div class="col-referral-progress">
+      <span id="colRefProgress">0 of 10 referrals used</span>
+      <div class="col-ref-bar-track">
+        <div class="col-ref-bar-fill" id="colRefBarFill"></div>
+      </div>
+    </div>
+    <p class="col-referral-instructions">
+      📤 Share your code with a friend — they enter it on the
+      <a href="/upgrade" class="col-referral-link">Upgrade page</a>
+      before clicking the monthly plan button to get £2.99 first month.
+      You'll earn a free month once they subscribe.
+    </p>
+  </div>
+
+  <!-- TCG breakdown cards -->
+  <div class="col-tcg-breakdown" id="colTcgBreakdown"></div>
+
+  <!-- Sort dropdown -->
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px;position:relative;" id="colSortWrap">
+    <button onclick="document.getElementById('colSortMenu').style.display=document.getElementById('colSortMenu').style.display==='block'?'none':'block'" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:#f0ecff;padding:6px 12px;border-radius:8px;font-size:0.8rem;cursor:pointer;display:flex;align-items:center;gap:6px;" id="colSortBtn">
+      <span id="colSortLabel">Newest first</span> ▾
+    </button>
+    <div id="colSortMenu" style="display:none;position:absolute;top:36px;right:0;z-index:200;background:rgba(26,24,48,0.98);border:1px solid rgba(255,255,255,0.15);border-radius:10px;overflow:hidden;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+      <div onclick="colSetSort('newest','Newest first')" style="padding:10px 16px;color:#f0ecff;font-size:0.8rem;cursor:pointer;" onmouseover="this.style.background='rgba(177,77,255,0.15)'" onmouseout="this.style.background=''">Newest first</div>
+      <div onclick="colSetSort('oldest','Oldest first')" style="padding:10px 16px;color:#f0ecff;font-size:0.8rem;cursor:pointer;" onmouseover="this.style.background='rgba(177,77,255,0.15)'" onmouseout="this.style.background=''">Oldest first</div>
+      <div onclick="colSetSort('high','Highest value')" style="padding:10px 16px;color:#f0ecff;font-size:0.8rem;cursor:pointer;" onmouseover="this.style.background='rgba(177,77,255,0.15)'" onmouseout="this.style.background=''">Highest value</div>
+      <div onclick="colSetSort('low','Lowest value')" style="padding:10px 16px;color:#f0ecff;font-size:0.8rem;cursor:pointer;" onmouseover="this.style.background='rgba(177,77,255,0.15)'" onmouseout="this.style.background=''">Lowest value</div>
+      <div onclick="colSetSort('name','Name A-Z')" style="padding:10px 16px;color:#f0ecff;font-size:0.8rem;cursor:pointer;" onmouseover="this.style.background='rgba(177,77,255,0.15)'" onmouseout="this.style.background=''">Name A-Z</div>
+    </div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="col-filters">
+    <button class="col-filter-btn col-filter-btn--active" onclick="colFilter('all', this)">All</button>
+    <button class="col-filter-btn col-filter-btn--pokemon" onclick="colFilter('pokemon', this)">🎮 Pokémon</button>
+    <button class="col-filter-btn col-filter-btn--ygo" onclick="colFilter('ygo', this)">⚔️ Yu-Gi-Oh</button>
+    <button class="col-filter-btn col-filter-btn--mtg" onclick="colFilter('mtg', this)">🧙 MTG</button>
+  </div>
+  <div class="col-set-filters" id="colSetFilters" style="display:none;flex-wrap:wrap;gap:6px;margin-top:8px;margin-bottom:12px;"></div>
+
+  <!-- Empty state — hidden immediately if server has cards -->
+  <div id="colEmpty" style="display:{% if ssr_collection is defined and ssr_collection %}none{% else %}none{% endif %};text-align:center;padding:60px 20px;color:var(--mi-muted,#aaa);">
+    <div style="font-size:3rem;margin-bottom:16px;">🃏</div>
+    <div style="font-size:1.1rem;font-weight:700;margin-bottom:8px;color:var(--mi-text,#eee);">No cards yet</div>
+    <div style="font-size:0.85rem;margin-bottom:24px;">Scan or upload a card photo and tap "Add to Collection" to get started</div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="/match" class="mi-btn" style="text-decoration:none;">📷 Upload a Photo</a>
+        <a href="/match#scanner" class="mi-btn" style="text-decoration:none;background:rgba(0,229,255,0.15)!important;border:1px solid rgba(0,229,255,0.3)!important;color:#00e5ff!important;box-shadow:none!important;">📱 Use Scanner</a>
+    </div>
+  </div>
+
+  <!-- Top 3 value highlights -->
+  <div id="colTopCards" style="display:none;margin-bottom:16px;"></div>
+
+  <!-- Collection list -->
+  <div id="colList" class="col-list"></div>
+
+  <!-- Image lightbox -->
+  <div id="colLightbox" onclick="colCloseLightbox()" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(26,24,48,0.95);backdrop-filter:blur(12px);align-items:center;justify-content:center;cursor:zoom-out;">
+    <img id="colLightboxImg" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:12px;box-shadow:0 0 80px rgba(177,77,255,0.25);" alt="Card zoom">
+  </div>
+</div>
+
+<style>
+.col-page { max-width: 960px; margin: 0 auto; }
+
+.col-summary { display:flex; gap:12px; margin:16px 0 20px; flex-wrap:wrap; }
+.col-stat { flex:1; min-width:90px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px; text-align:center; }
+.col-stat--highlight { background:rgba(0,255,136,0.05); border-color:rgba(0,255,136,0.2); }
+.col-stat-val { font-family:'Orbitron',monospace; font-size:1.5rem; font-weight:700; background:linear-gradient(90deg,#ffd700,#00e5ff); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.col-stat--highlight .col-stat-val { background:linear-gradient(90deg,#00ff88,#00e5ff); -webkit-background-clip:text; background-clip:text; }
+.col-stat-label { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--mi-muted,#aaa); margin-top:4px; }
+
+.col-tcg-breakdown { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+.col-tcg-card { border-radius:12px; padding:14px 16px; border:1px solid; display:flex; align-items:center; gap:12px; }
+.col-tcg-card--pokemon { background:rgba(255,203,5,0.06); border-color:rgba(255,203,5,0.2); }
+.col-tcg-card--ygo     { background:rgba(177,77,255,0.06); border-color:rgba(177,77,255,0.2); }
+.col-tcg-card--mtg     { background:rgba(0,229,255,0.06);  border-color:rgba(0,229,255,0.2); }
+.col-tcg-icon { font-size:1.6rem; }
+.col-tcg-info { flex:1; min-width:0; }
+.col-tcg-name { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--mi-muted,#aaa); }
+.col-tcg-cards { font-size:0.85rem; color:var(--mi-text,#eee); font-weight:600; }
+.col-tcg-value { font-family:'Orbitron',monospace; font-size:1rem; font-weight:700; color:#00ff88; white-space:nowrap; }
+
+.col-filters { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.col-filter-btn { padding:6px 16px; border-radius:20px; border:1px solid rgba(255,255,255,0.15); background:rgba(255,255,255,0.04); color:var(--mi-muted,#aaa); font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.15s; }
+.col-set-pill { padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.6);font-size:0.68rem;cursor:pointer;transition:all 0.2s;white-space:nowrap; }
+.col-set-pill--active { border-color:var(--cx-violet);background:rgba(177,77,255,0.15);color:#fff; }
+.col-set-pill:hover { background:rgba(177,77,255,0.1);color:#fff; }
+.col-filter-btn--active,.col-filter-btn:hover { background:rgba(177,77,255,0.15); border-color:rgba(177,77,255,0.4); color:#b14dff; }
+.col-filter-btn--pokemon.col-filter-btn--active { background:rgba(255,203,5,0.15); border-color:rgba(255,203,5,0.4); color:#ffcb05; }
+.col-filter-btn--ygo.col-filter-btn--active     { background:rgba(177,77,255,0.15); border-color:rgba(177,77,255,0.4); color:#b14dff; }
+.col-filter-btn--mtg.col-filter-btn--active     { background:rgba(0,229,255,0.15);  border-color:rgba(0,229,255,0.4);  color:#00e5ff; }
+
+.col-list { display:flex; flex-direction:column; gap:8px; }
+
+.col-delta-badge { display:block; font-size:0.7rem; font-weight:700; margin-top:2px; }
+
+.col-top-header { font-family:'Orbitron',monospace; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--mi-muted,#aaa); margin-bottom:10px; }
+.col-top-row { display:flex; flex-direction:row; overflow-x:auto; gap:12px; padding-bottom:8px; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+.col-top-row::-webkit-scrollbar { display:none; }
+.col-top-card { flex:0 0 calc(33.333% - 8px); width:calc(33.333% - 8px); min-width:0; display:flex; flex-direction:column; align-items:center; gap:6px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px 10px; text-align:center; position:relative; }
+.col-top-medal { font-size:1.1rem; line-height:1; }
+.col-top-img { width:52px; height:72px; object-fit:contain; border-radius:6px; }
+.col-top-name { font-size:0.73rem; font-weight:700; color:#f0ecff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.col-top-set { font-size:0.65rem; color:#9b95b8; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.col-top-price { font-family:'Orbitron',monospace; font-size:0.82rem; font-weight:700; color:#00ff88; margin-top:2px; }
+.col-item { display:grid; grid-template-columns:60px 1fr auto; gap:12px; align-items:center; padding:12px 16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:10px; transition:background 0.15s; }
+.col-item:hover { background:rgba(255,255,255,0.06); }
+.col-item--pokemon { border-left:3px solid rgba(255,203,5,0.4); }
+.col-item--ygo     { border-left:3px solid rgba(177,77,255,0.4); }
+.col-item--mtg     { border-left:3px solid rgba(0,229,255,0.4); }
+.col-item-img { width:60px; height:60px; object-fit:contain; border-radius:6px; background:rgba(255,255,255,0.05); }
+.col-item-info { min-width:0; }
+.col-item-name { font-weight:700; font-size:0.95rem; color:var(--mi-text,#eee); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.col-item-set  { font-size:0.75rem; color:#00e5ff; margin-top:2px; }
+.col-item-sku  { font-size:0.65rem; color:var(--mi-muted,#aaa); margin-top:2px; }
+.col-item-tcg-badge { display:inline-block; font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:1px 6px; border-radius:4px; margin-top:3px; }
+.badge-pokemon { background:rgba(255,203,5,0.15); color:#ffcb05; }
+.badge-ygo     { background:rgba(177,77,255,0.15); color:#b14dff; }
+.badge-mtg     { background:rgba(0,229,255,0.15);  color:#00e5ff; }
+.col-item-actions { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+.col-item-price { font-weight:700; color:#00ff88; font-size:0.95rem; font-family:'Orbitron',monospace; }
+.col-item-date  { font-size:0.65rem; color:var(--mi-muted,#aaa); }
+.col-remove { background:none; border:none; color:rgba(255,45,111,0.5); cursor:pointer; font-size:0.8rem; padding:2px 6px; border-radius:4px; transition:color 0.15s,background 0.15s; }
+.col-remove:hover { color:#ff2d6f; background:rgba(255,45,111,0.1); }
+.col-item { cursor: pointer; }
+.col-alert-btn { background:none; border:1px solid rgba(255,165,0,0.3); color:#ffa500; font-size:0.72rem; padding:2px 8px; border-radius:4px; cursor:pointer; transition:all 0.15s; }
+.col-alert-btn:hover { background:rgba(255,165,0,0.1); }
+.col-alert-btn--set { background:rgba(255,165,0,0.12); border-color:rgba(255,165,0,0.5); }
+.col-alert-btn--set:hover { background:rgba(255,45,111,0.12); border-color:rgba(255,45,111,0.5); color:#ff2d6f; }
+
+@media (max-width:600px) {
+    .col-tcg-breakdown { grid-template-columns:1fr; }
+    .col-item { grid-template-columns:44px 1fr auto; gap:8px; padding:10px 12px; }
+    .col-item-img { width:44px; height:44px; }
+    .col-stat-val { font-size:1.2rem; }
+}
+
+/* ── Card detail modal ── */
+#cardDetailModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 10000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.cd-modal {
+  background: #1a1a2e;
+  border-radius: 16px 16px 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 20px;
+  border-top: 2px solid #b14dff;
+}
+.cd-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.88rem;
+  color: #b14dff;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.cd-modal-header button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.cd-card-info {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+.cd-card-img { width: 80px; border-radius: 6px; flex-shrink: 0; }
+.cd-card-meta { flex: 1; font-family: 'DM Sans', sans-serif; }
+.cd-card-name { font-size: 0.95rem; font-weight: 700; color: #ffd700; margin-bottom: 4px; }
+.cd-card-set  { font-size: 0.8rem; color: #00e5ff; margin-bottom: 6px; }
+.cd-card-price { font-size: 1.1rem; font-weight: 700; color: #00ff88; margin-bottom: 6px; }
+.cd-card-condition,
+.cd-card-notes,
+.cd-card-added { font-size: 0.78rem; color: rgba(255,255,255,0.45); margin-bottom: 3px; }
+.cd-price-history {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(177,77,255,0.2);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+.cd-ph-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.cd-ph-title { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.8); }
+.cd-ph-badge {
+  background: linear-gradient(90deg, #b14dff, #00e5ff);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: 'DM Sans', sans-serif;
+}
+.cd-ph-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.4);
+}
+.cd-ph-upgrade {
+  background: linear-gradient(90deg, #b14dff, #00e5ff);
+  color: #000;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 8px 16px;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-family: 'DM Sans', sans-serif;
+}
+.cd-ph-empty {
+  text-align: center;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.3);
+  padding: 16px 0;
+}
+#cdPriceChart { width: 100% !important; }
+.cd-grade-section { background: rgba(255,255,255,0.04); border: 1px solid rgba(0,229,255,0.2); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+.cd-grade-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.cd-grade-title { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.8); flex: 1; }
+.cd-grade-badge { font-size: 0.65rem; font-weight: 700; border-radius: 4px; padding: 1px 6px; font-family: 'DM Sans', sans-serif; }
+.cd-grade-badge.auto { background: rgba(0,229,255,0.2); color: #00e5ff; border: 1px solid #00e5ff44; }
+.cd-grade-badge.deep { background: linear-gradient(90deg, #b14dff, #00e5ff); color: #000; }
+.cd-grade-score-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.cd-grade-score { font-family: 'Orbitron', sans-serif; font-size: 1.6rem; font-weight: 700; color: #ffd700; }
+.cd-grade-label { font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: rgba(255,255,255,0.7); font-weight: 600; }
+.cd-grade-bars { margin-bottom: 8px; }
+.cd-grade-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-family: 'DM Sans', sans-serif; font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+.cd-grade-bar-label { width: 70px; flex-shrink: 0; }
+.cd-grade-bar-track { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+.cd-grade-bar-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #b14dff, #00e5ff); }
+.cd-grade-bar-val { width: 40px; text-align: right; flex-shrink: 0; }
+.cd-grade-summary { font-family: 'DM Sans', sans-serif; font-size: 0.78rem; color: rgba(255,255,255,0.5); line-height: 1.5; margin: 6px 0 0; font-style: italic; }
+.cd-grade-note { font-family: 'DM Sans', sans-serif; font-size: 0.8rem; color: rgba(255,255,255,0.35); margin-bottom: 10px; font-style: italic; }
+.cd-deep-grade-btn { width: 100%; padding: 10px; background: linear-gradient(90deg, rgba(177,77,255,0.13), rgba(0,229,255,0.13)); border: 1px solid #b14dff55; color: #b14dff; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.85rem; cursor: pointer; margin-bottom: 6px; }
+.grade-limit-note { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; color: rgba(255,255,255,0.35); text-align: center; margin-top: 4px; font-style: italic; }
+.grade-photo-note { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; color: rgba(255,255,255,0.35); margin-top: 6px; margin-bottom: 0; font-style: italic; }
+
+.cd-modal-actions { display: flex; justify-content: center; }
+.cd-btn-remove {
+  background: rgba(255,50,50,0.1);
+  border: 1px solid rgba(255,50,50,0.3);
+  color: #ff4466;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  width: 100%;
+}
+
+/* ── Visibility helpers ── */
+.gs-hidden { display: none !important; }
+.import-modal-overlay { display: flex; }
+.dup-modal-overlay    { display: flex; }
+.cd-modal-overlay     { display: flex; }
+
+/* ── CSV export button ── */
+.col-csv-export-btn {
+  background: rgba(0,255,136,0.1);
+  border: 1px solid rgba(0,255,136,0.3);
+  color: #00ff88;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+}
+
+/* ── Pro badge ── */
+.pro-badge {
+  background: linear-gradient(90deg, #b14dff, #00e5ff);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 4px;
+  vertical-align: middle;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ── Referral box ── */
+.col-referral-box { background: linear-gradient(135deg, rgba(177,77,255,0.1), rgba(0,229,255,0.1)); border: 1px solid rgba(177,77,255,0.3); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+.col-referral-header { margin-bottom: 12px; }
+.col-referral-title { font-family: 'Orbitron', sans-serif; font-size: 0.88rem; font-weight: 700; color: #b14dff; display: block; margin-bottom: 4px; }
+.col-referral-sub { font-family: 'DM Sans', sans-serif; font-size: 0.78rem; color: rgba(255,255,255,0.55); }
+.col-referral-code-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.col-referral-code { font-family: 'Orbitron', sans-serif; font-size: 0.9rem; font-weight: 700; color: #00e5ff; background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2); border-radius: 8px; padding: 8px 14px; letter-spacing: 0.05em; flex: 1; text-align: center; }
+.col-referral-copy, .col-referral-share { background: rgba(177,77,255,0.15); border: 1px solid rgba(177,77,255,0.3); color: #b14dff; border-radius: 8px; padding: 8px 14px; font-size: 0.8rem; font-family: 'DM Sans', sans-serif; font-weight: 700; cursor: pointer; white-space: nowrap; }
+.col-referral-progress { font-family: 'DM Sans', sans-serif; font-size: 0.75rem; color: rgba(255,255,255,0.45); margin-bottom: 6px; }
+.col-ref-bar-track { height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+.col-ref-bar-fill { height: 100%; width: 0; background: linear-gradient(90deg, #b14dff, #00e5ff); border-radius: 2px; transition: width 0.5s ease; }
+.col-referral-instructions { font-family: 'DM Sans', sans-serif; font-size: 0.76rem; color: rgba(255,255,255,0.4); line-height: 1.6; margin-top: 8px; margin-bottom: 0; }
+.col-referral-link { color: #b14dff; text-decoration: none; }
+
+/* ── Import button ── */
+.col-import-btn {
+  background: linear-gradient(90deg, #00e5ff22, #b14dff22);
+  border: 1px solid #00e5ff55;
+  color: #00e5ff;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+}
+
+/* ── Import modal ── */
+#importModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  z-index: 10000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.import-modal {
+  background: #1a1a2e;
+  border-radius: 16px 16px 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 20px;
+  border-top: 2px solid #00e5ff;
+}
+.import-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  color: #00e5ff;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+.import-modal-header button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+.import-info {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+.import-template-link {
+  display: block;
+  color: #b14dff;
+  font-size: 0.82rem;
+  font-family: 'DM Sans', sans-serif;
+  margin-bottom: 14px;
+  text-decoration: none;
+}
+.import-drop-zone {
+  border: 2px dashed rgba(0,229,255,0.3);
+  border-radius: 12px;
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  margin-bottom: 12px;
+}
+.import-drop-zone.drag-over {
+  border-color: #00e5ff;
+  background: rgba(0,229,255,0.05);
+}
+.import-drop-icon { font-size: 2rem; margin-bottom: 8px; }
+.import-drop-text {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.5);
+}
+.import-error {
+  color: #ff4466;
+  font-size: 0.82rem;
+  font-family: 'DM Sans', sans-serif;
+  margin-top: 8px;
+}
+.import-preview-header {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  color: #00e5ff;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.import-preview-list {
+  max-height: 240px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+.import-preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.8);
+  gap: 8px;
+}
+.import-preview-row .ipr-name { flex: 1; }
+.import-preview-row .ipr-set {
+  color: rgba(255,255,255,0.45);
+  font-size: 0.75rem;
+  flex: 1;
+}
+.import-preview-row .ipr-dup {
+  color: #ffd700;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+.import-preview-footer {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.import-btn-cancel {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.import-btn-confirm {
+  background: linear-gradient(90deg, #b14dff, #00e5ff);
+  border: none;
+  color: #000;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.import-done-icon {
+  font-size: 3rem;
+  text-align: center;
+  margin: 16px 0 10px;
+}
+.import-done-msg {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.8);
+  text-align: center;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+/* ── Dup modal (used by import flow) ── */
+#dupModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.dup-modal {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 24px 20px;
+  max-width: 320px;
+  width: 100%;
+  border: 1px solid rgba(177,77,255,0.4);
+  text-align: center;
+}
+.dup-modal-icon { font-size: 2rem; margin-bottom: 8px; }
+.dup-modal-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
+  color: #ffd700;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.dup-modal-msg {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+.dup-modal-btns { display: flex; gap: 10px; justify-content: center; }
+.dup-btn-cancel {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.dup-btn-add {
+  background: linear-gradient(90deg, #b14dff, #00e5ff);
+  border: none;
+  color: #000;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+</style>
+
+<script>
+const COL_KEY = 'matchit_collection_v1';
+let _activeFilter = 'all';
+let _activeSet = 'all';
+
+// SSR'd server collection — injected by Flask, merged below
+var _ssrCollection;
+try {
+    _ssrCollection = {{ (ssr_collection|tojson|safe) if ssr_collection is defined else '[]' }};
+} catch (e) {
+    console.error('SSR collection parse failed:', e);
+    _ssrCollection = [];
+}
+
+function colLoad() {
+    try {
+        var ls = JSON.parse(localStorage.getItem(COL_KEY) || '[]');
+        if (!_ssrCollection || !_ssrCollection.length) return ls;
+        if (!ls.length) return _ssrCollection;
+        // Merge: add SSR cards not already in localStorage (keyed by sku+added)
+        var lsKeys = new Set(ls.map(function(c) { return (c.sku||'') + '|' + (c.added||''); }));
+        var extras = _ssrCollection.filter(function(c) {
+            return !lsKeys.has((c.sku||'') + '|' + (c.added||''));
+        });
+        if (extras.length) {
+            var merged = ls.concat(extras);
+            localStorage.setItem(COL_KEY, JSON.stringify(merged));
+            return merged;
+        }
+        return ls;
+    } catch(e) { return _ssrCollection.length ? _ssrCollection : []; }
+}
+function colSave(items) { localStorage.setItem(COL_KEY, JSON.stringify(items)); _ssrCollection = items.slice(); }
+
+function _getTcg(sku) {
+    if (!sku) return 'pokemon';
+    const s = sku.toLowerCase();
+    if (s.startsWith('ygo-')) return 'ygo';
+    if (s.startsWith('mtg-')) return 'mtg';
+    return 'pokemon';
+}
+
+var colSortValue = 'newest';
+function colSetSort(val, label) {
+    colSortValue = val;
+    document.getElementById('colSortLabel').textContent = label;
+    document.getElementById('colSortMenu').style.display = 'none';
+    colRender();
+}
+document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('colSortWrap');
+    if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('colSortMenu').style.display = 'none';
+    }
+    var sf = document.getElementById('colSetFilters');
+    if (sf && !sf.contains(e.target)) {
+        var smenu = document.getElementById('colSetMenu');
+        if (smenu) smenu.style.display = 'none';
+    }
+});
+
+function colRender() {
+    premCheckGate();
+    if (!premIsUnlocked()) return;
+    const items = colLoad();
+    const list  = document.getElementById('colList');
+    const empty = document.getElementById('colEmpty');
+    const bd    = document.getElementById('colTcgBreakdown');
+
+    document.getElementById('colCount').textContent = items.length;
+    const total = items.reduce((s,i) => s + (parseFloat(i.gbp)||0), 0);
+    document.getElementById('colValue').textContent = '£' + total.toFixed(2);
+    const sets = new Set(items.map(i=>i.set_name).filter(Boolean));
+    document.getElementById('colSets').textContent = sets.size;
+
+    // TCG breakdown
+    const tcgs = { pokemon:{cards:0,value:0}, ygo:{cards:0,value:0}, mtg:{cards:0,value:0} };
+    items.forEach(i => { const t=_getTcg(i.sku); if(tcgs[t]){tcgs[t].cards++;tcgs[t].value+=parseFloat(i.gbp)||0;} });
+    const defs = [
+        {key:'pokemon',icon:'🎮',name:'Pokémon TCG', cls:'col-tcg-card--pokemon'},
+        {key:'ygo',    icon:'⚔️',name:'Yu-Gi-Oh',    cls:'col-tcg-card--ygo'},
+        {key:'mtg',    icon:'🧙',name:'Magic: The Gathering',   cls:'col-tcg-card--mtg'},
+    ];
+    bd.innerHTML = defs.map(d=>`
+        <div class="col-tcg-card ${d.cls}" style="${tcgs[d.key].cards===0?'opacity:0.4':''}">
+            <div class="col-tcg-icon">${d.icon}</div>
+            <div class="col-tcg-info">
+                <div class="col-tcg-name">${d.name}</div>
+                <div class="col-tcg-cards">${tcgs[d.key].cards} card${tcgs[d.key].cards!==1?'s':''}</div>
+                <div style="font-size:0.68rem;color:#9b95b8;margin-top:2px;">avg £${tcgs[d.key].cards ? (tcgs[d.key].value/tcgs[d.key].cards).toFixed(2) : '0.00'} per card</div>
+            </div>
+            <div class="col-tcg-value">£${tcgs[d.key].value.toFixed(2)}</div>
+        </div>`).join('');
+    colRenderTopCards();
+
+    if (!items.length) { empty.style.display='block'; list.style.display='none'; return; }
+    empty.style.display='none'; list.style.display='flex';
+
+    const filtered = items.filter(function(i) {
+        if (_activeFilter !== 'all' && _getTcg(i.sku) !== _activeFilter) return false;
+        if (_activeSet !== 'all' && (i.set_name||i.set||'') !== _activeSet) return false;
+        return true;
+    });
+    if (!filtered.length) {
+        list.innerHTML=`<div style="text-align:center;padding:32px;color:var(--mi-muted,#aaa);font-size:0.85rem;">No cards for this TCG yet.</div>`;
+        return;
+    }
+
+    const sortBy = colSortValue;
+    let sorted = filtered.slice();
+    if (sortBy === 'newest')    sorted = sorted.reverse();
+    else if (sortBy === 'oldest') { /* already in added order */ }
+    else if (sortBy === 'high') sorted.sort(function(a,b){ return (parseFloat(b.gbp)||0)-(parseFloat(a.gbp)||0); });
+    else if (sortBy === 'low')  sorted.sort(function(a,b){ return (parseFloat(a.gbp)||0)-(parseFloat(b.gbp)||0); });
+    else if (sortBy === 'name') sorted.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+
+    const existingAlerts = JSON.parse(localStorage.getItem('col_alerts_v1') || '[]');
+
+    const badges = {pokemon:'badge-pokemon',ygo:'badge-ygo',mtg:'badge-mtg'};
+    const labels = {pokemon:'Pokémon',ygo:'Yu-Gi-Oh',mtg:'MTG'};
+    list.innerHTML = sorted.map(function(item) {
+        const realIdx = items.indexOf(item);
+        const tcg     = _getTcg(item.sku);
+        const price   = item.gbp ? '£'+parseFloat(item.gbp).toFixed(2) : '—';
+        const safeName = (item.name||'').replace(/'/g, '');
+        const hasAlert = existingAlerts.indexOf(item.sku) !== -1;
+        const alertBtn = hasAlert
+            ? '<button class="col-alert-btn col-alert-btn--set" onclick="colCancelAlert(\'' + item.sku + '\',\'' + safeName + '\')" title="Click to cancel alert">🔔 Alert set ✕</button>'
+            : '<button class="col-alert-btn" onclick="colSetAlert(\'' + item.sku + '\',\'' + safeName + '\',' + (parseFloat(item.gbp)||0) + ')">🔔 Alert</button>';
+        return '<div class="col-item col-item--' + tcg + '" onclick="gsOpenCardDetailByIdx(' + realIdx + ')">' +
+            '<img class="col-item-img" src="' + (item.img||'') + '" loading="lazy" onerror="this.style.opacity=\'0.15\'" onclick="event.stopPropagation();colZoomImage(\'' + (item.img||'') + '\')" style="cursor:zoom-in;" title="Click to enlarge">' +
+            '<div class="col-item-info">' +
+                '<div class="col-item-name">' + (item.name||item.sku||'—') + '</div>' +
+                '<div class="col-item-set">' + (item.set_name||item.set||'') + '</div>' +
+                '<div class="col-item-sku">' + (item.sku||'') + '</div>' +
+                '<span class="col-item-tcg-badge ' + badges[tcg] + '">' + labels[tcg] + '</span>' +
+            '</div>' +
+            '<div class="col-item-actions" onclick="event.stopPropagation()">' +
+                '<div class="col-item-price">' + price + '</div>' +
+                (item.sku ? '<span class="col-delta-badge gs-hidden" data-sku="' + item.sku + '" data-base="' + (parseFloat(item.gbp)||0) + '"></span>' : '') +
+                '<div class="col-item-date">' + (item.added||'') + '</div>' +
+                alertBtn +
+                '<button class="col-remove" onclick="colRemove(' + realIdx + ')">✕ Remove</button>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+    colFetchDeltas();
+}
+
+function colFilter(tcg, btn) {
+    _activeFilter = tcg;
+    _activeSet = 'all';
+    document.querySelectorAll('.col-filter-btn').forEach(b=>b.classList.remove('col-filter-btn--active'));
+    btn.classList.add('col-filter-btn--active');
+    // Build set pills for selected TCG
+    var sf = document.getElementById('colSetFilters');
+    if (tcg === 'all') {
+        sf.style.display = 'none';
+        sf.innerHTML = '';
+    } else {
+        var col = JSON.parse(localStorage.getItem('matchit_collection_v1')||'[]');
+        var sets = {};
+        col.forEach(function(item) {
+            if (_getTcg(item.sku) === tcg) {
+                var sn = item.set_name || item.set || 'Unknown';
+                sets[sn] = (sets[sn] || 0) + 1;
+            }
+        });
+        var setNames = Object.keys(sets).sort();
+        if (setNames.length > 1) {
+            var html = '<div style="position:relative;display:inline-block;">';
+            html += '<button onclick="document.getElementById(\'colSetMenu\').style.display=document.getElementById(\'colSetMenu\').style.display===\'block\'?\'none\':\'block\'" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#f0ecff;padding:6px 12px;border-radius:8px;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;gap:6px;" id="colSetBtn"><span id="colSetLabel">All sets</span> ▾</button>';
+            html += '<div id="colSetMenu" style="display:none;position:absolute;top:36px;left:0;z-index:200;background:rgba(26,24,48,0.98);border:1px solid rgba(255,255,255,0.15);border-radius:10px;overflow-y:auto;max-height:280px;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.5);">';
+            html += '<div onclick="colSetFilter(\'all\',\'All sets\')" style="padding:10px 16px;color:#f0ecff;font-size:0.78rem;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.06);" onmouseover="this.style.background=\'rgba(177,77,255,0.15)\'" onmouseout="this.style.background=\'\'">All sets</div>';
+            setNames.forEach(function(sn) {
+                html += '<div onclick="colSetFilter(\''+sn.replace(/'/g,"\\'")+'\',\''+sn.replace(/'/g,"\\'")+' ('+sets[sn]+')\')" style="padding:10px 16px;color:#f0ecff;font-size:0.78rem;cursor:pointer;" onmouseover="this.style.background=\'rgba(177,77,255,0.15)\'" onmouseout="this.style.background=\'\'">'+sn+' <span style="opacity:0.6;font-size:0.7em;">('+sets[sn]+')</span></div>';
+            });
+            html += '</div></div>';
+            sf.innerHTML = html;
+            sf.style.display = 'flex';
+        } else {
+            sf.style.display = 'none';
+            sf.innerHTML = '';
+        }
+    }
+    colRender();
+}
+
+function colSetFilter(setName, label) {
+    _activeSet = setName;
+    var lbl = document.getElementById('colSetLabel');
+    if (lbl) lbl.textContent = label;
+    var menu = document.getElementById('colSetMenu');
+    if (menu) menu.style.display = 'none';
+    colRender();
+}
+
+function colRemove(idx) {
+    const items = colLoad();
+    if (idx < 0 || idx >= items.length) return;
+    items.splice(idx,1);
+    colSave(items);
+    gsSyncCollection();
+    localStorage.removeItem('grailsweep_sets_cache_v1');
+    colRender();
+}
+
+function colClearAll() {
+    if (!confirm('Clear your entire collection? This cannot be undone.')) return;
+    colSave([]); colRender();
+}
+
+function colDeleteAllData() {
+    if (!confirm('This will permanently delete ALL your GrailSweep data including your collection, premium access and scan count. This cannot be undone. Are you sure?')) return;
+    localStorage.removeItem('matchit_collection_v1');
+    localStorage.removeItem('matchit_premium_v1');
+    localStorage.removeItem('matchit_scans_v2');
+    alert('All your data has been deleted.');
+    window.location.href = '/match';
+}
+
+function _colGetCurrentGbp(item) {
+  if (!item.sku) return parseFloat(item.gbp) || 0;
+  var cached = window._colPriceCache && window._colPriceCache[item.sku];
+  if (cached == null) return parseFloat(item.gbp) || 0;
+  return parseFloat(cached) || 0;
+}
+
+async function colExportCSV() {
+    if (typeof XLSX === 'undefined') {
+        alert('Excel library not loaded. Please refresh the page and try again.');
+        return;
+    }
+    const items = colLoad();
+    if (!items.length) { alert('No cards to export.'); return; }
+    const labels = {pokemon:'Pokémon TCG', ygo:'Yu-Gi-Oh', mtg:'Magic: The Gathering'};
+
+    // Build data rows
+    const rows = [['Name', 'Set', 'Number', 'SKU', 'TCG', 'Value (GBP)', 'Grade Score', 'Grade Label', 'Grade Method', 'Condition', 'Notes', 'Added', 'Current Price (£)', 'Change (£)']];
+    items.forEach(i => {
+        const _cur = _colGetCurrentGbp(i);
+        rows.push([
+            i.name             || '',
+            i.set_name         || '',
+            i.card_number      || '',
+            i.sku              || '',
+            labels[_getTcg(i.sku)] || '',
+            parseFloat(i.gbp)  || 0,
+            i.grade ? (i.grade.score || '') : '',
+            i.grade ? (i.grade.label || '') : '',
+            i.grade ? (i.grade.method || '') : '',
+            i.condition        || '',
+            i.notes            || '',
+            i.added            || '',
+            parseFloat(_cur.toFixed(2)),
+            parseFloat((_cur - (parseFloat(i.gbp) || 0)).toFixed(2))
+        ]);
+    });
+    const grandTotal = items.reduce((s,i) => s + (parseFloat(i.gbp)||0), 0);
+    rows.push(['', '', '', 'TOTAL', '£' + grandTotal.toFixed(2), '', '', '', '', '', '', '', '']);
+
+    // Create worksheet
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Set column widths
+    ws['!cols'] = [
+        {wch: 30},  // Name
+        {wch: 25},  // Set
+        {wch: 25},  // SKU
+        {wch: 20},  // TCG
+        {wch: 14},  // Value
+        {wch: 13},  // Grade Score
+        {wch: 16},  // Grade Label
+        {wch: 14},  // Grade Method
+        {wch: 18},  // Condition
+        {wch: 25},  // Notes
+        {wch: 14},  // Added
+        {wch: 18},  // Current Price
+        {wch: 12},  // Change
+    ];
+
+    // Style header row bold
+    const headerStyle = { font: { bold: true } };
+    ['A1','B1','C1','D1','E1','F1','M1','N1'].forEach(cell => {
+        if (ws[cell]) ws[cell].s = headerStyle;
+    });
+
+    // Format value column as currency
+    for (let r = 2; r <= items.length + 1; r++) {
+        const cell = ws['E' + r];
+        if (cell) cell.z = '"£"#,##0.00';
+        const mCell = ws['M' + r];
+        if (mCell) mCell.z = '"£"#,##0.00';
+        const nCell = ws['N' + r];
+        if (nCell) nCell.z = '"£"#,##0.00';
+    }
+
+    // Create workbook and download
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'My Collection');
+
+    // TCG breakdown sheets
+    const tcgDefs = [
+        { key: 'pokemon', name: 'Pokémon TCG',        label: 'Pokémon TCG' },
+        { key: 'ygo',     name: 'Yu-Gi-Oh',           label: 'Yu-Gi-Oh' },
+        { key: 'mtg',     name: 'Magic The Gathering', label: 'MTG' },
+    ];
+
+    tcgDefs.forEach(def => {
+        const tcgItems = items.filter(i => _getTcg(i.sku) === def.key);
+        if (!tcgItems.length) return;
+
+        const tcgRows = [['Name', 'Set', 'SKU', 'Value (GBP)', 'Grade Score', 'Grade Label', 'Grade Method', 'Added', 'Current Price (£)', 'Change (£)']];
+        tcgItems.forEach(i => {
+            const _cur = _colGetCurrentGbp(i);
+            tcgRows.push([
+                i.name     || '',
+                i.set_name || '',
+                i.sku      || '',
+                parseFloat(i.gbp) || 0,
+                i.grade ? (i.grade.score || '') : '',
+                i.grade ? (i.grade.label || '') : '',
+                i.grade ? (i.grade.method || '') : '',
+                i.added    || '',
+                parseFloat(_cur.toFixed(2)),
+                parseFloat((_cur - (parseFloat(i.gbp) || 0)).toFixed(2))
+            ]);
+        });
+
+        // Add total row
+        const total = tcgItems.reduce((s,i) => s + (parseFloat(i.gbp)||0), 0);
+        tcgRows.push(['', '', 'TOTAL', '£' + total.toFixed(2), '', '', '', '', '', '']);
+
+        const tcgWs = XLSX.utils.aoa_to_sheet(tcgRows);
+        tcgWs['!cols'] = [{wch:30},{wch:25},{wch:25},{wch:14},{wch:13},{wch:16},{wch:14},{wch:14},{wch:18},{wch:12}];
+
+        // Format value column
+        for (let r = 2; r <= tcgItems.length + 2; r++) {
+            const cell = tcgWs['D' + r];
+            if (cell) cell.z = '"£"#,##0.00';
+            const iCell = tcgWs['I' + r];
+            if (iCell) iCell.z = '"£"#,##0.00';
+            const jCell = tcgWs['J' + r];
+            if (jCell) jCell.z = '"£"#,##0.00';
+        }
+
+        XLSX.utils.book_append_sheet(wb, tcgWs, def.name);
+    });
+
+    const filename = 'GrailSweep_Collection_' + new Date().toISOString().slice(0,10) + '.xlsx';
+
+    // Try Save As dialog first (Chrome/Edge support)
+    if (window.showSaveFilePicker) {
+        try {
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/octet-stream' });
+            const handle = await window.showSaveFilePicker({
+                suggestedName: filename,
+                types: [{ description: 'Excel Files', accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] } }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            return;
+        } catch(e) {
+            if (e.name === 'AbortError') return; // User cancelled
+        }
+    }
+    // Fallback for Safari/Firefox
+    XLSX.writeFile(wb, filename);
+}
+
+const PREM_KEY = 'matchit_premium_v1';
+
+function premIsUnlocked() {
+    return localStorage.getItem(PREM_KEY) === 'unlocked';
+}
+
+function premCheckGate() {
+    const gate = document.getElementById('premiumGate');
+    if (!premIsUnlocked()) {
+        gate.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    } else {
+        gate.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+async function premValidate() {
+    const input = document.getElementById('premCodeInput');
+    const error = document.getElementById('premError');
+    const code  = input.value.trim().toUpperCase();
+
+    if (!code) return;
+
+    error.style.display = 'none';
+
+    try {
+        const resp = await fetch('/api/validate_premium', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({code})
+        });
+        const data = await resp.json();
+
+        if (data.valid) {
+            localStorage.setItem(PREM_KEY, 'unlocked');
+            localStorage.setItem('matchit_tier_v1', data.tier || 'monthly');
+            localStorage.setItem('matchit_access_code_v1', code);
+            document.cookie = 'gs_access_code=' + encodeURIComponent(code) + ';path=/;max-age=31536000;samesite=lax';
+            document.getElementById('premiumGate').style.display = 'none';
+            document.body.style.overflow = '';
+            colRender();
+        } else {
+            if (data.reason && data.reason.indexOf('maximum number of devices') !== -1) {
+                error.textContent = '❌ This code is already in use on too many devices. Contact support@grailsweep.com for help.';
+            } else {
+                error.textContent = '❌ ' + (data.reason || 'Invalid code. Please check and try again.');
+            }
+            error.style.display = 'block';
+            input.style.borderColor = 'rgba(255,45,111,0.5)';
+            setTimeout(() => { input.style.borderColor = ''; }, 2000);
+        }
+    } catch(e) {
+        error.textContent = '❌ Could not verify code. Check your connection.';
+        error.style.display = 'block';
+    }
+}
+
+// Allow Enter key to submit
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('premCodeInput');
+    if (input) {
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') premValidate();
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Migrate any old Modal URLs to grailsweep.com
+    try {
+        var col = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+        var changed = false;
+        col.forEach(function(item) {
+            if (item.img && item.img.includes('modal.run')) {
+                item.img = item.img.replace(/https?:\/\/[^\/]*modal\.run/, 'https://grailsweep.com');
+                changed = true;
+            }
+        });
+        if (changed) {
+            localStorage.setItem('matchit_collection_v1', JSON.stringify(col));
+            gsSyncCollection();
+            localStorage.removeItem('grailsweep_sets_cache_v1');
+        }
+    } catch(e) {}
+});
+
+// SSR subscription bootstrap — propagate server-verified state into localStorage
+(function() {
+    var ssrPremium = {{ (ssr_sub.is_premium)|tojson|safe if ssr_sub is defined else 'false' }};
+    var ssrTier    = {{ ssr_sub.tier|tojson|safe if ssr_sub is defined and ssr_sub.tier else 'null' }};
+    var ssrCode    = {{ ssr_sub.code|tojson|safe if ssr_sub is defined and ssr_sub.code else 'null' }};
+    if (ssrPremium) {
+        localStorage.setItem('matchit_premium_v1', 'unlocked');
+        if (ssrTier) localStorage.setItem('matchit_tier_v1', ssrTier);
+        if (ssrCode) {
+            localStorage.setItem('matchit_access_code_v1', ssrCode);
+            document.cookie = 'gs_access_code=' + encodeURIComponent(ssrCode) + ';path=/;max-age=31536000;samesite=lax';
+        }
+    }
+    // Cookie-migration fallback handled globally in base.html
+})();
+
+document.addEventListener('DOMContentLoaded', colRender);
+document.addEventListener('DOMContentLoaded', gsColLoadReferral);
+document.addEventListener('DOMContentLoaded', colLoadValueChart);
+document.addEventListener('DOMContentLoaded', function() {
+    var premium = localStorage.getItem('matchit_premium_v1');
+    var code = localStorage.getItem('matchit_access_code_v1');
+    if (premium === 'unlocked' && !code) {
+        // Pro user but no code stored — show prompt
+        var banner = document.createElement('div');
+        banner.id = 'gsCodePromptBanner';
+        banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:500;background:linear-gradient(135deg,rgba(177,77,255,0.97),rgba(0,229,255,0.97));padding:16px;box-shadow:0 4px 20px rgba(0,0,0,0.5);';
+        banner.innerHTML = '<div style="max-width:500px;margin:0 auto;text-align:center;">'
+            + '<div style="font-size:0.85rem;font-weight:700;color:#fff;margin-bottom:8px;">🔑 Enter your Pro access code to sync your collection across devices</div>'
+            + '<div style="display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;">'
+            + '<input id="gsCodePromptInput" type="text" placeholder="GRAIL-XXXX-XXXX" style="padding:8px 12px;border-radius:8px;border:none;font-size:0.8rem;width:180px;text-transform:uppercase;letter-spacing:1px;">'
+            + '<button onclick="gsCodePromptActivate()" style="padding:8px 16px;border-radius:8px;border:none;background:#fff;color:#b14dff;font-weight:700;font-size:0.8rem;cursor:pointer;">Activate</button>'
+            + '<button onclick="document.getElementById(\'gsCodePromptBanner\').remove()" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.4);background:transparent;color:#fff;font-size:0.8rem;cursor:pointer;">Skip</button>'
+            + '</div>'
+            + '<div style="font-size:0.65rem;color:rgba(255,255,255,0.8);margin-top:6px;">Your code was emailed when you subscribed. Syncing keeps your collection safe across devices.</div>'
+            + '</div>';
+        document.body.appendChild(banner);
+    }
+});
+
+window.gsCodePromptActivate = async function() {
+    var input = document.getElementById('gsCodePromptInput');
+    if (!input || !input.value.trim()) return;
+    var code = input.value.trim().toUpperCase();
+    var btn = input.nextElementSibling;
+    btn.textContent = 'Checking...';
+    btn.disabled = true;
+    try {
+        var resp = await fetch('/api/validate_premium', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({code: code})
+        });
+        var data = await resp.json();
+        if (data.valid) {
+            localStorage.setItem('matchit_access_code_v1', code);
+            localStorage.setItem('matchit_premium_v1', 'unlocked');
+            localStorage.setItem('matchit_tier_v1', data.tier || 'monthly');
+            document.cookie = 'gs_access_code=' + encodeURIComponent(code) + ';path=/;max-age=31536000;samesite=lax';
+            document.getElementById('gsCodePromptBanner').remove();
+            // Trigger collection sync and push registration
+            gsSyncCollection();
+            localStorage.removeItem('grailsweep_sets_cache_v1');
+            if (typeof gsInitPush === 'function') gsInitPush();
+            // Pull server collection
+            var syncResp = await fetch('/api/collection/sync?code=' + encodeURIComponent(code));
+            if (syncResp.ok) {
+                var syncData = await syncResp.json();
+                if (syncData.items && syncData.items.length > 0) {
+                    var local = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+                    var seen = new Set(local.map(function(x){ return x.sku; }));
+                    syncData.items.forEach(function(item){
+                        if (!seen.has(item.sku)) { local.push(item); seen.add(item.sku); }
+                    });
+                    localStorage.setItem('matchit_collection_v1', JSON.stringify(local));
+                    colRender();
+                }
+            }
+        } else {
+            btn.textContent = 'Activate';
+            btn.disabled = false;
+            input.style.border = '2px solid red';
+            setTimeout(function(){ input.style.border = 'none'; }, 2000);
+        }
+    } catch(e) {
+        btn.textContent = 'Activate';
+        btn.disabled = false;
+    }
+};
+document.addEventListener('DOMContentLoaded', function() {
+    var code = localStorage.getItem('matchit_access_code_v1');
+    if (!code || localStorage.getItem('matchit_premium_v1') !== 'unlocked') return;
+    fetch('/api/collection/sync?code=' + encodeURIComponent(code.trim().toUpperCase()))
+        .then(function(r){ return r.ok ? r.json() : null; })
+        .then(function(data){
+            if (!data || !data.items || !data.items.length) return;
+            var local = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+            var seen = new Set(local.map(function(x){ return x.sku; }));
+            var added = 0;
+            data.items.forEach(function(item){
+                if (!seen.has(item.sku)) {
+                    local.push(item);
+                    seen.add(item.sku);
+                    added++;
+                }
+            });
+            if (added > 0) {
+                localStorage.setItem('matchit_collection_v1', JSON.stringify(local));
+                colRender();
+            }
+
+            var localCount = local.length;
+            var serverCount = (data.items || []).length;
+
+            if (localCount > serverCount) {
+                var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
+                if (code && isPro) {
+                    fetch('/api/collection/sync', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({code: code, items: local})
+                    })
+                    .then(function(r) { return r.json(); })
+                    .then(function(d) {
+                        console.log('[collection] pushed ' + local.length +
+                            ' local items to server (was ' + serverCount + ')');
+                    })
+                    .catch(function(e) {
+                        console.warn('[collection] push to server failed:', e);
+                    });
+                }
+            }
+        })
+        .catch(function(){});
+});
+
+function gsColLoadReferral() {
+  var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
+  if (!isPro) return;
+
+  var box = document.getElementById('colReferralBox');
+  if (!box) return;
+  box.classList.remove('gs-hidden');
+
+  var accessCode = localStorage.getItem('matchit_access_code_v1') || '';
+
+  if (!accessCode) {
+    document.getElementById('colRefCode').textContent = 'Enter code below to activate';
+    document.getElementById('colRefProgress').textContent =
+      'Re-enter your access code once to generate your referral link';
+
+    var row = document.querySelector('.col-referral-code-row');
+    if (row && !document.getElementById('colRefReEntry')) {
+      var input = document.createElement('input');
+      input.id = 'colRefReEntry';
+      input.type = 'text';
+      input.placeholder = 'GRAIL-XXXX-XXXX';
+      input.style.cssText = 'background:rgba(255,255,255,0.06);border:1px solid rgba(0,229,255,0.3);' +
+        'border-radius:8px;padding:8px 12px;color:#fff;font-family:Orbitron,sans-serif;' +
+        'font-size:0.78rem;width:100%;box-sizing:border-box;margin-top:8px;';
+      input.oninput = function() { this.value = this.value.toUpperCase(); };
+
+      var btn = document.createElement('button');
+      btn.textContent = 'Activate';
+      btn.style.cssText = 'background:linear-gradient(90deg,#b14dff,#00e5ff);border:none;' +
+        'color:#000;border-radius:8px;padding:8px 14px;font-size:0.8rem;' +
+        'font-family:DM Sans,sans-serif;font-weight:700;cursor:pointer;margin-top:8px;width:100%;';
+      btn.onclick = function() {
+        var code = input.value.trim().toUpperCase();
+        if (!code) return;
+        localStorage.setItem('matchit_access_code_v1', code);
+        row.removeChild(input);
+        row.removeChild(btn);
+        gsColLoadReferral();
+      };
+
+      row.appendChild(input);
+      row.appendChild(btn);
+    }
+    return;
+  }
+
+  fetch('/api/referral_code', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({access_code: accessCode})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.ref_code) {
+      document.getElementById('colRefCode').textContent = data.ref_code;
+      var count = data.ref_count || 0;
+      var max = data.ref_max || 10;
+      document.getElementById('colRefProgress').textContent =
+        count + ' of ' + max + ' referrals used' +
+        (count > 0 ? ' \u2014 ' + count + ' free month' + (count > 1 ? 's' : '') + ' earned' : '');
+      document.getElementById('colRefBarFill').style.width =
+        Math.round((count / max) * 100) + '%';
+    } else {
+      document.getElementById('colRefCode').textContent = 'Code not found';
+    }
+  })
+  .catch(function() {
+    document.getElementById('colRefCode').textContent = 'Could not load';
+  });
+}
+
+function gsColCopyRef() {
+  var el = document.getElementById('colRefCode');
+  var code = '';
+  el.childNodes.forEach(function(node) {
+    if (node.nodeType === 3) code += node.textContent;
+  });
+  code = code.trim();
+  if (!code || code === 'Loading...' || code === 'Enter code below to activate') return;
+  var msg = 'Use my GrailSweep referral code ' + code +
+    ' to get your first month for \u00a32.99 instead of \u00a33.99! grailsweep.com/upgrade';
+  var _applyFeedback = function() {
+    var btn = document.querySelector('.col-referral-copy');
+    if (btn) {
+      btn.textContent = '\u2713 Copied!';
+      setTimeout(function() { btn.textContent = '\ud83d\udccb Copy'; }, 2000);
+    }
+  };
+  navigator.clipboard.writeText(msg).then(_applyFeedback).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = msg;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    _applyFeedback();
+  });
+}
+
+function gsColShareRef() {
+  var code = document.getElementById('colRefCode').textContent;
+  var shareData = {
+    title: 'GrailSweep \u2014 AI Card Scanner',
+    text: 'Use my referral code ' + code +
+      ' to get your first month for \u00a32.99! Scan any Pok\u00e9mon, MTG or Yu-Gi-Oh card instantly.',
+    url: 'https://grailsweep.com'
+  };
+  if (navigator.share) {
+    navigator.share(shareData).catch(function() {});
+  } else {
+    gsColCopyRef();
+  }
+}
+
+function colZoomImage(src) {
+    if (!src) return;
+    var lb = document.getElementById('colLightbox');
+    document.getElementById('colLightboxImg').src = src;
+    lb.style.display = 'flex';
+}
+function colCloseLightbox() {
+    document.getElementById('colLightbox').style.display = 'none';
+}
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') colCloseLightbox(); });
+
+function colSetAlert(sku, name, gbp) {
+    if (localStorage.getItem('matchit_premium_v1') !== 'unlocked') {
+        window.location.href = '/upgrade';
+        return;
+    }
+    var low  = prompt('Set a BUY alert for "' + name + '"\nAlert when price drops BELOW £ (leave blank to skip):');
+    var high = prompt('Set a SELL alert for "' + name + '"\nAlert when price rises ABOVE £ (leave blank to skip):');
+    if (low === null && high === null) return;
+    if (!low && !high) { alert('No alert set.'); return; }
+
+    var email = prompt('Enter your email address for alerts:');
+    if (!email) return;
+
+    fetch('/api/set-alert', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            email:       email,
+            code:        localStorage.getItem('matchit_access_code_v1') || '',
+            sku:         sku,
+            card_name:   name,
+            target_low:  low  ? parseFloat(low)  : null,
+            target_high: high ? parseFloat(high) : null,
+            current_gbp: gbp
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.status === 'ok') {
+            alert('✅ Price alert set! We\'ll email you when the price hits your target.');
+            var alerts = JSON.parse(localStorage.getItem('col_alerts_v1') || '[]');
+            if (alerts.indexOf(sku) === -1) alerts.push(sku);
+            localStorage.setItem('col_alerts_v1', JSON.stringify(alerts));
+            // Persist the email used so cancel can delete the matching backend record (keyed on email+sku)
+            var alertEmails = JSON.parse(localStorage.getItem('col_alert_emails_v1') || '{}');
+            alertEmails[sku] = email;
+            localStorage.setItem('col_alert_emails_v1', JSON.stringify(alertEmails));
+            colRender();
+        } else {
+            alert('❌ ' + (d.error || 'Could not set alert.'));
+        }
+    })
+    .catch(function() { alert('Connection error. Please try again.'); });
+}
+
+function colCancelAlert(sku, name) {
+    // Recover the email the alert was set with (backend deletes on email+sku).
+    var alertEmails = JSON.parse(localStorage.getItem('col_alert_emails_v1') || '{}');
+    var email = alertEmails[sku];
+    // Fallback for legacy alerts set before the email was persisted.
+    if (!email) {
+        email = prompt('Cancel price alert for "' + name + '"\nEnter the email address the alert was set with:');
+        if (!email) return;
+    }
+
+    fetch('/api/delete-alert', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            email: email,
+            code:  localStorage.getItem('matchit_access_code_v1') || '',
+            sku:   sku
+        })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+        if (d.status === 'ok') {
+            // Revert to the pre-alert state: drop sku from the alert list + email map, re-render.
+            var alerts = JSON.parse(localStorage.getItem('col_alerts_v1') || '[]');
+            alerts = alerts.filter(function(s) { return s !== sku; });
+            localStorage.setItem('col_alerts_v1', JSON.stringify(alerts));
+            delete alertEmails[sku];
+            localStorage.setItem('col_alert_emails_v1', JSON.stringify(alertEmails));
+            colRender();
+        } else if (d.status === 'not_found') {
+            // Alert wasn't on the server (e.g. already cancelled or wrong email)
+            // Still clean up localStorage so UI stays consistent
+            var _a = JSON.parse(localStorage.getItem('col_alerts_v1') || '[]');
+            _a = _a.filter(function(s){ return s !== sku; });
+            localStorage.setItem('col_alerts_v1', JSON.stringify(_a));
+            var _e = JSON.parse(localStorage.getItem('col_alert_emails_v1') || '{}');
+            delete _e[sku];
+            localStorage.setItem('col_alert_emails_v1', JSON.stringify(_e));
+            colRender();
+        } else {
+            alert('❌ ' + (d.error || 'Could not cancel alert.'));
+        }
+    })
+    .catch(function() { alert('Connection error. Please try again.'); });
+}
+
+/* ── Dup detection (shared with import flow) ── */
+var _gsDupPendingFn = null;
+
+function gsDupCheck(cardName, setName, proceedFn) {
+  var collection = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+  var copies = collection.filter(function(item) {
+    return (item.name || '').trim().toLowerCase() === cardName.trim().toLowerCase() &&
+           (item.set_name || item.set || '').trim().toLowerCase() === setName.trim().toLowerCase();
+  }).length;
+  if (copies === 0) { proceedFn(); return; }
+  var copyWord = copies === 1 ? 'copy' : 'copies';
+  document.getElementById('dupModalMsg').innerHTML =
+    'You already have <strong>' + copies + ' ' + copyWord + '</strong> of <strong>' +
+    cardName + '</strong> (' + setName + ') in your collection.<br><br>' +
+    'Do you want to add another copy?';
+  _gsDupPendingFn = proceedFn;
+  document.getElementById('dupModal').classList.remove('gs-hidden');
+}
+
+function gsDupConfirm() {
+  document.getElementById('dupModal').classList.add('gs-hidden');
+  if (_gsDupPendingFn) { _gsDupPendingFn(); _gsDupPendingFn = null; }
+}
+
+function gsDupCancel() {
+  document.getElementById('dupModal').classList.add('gs-hidden');
+  // Restore button text if changed by import flow
+  var confirmBtn = document.querySelector('.dup-btn-add');
+  if (confirmBtn) confirmBtn.textContent = 'Add Another Copy';
+  _gsDupPendingFn = null;
+}
+
+/* ── CSV Import ── */
+var GS_COL_ALIASES = {
+  name:      ['name','card name','card','title','card title','pokemon','monster',
+               'spell','trap','creature','planeswalker','item'],
+  set:       ['set','set name','edition','series','expansion','collection',
+               'set_name','setname','release'],
+  price:     ['price','value','gbp','usd','eur','cost','market price',
+               'market value','tcg price','cardmarket price','low','mid','high'],
+  condition: ['condition','grade','quality','cond'],
+  notes:     ['notes','note','comment','comments','description','desc']
+};
+
+var _gsImportParsed = [];
+
+function gsShowImport() {
+  if (localStorage.getItem('matchit_premium_v1') !== 'unlocked') {
+    window.location.href = '/upgrade?reason=import';
+    return;
+  }
+  document.getElementById('importModal').classList.remove('gs-hidden');
+  gsImportReset();
+}
+
+function gsCloseImport() {
+  document.getElementById('importModal').classList.add('gs-hidden');
+}
+
+function gsImportReset() {
+  document.getElementById('importStep1').classList.remove('gs-hidden');
+  document.getElementById('importStep2').classList.add('gs-hidden');
+  document.getElementById('importStep3').classList.add('gs-hidden');
+  document.getElementById('importError').classList.add('gs-hidden');
+  document.getElementById('importFileInput').value = '';
+  _gsImportParsed = [];
+}
+
+function gsImportBack() {
+  document.getElementById('importStep1').classList.remove('gs-hidden');
+  document.getElementById('importStep2').classList.add('gs-hidden');
+}
+
+function gsHandleDrop(e) {
+  e.preventDefault();
+  document.getElementById('importDropZone').classList.remove('drag-over');
+  var file = e.dataTransfer.files[0];
+  if (file) gsHandleFile(file);
+}
+
+function gsHandleFile(file) {
+  if (!file || !file.name.endsWith('.csv')) {
+    gsImportError('Please select a .csv file');
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(ev) { gsParseCSV(ev.target.result); };
+  reader.readAsText(file);
+}
+
+function gsNormaliseHeader(h) {
+  return h.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
+}
+
+function gsDetectColumn(headers, fieldAliases) {
+  for (var i = 0; i < headers.length; i++) {
+    if (fieldAliases.indexOf(gsNormaliseHeader(headers[i])) !== -1) return i;
+  }
+  return -1;
+}
+
+function gsParseCSV(text) {
+  var lines = text.split(/\r?\n/).filter(function(l) { return l.trim().length > 0; });
+  if (lines.length < 2) {
+    gsImportError('CSV appears to be empty or has no data rows');
+    return;
+  }
+  var headers = lines[0].split(',').map(function(h) { return h.replace(/^"|"$/g, '').trim(); });
+  var cols = {};
+  for (var field in GS_COL_ALIASES) {
+    cols[field] = gsDetectColumn(headers, GS_COL_ALIASES[field]);
+  }
+  if (cols.name === -1) {
+    gsImportError('Could not find a card name column. Expected: Name, Card Name, Card, or Title');
+    return;
+  }
+  var rows = [];
+  for (var i = 1; i < lines.length; i++) {
+    var cells = lines[i].split(',').map(function(c) { return c.replace(/^"|"$/g, '').trim(); });
+    if (!cells[cols.name]) continue;
+    rows.push({
+      name:      cols.name      !== -1 ? cells[cols.name]                          : '',
+      set:       cols.set       !== -1 ? cells[cols.set]                           : '',
+      price:     cols.price     !== -1 ? (parseFloat(cells[cols.price]) || 0)      : 0,
+      condition: cols.condition !== -1 ? cells[cols.condition]                      : '',
+      notes:     cols.notes     !== -1 ? cells[cols.notes]                         : ''
+    });
+  }
+  if (rows.length === 0) {
+    gsImportError('No valid card rows found in the CSV');
+    return;
+  }
+  _gsImportParsed = rows;
+  gsShowPreview(rows);
+}
+
+function gsImportError(msg) {
+  var el = document.getElementById('importError');
+  el.textContent = '\u274c ' + msg;
+  el.classList.remove('gs-hidden');
+}
+
+function gsShowPreview(rows) {
+  var collection = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+  var dupCount = 0;
+  var html = '';
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    var copies = 0;
+    for (var j = 0; j < collection.length; j++) {
+      var c = collection[j];
+      if ((c.name || '').trim().toLowerCase() === r.name.trim().toLowerCase() &&
+          (c.set_name || c.set || '').trim().toLowerCase() === (r.set || '').trim().toLowerCase()) {
+        copies++;
+      }
+    }
+    if (copies > 0) dupCount++;
+    html += '<div class="import-preview-row">' +
+      '<span class="ipr-name">' + r.name + '</span>' +
+      '<span class="ipr-set">' + (r.set || '\u2014') + '</span>' +
+      (copies > 0 ? '<span class="ipr-dup">\u26a0 own ' + copies + '</span>' : '') +
+      '</div>';
+  }
+  document.getElementById('importPreviewHeader').textContent =
+    rows.length + ' card' + (rows.length !== 1 ? 's' : '') + ' found' +
+    (dupCount > 0 ? ' (' + dupCount + ' already owned)' : '');
+  document.getElementById('importPreviewList').innerHTML = html;
+  document.getElementById('importStep1').classList.add('gs-hidden');
+  document.getElementById('importStep2').classList.remove('gs-hidden');
+}
+
+function gsImportConfirm() {
+  var collection = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+  var dups = [];
+  var nonDups = [];
+  for (var i = 0; i < _gsImportParsed.length; i++) {
+    var r = _gsImportParsed[i];
+    var isDup = false;
+    for (var j = 0; j < collection.length; j++) {
+      var c = collection[j];
+      if ((c.name || '').trim().toLowerCase() === r.name.trim().toLowerCase() &&
+          (c.set_name || c.set || '').trim().toLowerCase() === (r.set || '').trim().toLowerCase()) {
+        isDup = true; break;
+      }
+    }
+    if (isDup) dups.push(r); else nonDups.push(r);
+  }
+
+  if (dups.length === 0) {
+    gsDoImport(nonDups, []);
+    return;
+  }
+
+  // Prompt about duplicates via the dup modal
+  var dupNames = dups.slice(0, 3).map(function(d) { return d.name; }).join(', ');
+  if (dups.length > 3) dupNames += ' and ' + (dups.length - 3) + ' more';
+  document.getElementById('dupModalMsg').innerHTML =
+    '<strong>' + dups.length + ' card' + (dups.length !== 1 ? 's' : '') +
+    '</strong> in this CSV are already in your collection:<br><br><em>' +
+    dupNames + '</em><br><br>Add duplicate copies anyway, or skip them?';
+
+  // Repurpose Skip button to skip dups only
+  var skipBtn = document.querySelector('.dup-btn-cancel');
+  if (skipBtn) {
+    skipBtn.textContent = 'Skip Duplicates';
+    skipBtn.onclick = function() { gsImportSkipDups(nonDups); };
+  }
+  var addBtn = document.querySelector('.dup-btn-add');
+  if (addBtn) {
+    addBtn.textContent = 'Add All Including Duplicates';
+    addBtn.onclick = function() { gsDoImport(nonDups, dups); };
+  }
+
+  document.getElementById('dupModal').classList.remove('gs-hidden');
+}
+
+function gsImportSkipDups(nonDups) {
+  document.getElementById('dupModal').classList.add('gs-hidden');
+  gsRestoreDupButtons();
+  gsDoImport(nonDups, []);
+}
+
+function gsRestoreDupButtons() {
+  var skipBtn = document.querySelector('.dup-btn-cancel');
+  if (skipBtn) { skipBtn.textContent = 'Skip'; skipBtn.onclick = gsDupCancel; }
+  var addBtn = document.querySelector('.dup-btn-add');
+  if (addBtn) { addBtn.textContent = 'Add Another Copy'; addBtn.onclick = gsDupConfirm; }
+}
+
+function gsDoImport(toImport, dups) {
+  document.getElementById('dupModal').classList.add('gs-hidden');
+  gsRestoreDupButtons();
+  var collection = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+  var allToAdd = toImport.concat(dups);
+  for (var i = 0; i < allToAdd.length; i++) {
+    var r = allToAdd[i];
+    collection.push({
+      id:        Date.now().toString() + '_' + i,
+      name:      r.name,
+      set_name:  r.set || '',
+      gbp:       r.price || 0,
+      condition: r.condition || '',
+      notes:     r.notes || '',
+      img:       '',
+      added:     new Date().toLocaleDateString('en-GB'),
+      source:    'csv_import'
+    });
+  }
+  localStorage.setItem('matchit_collection_v1', JSON.stringify(collection));
+  document.getElementById('importStep2').classList.add('gs-hidden');
+  document.getElementById('importStep3').classList.remove('gs-hidden');
+  document.getElementById('importDoneMsg').innerHTML =
+    '<strong>' + allToAdd.length + ' card' + (allToAdd.length !== 1 ? 's' : '') +
+    '</strong> imported successfully' +
+    (dups.length > 0 ? ' (' + dups.length + ' duplicate' + (dups.length !== 1 ? 's' : '') + ' included)' : '') +
+    '.<br>Your collection has been updated.';
+}
+
+function gsExportCSV() {
+  var collection = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+  if (collection.length === 0) {
+    alert('Your collection is empty.');
+    return;
+  }
+  var rows = ['Name,Set,Price,Grade Score,Grade Label,Grade Method,Condition,Notes,Current Price (GBP),Change (GBP)'];
+  for (var i = 0; i < collection.length; i++) {
+    var c = collection[i];
+    var _cur = _colGetCurrentGbp(c);
+    var row = [
+      '"' + (c.name      || '').replace(/"/g, '""') + '"',
+      '"' + (c.set_name  || c.set || '').replace(/"/g, '""') + '"',
+      '"' + (parseFloat(c.gbp) || 0).toFixed(2) + '"',
+      '"' + (c.grade ? (c.grade.score || '') : '') + '"',
+      '"' + (c.grade ? (c.grade.label || '').replace(/"/g, '""') : '') + '"',
+      '"' + (c.grade ? (c.grade.method || '').replace(/"/g, '""') : '') + '"',
+      '"' + (c.condition || '').replace(/"/g, '""') + '"',
+      '"' + (c.notes     || '').replace(/"/g, '""') + '"',
+      _cur.toFixed(2),
+      (_cur - (parseFloat(c.gbp) || 0)).toFixed(2)
+    ];
+    rows.push(row.join(','));
+  }
+  var csv = rows.join('\n');
+  var blob = new Blob([csv], {type: 'text/csv'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'grailsweep_collection.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ── Card detail modal ── */
+var _cdCurrentCard = null;
+var _cdCurrentIdx  = null;
+var _cdChart       = null;
+
+function gsOpenCardDetailByIdx(idx) {
+  var col = colLoad();
+  if (col[idx]) {
+    _cdCurrentIdx = idx;
+    gsOpenCardDetail(col[idx]);
+  }
+}
+
+function gsOpenCardDetail(card) {
+  _cdCurrentCard = card;
+
+  var cardSet = card.set_name || card.set || '';
+  document.getElementById('cdModalTitle').textContent = card.name || 'Card Detail';
+  document.getElementById('cdCardName').textContent   = card.name || '';
+  document.getElementById('cdCardSet').textContent    = cardSet;
+  document.getElementById('cdCardPrice').textContent  = card.gbp ? '\u00a3' + parseFloat(card.gbp).toFixed(2) : '\u2014';
+  document.getElementById('cdCardCondition').textContent = card.condition ? 'Condition: ' + card.condition : '';
+  document.getElementById('cdCardNotes').textContent  = card.notes ? 'Notes: ' + card.notes : '';
+  document.getElementById('cdCardAdded').textContent  = card.added ? 'Added: ' + card.added : '';
+
+  var img = document.getElementById('cdCardImg');
+  if (card.img) { img.src = card.img; img.style.display = 'block'; }
+  else { img.style.display = 'none'; }
+
+  // Reset graph state
+  document.getElementById('cdPriceChartWrap').classList.remove('gs-hidden');
+  document.getElementById('cdPriceHistoryLocked').classList.add('gs-hidden');
+  document.getElementById('cdPriceHistoryEmpty').classList.add('gs-hidden');
+  if (_cdChart) { _cdChart.destroy(); _cdChart = null; }
+
+  document.getElementById('cardDetailModal').classList.remove('gs-hidden');
+  gsShowCollectionGrade(card);
+
+  var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
+  if (!isPro) {
+    document.getElementById('cdPriceChartWrap').classList.add('gs-hidden');
+    document.getElementById('cdPriceHistoryLocked').classList.remove('gs-hidden');
+    return;
+  }
+
+  var sku = card.sku || null;
+  if (!sku) {
+    document.getElementById('cdPriceChartWrap').classList.add('gs-hidden');
+    document.getElementById('cdPriceHistoryEmpty').classList.remove('gs-hidden');
+    return;
+  }
+
+  fetch('/api/price_history?sku=' + encodeURIComponent(sku))
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var history = data.history || [];
+      if (history.length < 2) {
+        document.getElementById('cdPriceChartWrap').classList.add('gs-hidden');
+        document.getElementById('cdPriceHistoryEmpty').classList.remove('gs-hidden');
+        return;
+      }
+      var labels = history.map(function(h) {
+        var d = new Date(h.date);
+        return d.getDate() + '/' + (d.getMonth() + 1);
+      });
+      var prices = history.map(function(h) { return h.gbp; });
+      var ctx = document.getElementById('cdPriceChart').getContext('2d');
+      _cdChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'GBP Price',
+            data: prices,
+            borderColor: '#00e5ff',
+            backgroundColor: 'rgba(0,229,255,0.1)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointBackgroundColor: '#00e5ff',
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(c) { return '\u00a3' + c.parsed.y.toFixed(2); }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 }, maxTicksLimit: 7 },
+              grid:  { color: 'rgba(255,255,255,0.05)' }
+            },
+            y: {
+              ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 }, callback: function(v) { return '\u00a3' + v.toFixed(2); } },
+              grid:  { color: 'rgba(255,255,255,0.05)' }
+            }
+          }
+        }
+      });
+    })
+    .catch(function() {
+      document.getElementById('cdPriceChartWrap').classList.add('gs-hidden');
+      document.getElementById('cdPriceHistoryEmpty').classList.remove('gs-hidden');
+    });
+}
+
+function gsGetDeepGradeLimit() {
+  var tier = localStorage.getItem('matchit_tier_v1') || 'monthly';
+  if (tier === 'lifetime' || tier === 'founder_yearly') return 40;
+  if (tier === 'annual') return 20;
+  return 10;
+}
+function gsShowCollectionGrade(card) {
+  var gradeDisplay = document.getElementById('cdGradeDisplay');
+  var gradeEmpty   = document.getElementById('cdGradeEmpty');
+  var gradeBadge   = document.getElementById('cdGradeBadge');
+  var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
+  var deepGradeLimit = gsGetDeepGradeLimit();
+
+  var d = new Date();
+  var monthKey = 'gs_deep_grades_' + d.getFullYear() + '-' + (d.getMonth() + 1);
+  var used = parseInt(localStorage.getItem(monthKey) || '0');
+  var remaining = Math.max(0, deepGradeLimit - used);
+  var noteEl = document.getElementById('cdGradeRemainingNote');
+  if (noteEl) {
+    if (!isPro) {
+      noteEl.textContent = '';
+    } else if (remaining === 0) {
+      noteEl.textContent = 'Monthly limit reached \u2014 resets 1st of next month';
+      noteEl.style.color = '#ff4466';
+    } else {
+      noteEl.textContent = remaining + ' of ' + deepGradeLimit + ' deep grades remaining this month';
+      noteEl.style.color = 'rgba(255,255,255,0.35)';
+    }
+  }
+
+  if (card.grade) {
+    var g = card.grade;
+    document.getElementById('cdGradeScore').textContent = g.score + '/10';
+    document.getElementById('cdGradeLabel').textContent = g.label || '';
+    document.getElementById('cdGradeSummary').textContent = g.summary || '';
+
+    if (g.method === 'deep') {
+      gradeBadge.textContent = 'AI Deep Analysis';
+      gradeBadge.className = 'cd-grade-badge deep';
+      var barsHtml = '';
+      var aspects = ['centering', 'corners', 'edges', 'surface'];
+      var ratings = {Poor: 2, Fair: 5, Good: 8, Excellent: 10};
+      aspects.forEach(function(a) {
+        if (g[a]) {
+          var pct = ((ratings[g[a]] || 5) / 10 * 100) + '%';
+          barsHtml += '<div class="cd-grade-bar-row">' +
+            '<span class="cd-grade-bar-label">' + a.charAt(0).toUpperCase() + a.slice(1) + '</span>' +
+            '<div class="cd-grade-bar-track"><div class="cd-grade-bar-fill" style="width:' + pct + '"></div></div>' +
+            '<span class="cd-grade-bar-val">' + g[a] + '</span>' +
+            '</div>';
+        }
+      });
+      document.getElementById('cdGradeBars').innerHTML = barsHtml;
+    } else {
+      gradeBadge.textContent = 'AI Auto';
+      gradeBadge.className = 'cd-grade-badge auto';
+      document.getElementById('cdGradeBars').innerHTML = '';
+    }
+
+    gradeDisplay.classList.remove('gs-hidden');
+    gradeEmpty.classList.add('gs-hidden');
+  } else {
+    gradeDisplay.classList.add('gs-hidden');
+    gradeEmpty.classList.remove('gs-hidden');
+    gradeBadge.textContent = '';
+    var btn = document.getElementById('cdDeepGradeBtn');
+    if (btn) btn.style.display = isPro ? 'block' : 'none';
+  }
+}
+
+function gsCollectionDeepGrade() {
+  var card = _cdCurrentCard;
+  if (!card) return;
+
+  var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
+  if (!isPro) { window.location.href = '/upgrade'; return; }
+
+  var deepGradeLimit = gsGetDeepGradeLimit();
+  var d = new Date();
+  var monthKey = 'gs_deep_grades_' + d.getFullYear() + '-' + (d.getMonth() + 1);
+  var used = parseInt(localStorage.getItem(monthKey) || '0');
+  if (used >= deepGradeLimit) {
+    alert('You have used all ' + deepGradeLimit + ' deep grades for this month. Resets on the 1st.');
+    return;
+  }
+
+  var imgUrl = card.img || '';
+  if (!imgUrl) {
+    alert('No image available for this card. Deep grade requires a card image.');
+    return;
+  }
+
+  var btn = document.getElementById('cdDeepGradeBtn');
+  if (btn) { btn.textContent = 'Grading\u2026'; btn.disabled = true; }
+
+  fetch('/api/deep_grade_url', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({image_url: imgUrl, card_name: (card.name || 'Unknown') + ' ' + (card.set_name || card.set || '')})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.error) throw new Error(data.error);
+    localStorage.setItem(monthKey, (used + 1).toString());
+
+    var collection = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+    for (var i = 0; i < collection.length; i++) {
+      var c = collection[i];
+      var match = (card.id && c.id === card.id) ||
+                  (!card.id && c.name === card.name &&
+                   (c.set_name || c.set) === (card.set_name || card.set) &&
+                   c.added === card.added);
+      if (match) { collection[i].grade = data; _cdCurrentCard = collection[i]; break; }
+    }
+    localStorage.setItem('matchit_collection_v1', JSON.stringify(collection));
+    gsShowCollectionGrade(_cdCurrentCard);
+    if (btn) { btn.innerHTML = '\ud83d\udd2c AI Deep Analysis <span class="pro-badge">PRO</span>'; btn.disabled = false; }
+  })
+  .catch(function(e) {
+    alert('Deep grade is temporarily unavailable. Please try again shortly.');
+    if (btn) { btn.innerHTML = '\ud83d\udd2c AI Deep Analysis <span class="pro-badge">PRO</span>'; btn.disabled = false; }
+  });
+}
+
+function gsCloseCardDetail() {
+  document.getElementById('cardDetailModal').classList.add('gs-hidden');
+  if (_cdChart) { _cdChart.destroy(); _cdChart = null; }
+  _cdCurrentCard = null;
+  _cdCurrentIdx  = null;
+}
+
+function gsRemoveCardFromDetail() {
+  if (!_cdCurrentCard) return;
+  var cardName = _cdCurrentCard.name || 'this card';
+  if (!confirm('Remove ' + cardName + ' from your collection?')) return;
+  var col = colLoad();
+  if (_cdCurrentIdx !== null && col[_cdCurrentIdx]) {
+    col.splice(_cdCurrentIdx, 1);
+  } else {
+    // Fallback: match by sku+name+added
+    col = col.filter(function(c) {
+      return !(c.name === _cdCurrentCard.name &&
+               (c.set_name || c.set) === (_cdCurrentCard.set_name || _cdCurrentCard.set) &&
+               c.added === _cdCurrentCard.added);
+    });
+  }
+  colSave(col);
+  gsSyncCollection();
+  gsCloseCardDetail();
+  colRender();
+}
+
+function gsDownloadTemplate() {
+  var csv = 'Name,Set,Price,Condition,Notes\n' +
+    'Charizard,Base Set,450.00,Near Mint,Shadowless\n' +
+    'Dark Magician,LOB-EN005,12.00,Played,1st Edition\n' +
+    'Black Lotus,Alpha,5000.00,Good,Signed\n';
+  var blob = new Blob([csv], {type: 'text/csv'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'grailsweep_import_template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  return false;
+}
+
+/* ── Top 3 value highlights ────────────────────────────────────────────── */
+function colRenderTopCards() {
+  var wrap = document.getElementById('colTopCards');
+  if (!wrap) return;
+  var items = colLoad();
+  if (items.length < 3) { wrap.style.display = 'none'; return; }
+  var sorted = items.slice().sort(function(a, b) {
+    return (parseFloat(b.gbp) || 0) - (parseFloat(a.gbp) || 0);
+  });
+  var top    = sorted.slice(0, 3);
+  var medals = ['🏆', '🥈', '🥉'];
+  wrap.style.display = '';
+  wrap.innerHTML = '<div class="col-top-header">Top Cards</div>' +
+    '<div class="col-top-row">' +
+    top.map(function(c, i) {
+      return '<div class="col-top-card">' +
+        '<div class="col-top-medal">' + medals[i] + '</div>' +
+        (c.img ? '<img src="' + c.img + '" class="col-top-img" onerror="this.style.display=\'none\'" alt="">' : '') +
+        '<div class="col-top-name">' + (c.name || '—') + '</div>' +
+        '<div class="col-top-set">'  + (c.set_name || c.set || '') + '</div>' +
+        '<div class="col-top-price">£' + parseFloat(c.gbp || 0).toFixed(2) + '</div>' +
+      '</div>';
+    }).join('') +
+    '</div>';
+}
+
+/* ── Gain/loss delta badges ─────────────────────────────────────────────── */
+window._colPriceCache = window._colPriceCache || {};
+
+function colFetchDeltas() {
+  var badges = document.querySelectorAll('.col-delta-badge[data-sku]');
+  var skus = {};
+  badges.forEach(function(b) { skus[b.dataset.sku] = true; });
+  Object.keys(skus).forEach(function(sku) {
+    if (window._colPriceCache[sku] !== undefined) {
+      _colApplyDelta(sku, window._colPriceCache[sku]);
+      return;
+    }
+    fetch('/api/price_history?sku=' + encodeURIComponent(sku))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var history = data.history || [];
+        var latest = history.length ? history[history.length - 1].gbp : null;
+        window._colPriceCache[sku] = latest;
+        _colApplyDelta(sku, latest);
+      })
+      .catch(function() { window._colPriceCache[sku] = null; });
+  });
+}
+
+function _colApplyDelta(sku, latestGbp) {
+  if (latestGbp === null || latestGbp === undefined) return;
+  document.querySelectorAll('.col-delta-badge[data-sku="' + sku + '"]').forEach(function(badge) {
+    var base  = parseFloat(badge.dataset.base) || 0;
+    var delta = latestGbp - base;
+    if (Math.abs(delta) < 0.005) return;
+    badge.textContent = (delta > 0 ? '+' : '') + '£' + delta.toFixed(2);
+    badge.style.color = delta > 0 ? '#4caf50' : '#f44336';
+    badge.classList.remove('gs-hidden');
+  });
+}
+
+/* ── Portfolio value chart ──────────────────────────────────────────────── */
+function colLoadValueChart() {
+  var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
+  var code  = localStorage.getItem('matchit_access_code_v1');
+  if (!isPro || !code) return;
+
+  var items = colLoad().map(function(c) {
+    return {sku: c.sku || null, gbp: parseFloat(c.gbp) || 0};
+  });
+  if (!items.length) return;
+
+  fetch('/api/collection/value_history', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({code: code.trim().toUpperCase(), items: items})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (!data.days || data.days.length < 2) return;
+    var nonZero = data.days.filter(function(d) { return d.value > 0; });
+    if (nonZero.length < 2) return;
+
+    var wrap = document.getElementById('colValueChartWrap');
+    if (wrap) wrap.style.display = '';
+
+    var labels = data.days.map(function(d) {
+      var parts = d.date.split('-');
+      var dt = new Date(+parts[0], +parts[1] - 1, +parts[2]);
+      return dt.toLocaleDateString('en-GB', {day: '2-digit', month: 'short'});
+    });
+    var values = data.days.map(function(d) { return d.value; });
+
+    var ctx = document.getElementById('colValueChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Collection Value (£)',
+          data: values,
+          borderColor: '#00e5ff',
+          backgroundColor: 'rgba(0,229,255,0.08)',
+          borderWidth: 2,
+          pointRadius: 2,
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {display: false},
+          tooltip: {
+            callbacks: {
+              label: function(c) { return '£' + c.parsed.y.toFixed(2); }
+            }
+          }
+        },
+        scales: {
+          x: {ticks: {color: 'rgba(255,255,255,0.4)', font: {size: 10}, maxTicksLimit: 7}, grid: {color: 'rgba(255,255,255,0.05)'}},
+          y: {ticks: {color: 'rgba(255,255,255,0.4)', font: {size: 10}, callback: function(v) { return '£' + v.toFixed(2); }}, grid: {color: 'rgba(255,255,255,0.05)'}}
+        }
+      }
+    });
+  })
+  .catch(function(e) { console.warn('[colValueChart] fetch failed', e); });
+}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- Card detail modal -->
+<div id="cardDetailModal" class="gs-hidden cd-modal-overlay" onclick="if(event.target===this)gsCloseCardDetail()">
+  <div class="cd-modal">
+    <div class="cd-modal-header">
+      <span id="cdModalTitle">Card Detail</span>
+      <button type="button" onclick="gsCloseCardDetail()">✕</button>
+    </div>
+    <div class="cd-modal-body">
+      <div class="cd-card-info">
+        <img id="cdCardImg" src="" alt="Card image" class="cd-card-img" onerror="this.style.display='none'">
+        <div class="cd-card-meta">
+          <div class="cd-card-name" id="cdCardName"></div>
+          <div class="cd-card-set" id="cdCardSet"></div>
+          <div class="cd-card-price" id="cdCardPrice"></div>
+          <div class="cd-card-condition" id="cdCardCondition"></div>
+          <div class="cd-card-notes" id="cdCardNotes"></div>
+          <div class="cd-card-added" id="cdCardAdded"></div>
+        </div>
+      </div>
+
+      <div class="cd-grade-section" id="cdGradeSection">
+        <div class="cd-grade-header">
+          <span class="cd-grade-title">🔬 Condition Grade</span>
+          <span class="cd-grade-badge" id="cdGradeBadge"></span>
+        </div>
+        <div id="cdGradeDisplay" class="gs-hidden">
+          <div class="cd-grade-score-row">
+            <span class="cd-grade-score" id="cdGradeScore"></span>
+            <span class="cd-grade-label" id="cdGradeLabel"></span>
+          </div>
+          <div class="cd-grade-bars" id="cdGradeBars"></div>
+          <p class="cd-grade-summary" id="cdGradeSummary"></p>
+        </div>
+        <div id="cdGradeEmpty">
+          <p class="cd-grade-note">No grade recorded for this card yet.</p>
+          <button type="button" class="cd-deep-grade-btn" id="cdDeepGradeBtn" onclick="gsCollectionDeepGrade()">🔬 AI Deep Analysis <span class="pro-badge">PRO</span></button>
+          <p class="grade-limit-note" id="cdGradeRemainingNote"></p>
+          <p class="grade-photo-note">📷 Grade based on card image — ensure photo has good lighting</p>
+        </div>
+      </div>
+
+      <div class="cd-price-history">
+        <div class="cd-ph-header">
+          <span class="cd-ph-title">📈 30 Day Price History</span>
+          <span class="cd-ph-badge">PRO</span>
+        </div>
+        <div id="cdPriceChartWrap">
+          <canvas id="cdPriceChart" height="130"></canvas>
+        </div>
+        <div id="cdPriceHistoryLocked" class="gs-hidden">
+          <div class="cd-ph-locked">
+            <span>🔒 Price history is a Pro feature</span>
+            <a href="/upgrade" class="cd-ph-upgrade">Upgrade to Pro</a>
+          </div>
+        </div>
+        <div id="cdPriceHistoryEmpty" class="gs-hidden">
+          <div class="cd-ph-empty">Not enough data yet — check back tomorrow</div>
+        </div>
+      </div>
+
+      <div class="cd-modal-actions">
+        <button type="button" class="cd-btn-remove" onclick="gsRemoveCardFromDetail()">🗑 Remove from Collection</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import modal -->
+<div id="importModal" class="gs-hidden import-modal-overlay" onclick="if(event.target===this)gsCloseImport()">
+  <div class="import-modal">
+    <div class="import-modal-header">
+      <span>📥 Import Collection</span>
+      <button type="button" onclick="gsCloseImport()">✕</button>
+    </div>
+
+    <div id="importStep1">
+      <p class="import-info">
+        Upload a CSV from GrailSweep, HobbyDB, TCGPlayer, or any app.
+        We'll auto-detect the columns.<br><br>
+        <strong>Expected columns (any order, any capitalisation):</strong><br>
+        Name, Set, Price, Condition, Notes
+      </p>
+      <a href="#" onclick="return gsDownloadTemplate()" class="import-template-link">
+        ⬇ Download GrailSweep template
+      </a>
+      <div class="import-drop-zone" id="importDropZone"
+           onclick="document.getElementById('importFileInput').click()"
+           ondragover="event.preventDefault();this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')"
+           ondrop="gsHandleDrop(event)">
+        <div class="import-drop-icon">📂</div>
+        <div class="import-drop-text">Tap to choose CSV or drag and drop</div>
+        <input type="file" id="importFileInput" accept=".csv"
+               title="Choose a CSV file to import"
+               class="gs-hidden" onchange="gsHandleFile(this.files[0])">
+      </div>
+      <div id="importError" class="import-error gs-hidden"></div>
+    </div>
+
+    <div id="importStep2" class="gs-hidden">
+      <div class="import-preview-header" id="importPreviewHeader"></div>
+      <div class="import-preview-list" id="importPreviewList"></div>
+      <div class="import-preview-footer">
+        <button type="button" class="import-btn-cancel" onclick="gsImportBack()">← Back</button>
+        <button type="button" class="import-btn-confirm" onclick="gsImportConfirm()">✓ Import All</button>
+      </div>
+    </div>
+
+    <div id="importStep3" class="gs-hidden">
+      <div class="import-done-icon">✅</div>
+      <div class="import-done-msg" id="importDoneMsg"></div>
+      <button type="button" class="import-btn-confirm"
+              onclick="gsCloseImport();location.reload()">View Collection</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dup modal (shared with import flow) -->
+<div id="dupModal" class="gs-hidden dup-modal-overlay" onclick="if(event.target===this)gsDupCancel()">
+  <div class="dup-modal">
+    <div class="dup-modal-icon">📋</div>
+    <div class="dup-modal-title">Already in Collection</div>
+    <div class="dup-modal-msg" id="dupModalMsg"></div>
+    <div class="dup-modal-btns">
+      <button type="button" class="dup-btn-cancel" onclick="gsDupCancel()">Skip</button>
+      <button type="button" class="dup-btn-add" onclick="gsDupConfirm()">Add Another Copy</button>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}

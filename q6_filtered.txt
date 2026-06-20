@@ -1,0 +1,11 @@
+﻿
+q6_test_logs.txt:22:[STEP6-TEST] Calling _issue_new_code(email=grailtest2026@outlook.com, tier=monthly)
+q6_test_logs.txt:26:[RESEND] Sent to grailtest2026@outlook.com subject='Your GrailSweep Pro Monthly access code' 
+id=fd64790e-7b9b-42af-ba6a-aef00cb9fac1
+q6_test_logs.txt:27:[ISSUE] Sent code GRAIL-XRGG-QEYA to grailtest2026@outlook.com tier=monthly
+q6_test_logs.txt:28:[STEP6-TEST] Calling _issue_new_topup_code(email=grailtest2026@outlook.com, credits=75)
+q6_test_logs.txt:32:[RESEND] Sent to grailtest2026@outlook.com subject='Your GrailSweep top-up: 75 scans' 
+id=1e6db831-fe71-4f84-abc3-86368540d7f1
+q6_test_logs.txt:33:[TOPUP] Issued code TOPUP-UWMF-G28M to grailtest2026@outlook.com (75 credits)
+
+

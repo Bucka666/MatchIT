@@ -1,0 +1,96 @@
+﻿            if isinstance(vdata, dict):
+                price = vdata.get("market") or vdata.get("mid") or vdata.get("trend") or vdata.get("avg_sell")
+            else:
+                price = vdata
+            if price:
+                mult = 0.86 if "cardmarket" in src else 0.79
+                return round(float(price) * mult, 2)
+    return None
+
+def _issue_new_code(email, tier, subscription_id, ref_code=""):
+    import random, smtplib, ssl, json as _json
+    from datetime import datetime, timedelta
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    part1 = ''.join(random.choices(chars, k=4))
+    part2 = ''.join(random.choices(chars, k=4))
+    code = f"GRAIL-{part1}-{part2}"
+
+    if tier == "lifetime":
+        expires = None
+    elif tier in ("annual", "founder_yearly"):
+        expires = (datetime.utcnow() + timedelta(days=366)).isoformat()
+    else:
+        expires = (datetime.utcnow() + timedelta(days=32)).isoformat()
+
+    subs = _load_subs()
+    subs[code] = {
+        "email": email,
+        "tier": tier,
+        "stripe_subscription_id": subscription_id,
+        "created_at": datetime.utcnow().isoformat(),
+        "expires_at": expires,
+        "status": "active"
+    }
+    _save_subs(subs)
+
+    # Send email
+    try:
+        smtp_host = os.environ["SMTP_HOST"]
+        smtp_port = int(os.environ["SMTP_PORT"])
+        smtp_user = os.environ["SMTP_USER"]
+        smtp_pass = os.environ["SMTP_PASS"]
+        from_address = os.environ.get("SMTP_FROM_NOREPLY", smtp_user)
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = "Your GrailSweep Pro Access Code"
+        msg["From"] = from_address
+        msg["To"] = email
+
+        tier_label = {"monthly": "Pro Monthly", "annual": "Pro Annual", "lifetime": "Lifetime"}.get(tier, "Pro")
+        expiry_text = f"Your subscription renews automatically â€” you won't need a new code." if tier != "lifetime" else "Your code never expires."
+
+        body = f"""
+Hi there,
+
+Thanks for subscribing to GrailSweep {tier_label}!
+
+Your access code is:
+
+    {code}
+
+To activate Pro:
+1. Open GrailSweep
+2. Go to your Collection
+3. Click "Enter Access Code"
+4. Paste the code above
+
+{expiry_text}
+
+Keep this email safe â€” you'll need the code if you clear your browser data.
+
+Questions? Reply to this email.
+
+â€” The GrailSweep Team
+"""
+        msg.attach(MIMEText(body, "plain"))
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context) as server:
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(from_address, email, msg.as_string())
+    except Exception as e:
+        print(f"[EMAIL ERROR] {e}")
+
+    # Apply referral reward if this purchase used a referral code
+    if ref_code:
+        _apply_referral_reward(ref_code)
+    return code
+
+
+def _issue_new_topup_code(email, credits=75, payment_intent_id=None):
+    """
+    Issue a one-time top-up redemption code (TOPUP-XXXX-XXXX).
+
+    Top-up codes grant N additional scan credits when redeemed.
+    Unlike GRAIL- codes (which are tied to subscriptions and

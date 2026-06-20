@@ -1,0 +1,287 @@
+{
+  "id": "remotes",
+  "name": "MatchIT - REMOTES 📡",
+  "page_title": "MatchIT – REMOTES",
+  "subtitle": "AI Guided Remote Fob Matching and Cross-Referencing Program. ©",
+  "icon": "📡",
+  "query_title": "Identify Your Remote",
+  "image_labels": {"front": "Front (buttons)", "back": "Back (label/sticker)"},
+
+  "ui_text": {
+    "how_to_title": "How to identify your remote",
+    "step1_text": "If you have a <strong>model number</strong> or <strong>brand name</strong>, enter it below",
+    "step1_placeholder": "e.g. TOP-432NA, HSE2, BFT Mitto, Nice FLO2R…",
+    "step2_text": "Or <strong>upload / take photos</strong> of the remote — front (buttons) and back (label) for best results",
+    "progress_subtitle": "Analysing your remote against the database…",
+    "guide_tips": [
+      "Photograph the <strong>front</strong> showing button layout clearly.",
+      "Photograph the <strong>back</strong> — the label often has model/frequency info.",
+      "Use good lighting — avoid glare on glossy plastic.",
+      "If you know the frequency or button count, set it below — this significantly narrows the search."
+    ],
+    "feedback_correct_prompt": "Was the correct remote in these results?",
+    "feedback_notfound_prompt": "Which remote was it? (enter model or leave blank if unknown)",
+    "feedback_sku_placeholder": "e.g. TOP-432NA",
+    "db_sync_title": "RemotesDB Sync",
+    "db_sync_desc": "Imports new remote images from your synced remote database folder into MatchIT's local DB.",
+    "db_sync_button": "Sync from RemotesDB",
+    "db_sync_confirm": "Sync new images from RemotesDB into MatchIT database?"
+  },
+
+  "require_two_images": true,
+  "style_detection_enabled": true,
+  "ras_images_enabled": true,
+
+  "db_root": "C:\\Users\\c_a_b\\My Drive\\RemotesDB",
+
+  "categories": {
+    "GARAGE_HANDHELD":   {"label": "Garage Door Remote",       "show": ["button_count","frequency","code_type","shell_colour","shell_shape","button_layout","battery_type"]},
+    "GATE_HANDHELD":     {"label": "Gate Remote",              "show": ["button_count","frequency","code_type","shell_colour","shell_shape","button_layout","battery_type"]},
+    "BARRIER_HANDHELD":  {"label": "Barrier Remote",           "show": ["button_count","frequency","code_type","shell_colour","shell_shape","button_layout","battery_type"]},
+    "SHUTTER_HANDHELD":  {"label": "Roller Shutter Remote",    "show": ["button_count","frequency","code_type","shell_colour","shell_shape","button_layout","battery_type"]},
+    "UNIVERSAL_CLONE":   {"label": "Universal / Clone Remote", "show": ["button_count","frequency","code_type","shell_colour","clone_capability"]},
+    "KEY_FOB_REMOTE":    {"label": "Key Fob with Remote",      "show": ["button_count","frequency","code_type","shell_colour","shell_shape"]},
+    "WALL_BUTTON":       {"label": "Wall-Mounted Transmitter", "show": ["button_count","frequency","code_type","mounting_type"]},
+    "KEYPAD":            {"label": "Wireless Keypad",          "show": ["frequency","code_type","mounting_type","backlit"]},
+    "RECEIVER":          {"label": "Receiver Unit",            "show": ["frequency","code_type","channel_count","voltage"]},
+    "VISOR_CLIP":        {"label": "Sun Visor Remote",         "show": ["button_count","frequency","code_type","shell_colour"]}
+  },
+
+  "profile_fields": [
+    {
+      "id": "button_count",
+      "label": "Number of buttons",
+      "type": "int_range",
+      "min": 1,
+      "max": 6,
+      "default": -1,
+      "penalty": 0.950,
+      "match_rule": "exact"
+    },
+    {
+      "id": "frequency",
+      "label": "Frequency",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["26.995","26.995 MHz"],
+        ["30.875","30.875 MHz"],
+        ["40.685","40.685 MHz"],
+        ["280","280 MHz"],
+        ["300","300 MHz"],
+        ["306","306 MHz"],
+        ["310","310 MHz"],
+        ["315","315 MHz"],
+        ["330","330 MHz"],
+        ["390","390 MHz"],
+        ["403","403 MHz"],
+        ["418","418 MHz"],
+        ["433.92","433.92 MHz"],
+        ["434.15","434.15 MHz"],
+        ["434.42","434.42 MHz"],
+        ["868.3","868.3 MHz"],
+        ["868.8","868.8 MHz"]
+      ],
+      "default": "",
+      "penalty": 0.930,
+      "match_rule": "exact"
+    },
+    {
+      "id": "code_type",
+      "label": "Code type",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["FIXED","Fixed Code"],
+        ["ROLLING","Rolling / Hopping Code"],
+        ["FIXED_ROLLING","Fixed + Rolling"],
+        ["DIPSWITCH","DIP Switch"],
+        ["LEARN","Self-Learning"]
+      ],
+      "default": "",
+      "penalty": 0.940,
+      "match_rule": "exact"
+    },
+    {
+      "id": "shell_colour",
+      "label": "Shell colour",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["BLACK","Black"],
+        ["WHITE","White"],
+        ["GREY","Grey"],
+        ["BLUE","Blue"],
+        ["GREEN","Green"],
+        ["RED","Red"],
+        ["YELLOW","Yellow"],
+        ["ORANGE","Orange"],
+        ["BEIGE","Beige / Cream"],
+        ["SILVER","Silver / Chrome"],
+        ["WOOD","Wood Effect"],
+        ["TRANSLUCENT","Translucent"]
+      ],
+      "default": "",
+      "penalty": 0.970,
+      "match_rule": "exact"
+    },
+    {
+      "id": "shell_shape",
+      "label": "Shell shape",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["RECTANGULAR","Rectangular"],
+        ["OVAL","Oval / Rounded"],
+        ["SLIM","Slim / Credit Card"],
+        ["ROUND","Round / Circular"],
+        ["TUBULAR","Tubular / Stick"],
+        ["KEYRING","Keyring Fob"],
+        ["SQUARE","Square"],
+        ["IRREGULAR","Irregular / Unique"]
+      ],
+      "default": "",
+      "penalty": 0.960,
+      "match_rule": "exact"
+    },
+    {
+      "id": "button_layout",
+      "label": "Button layout",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["VERTICAL","Vertical (stacked)"],
+        ["HORIZONTAL","Horizontal (side by side)"],
+        ["GRID","Grid (2x2)"],
+        ["SINGLE","Single button"],
+        ["DIAMOND","Diamond"],
+        ["CIRCULAR","Circular arrangement"],
+        ["MIXED","Mixed / Asymmetric"]
+      ],
+      "default": "",
+      "penalty": 0.955,
+      "match_rule": "exact"
+    },
+    {
+      "id": "battery_type",
+      "label": "Battery type",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["CR2032","CR2032"],
+        ["CR2016","CR2016"],
+        ["CR1620","CR1620"],
+        ["CR2025","CR2025"],
+        ["CR1220","CR1220"],
+        ["23A","23A (12V)"],
+        ["27A","27A (12V)"],
+        ["AAA","AAA"],
+        ["AA","AA"],
+        ["6V_4LR44","6V (4LR44)"],
+        ["9V","9V"]
+      ],
+      "default": "",
+      "penalty": 0.965,
+      "match_rule": "exact"
+    },
+    {
+      "id": "clone_capability",
+      "label": "Clone capability",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["FIXED_ONLY","Fixed code only"],
+        ["ROLLING_ONLY","Rolling code only"],
+        ["BOTH","Fixed + Rolling"],
+        ["MULTI_FREQ","Multi-frequency"]
+      ],
+      "default": "",
+      "penalty": 0.950,
+      "match_rule": "exact"
+    },
+    {
+      "id": "mounting_type",
+      "label": "Mounting type",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["SURFACE","Surface mount"],
+        ["FLUSH","Flush / Recessed"],
+        ["FREESTANDING","Freestanding / Desktop"]
+      ],
+      "default": "",
+      "penalty": 0.970,
+      "match_rule": "exact"
+    },
+    {
+      "id": "backlit",
+      "label": "Backlit",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["YES","Yes"],
+        ["NO","No"]
+      ],
+      "default": "",
+      "penalty": 0.980,
+      "match_rule": "exact"
+    },
+    {
+      "id": "channel_count",
+      "label": "Channels",
+      "type": "int_range",
+      "min": 1,
+      "max": 8,
+      "default": -1,
+      "penalty": 0.955,
+      "match_rule": "exact"
+    },
+    {
+      "id": "voltage",
+      "label": "Operating voltage",
+      "type": "select",
+      "options": [
+        ["","Unknown"],
+        ["12V","12V DC"],
+        ["24V","24V DC"],
+        ["12_24V","12–24V DC"],
+        ["230V","230V AC"],
+        ["BATTERY","Battery powered"]
+      ],
+      "default": "",
+      "penalty": 0.960,
+      "match_rule": "exact"
+    }
+  ],
+
+  "category_families": {
+    "HANDHELD": ["GARAGE_HANDHELD","GATE_HANDHELD","BARRIER_HANDHELD","SHUTTER_HANDHELD","VISOR_CLIP"],
+    "SPECIAL": ["UNIVERSAL_CLONE","KEY_FOB_REMOTE"],
+    "FIXED": ["WALL_BUTTON","KEYPAD"],
+    "HARDWARE": ["RECEIVER"]
+  },
+
+  "silhouette_map": {
+    "GARAGE_HANDHELD": "HANDHELD",
+    "GATE_HANDHELD": "HANDHELD",
+    "BARRIER_HANDHELD": "HANDHELD",
+    "SHUTTER_HANDHELD": "HANDHELD",
+    "VISOR_CLIP": "HANDHELD",
+    "UNIVERSAL_CLONE": "HANDHELD",
+    "KEY_FOB_REMOTE": "KEYFOB",
+    "WALL_BUTTON": "WALLMOUNT",
+    "KEYPAD": "WALLMOUNT",
+    "RECEIVER": "RECEIVER"
+  },
+
+  "target_retailers": [
+    "Gate Remotes", "Remote Control Gates", "EasyGates", "Metalines",
+    "Quantek", "Timpson", "Gate Auto", "RemoteControl-Express",
+    "Amazon UK", "eBay UK"
+  ],
+
+  "disclaimer": "Product images, brand names, and cross-reference codes (including but not limited to Came, BFT, Nice, Faac, Hörmann, Marantec, Chamberlain, LiftMaster, Merlin, Cardin, Beninca, DEA, Ditec, Sommer, Novoferm, Garador, and all aftermarket/compatible brands) remain the property of their respective owners. MatchIT is not affiliated with, endorsed by, or sponsored by any of these companies. All third-party trademarks and images are used for identification and reference purposes only.",
+
+  "guidance_text": "The top 5 closest matches are listed below. If your remote isn't ranked #1, please check ranks 2–5 — the correct match is almost always within the top 5. Cross-reference codes show compatible replacements from other manufacturers.",
+  "guidance_feedback": "Please use the feedback bar at the bottom to tell us where your remote ranked — this directly helps the AI improve its accuracy. Thank you!"
+}

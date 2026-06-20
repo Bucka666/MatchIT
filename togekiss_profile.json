@@ -1,0 +1,51 @@
+{
+  "api_id": "sv3-85",
+  "name": "Togekiss",
+  "card_number": "85",
+  "set_id": "sv3",
+  "set_name": "Obsidian Flames",
+  "category": "POKEMON",
+  "rarity": "RARE",
+  "energy_type": "PSYCHIC",
+  "card_supertype": "POKEMON",
+  "hp_range": "HP_HIGH",
+  "set_era": "SV_ERA",
+  "language": "EN",
+  "edition": "",
+  "tcgplayer_id": "",
+  "tcgplayer_url": "https://prices.pokemontcg.io/tcgplayer/sv3-85",
+  "cardmarket_id": "",
+  "cardmarket_url": "https://prices.pokemontcg.io/cardmarket/sv3-85",
+  "prices": {
+    "tcgplayer": {
+      "reverseHolofoil": {
+        "low": 0.09,
+        "mid": 0.25,
+        "high": 4.0,
+        "market": 0.22
+      },
+      "holofoil": {
+        "low": 0.01,
+        "mid": 0.19,
+        "high": 123.45,
+        "market": 0.17
+      }
+    },
+    "cardmarket": {
+      "avg_sell": 0.06,
+      "low": 0.02,
+      "trend": 0.05,
+      "avg_1d": 0.03,
+      "avg_7d": 0.05,
+      "avg_30d": 0.05
+    }
+  },
+  "artist": "Cona Nitanda",
+  "subtypes": [
+    "Stage 2"
+  ],
+  "hp": "150",
+  "evolves_from": "Togetic",
+  "image_url_small": "https://images.pokemontcg.io/sv3/85.png",
+  "image_url_large": "https://images.pokemontcg.io/sv3/85_hires.png"
+}

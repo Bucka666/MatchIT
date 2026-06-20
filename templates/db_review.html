@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block body %}
+<h2>Review Batch</h2>
+<p class="muted">Edit SKU/Description if needed, then Commit. Commit is blocked if any field is blank/unknown.</p>
+
+<form method="POST">
+  <div style="overflow-x:auto;">
+    <table class="matches" style="width:100%;border-collapse:collapse;white-space:nowrap;">
+      <thead>
+        <tr style="background:#fafafa;">
+          <th style="padding:10px;border-bottom:1px solid #eee;">Preview</th>
+          <th style="padding:10px;border-bottom:1px solid #eee;">Original filename</th>
+          <th style="padding:10px;border-bottom:1px solid #eee;">SKU</th>
+          <th style="padding:10px;border-bottom:1px solid #eee;">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in records %}
+        <tr>
+          <td style="padding:10px;border-bottom:1px solid #eee;">
+            <img src="/img/pending/{{ batch_id }}/{{ r.pending_filename }}"
+                 style="width:86px;height:86px;object-fit:cover;border-radius:10px;border:1px solid #ddd;cursor:zoom-in;"
+                 class="js-lightbox"
+                 data-full="/img/pending/{{ batch_id }}/{{ r.pending_filename }}"
+                 data-label="{{ r.original_filename }}">
+          </td>
+          <td style="padding:10px;border-bottom:1px solid #eee;">{{ r.original_filename }}</td>
+          <td style="padding:10px;border-bottom:1px solid #eee;">
+            <input type="text" name="sku_{{ r.image_id }}" value="{{ r.sku }}" style="width:180px;">
+          </td>
+          <td style="padding:10px;border-bottom:1px solid #eee;">
+            <input type="text" name="desc_{{ r.image_id }}" value="{{ r.description }}" style="width:360px;">
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:14px;">
+    <button type="submit">Commit Batch</button>
+    <a href="/db_upload" style="margin-left:10px;">Back to Upload</a>
+  </div>
+</form>
+
+<!-- Minimal lightbox for review page -->
+<div id="lb" style="position:fixed;inset:0;display:none;z-index:9999;">
+  <div data-close style="position:absolute;inset:0;background:rgba(0,0,0,0.7);"></div>
+  <div style="position:relative;width:min(1100px, calc(100% - 24px));margin:14px auto;background:#111;border-radius:14px;overflow:hidden;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;color:#fff;border-bottom:1px solid rgba(255,255,255,.14);">
+      <div id="lbTitle" style="opacity:.9;">Preview</div>
+      <button data-close style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.22);border-radius:10px;padding:6px 10px;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:12px;">
+      <img id="lbImg" style="width:100%;height:auto;max-height:calc(100vh - 140px);object-fit:contain;display:block;border-radius:12px;background:#000;">
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const lb = document.getElementById('lb');
+  const img = document.getElementById('lbImg');
+  const title = document.getElementById('lbTitle');
+
+  function openLB(el){
+    img.src = el.dataset.full || el.src;
+    title.textContent = el.dataset.label || 'Preview';
+    lb.style.display = 'block';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLB(){
+    lb.style.display = 'none';
+    img.src = '';
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('click', e=>{
+    const t = e.target;
+    const trigger = t.closest && t.closest('.js-lightbox');
+    if(trigger){ e.preventDefault(); openLB(trigger); return; }
+    const closer = t.closest && t.closest('[data-close]');
+    if(closer) closeLB();
+  });
+  document.addEventListener('keydown', e=>{
+    if(e.key === 'Escape') closeLB();
+  });
+})();
+</script>
+
+{% endblock %}

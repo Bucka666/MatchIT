@@ -1,0 +1,45 @@
+{
+  "api_id": "3aa29fe8-1687-486f-b4df-c04977869ab1",
+  "name": "An Unexpected Party",
+  "card_number": "29",
+  "set_id": "hob",
+  "set_name": "The Hobbit",
+  "category": "MTG",
+  "rarity": "RARE",
+  "mtg_color": "COLORLESS",
+  "mtg_card_type": "ENCHANTMENT",
+  "set_era": "MODERN_MTG",
+  "language": "EN",
+  "edition": "",
+  "scryfall_id": "3aa29fe8-1687-486f-b4df-c04977869ab1",
+  "scryfall_url": "https://scryfall.com/card/hob/29/an-unexpected-party-at-the-door?utm_source=api",
+  "tcgplayer_id": "692999",
+  "cardmarket_id": "",
+  "prices": {
+    "tcgplayer": {
+      "normal": {
+        "market": null
+      },
+      "foil": {
+        "market": null
+      }
+    },
+    "cardmarket": {
+      "normal": {
+        "trend": null
+      },
+      "foil": {
+        "trend": null
+      }
+    }
+  },
+  "tcgplayer_url": "https://partner.tcgplayer.com/c/4931599/1830156/21018?subId1=api&u=https%3A%2F%2Fwww.tcgplayer.com%2Fproduct%2F692999%3Fpage%3D1",
+  "cardmarket_url": "https://www.cardmarket.com/en/Magic/Products/Search?referrer=scryfall&searchString=An+Unexpected+Party&utm_campaign=card_prices&utm_medium=text&utm_source=scryfall",
+  "artist": "Matt Stewart",
+  "type_line": "Enchantment // Sorcery — Adventure",
+  "mana_cost": "{2}{W}{W}",
+  "oracle_text": "As this enchantment enters, choose a creature type.\nCreatures you control of the chosen type get +2/+2.",
+  "power": "",
+  "toughness": "",
+  "cmc": 4.0
+}

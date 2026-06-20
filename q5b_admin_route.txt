@@ -1,0 +1,35 @@
+﻿
+  app.py:3173:
+  app.py:3174:
+> app.py:3175:@app.route("/admin/run_scheduler", methods=["POST"])
+  app.py:3176:@admin_required
+> app.py:3177:def admin_run_scheduler():
+> app.py:3178:    from set_scheduler import run_scheduler
+  app.py:3179:    try:
+> app.py:3180:        result = run_scheduler(dry_run=False)
+  app.py:3181:        new_total = sum(len(v.get("new_sets", [])) for v in result.get("tcgs", {}).values())
+  app.py:3182:        if new_total > 0:
+  app.py:3183:            flash(f"✅ Scheduler complete — {new_total} new set(s) found and queued for download.", "ok")
+  app.py:3184:        else:
+  app.py:3185:            flash("✅ Scheduler complete — all TCGs up to date.", "ok")
+  app.py:3186:    except Exception as e:
+  app.py:3187:        flash(f"❌ Scheduler error: {e}", "err")
+  app.py:3188:    return redirect(url_for("admin"))
+  app.py:3189:
+  app.py:3190:
+> app.py:3191:@app.route("/admin/run_scheduler_dry", methods=["POST"])
+  app.py:3192:@admin_required
+> app.py:3193:def admin_run_scheduler_dry():
+> app.py:3194:    from set_scheduler import run_scheduler
+  app.py:3195:    try:
+> app.py:3196:        result = run_scheduler(dry_run=True)
+  app.py:3197:        new_total = sum(len(v.get("new_sets", [])) for v in result.get("tcgs", {}).values())
+  app.py:3198:        if new_total > 0:
+  app.py:3199:            flash(f"🔍 Dry run complete — {new_total} new set(s) detected (not downloaded).", "ok")
+  app.py:3200:        else:
+  app.py:3201:            flash("🔍 Dry run complete — all TCGs up to date.", "ok")
+  app.py:3202:    except Exception as e:
+  app.py:3203:        flash(f"❌ Dry run error: {e}", "err")
+  app.py:3204:    return redirect(url_for("admin"))
+
+

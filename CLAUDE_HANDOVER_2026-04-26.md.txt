@@ -1,0 +1,125 @@
+CLAUDE_HANDOVER_2026-04-26.md
+Last session: 2026-04-25 (very long, extremely productive — 17 items shipped)
+Last deploy: 2026-04-25 ~19:00 UTC (final SSR sweep)
+Site status: Live at grailsweep.com, fully functional, no known bugs
+Scanner: Working across Pokémon, YGO, MTG with tiered price reveal animations
+
+RECENT MAJOR WINS (2026-04-25)
+
+Tiered Price Reveal System (the headline feature)
+Replaced silent "add to list" behaviour with celebratory animated overlay scaling to card value:
+- BULK (<£1): subtle white fade, soft chime, 1.2s
+- DECENT (£1-£10): green scale-in, star burst, ping, 1.6s
+- HIT (£10-£50): green+gold, particle burst, fuller sound, 2.0s
+- BANGER (£50-£200): gold gradient, screen-edge glow, animated stars, triumphant chord, 2.3s
+- GRAIL (£200+): full fireworks, "GRAIL!" text, screen flash, fanfare, navigator.vibrate(), 2.5s
+
+All sounds synthesised via existing Web Audio API functions (no mp3 files needed):
+BULK→_playPing, DECENT→_playChime, HIT→_playGoodFind, BANGER→_playBigWin, GRAIL→_playJackpot.
+Slot-machine digit cycling for all tiers except BULK. Respects prefers-reduced-motion.
+Tier thresholds (£1, £10, £50, £200) are constants at top of script — easy to tune after real-world testing.
+
+Volume Write Hardening (6 paths)
+Atomic write helper _atomic_write_json applied to:
+- _save_subs (subscriptions.json)
+- _save_push_subs (push_subscriptions.json)
+- _save_referrals (referrals.json)
+- _save_stats (stats.json)
+- _save_price_history (price_history.json)
+- inline write in /api/validate_premium
+- _save_collections already had it from earlier in day
+Plus diagnostic stat logging ([COLLECTIONS], [SUBS], [STATS], [PRICE_HISTORY] etc.) on every write — caught a subtle Modal bug where tempfile.mkstemp's default 0o600 perms were rejected for new files. Final fix uses os.open with explicit 0o644 and a deterministic .tmp suffix.
+
+Server-Side Rendering Sweep
+Eliminated all blank-state-on-page-load patterns:
+- Landing page hero stats: SSR'd from _load_stats(), placeholder dashes gone
+- Subscription details: SSR'd via gs_access_code cookie (1-year, SameSite=Lax), bootstrap IIFE in base.html copies from localStorage for existing users
+- Footer stats (every page): SSR'd via Flask context processor
+- Collection page: ssr_collection JSON blob merged with localStorage in colLoad() — localStorage wins conflicts (user's most recent edit is authoritative)
+- /match scan count: hide-until-ready visibility pattern (sessionStorage is browser-only, can't true-SSR)
+
+Grading Now Fires on All Match Paths
+Previously bypassed when OCR-FIRST short-circuited CLIP inference. Helper extracted, called in both branches. New [GRADE-PATH] log lines (OCR-FIRST, OCR-HI, CLIP) confirm which path computed grade. Confirmed working via real YGO scans showing grades on direct DB matches.
+
+Heartbeat
+GET /api/heartbeat fires every 90s from /match while document.visibilityState === 'visible'. Keeps container warm during active scanning sessions without raising overnight idle costs. No-store cache headers prevent Cloudflare/browser caching.
+
+Collection Sync PermissionError Fixed
+Atomic write replaces the previous corrupted-file-and-reupload manual fix. Self-healing — no more silent data loss.
+
+Stats Counter Polling
+Every 30s while page visible, with visibility-change listener. Animation interpolates from previous to new value. Combined with SSR initial values means counter feels live with no blank state.
+
+Cloudflare Block Rule Updated
+/.env and /wp-login.php added to bot block expression alongside existing /wp-admin, /xmlrpc, etc.
+
+Excel Export Grade Column
+Now appears on Pokémon, Yu-Gi-Oh, and MTG per-TCG tabs in the same column position as the "All" tab.
+
+Session Panel z-index Fixed
+9999, opaque background, top:80px — buttons reachable above page header.
+
+Social Links Sitewide
+Footer on every page (Instagram + TikTok @grailsweep with inline SVG icons, hover colour shift to cyan, scale 1.05 lift). Landing page has dedicated "Follow Us for Grail Pulls" section between Pricing and Final CTA — Instagram card with brand gradient, TikTok with cyan/red duotone. Schema.org JSON-LD updated with sameAs array linking both profiles.
+
+OUTSTANDING ISSUES
+None. Board is properly clean.
+
+WATCH ITEMS (post-deploy)
+- Tier threshold sense check: scan 20-30 cards from collection in real session. Confirm £1/£10/£50/£200 bands feel right. Constants at top of price reveal script.
+- Mobile vibration on GRAIL: confirm navigator.vibrate fires on actual phone hardware (some browsers silently no-op).
+- prefers-reduced-motion fallback: test with OS reduce-motion enabled, confirm price reveal falls back to static fade.
+- Watch Modal logs over next 24-48h for any new PermissionError tracebacks. The 6 write paths should now be bulletproof but the diagnostic stat lines will tell us instantly if something slips through.
+- /api/heartbeat traffic: confirm it's not being cached anywhere — should hit the warm container directly, not Cloudflare.
+
+PENDING OUTREACH
+Aaron Clarke (The Grading Club Manchester) — Instagram DM sent 2026-04-25.
+Follow-up window: 4-5 days minimum before bumping. If no reply by ~30 April, send single follow-up. If still nothing by ~5 May, move on or try alternate UK grading partner.
+
+MODAL COSTS
+~£1/day baseline (down from £4.77 pre-Cloudflare-caching).
+Heartbeat may shift this slightly upward during active sessions but reduces cold-start frustration.
+Total spend tracking: ~$116 at last check.
+
+KEY FILES
+C:\MatchIT\app.py — main Flask app
+C:\MatchIT\api_routes.py — scanner API
+C:\MatchIT\ocr_confirm.py — OCR regions and matching
+C:\MatchIT\templates\base.html — sitewide footer, bootstrap IIFE, social links
+C:\MatchIT\templates\index.html — landing page (SSR'd hero stats, social section)
+C:\MatchIT\templates\match.html — scanner page with tiered price reveal animations
+C:\MatchIT\templates\results.html — photo match results
+C:\MatchIT\templates\collection.html — SSR'd collection list, gs_access_code cookie writer
+C:\MatchIT\templates\upgrade.html — Pro plan page, gs_access_code cookie writer
+C:\MatchIT\verticals\cards\vertical.json — TCG vertical config
+C:\MatchIT\config.json — admin password, low_cert_prob_gap=0.08, VAPID keys
+
+KEY IDENTIFIERS
+Modal workspace: c-a-buckley
+Modal app: matchit-api
+Modal volume: matchit-data-v2
+Live URL: https://grailsweep.com
+Test code: GRAIL-XAJI-0Y6D
+Deploy: PYTHONIOENCODING=utf-8 modal deploy matchit_modal.py
+Cookie: gs_access_code (1yr expiry, SameSite=Lax, path=/)
+
+TOMORROW'S SUGGESTED PRIORITIES
+Pick 1-3 based on energy/time:
+
+1. Tier threshold sense check — 15min real-scan session with collection, tune the 4 constants at top of price reveal script if any band feels off.
+
+2. Demo video for socials — the GRAIL moment is built for short-form video. 30-60s clip of a binder rip showing escalating reactions = potentially huge for TikTok/Instagram launch push. Pin the resulting reel on both accounts.
+
+3. App Store / Play Store submission planning — currently PWA-only. Identify the path: native wrappers (Capacitor / TWA) vs full rewrite, App Store screenshots, privacy policy, content rating questionnaire prep.
+
+4. Price alerts feature — listed in Pro tier on landing page, worth confirming actual functionality and polishing if needed.
+
+5. Referral programme E2E test — now that subscription save is fixed, walk through: create referral code, friend uses it, friend subscribes, original user gets free month credited. Confirm full chain works.
+
+6. Aaron Clarke follow-up tracker — set a calendar reminder for 30 April to check IG DMs.
+
+BUSINESS NOTES
+The Grading Club Manchester — UK CGC/PSA/BGS authorised dealer, Aaron Clarke is director.
+Pre-launch beta status — be transparent in outreach.
+App not yet on App Store or Google Play — PWA only currently.
+GrailSweep handles: @grailsweep on Instagram + TikTok (set 2026-04-25).

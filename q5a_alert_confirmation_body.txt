@@ -1,0 +1,66 @@
+﻿
+        # Create portal session
+        session = stripe.billing_portal.Session.create(
+            customer=customer_id,
+            return_url="https://grailsweep.com/collection",
+        )
+        return jsonify({"url": session.url})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def _send_alert_confirmation(email, card_name, target_low, target_high):
+    import smtplib
+    import ssl
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    smtp_host = os.environ["SMTP_HOST"]
+    smtp_port = int(os.environ["SMTP_PORT"])
+    smtp_user = os.environ["SMTP_USER"]
+    smtp_pass = os.environ["SMTP_PASS"]
+    from_address = os.environ.get("SMTP_FROM_NOREPLY", smtp_user)
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"ðŸ”” Price Alert Set â€” {card_name}"
+    msg["From"] = from_address
+    msg["To"] = email
+
+    targets = []
+    if target_low:
+        targets.append(f"Alert when price drops below Â£{float(target_low):.2f} (buy signal)")
+    if target_high:
+        targets.append(f"Alert when price rises above Â£{float(target_high):.2f} (sell signal)")
+
+    html = f"""
+    <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:20px;background:#1a1830;color:#f0ecff;">
+        <h1 style="color:#b14dff;font-size:1.4rem;">ðŸ”” Price Alert Confirmed!</h1>
+        <p>Your price alert for <strong>{card_name}</strong> has been set.</p>
+
+        <div style="background:#252248;border:2px solid #b14dff;border-radius:12px;padding:20px;margin:20px 0;">
+            {"".join(f'<p style="color:#00ff88;margin:8px 0;">âœ… {t}</p>' for t in targets)}
+        </div>
+
+        <p style="color:#9b95b8;font-size:0.85rem;">
+            We check prices weekly and will email you when your target is hit.
+            Alerts are a GrailSweep Pro feature.
+        </p>
+
+        <p style="margin-top:24px;font-size:0.75rem;color:#9b95b8;">
+            GrailSweep â€” AI Card Scanner & Price Reference<br>
+            <a href="https://grailsweep.com" style="color:#b14dff;">grailsweep.com</a>
+        </p>
+    </div>
+    """
+
+    msg.attach(MIMEText(html, "html"))
+
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(smtp_host, smtp_port, context=context) as server:
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(from_address, email, msg.as_string())
+        print(f"[ALERTS] Confirmation sent to {email}")
+    except Exception as e:
+        print(f"[ALERTS] Confirmation email failed: {e}")
+

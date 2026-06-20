@@ -1,0 +1,46 @@
+{
+  "api_id": "662853",
+  "name": "Sanctity of Dragon",
+  "card_number": "2017-EN001",
+  "set_id": "2017",
+  "set_name": "Yu-Gi-Oh! World Championship 2017 prize cards",
+  "category": "YUGIOH",
+  "rarity": "RARE",
+  "ygo_card_type": "MONSTER_LINK",
+  "ygo_attribute": "LIGHT",
+  "set_era": "MODERN_YGO",
+  "language": "EN",
+  "edition": "",
+  "ygoprodeck_id": "662853",
+  "tcgplayer_url": "https://www.tcgplayer.com/search/yugioh/product?q=Sanctity of Dragon",
+  "cardmarket_url": "https://www.cardmarket.com/en/YuGiOh/Products/Search?searchString=Sanctity of Dragon",
+  "prices": {
+    "tcgplayer": {
+      "normal": {
+        "market": null
+      }
+    },
+    "cardmarket": {
+      "normal": {
+        "trend": 30.89
+      }
+    },
+    "ebay": {
+      "normal": {
+        "market": 22.0
+      }
+    },
+    "amazon": {
+      "normal": {
+        "market": 2.5
+      }
+    }
+  },
+  "type_line": "Link Monster",
+  "race": "Dragon",
+  "atk": 3000,
+  "def": null,
+  "level": 0,
+  "desc": "3+ Dragon Effect Monsters\nMust be Link Summoned. If this Extra Linked card attacks your opponent directly and reduces their LP to 0, you win the Match.",
+  "archetype": ""
+}

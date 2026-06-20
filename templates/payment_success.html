@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="mi-card" style="max-width:560px;margin:0 auto;text-align:center;padding:48px 32px;">
+
+  <div style="font-size:4rem;margin-bottom:16px;">🎉</div>
+
+  <h1 class="mi-h1" style="font-size:1.8rem;margin-bottom:12px;">Payment Successful!</h1>
+
+  <p style="color:var(--mi-muted,#aaa);font-size:0.95rem;margin-bottom:32px;line-height:1.6;">
+    Welcome to GrailSweep Pro! Your access code is on its way to your email inbox. 
+    Check your spam folder if you don't see it within a few minutes.
+  </p>
+
+  <div style="background:rgba(177,77,255,0.08);border:1px solid rgba(177,77,255,0.25);border-radius:16px;padding:24px;margin-bottom:32px;">
+    <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#9b95b8;margin-bottom:12px;">What happens next?</div>
+    <div style="display:flex;flex-direction:column;gap:12px;text-align:left;">
+      <div style="display:flex;align-items:center;gap:12px;font-size:0.88rem;color:var(--mi-text,#eee);">
+        <span style="font-size:1.2rem;">📧</span>
+        <span>Check your email for your unique access code</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:0.88rem;color:var(--mi-text,#eee);">
+        <span style="font-size:1.2rem;">🔑</span>
+        <span>Enter the code on the upgrade page to unlock Pro</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:0.88rem;color:var(--mi-text,#eee);">
+        <span style="font-size:1.2rem;">⚡</span>
+        <span>Enjoy your monthly scan allowance and collection tracking</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+    <a href="/upgrade" class="mi-btn" style="text-decoration:none;">
+      🔑 Enter Access Code
+    </a>
+    <a href="/match" class="mi-btn" style="text-decoration:none;background:rgba(255,255,255,0.06)!important;border:1px solid rgba(255,255,255,0.15)!important;box-shadow:none!important;color:var(--mi-text,#eee)!important;">
+      Start Scanning
+    </a>
+  </div>
+
+  <p style="margin-top:24px;font-size:0.75rem;color:#9b95b8;">
+    Need help? Contact us at <a href="mailto:support@grailsweep.com" style="color:#b14dff;">support@grailsweep.com</a>
+  </p>
+
+</div>
+{% endblock %}

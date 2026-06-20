@@ -1,0 +1,160 @@
+{
+  "id": "keys",
+  "name": "MatchIT - KEYS 🔑",
+  "page_title": "MatchIT – KEYS",
+  "subtitle": "AI Guided Key Matching and Key Referencing Program. ©",
+  "icon": "🔑",
+  "query_title": "Identify Your Key",
+"image_labels": {"front": "Front", "back": "Back"},
+
+"ui_text": {
+  "how_to_title": "How to identify your key",
+  "step1_text": "If you have a <strong>key reference code</strong>, enter it below — or search by <strong>manufacturer name</strong>",
+  "step1_placeholder": "e.g. AL-2, ADG2S, Yale, Asec…",
+  "step2_text": "Or <strong>upload / take photos</strong> of the key — fill in the key details drop-down boxes below for better results",
+  "progress_subtitle": "Analysing your key against the database…",
+  "guide_tips": [
+    "Fill most of the frame with the <strong>key</strong> (avoid lots of background).",
+    "Use good lighting — avoid heavy shadows or glare.",
+    "Keep the key flat and straight — do not angle it.",
+    "Set grooves and pin count above if known — this significantly narrows the search."
+  ],
+  "feedback_correct_prompt": "Was the correct key in these results?",
+  "feedback_notfound_prompt": "Which key was it? (enter SKU or leave blank if unknown)",
+  "feedback_sku_placeholder": "e.g. EL5R",
+  "db_sync_title": "KeysDB Sync (Google Drive mirror)",
+  "db_sync_desc": "Imports new SKU folder images from your mirrored KeysDB folder into MatchIT's local DB. Use this after your capture app uploads new SKU images into KeysDB.",
+  "db_sync_button": "Sync from KeysDB",
+  "db_sync_confirm": "Sync new images from KeysDB into MatchIT database?"
+},
+
+"require_two_images": true,
+  "style_detection_enabled": true,
+  "ras_images_enabled": true,
+  "db_root": "C:\\CardsDB",
+
+  "categories": {
+    "CYLINDER":        {"label": "Single-sided",    "show": ["front_grooves","back_grooves","pin_count"]},
+    "DOUBLE_SIDED":    {"label": "Double-sided",    "show": ["groove_side","front_grooves","back_grooves","pin_count"]},
+    "MORTICE":         {"label": "Mortice (Lever)",  "show": ["groove_side","flag_profile","bow_shape","front_grooves","back_grooves","mortice_gauge"]},
+    "MORTICE_PIN":     {"label": "Mortice Pin",      "show": ["groove_side","flag_profile","bow_shape","front_grooves","back_grooves","mortice_gauge"]},
+    "MORTICE_PIPE":    {"label": "Mortice Pipe",     "show": ["groove_side","flag_profile","bow_shape","front_grooves","back_grooves","mortice_gauge"]},
+    "MORTICE_PRECUT":  {"label": "Mortice Pre-Cut",  "show": ["groove_side","flag_profile","bow_shape","front_grooves","back_grooves","mortice_gauge"]},
+    "DOUBLE_BIT_PIN":  {"label": "Double Bit Pin",   "show": ["groove_side","flag_profile","bow_shape","front_grooves","back_grooves","mortice_gauge"]},
+    "DOUBLE_BIT_PIPE": {"label": "Double Bit Pipe",  "show": ["groove_side","flag_profile","bow_shape","front_grooves","back_grooves","mortice_gauge"]},
+    "DIMPLE":          {"label": "Dimple / Cavity",  "show": ["groove_side","dimple_track","dimple_cuts"]}
+  },
+
+  "profile_fields": [
+    {
+      "id": "front_grooves",
+      "label": "Front grooves",
+      "type": "int_range",
+      "min": 0, "max": 6,
+      "default": -1,
+      "penalty": 0.970,
+      "match_rule": "exact"
+    },
+    {
+      "id": "back_grooves",
+      "label": "Back grooves",
+      "type": "int_range",
+      "min": 0, "max": 6,
+      "default": -1,
+      "penalty": 0.970,
+      "match_rule": "exact"
+    },
+    {
+      "id": "pin_count",
+      "label": "Pins / Cuts Count",
+      "type": "int_range",
+      "min": 2, "max": 10,
+      "default": -1,
+      "penalty": 0.975,
+      "match_rule": "exact"
+    },
+    {
+      "id": "groove_side",
+      "label": "Groove side",
+      "type": "select",
+      "options": [["","Unknown"],["LEFT","Left"],["RIGHT","Right"],["BOTH","Both"],["NONE","None"]],
+      "default": "",
+      "penalty": 0.970,
+      "match_rule": "exact"
+    },
+    {
+      "id": "flag_profile",
+      "label": "Flag profile",
+      "type": "select",
+      "options": [["","Unknown"],["FLAT","Flat"],["STEPPED","Stepped"],["GROOVED","Grooved"],["RAISED_RIDGE","Raised Ridge"]],
+      "default": "",
+      "penalty": 0.965,
+      "match_rule": "exact"
+    },
+    {
+      "id": "bow_shape",
+      "label": "Bow shape",
+      "type": "select",
+      "options": [["","Unknown"],["ROUND","Round"],["OVAL","Oval"],["SQUARE","Square"],["UNIQUE","Unique / Other"]],
+      "default": "",
+      "penalty": 0.960,
+      "match_rule": "exact"
+    },
+    {
+      "id": "mortice_gauge",
+      "label": "Gauge (thickness)",
+      "type": "float_select",
+      "values_by_category": {
+        "MORTICE":         [1,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8],
+        "MORTICE_PIN":     [1,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8],
+        "MORTICE_PRECUT":  [1,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8],
+        "MORTICE_PIPE":    [5,6,7,8,9,10,11,12],
+        "DOUBLE_BIT_PIN":  [1,2,2.5,3,3.5,4,4.5,5,5.5,6,6.5,7,7.5,8],
+        "DOUBLE_BIT_PIPE": [5,6,7,8,9,10,11,12]
+      },
+      "default": -1,
+      "penalty": 0.950,
+      "match_rule": "exact_float"
+    },
+    {
+      "id": "dimple_track",
+      "label": "Track type",
+      "type": "select",
+      "options": [["","Unknown"],["SINGLE_TRACK","Single Track"],["DOUBLE_TRACK","Double Track"]],
+      "default": "",
+      "penalty": 0.955,
+      "match_rule": "exact"
+    },
+    {
+      "id": "dimple_cuts",
+      "label": "Dimple cut count",
+      "type": "int_range",
+      "min": 5, "max": 10,
+      "default": -1,
+      "penalty": 0.975,
+      "match_rule": "exact"
+    }
+  ],
+
+  "category_families": {
+    "MORTICE": ["MORTICE","MORTICE_PIN","MORTICE_PIPE","MORTICE_PRECUT"],
+    "DOUBLE_BIT": ["DOUBLE_BIT_PIN","DOUBLE_BIT_PIPE"]
+  },
+
+  "silhouette_map": {
+    "MORTICE": "MORTICE",
+    "MORTICE_PIN": "MORTICE",
+    "MORTICE_PIPE": "MORTICE",
+    "MORTICE_PRECUT": "MORTICE",
+    "DOUBLE_BIT_PIN": "MORTICE",
+    "DOUBLE_BIT_PIPE": "MORTICE",
+    "CYLINDER": "CYLINDER",
+    "DOUBLE_SIDED": "DOUBLE_SIDED",
+    "DIMPLE": "DIMPLE"
+  },
+
+  "disclaimer": "Product images, brand names, and cross-reference codes (including but not limited to HD, JMA, Silca, Keyline, RST, and Lishi) remain the property of their respective owners. MatchIT is not affiliated with, endorsed by, or sponsored by any of these companies. All third-party trademarks and images are used for identification and reference purposes only.",
+
+  "guidance_text": "The top 5 closest matches are listed below. If your key isn't ranked #1, please check ranks 2–5 — the correct match is almost always within the top 5. Use your knowledge and expertise to compare against your query images.",
+  "guidance_feedback": "Please use the feedback bar at the bottom to tell us where your key ranked — this directly helps the AI improve its accuracy. Thank you!"
+}

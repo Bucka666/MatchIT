@@ -1,0 +1,1161 @@
+{% extends "base.html" %}
+{% block head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "GrailSweep",
+  "operatingSystem": "Web, iOS, Android",
+  "applicationCategory": "UtilitiesApplication",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "GBP"},
+  "description": "UK's first AI trading card scanner. Identify Pokémon, MTG and Yu-Gi-Oh cards instantly with live GBP pricing.",
+  "url": "https://grailsweep.com",
+  "screenshot": "https://grailsweep.com/static/assets/grailsweep_og.png",
+  "featureList": "AI card identification, Live GBP pricing, Condition grading, Collection tracking, Japanese Pokémon cards, Set completion tracking, Collection analytics",
+  "inLanguage": "en-GB",
+  "countryOfOrigin": "GB",
+  "sameAs": [
+    "https://www.instagram.com/grailsweep",
+    "https://www.tiktok.com/@grailsweep"
+  ]
+}
+</script>
+{% endblock %}
+
+{% block body %}
+
+<div id="gsColdStart" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0f0f1a 0%,#1a1530 100%);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;transition:opacity 0.4s ease-out;">
+  <div style="font-size:2rem;font-weight:600;background:linear-gradient(90deg,#b14dff,#1E88C7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.5rem;">GrailSweep</div>
+  <div id="gsColdStartMessage" style="font-size:0.95rem;opacity:0.7;margin-top:1rem;">Loading...</div>
+  <div style="margin-top:2rem;width:60px;height:60px;position:relative;">
+    <div style="position:absolute;width:100%;height:100%;border:3px solid rgba(177,77,255,0.2);border-top-color:#b14dff;border-radius:50%;animation:gsSpin 1s linear infinite;"></div>
+  </div>
+  <style>@keyframes gsSpin { to { transform:rotate(360deg); } }</style>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     HERO SECTION
+═══════════════════════════════════════════════════════ -->
+<section class="gs-hero">
+  <div class="gs-hero-video-wrap">
+    <video class="gs-hero-video" autoplay muted loop playsinline id="gsHeroVideo">
+      <source src="/static/assets/Hero.mp4" type="video/mp4">
+    </video>
+    <script>
+      (function() {
+        var v = document.getElementById('gsHeroVideo');
+        if (!v) return;
+        var p = v.play();
+        if (p !== undefined) {
+          p.catch(function() {
+            // Autoplay blocked — retry on first touch/click
+            var resume = function() {
+              v.play();
+              document.removeEventListener('touchstart', resume);
+              document.removeEventListener('click', resume);
+            };
+            document.addEventListener('touchstart', resume, {once: true});
+            document.addEventListener('click', resume, {once: true});
+          });
+        }
+      })();
+    </script>
+    <div class="gs-hero-overlay"></div>
+    <div class="gs-hero-grid"></div>
+  </div>
+  <div class="gs-hero-content">
+    <div class="gs-hero-badge">
+      <span class="gs-badge-dot"></span>
+      🇬🇧 UK's First Multi-TCG AI Scanner
+    </div>
+    <div class="gs-hero-logo">
+      <span class="gs-logo-grail">Grail</span><span class="gs-logo-sweep">Sweep</span>
+    </div>
+    <h1 class="gs-hero-h1">
+      Scan any card.<br>
+      <span class="gs-hero-h1-accent">Know its value instantly.</span>
+    </h1>
+    <p class="gs-hero-sub">
+      AI card identification. Instant condition grading. Live GBP pricing from TCGPlayer & Cardmarket.
+    </p>
+    <div class="gs-tcg-pills">
+      <span class="gs-tcg-pill gs-pill-pok">Pokémon</span>
+      <span class="gs-tcg-pill gs-pill-ygo">Yu-Gi-Oh</span>
+      <span class="gs-tcg-pill gs-pill-mtg">Magic: The Gathering</span>
+    </div>
+    <div class="gs-hero-ctas">
+      <a href="/match" class="gs-btn gs-btn-primary">⚡ Start Scanning Free →</a>
+      <a href="/upgrade" class="gs-btn gs-btn-ghost">View Pro Plans</a>
+    </div>
+    <div class="gs-stats-bar" id="gsStatsBar">
+      <div class="gs-stat">
+        <span class="gs-stat-num" id="gsTotalScans">{{ total_scans|default(0) }}</span>
+        <span class="gs-stat-label">cards identified</span>
+      </div>
+      <div class="gs-stat-divider"></div>
+      <div class="gs-stat">
+        <span class="gs-stat-num" id="gsTodayScans">{{ today_scans|default(0) }}</span>
+        <span class="gs-stat-label">scanned today</span>
+      </div>
+    </div>
+    <div class="gs-hero-stats">
+      <div class="gs-stat"><span class="gs-stat-num">160K+</span><span class="gs-stat-label">Cards in database</span></div>
+      <div class="gs-stat-divider"></div>
+      <div class="gs-stat"><span class="gs-stat-num">3</span><span class="gs-stat-label">TCGs supported</span></div>
+      <div class="gs-stat-divider"></div>
+      <div class="gs-stat"><span class="gs-stat-num">Free</span><span class="gs-stat-label">To get started</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     HOW IT WORKS
+═══════════════════════════════════════════════════════ -->
+<section class="gs-section gs-how">
+  <div class="gs-container">
+    <div class="gs-section-badge">Simple as 1-2-3</div>
+    <h2 class="gs-section-h2">How It Works</h2>
+    <p class="gs-section-sub">From photo to price in seconds</p>
+
+    <div class="gs-steps">
+      <div class="gs-step">
+        <div class="gs-step-num">01</div>
+        <div class="gs-step-icon">📸</div>
+        <h3 class="gs-step-title">Take a Photo</h3>
+        <p class="gs-step-desc">Upload a photo or use the live scanner. Works with photos you already have or take one right now.</p>
+      </div>
+      <div class="gs-step-arrow">→</div>
+      <div class="gs-step">
+        <div class="gs-step-num">02</div>
+        <div class="gs-step-icon">🤖</div>
+        <h3 class="gs-step-title">AI Identifies</h3>
+        <p class="gs-step-desc">Our AI engine matches your card against 160,000+ cards — Pokémon (including Japanese), Yu-Gi-Oh and MTG — using visual recognition and text reading.</p>
+      </div>
+      <div class="gs-step-arrow">→</div>
+      <div class="gs-step">
+        <div class="gs-step-num">03</div>
+        <div class="gs-step-icon">💰</div>
+        <h3 class="gs-step-title">Get the Value</h3>
+        <p class="gs-step-desc">Instantly see the card's current market value in GBP from TCGPlayer and Cardmarket.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     FEATURES
+═══════════════════════════════════════════════════════ -->
+<section class="gs-section gs-features">
+  <div class="gs-container">
+    <div class="gs-section-badge">What Makes Us Different</div>
+    <h2 class="gs-section-h2">Built for UK Collectors</h2>
+    <p class="gs-section-sub">Everything competitors are missing</p>
+
+    <div class="gs-feature-grid">
+
+      <div class="gs-feature gs-feature--highlight">
+        <div class="gs-feature-icon">💷</div>
+        <h3 class="gs-feature-title">GBP Pricing First</h3>
+        <p class="gs-feature-desc">Every price shown in pounds sterling. Live market data updated daily from TCGPlayer and Cardmarket — no more converting from USD or checking multiple sites.</p>
+      </div>
+
+      <div class="gs-feature">
+        <div class="gs-feature-icon">🎮</div>
+        <h3 class="gs-feature-title">All 3 Major TCGs + Japanese</h3>
+        <p class="gs-feature-desc">Pokémon (English &amp; Japanese), Yu-Gi-Oh and Magic: The Gathering in one app. 160,000+ cards across all four catalogues.</p>
+      </div>
+
+      <div class="gs-feature">
+        <div class="gs-feature-icon">🔍</div>
+        <h3 class="gs-feature-title">OCR Set Confirmation</h3>
+        <p class="gs-feature-desc">Reads the set code directly from the card to identify the exact print — not just the artwork. Crucial for reprints.</p>
+      </div>
+
+      <div class="gs-feature">
+        <div class="gs-feature-icon">⚡</div>
+        <h3 class="gs-feature-title">Fast Live Scanner</h3>
+        <p class="gs-feature-desc">Point your phone camera at a card and typically get an ID in 1–5 seconds. Perfect for sorting through a collection fast.</p>
+      </div>
+
+      <div class="gs-feature">
+        <div class="gs-feature-icon">📊</div>
+        <h3 class="gs-feature-title">Collection Manager &amp; Analytics</h3>
+        <p class="gs-feature-desc">Save your cards, track portfolio value with gain/loss analytics, view your collection chart and export to Excel or CSV. <span class="gs-feature-pro-tag">Pro</span></p>
+      </div>
+
+      <div class="gs-feature">
+        <div class="gs-feature-icon">✅</div>
+        <h3 class="gs-feature-title">Set Completion Tracking</h3>
+        <p class="gs-feature-desc">See how close you are to completing any set across 1,000+ sets. Scan your cards and watch your progress update in real time — free for all users.</p>
+      </div>
+
+      <div class="gs-feature">
+        <div class="gs-feature-icon">🔔</div>
+        <h3 class="gs-feature-title">Price Alerts</h3>
+        <p class="gs-feature-desc">Get notified when your cards change value. Know the perfect moment to buy or sell. <span class="gs-feature-pro-tag">Pro</span></p>
+      </div>
+
+      <div class="gs-feature">
+        <div class="gs-feature-icon">📥</div>
+        <h3 class="gs-feature-title">CSV Import</h3>
+        <p class="gs-feature-desc">Already collecting elsewhere? Import your entire collection from HobbyDB, TCGPlayer, or any app in seconds. <span class="gs-feature-pro-tag">Pro</span></p>
+      </div>
+
+      <div class="gs-feature">
+        <div class="gs-feature-icon">📈</div>
+        <h3 class="gs-feature-title">Price History</h3>
+        <p class="gs-feature-desc">See 30-day price trends for any card. Know if prices are rising or falling before you buy or sell. <span class="gs-feature-pro-tag">Pro</span></p>
+      </div>
+
+      <div class="gs-feature">
+        <div class="gs-feature-icon">🗂️</div>
+        <h3 class="gs-feature-title">Collection Detail View</h3>
+        <p class="gs-feature-desc">Tap any card in your collection to see full details, price history graph, condition and notes — all in one place. <span class="gs-feature-pro-tag">Pro</span></p>
+      </div>
+
+      <div class="gs-feature">
+        <div class="gs-feature-icon">🔬</div>
+        <h3 class="gs-feature-title">AI Condition Grading</h3>
+        <p class="gs-feature-desc">Every photo match and scan gets an instant auto-grade. Pro users can request a Claude Vision deep grade — assessing centering, corners, edges and surface with a detailed breakdown. Monthly: 10/month · Annual: 20/month. <span class="gs-feature-pro-tag">Pro</span></p>
+      </div>
+
+      <div class="gs-feature">
+        <div class="gs-feature-icon">🎁</div>
+        <h3 class="gs-feature-title">Refer a Friend</h3>
+        <p class="gs-feature-desc">Love GrailSweep? Share your referral code with friends. They get their first month for £2.99 — you get a free month added for every friend who subscribes. Up to 10 free months per year. <span class="gs-feature-pro-tag">Pro</span></p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     PRICING
+═══════════════════════════════════════════════════════ -->
+<section class="gs-section gs-pricing">
+  <div class="gs-container">
+    <div class="gs-section-badge">Simple Pricing</div>
+    <h2 class="gs-section-h2">Start Free. Upgrade When Ready.</h2>
+    <p class="gs-section-sub">No credit/debit card required to get started</p>
+
+    <div class="gs-pricing-grid">
+
+      <!-- Card 1: Free -->
+      <div class="gs-price-card">
+        <h3 class="gs-price-name">Free</h3>
+        <div class="gs-price-amount">£0</div>
+        <div class="gs-price-period">forever</div>
+        <ul class="gs-price-features">
+          <li>✓ 25 card scans per month</li>
+          <li>✓ All 3 TCGs (Pokémon, Yu-Gi-Oh, MTG)</li>
+          <li>✓ Live GBP price reference</li>
+          <li>✓ AI card identification</li>
+          <li>✓ Auto condition grade</li>
+        </ul>
+        <a class="gs-price-cta" href="/match">Start Free</a>
+      </div>
+
+      <!-- Card 2: Pro Monthly -->
+      <div class="gs-price-card gs-price-card--featured">
+        <span class="gs-price-badge">POPULAR</span>
+        <h3 class="gs-price-name">Pro Monthly</h3>
+        <div class="gs-price-amount">£3.99</div>
+        <div class="gs-price-period">per month</div>
+        <ul class="gs-price-features">
+          <li>✓ 1,000 scans/month</li>
+          <li>✓ Everything in Free</li>
+          <li>✓ Collection manager</li>
+          <li>✓ Excel export + CSV import</li>
+          <li>✓ Live scanner</li>
+          <li>✓ Price alerts</li>
+          <li>✓ 30-day price history</li>
+          <li>✓ AI deep grade (10/month)</li>
+          <li>✓ Referral programme</li>
+          <li>✓ Cancel anytime</li>
+        </ul>
+        <button class="gs-price-cta gs-price-cta--featured"
+                onclick="lpUpgrade('monthly')">Subscribe</button>
+      </div>
+
+      <!-- Card 3: Pro Annual -->
+      <div class="gs-price-card gs-price-card--annual">
+        <span class="gs-price-badge">SAVE 27%</span>
+        <h3 class="gs-price-name">Pro Annual</h3>
+        <div class="gs-price-amount">£34.99</div>
+        <div class="gs-price-period">per year (~£2.92/mo)</div>
+        <ul class="gs-price-features">
+          <li>✓ 1,200 scans/month</li>
+          <li>✓ Everything in Monthly</li>
+          <li>✓ AI deep grade (20/month)</li>
+          <li>✓ Save ~27% — best value</li>
+        </ul>
+        <button class="gs-price-cta gs-price-cta--annual"
+                onclick="lpUpgrade('annual')">Subscribe</button>
+      </div>
+
+      <!-- Card 4: Founder Yearly -->
+      {% set founder_remaining = ssr_founder_remaining|default(100) %}
+      {% set founder_sold_out = ssr_founder_sold_out|default(false) %}
+      <div class="gs-price-card gs-price-card--founder{% if founder_sold_out %} is-sold-out{% endif %}">
+        <span class="gs-price-badge">⚡ LIMITED — FIRST 100</span>
+        <h3 class="gs-price-name">Founder Yearly</h3>
+        <div class="gs-price-amount">£19.99</div>
+        <div class="gs-price-period">per year (~£1.67/mo)</div>
+        <ul class="gs-price-features">
+          <li>✓ Everything in Annual</li>
+          <li>✓ Founder pricing locked in</li>
+          <li>✓ All future Pro features</li>
+          <li>✓ Limited to first 100 customers</li>
+        </ul>
+        {% if founder_sold_out %}
+        <div class="gs-price-cta" style="background:rgba(128,128,128,0.2);color:rgba(255,255,255,0.5);cursor:not-allowed;text-align:center;padding:10px;">
+          Sold Out
+        </div>
+        {% else %}
+        <button class="gs-price-cta gs-price-cta--founder"
+                onclick="lpUpgrade('founder_yearly')">Become a Founder</button>
+        {% endif %}
+        <div class="gs-price-spots">
+          ⚡ {{ founder_remaining }} spots remaining
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     SOCIAL FOLLOW
+═══════════════════════════════════════════════════════ -->
+<section class="gs-section gs-social-section">
+  <div class="gs-container">
+    <div class="gs-section-badge">Join the Community</div>
+    <h2 class="gs-section-h2">Follow Us for Grail Pulls</h2>
+    <p class="gs-section-sub">Real card pulls, scanner reveals, and the grails the community is finding — daily on Instagram and TikTok</p>
+
+    <div class="gs-social-grid">
+
+      <a href="https://www.instagram.com/grailsweep" target="_blank" rel="noopener noreferrer" class="gs-social-card gs-social-card--ig">
+        <div class="gs-social-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#f09433"/>
+                <stop offset="25%" stop-color="#e6683c"/>
+                <stop offset="50%" stop-color="#dc2743"/>
+                <stop offset="75%" stop-color="#cc2366"/>
+                <stop offset="100%" stop-color="#bc1888"/>
+              </linearGradient>
+            </defs>
+            <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="url(#ig-grad)" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="4.5" stroke="url(#ig-grad)" stroke-width="1.8"/>
+            <circle cx="17.5" cy="6.5" r="1.1" fill="url(#ig-grad)"/>
+          </svg>
+        </div>
+        <div class="gs-social-platform">Instagram</div>
+        <div class="gs-social-handle">@grailsweep</div>
+        <div class="gs-social-btn gs-social-btn--ig">Follow on Instagram</div>
+      </a>
+
+      <a href="https://www.tiktok.com/@grailsweep" target="_blank" rel="noopener noreferrer" class="gs-social-card gs-social-card--tt">
+        <div class="gs-social-icon">
+          <svg width="58" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.85a8.24 8.24 0 0 0 4.83 1.56V6.96a4.85 4.85 0 0 1-1.07-.27z" fill="#69C9D0"/>
+            <path d="M18.52 6.42a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.85a8.24 8.24 0 0 0 4.83 1.56V6.96a4.85 4.85 0 0 1-1.07-.27z" fill="#EE1D52" opacity="0.5"/>
+          </svg>
+        </div>
+        <div class="gs-social-platform">TikTok</div>
+        <div class="gs-social-handle">@grailsweep</div>
+        <div class="gs-social-btn gs-social-btn--tt">Follow on TikTok</div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════
+     FINAL CTA
+═══════════════════════════════════════════════════════ -->
+<section class="gs-section gs-cta">
+  <div class="gs-container gs-cta-inner">
+    <h2 class="gs-cta-h2">Ready to Know What Your Cards Are Worth?</h2>
+    <p class="gs-cta-sub">Join collectors already using GrailSweep. Free to start, no account needed.</p>
+    <a href="/match" class="gs-btn gs-btn-primary gs-btn-large">⚡ Start Scanning Free →</a>
+  </div>
+</section>
+
+<style>
+/* ── Variables ── */
+:root {
+  --gs-purple: #b14dff;
+  --gs-cyan:   #00e5ff;
+  --gs-gold:   #ffd700;
+  --gs-green:  #00ff88;
+  --gs-bg:     #1a1830;
+  --gs-card:   #252248;
+  --gs-text:   #f0ecff;
+  --gs-muted:  #9b95b8;
+}
+
+/* ── Hero ── */
+.gs-hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin: -18px -18px 0;
+}
+.gs-hero-video-wrap { position: absolute; inset: 0; z-index: 0; }
+.gs-hero-video { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.gs-hero-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(10,8,24,0.75) 0%,
+    rgba(10,8,24,0.55) 40%,
+    rgba(10,8,24,0.75) 80%,
+    rgba(10,8,24,0.95) 100%
+  );
+}
+.gs-hero-grid {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(177,77,255,0.05) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(177,77,255,0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
+}
+.gs-hero-content {
+  position: relative; z-index: 1;
+  text-align: center;
+  padding: 40px 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  animation: gsHeroFadeIn 1.2s ease-out;
+}
+@keyframes gsHeroFadeIn {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.gs-hero-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(0,229,255,0.08);
+  border: 1px solid rgba(0,229,255,0.25);
+  color: #00e5ff;
+  font-size: 0.75rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 6px 16px; border-radius: 20px; margin-bottom: 20px;
+}
+.gs-badge-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: #00ff88;
+  animation: gsBadgePulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes gsBadgePulse {
+  0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,255,136,0.4); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 4px rgba(0,255,136,0); }
+}
+.gs-hero-logo {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(2.8rem, 8vw, 5rem);
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 16px;
+  letter-spacing: 0.03em;
+}
+.gs-logo-grail {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gs-logo-sweep {
+  background: linear-gradient(135deg, #b14dff, #00e5ff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gs-hero-h1 {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  font-weight: 500;
+  color: rgba(240,236,255,0.7);
+  line-height: 1.5;
+  margin-bottom: 16px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.gs-hero-h1-accent {
+  background: linear-gradient(90deg, #ffd700, #00e5ff);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.gs-hero-sub {
+  font-size: 1rem;
+  color: rgba(240,236,255,0.55);
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+.gs-tcg-pills {
+  display: flex; gap: 8px;
+  justify-content: center; flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+.gs-tcg-pill {
+  padding: 5px 14px; border-radius: 20px;
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.gs-pill-pok { background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.3); color: #ffd700; }
+.gs-pill-ygo { background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.3); color: #00e5ff; }
+.gs-pill-mtg { background: rgba(177,77,255,0.1); border: 1px solid rgba(177,77,255,0.3); color: #b14dff; }
+.gs-hero-ctas {
+  display: flex; gap: 16px;
+  justify-content: center; flex-wrap: wrap;
+  margin-bottom: 48px;
+}
+.gs-hero-stats {
+  display: flex; align-items: center;
+  justify-content: center; gap: 24px; flex-wrap: wrap;
+}
+.gs-stat { text-align: center; }
+.gs-stat-num {
+  display: block;
+  font-family: 'Orbitron', monospace;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--gs-gold);
+}
+.gs-stat-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--gs-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+.gs-stat-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255,255,255,0.15);
+}
+.gs-stats-bar {
+  display: flex; align-items: center; justify-content: center;
+  gap: 24px; margin-top: 20px; padding: 12px 24px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50px; width: fit-content;
+  margin-left: auto; margin-right: auto;
+  transition: opacity 0.6s ease;
+}
+.gs-stats-bar--hidden { opacity: 0; }
+
+/* ── Buttons ── */
+.gs-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 28px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  border: none;
+}
+.gs-btn-primary {
+  background: linear-gradient(135deg, #b14dff, #4d8eff, #00e5ff);
+  color: white;
+  box-shadow: 0 4px 25px rgba(177,77,255,0.4);
+}
+.gs-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 35px rgba(177,77,255,0.5); }
+.gs-btn-ghost {
+  background: rgba(255,255,255,0.08);
+  color: var(--gs-text);
+  border: 1px solid rgba(255,255,255,0.2);
+}
+.gs-btn-ghost:hover { background: rgba(255,255,255,0.15); }
+.gs-btn-gold {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a1830;
+  box-shadow: 0 4px 25px rgba(255,215,0,0.3);
+}
+.gs-btn-gold:hover { transform: translateY(-2px); box-shadow: 0 8px 35px rgba(255,215,0,0.4); }
+.gs-btn-full { width: 100%; }
+.gs-btn-large { padding: 18px 40px; font-size: 1.1rem; }
+
+/* ── Sections ── */
+.gs-section {
+  padding: 80px 20px;
+}
+.gs-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.gs-section-badge {
+  display: inline-block;
+  background: rgba(0,229,255,0.1);
+  border: 1px solid rgba(0,229,255,0.3);
+  color: #00e5ff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+.gs-section-h2 {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 700;
+  color: var(--gs-text);
+  margin-bottom: 8px;
+}
+.gs-section-sub {
+  color: var(--gs-muted);
+  font-size: 0.95rem;
+  margin-bottom: 48px;
+}
+
+/* ── How it works ── */
+.gs-how { text-align: center; }
+.gs-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.gs-step {
+  flex: 1;
+  min-width: 220px;
+  max-width: 280px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 32px 24px;
+  position: relative;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.gs-step:hover {
+  transform: translateY(-4px);
+  border-color: rgba(177,77,255,0.3);
+}
+.gs-step-num {
+  position: absolute;
+  top: -14px;
+  left: 24px;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--gs-purple);
+  background: var(--gs-bg);
+  padding: 2px 8px;
+  border: 1px solid rgba(177,77,255,0.3);
+  border-radius: 4px;
+}
+.gs-step-icon { font-size: 2.5rem; margin-bottom: 16px; }
+.gs-step-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gs-text);
+  margin-bottom: 8px;
+}
+.gs-step-desc {
+  font-size: 0.85rem;
+  color: var(--gs-muted);
+  line-height: 1.6;
+}
+.gs-step-arrow {
+  font-size: 1.5rem;
+  color: var(--gs-purple);
+  opacity: 0.5;
+}
+
+/* ── Features ── */
+.gs-features { text-align: center; }
+.gs-features .gs-container { position: relative; }
+.gs-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.gs-feature {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 28px 24px;
+  text-align: left;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.gs-feature:hover {
+  transform: translateY(-3px);
+  border-color: rgba(177,77,255,0.25);
+}
+.gs-feature--highlight {
+  background: linear-gradient(135deg, rgba(177,77,255,0.08), rgba(0,229,255,0.05));
+  border-color: rgba(177,77,255,0.25);
+}
+.gs-feature-icon { font-size: 2rem; margin-bottom: 14px; }
+.gs-feature-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--gs-text);
+  margin-bottom: 8px;
+}
+.gs-feature-desc {
+  font-size: 0.83rem;
+  color: var(--gs-muted);
+  line-height: 1.6;
+}
+.gs-feature-pro-tag {
+  display: inline-block;
+  background: linear-gradient(90deg, #b14dff, #00e5ff);
+  color: #000;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 6px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+/* ── Pricing ── */
+.gs-pricing { text-align: center; }
+.gs-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+.gs-price-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 32px 24px;
+  text-align: left;
+  position: relative;
+}
+.gs-price-card--featured {
+  background: linear-gradient(135deg, rgba(177,77,255,0.08), rgba(0,229,255,0.05));
+  border-color: rgba(177,77,255,0.35);
+  transform: scale(1.03);
+}
+.gs-price-card--annual {
+  border: 2px solid rgba(0,255,136,0.4);
+  background: linear-gradient(180deg, rgba(0,255,136,0.06), transparent);
+}
+.gs-price-card--annual .gs-price-badge {
+  background: linear-gradient(135deg, #00ff88, #00ccff);
+  color: #1a1a2e;
+  border: none;
+}
+.gs-price-card--founder {
+  border: 2px solid rgba(255,215,0,0.5);
+  background: linear-gradient(180deg, rgba(255,215,0,0.08), transparent);
+  box-shadow: 0 4px 24px rgba(255,215,0,0.12);
+}
+.gs-price-card--founder .gs-price-badge {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a1a2e;
+  border: none;
+}
+.gs-price-card--founder.is-sold-out {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+.gs-price-cta {
+  display: inline-block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.06);
+  color: #ffffff;
+  border-radius: 10px;
+  text-align: center;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  margin-top: auto;
+}
+.gs-price-cta:hover {
+  background: rgba(255,255,255,0.12);
+  transform: translateY(-1px);
+}
+.gs-price-cta--featured {
+  background: linear-gradient(135deg, #b14dff, #4d8eff, #00e5ff);
+  border: none;
+  color: #ffffff;
+  font-weight: 700;
+}
+.gs-price-cta--featured:hover {
+  background: linear-gradient(135deg, #c068ff, #5da0ff, #14eeff);
+}
+.gs-price-cta--annual {
+  background: linear-gradient(135deg, #00ff88, #00ccff);
+  border: none;
+  color: #1a1a2e;
+  font-weight: 700;
+}
+.gs-price-cta--annual:hover {
+  background: linear-gradient(135deg, #14ffa0, #14d6ff);
+}
+.gs-price-cta--founder {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #1a1a2e;
+  font-weight: 700;
+}
+.gs-price-spots {
+  font-size: 0.75rem;
+  color: rgba(255,215,0,0.85);
+  margin-top: 8px;
+  text-align: center;
+}
+.gs-price-badge {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(177,77,255,0.2);
+  border: 1px solid rgba(177,77,255,0.4);
+  color: #b14dff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.gs-price-badge--gold {
+  background: rgba(255,215,0,0.2);
+  border-color: rgba(255,215,0,0.4);
+  color: #ffd700;
+}
+.gs-price-name {
+  font-family: 'Orbitron', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gs-muted);
+  margin-bottom: 8px;
+}
+.gs-price-amount {
+  font-family: 'Orbitron', monospace;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--gs-gold);
+  line-height: 1;
+}
+.gs-price-period {
+  font-size: 0.78rem;
+  color: var(--gs-muted);
+  margin-bottom: 20px;
+  margin-top: 4px;
+}
+.gs-price-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+}
+.gs-price-features li {
+  font-size: 0.82rem;
+  color: var(--gs-text);
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.gs-price-features li:last-child { border-bottom: none; }
+.gs-price-no { color: var(--gs-muted) !important; }
+.gs-price-soon { color: var(--gs-muted) !important; }
+
+/* ── Social Section ── */
+.gs-social-section { text-align: center; }
+.gs-social-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;
+  max-width: 640px; margin: 0 auto;
+}
+.gs-social-card {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 32px 24px; border-radius: 16px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+  text-decoration: none; color: var(--gs-text);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.gs-social-card--ig:hover {
+  border-color: rgba(220,39,67,0.4);
+  box-shadow: 0 0 40px rgba(220,39,67,0.12);
+}
+.gs-social-card--tt:hover {
+  border-color: rgba(105,201,208,0.4);
+  box-shadow: 0 0 40px rgba(105,201,208,0.12);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .gs-social-card:hover { transform: translateY(-4px); }
+}
+.gs-social-icon { display: flex; align-items: center; justify-content: center; height: 72px; }
+.gs-social-platform {
+  font-family: 'Orbitron', monospace; font-size: 1rem; font-weight: 700; color: var(--gs-text);
+}
+.gs-social-handle {
+  font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--gs-muted);
+}
+.gs-social-btn {
+  margin-top: 4px; padding: 10px 20px; border-radius: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 700;
+  transition: opacity 0.2s ease;
+}
+.gs-social-btn--ig {
+  background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  color: #fff;
+}
+.gs-social-btn--tt {
+  background: linear-gradient(135deg, #69C9D0, #010101, #EE1D52);
+  color: #fff;
+}
+.gs-social-card:hover .gs-social-btn { opacity: 0.85; }
+
+@media (max-width: 768px) {
+  .gs-social-grid { grid-template-columns: 1fr; max-width: 320px; }
+}
+
+/* ── Final CTA ── */
+.gs-cta {
+  text-align: center;
+  background: linear-gradient(135deg, rgba(177,77,255,0.08), rgba(0,229,255,0.05));
+  border-top: 1px solid rgba(177,77,255,0.15);
+  border-bottom: 1px solid rgba(177,77,255,0.15);
+}
+.gs-cta-h2 {
+  font-family: 'Orbitron', monospace;
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 700;
+  color: var(--gs-text);
+  margin-bottom: 12px;
+}
+.gs-cta-sub {
+  color: var(--gs-muted);
+  font-size: 0.95rem;
+  margin-bottom: 28px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .gs-pricing-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .gs-hero { margin: -18px -18px 0; min-height: 100svh; }
+  .gs-hero-logo { font-size: clamp(2.2rem, 12vw, 3rem); }
+  .gs-hero-stats { gap: 16px; }
+  .gs-stat-divider { display: none; }
+  .gs-feature-grid { grid-template-columns: 1fr; }
+  .gs-price-card--featured { transform: none; }
+  .gs-steps { flex-direction: column; }
+  .gs-step-arrow { transform: rotate(90deg); }
+  .gs-section { padding: 48px 16px; }
+}
+@media (max-width: 600px) {
+  .gs-pricing-grid { grid-template-columns: 1fr; }
+}
+</style>
+
+<script>
+function gsFormatNum(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return n.toString();
+}
+function gsAnimateCount(el, from, to, duration) {
+  var diff = to - from;
+  if (diff === 0) { el.textContent = gsFormatNum(to); return; }
+  var step = diff / (duration / 16);
+  var current = from;
+  var timer = setInterval(function() {
+    current += step;
+    if ((step > 0 && current >= to) || (step < 0 && current <= to)) {
+      current = to;
+      clearInterval(timer);
+    }
+    el.textContent = gsFormatNum(Math.round(current));
+  }, 16);
+}
+
+(function() {
+  var bar = document.getElementById('gsStatsBar');
+  var totalEl = document.getElementById('gsTotalScans');
+  var todayEl = document.getElementById('gsTodayScans');
+  if (!bar || !totalEl || !todayEl) return;
+
+  var lastTotal = parseInt((totalEl.textContent || '0').replace(/[^0-9]/g, '')) || 0;
+  var lastToday = parseInt((todayEl.textContent || '0').replace(/[^0-9]/g, '')) || 0;
+  var initialised = lastTotal > 0 || lastToday > 0;
+
+  function fetchStats() {
+    return fetch('/api/stats', { cache: 'no-store' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        // Defensive: never write 0 if API returned nothing useful
+        var newTotal = (typeof data.total_scans === 'number' && data.total_scans > 0) ? data.total_scans : lastTotal;
+        var newToday = (typeof data.today_scans === 'number' && data.today_scans >= 0) ? data.today_scans : lastToday;
+        if (!initialised) {
+          gsAnimateCount(totalEl, lastTotal, newTotal, 1500);
+          gsAnimateCount(todayEl, lastToday, newToday, 1000);
+          initialised = true;
+        } else {
+          if (newTotal !== lastTotal) gsAnimateCount(totalEl, lastTotal, newTotal, 800);
+          if (newToday !== lastToday) gsAnimateCount(todayEl, lastToday, newToday, 800);
+        }
+        lastTotal = newTotal;
+        lastToday = newToday;
+        // Also update footer elements if present on this page
+        var footerTotal = document.getElementById('miFooterTotal');
+        var footerToday = document.getElementById('miFooterToday');
+        if (footerTotal && typeof data.total_scans === 'number' && data.total_scans > 0)
+          footerTotal.textContent = newTotal;
+        if (footerToday && typeof data.today_scans === 'number' && data.today_scans >= 0)
+          footerToday.textContent = newToday;
+      });
+  }
+
+  // Initial fetch — SSR provides fallback values, so silence failures rather than hiding the bar
+  fetchStats().catch(function() { /* silent — SSR values remain */ });
+
+  // Poll every 30s, but only when the page is visible
+  setInterval(function() {
+    if (document.visibilityState === 'visible' && initialised) {
+      fetchStats().catch(function() { /* silent */ });
+    }
+  }, 30000);
+
+  // Also re-fetch when user returns to the tab after being away
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && initialised) {
+      fetchStats().catch(function() {});
+    }
+  });
+})();
+
+// Direct-to-Stripe checkout from landing page (Task 10)
+async function lpUpgrade(tier) {
+  try {
+    const resp = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({tier: tier})
+    });
+    const data = await resp.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else if (resp.status === 410 && data.error === 'sold_out') {
+      alert(data.message || 'Founder Yearly is sold out.');
+      window.location.reload();
+    } else {
+      alert('Could not start checkout: ' + (data.error || 'unknown error'));
+    }
+  } catch (e) {
+    alert('Network error: ' + e.message);
+  }
+}
+</script>
+
+<script>
+(function() {
+  var overlay = document.getElementById('gsColdStart');
+  if (!overlay) return;
+  var messageEl = document.getElementById('gsColdStartMessage');
+  var startTime = Date.now();
+  var minDisplayMs = 600;
+  var maxDisplayMs = 45000;
+  var messages = [
+    { at: 0,     text: 'Loading GrailSweep...' },
+    { at: 1500,  text: 'Setting up the scanner...' },
+    { at: 5000,  text: 'Loading 160,000+ card database...' },
+    { at: 12000, text: 'Almost there — first launch is slower...' },
+    { at: 25000, text: 'Final preparations...' }
+  ];
+  var msgInterval = setInterval(function() {
+    var elapsed = Date.now() - startTime;
+    for (var i = messages.length - 1; i >= 0; i--) {
+      if (elapsed >= messages[i].at) {
+        if (messageEl.textContent !== messages[i].text) messageEl.textContent = messages[i].text;
+        break;
+      }
+    }
+  }, 500);
+  var dismissed = false;
+  function dismiss() {
+    if (dismissed) return;
+    dismissed = true;
+    var remaining = Math.max(0, minDisplayMs - (Date.now() - startTime));
+    setTimeout(function() {
+      overlay.style.opacity = '0';
+      setTimeout(function() { overlay.style.display = 'none'; clearInterval(msgInterval); }, 400);
+    }, remaining);
+  }
+  if (document.readyState === 'complete') { dismiss(); }
+  else { window.addEventListener('load', dismiss); }
+  setTimeout(dismiss, maxDisplayMs);
+})();
+</script>
+
+<script>
+// Non-blocking server-readiness ping — shows a subtle toast if Modal is still cold
+// after window.load (page loaded from SW cache but API not yet warm).
+(function() {
+  var toast = null;
+  var finished = false;
+
+  function showToast(msg) {
+    if (finished) return;
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'gsServerToast';
+      toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(15,15,26,0.92);border:1px solid rgba(177,77,255,0.3);color:rgba(255,255,255,0.7);font-size:0.78rem;padding:7px 16px;border-radius:20px;z-index:9999;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:opacity 0.3s ease;white-space:nowrap;pointer-events:none;';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+  }
+
+  function hideToast() {
+    finished = true;
+    if (!toast) return;
+    toast.style.opacity = '0';
+    setTimeout(function() { if (toast && toast.parentNode) toast.parentNode.removeChild(toast); toast = null; }, 350);
+  }
+
+  function startPing() {
+    var startMs = Date.now();
+    var maxWaitMs = 40000;
+    var retryMs = 2000;
+
+    function ping() {
+      if (finished) return;
+      fetch('/api/heartbeat', { cache: 'no-store' })
+        .then(function(r) { if (r.ok) { hideToast(); } else { onFail(); } })
+        .catch(onFail);
+    }
+
+    function onFail() {
+      if (finished) return;
+      if (Date.now() - startMs >= maxWaitMs) {
+        showToast('Server is starting up — some features may be slow');
+        return;
+      }
+      showToast('Connecting to server...');
+      setTimeout(ping, retryMs);
+    }
+
+    ping();
+  }
+
+  if (document.readyState === 'complete') { startPing(); }
+  else { window.addEventListener('load', startPing); }
+})();
+</script>
+
+{% endblock %}

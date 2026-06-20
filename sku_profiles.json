@@ -1,0 +1,3912 @@
+{
+  "1001": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "V"
+    ],
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "1046A": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "104AM": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Asymm"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Asymm"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "10FS": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "NONE"
+  },
+  "1184FD": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "80N": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ABL4": {
+    "front_grooves": 0,
+    "front_shapes": [],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Round"
+    ],
+    "pin_count": 0,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "ABU93": {
+    "front_grooves": 4,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "ABUS": {
+    "front_grooves": 3,
+    "back_grooves": 3,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "AG5": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ASEC1": {
+    "front_grooves": 3,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ASEC2": {
+    "front_grooves": 3,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ASPM": {
+    "front_grooves": 2,
+    "back_grooves": 3,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ASSA": {
+    "front_grooves": 4,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ASTM": {
+    "front_grooves": 3,
+    "back_grooves": 3,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "AU28": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "AU42R": {
+    "front_grooves": 3,
+    "back_grooves": 3,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "AYAD": {
+    "front_grooves": 3,
+    "back_grooves": 4,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "AYDE": {
+    "front_grooves": 3,
+    "back_grooves": 3,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "C25LP": {
+    "front_grooves": 4,
+    "back_grooves": 4,
+    "pin_count": 6,
+    "key_type": "DIMPLE",
+    "groove_side": "BOTH",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "DOUBLE_TRACK",
+    "dimple_cuts": 6
+  },
+  "CE14": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "CEM4": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 3,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "CG2RP": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "V"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "V"
+    ],
+    "pin_count": 4,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "CH8": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "CHI7D": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "FV"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "COR13": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Asymm",
+      "FV"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Asymm",
+      "Asymm"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "CS14R": {
+    "front_grooves": 3,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "DAT4I": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "DS1R": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "LEFT"
+  },
+  "DT22": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "EL5": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "EL6R": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 10,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ENHX": {
+    "front_grooves": 4,
+    "back_grooves": 4,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ER6": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "F40R": {
+    "front_grooves": 3,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "FAR3D": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "V"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "V"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "GC": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "RIGHT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 5.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "OPHB": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "1147": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 2,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "1430": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Round"
+    ],
+    "back_grooves": 0,
+    "back_shapes": [],
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "NONE"
+  },
+  "FB11": {
+    "front_grooves": 3,
+    "front_shapes": [
+      "Square",
+      "Square",
+      "Asymm"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "FV",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "FD18RP128": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "V"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "V"
+    ],
+    "pin_count": 8,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "FO8DP": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 8,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "GF": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 5.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "GH10": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Asymm",
+      "Asymm"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Asymm",
+      "Asymm"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "GM25P": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "V",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "V",
+      "Square"
+    ],
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "GUR1G": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 6.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "HAF1": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "HD16": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "HD51RP113": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Asymm"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Asymm"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "HD58P": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DIMPLE",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "SINGLE_TRACK",
+    "dimple_cuts": -1
+  },
+  "HD67": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "HF10": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "HOND2P": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "HW2": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Asymm"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "HY2P": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "V",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "V",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "HYD1": {
+    "front_grooves": 2,
+    "back_grooves": 0,
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "IM9RP75": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "V"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "V"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "IN4": {
+    "front_grooves": 3,
+    "front_shapes": [
+      "Square",
+      "Asymm",
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 4,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH"
+  },
+  "K45225": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "RIGHT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K45226": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "RIGHT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K45227": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "RIGHT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K45228": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K45229": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K45230": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K45232": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "RIGHT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K45233": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "RIGHT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K45234": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K45235": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K45236": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C13": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C14": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C15": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C16": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C17": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C18": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C19": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C20": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C21": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C22": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C23": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K477C24": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "KL3": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH"
+  },
+  "KW14": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "KYM1P142": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 7,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "KYM3P": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 7,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "LU1": {
+    "front_grooves": 0,
+    "front_shapes": [],
+    "back_grooves": 0,
+    "back_shapes": [],
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "NONE"
+  },
+  "MD5PS": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "FV"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "MEHZ": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Asymm"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Asymm"
+    ],
+    "pin_count": 8,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "MENYP": {
+    "front_grooves": 3,
+    "front_shapes": [
+      "Square",
+      "V",
+      "Square"
+    ],
+    "back_grooves": 3,
+    "back_shapes": [
+      "Square",
+      "V",
+      "Square"
+    ],
+    "pin_count": 8,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH"
+  },
+  "MER16": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "MM2": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "MS12": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "MZ5": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "NE16": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "NE2": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "NE26": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Round"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Round"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "NE31": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Asymm"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "NE39": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "NE48": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Asymm"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "OMC2D": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Asymm",
+      "Round"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Round",
+      "Asymm"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "OPBA": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "OPHG": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "PF14": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Round"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Round",
+      "Square"
+    ],
+    "pin_count": 2,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "R33": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "RN7": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Asymm",
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "V"
+    ],
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "RS1": {
+    "front_grooves": 5,
+    "back_grooves": 6,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "RU27R": {
+    "front_grooves": 3,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "SA1R": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 3,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "SA2": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 3,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "SA3": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 3,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "SA3R": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 3,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "SAM1": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 3,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "SEA1": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "V",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "V",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "SF3": {
+    "front_grooves": 3,
+    "front_shapes": [
+      "Square",
+      "Asymm",
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Asymm"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "SIP13": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "SOF2": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "FV",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Round"
+    ],
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH"
+  },
+  "SUZU4D": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 4,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "SUZU7": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "SZ7": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "V",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "V",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "TAP4R": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "TEU1": {
+    "front_grooves": 0,
+    "front_shapes": [],
+    "back_grooves": 0,
+    "back_shapes": [],
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "NONE"
+  },
+  "TOYO15": {
+    "front_grooves": 3,
+    "back_grooves": 3,
+    "pin_count": 10,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "TOYO22": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "TR31P": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "FV"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "FV"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "TY29R": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "TY36R": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Asymm"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Asymm"
+    ],
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "TY47P80": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 8,
+    "key_type": "DIMPLE",
+    "groove_side": "",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "SINGLE_TRACK",
+    "dimple_cuts": -1
+  },
+  "UL2": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Asymm",
+      "Round"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Round",
+      "Asymm"
+    ],
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "UL2RED": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Asymm",
+      "Round"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Round",
+      "Asymm"
+    ],
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "V61S": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "VI8R": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Asymm",
+      "Asymm"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Round",
+      "Asymm"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "VOM": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "FV"
+    ],
+    "pin_count": 8,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH"
+  },
+  "WAS8D": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Square"
+    ],
+    "pin_count": 10,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "WIL14": {
+    "front_grooves": 3,
+    "back_grooves": 1,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "WS13": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 7,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "YA22": {
+    "front_grooves": 3,
+    "front_shapes": [
+      "Square",
+      "FV",
+      "Asymm"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Asymm",
+      "Square"
+    ],
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "YA26": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Asymm",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Asymm",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "YAMA11I": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "YAMA25DP": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "YAMA32DP": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "V"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "V"
+    ],
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "YM27": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Asymm",
+      "Square"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "FV",
+      "Square"
+    ],
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT"
+  },
+  "YM32R": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "V"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "V"
+    ],
+    "pin_count": 8,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "YM6": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Round"
+    ],
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH"
+  },
+  "YMHY": {
+    "front_grooves": 3,
+    "front_shapes": [
+      "Square",
+      "Asymm",
+      "Square"
+    ],
+    "back_grooves": 3,
+    "back_shapes": [
+      "Square",
+      "Asymm",
+      "Square"
+    ],
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH"
+  },
+  "ZA1": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Round"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "ZA5": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Round"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Square"
+    ],
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "ZA6DP1": {
+    "front_grooves": 2,
+    "front_shapes": [
+      "Square",
+      "V"
+    ],
+    "back_grooves": 2,
+    "back_shapes": [
+      "Square",
+      "V"
+    ],
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT"
+  },
+  "ZD2": {
+    "front_grooves": 1,
+    "front_shapes": [
+      "Square"
+    ],
+    "back_grooves": 1,
+    "back_shapes": [
+      "Round"
+    ],
+    "pin_count": 3,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE"
+  },
+  "BO9": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "B206B": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "B463": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 5.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "B700": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "1157": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "1179A": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "8VC": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "98M": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "AB8": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "ABO2": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ABO3": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ABU11D": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "BAS2R": {
+    "front_grooves": 3,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "BD1": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "BUR5": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "CE5D": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 0,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "CI18": {
+    "front_grooves": 3,
+    "back_grooves": 4,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "CO17": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "COR4DP": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 2,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "DM16R": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "DM17R": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 10,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "DOM26": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "FB1230": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "FB13": {
+    "front_grooves": 3,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "FB29": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 0,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "FH5": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "FIC5": {
+    "front_grooves": 3,
+    "back_grooves": 4,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "GE5": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "GO4R": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ILC2D": {
+    "front_grooves": 2,
+    "back_grooves": 3,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "K479A1": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K479A2": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K479A3": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K479A4": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K479A5": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "RIGHT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K479A6": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "RIGHT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K479B1": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K479B2": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K479B3": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K479B4": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "RIGHT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K479B5": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "RIGHT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "K479B6": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "MORTICE_PRECUT",
+    "groove_side": "RIGHT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LASP": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "LF51R": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 10,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LF8R": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "LI8R": {
+    "front_grooves": 3,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "LIN3D": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "LIN5I": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "MAS18D": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "MBS300": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "",
+    "groove_side": "BOTH",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ME4R": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "MLM3R": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "MLM4R": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "OJQ": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 0,
+    "key_type": "DIMPLE",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "SINGLE_TRACK",
+    "dimple_cuts": -1
+  },
+  "PC3": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 3,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "PU3": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "SAR5D": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "SLG18": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "SOFI1I": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "TN9": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "TRI13": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "TY1": {
+    "front_grooves": 2,
+    "back_grooves": 3,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "VA13D": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "VAC60": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 3,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "WIK1R": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "ZE5I": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": ""
+  },
+  "1556": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 0,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "1614G": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "1616G": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIPE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 9.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "1CA1": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "2MO10R": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "LEFT",
+    "flag_profile": "RAISED_RIDGE",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "5SAS3": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "LEFT",
+    "flag_profile": "GROOVED",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 5.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "5SCM2": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "RIGHT",
+    "flag_profile": "RAISED_RIDGE",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 5.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "6C": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "A1170B": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "AB10R": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "ABU15D": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "ABU39P": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "ABU61S": {
+    "front_grooves": 5,
+    "back_grooves": 3,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "ABU83": {
+    "front_grooves": 5,
+    "back_grooves": 3,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "AG5R": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "AG8D": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "AGE2": {
+    "front_grooves": 3,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "AS21": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "ATR2G": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "BOTH",
+    "flag_profile": "GROOVED",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "B13": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 3,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "BE4G": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "LEFT",
+    "flag_profile": "RAISED_RIDGE",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 5.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "BE6G": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "LEFT",
+    "flag_profile": "RAISED_RIDGE",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 6.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "CA10": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 7,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "CHR14P": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 7,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "CI1G": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "RIGHT",
+    "flag_profile": "RAISED_RIDGE",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "CI2G": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "LEFT",
+    "flag_profile": "RAISED_RIDGE",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "CI4G": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "LEFT",
+    "flag_profile": "RAISED_RIDGE",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "CIS1I": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "CVL1I": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "CVL2": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "DAD3D": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "DAE4DP1": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "DB16": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "DM1": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 3,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "DM20": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "DM21": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "DIMPLE",
+    "groove_side": "BOTH",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "DOUBLE_TRACK",
+    "dimple_cuts": -1
+  },
+  "DT19": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "ES9": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "FAC1G": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "LEFT",
+    "flag_profile": "RAISED_RIDGE",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "FD": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "RIGHT",
+    "flag_profile": "RAISED_RIDGE",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "FF14": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "FF1D": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "FI11P": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 7,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "GTV1D": {
+    "front_grooves": 2,
+    "back_grooves": 3,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "HA1": {
+    "front_grooves": 0,
+    "back_grooves": 1,
+    "pin_count": 2,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "HA1R": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 2,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "HD11": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "HF59P150": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DIMPLE",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "DOUBLE_TRACK",
+    "dimple_cuts": -1
+  },
+  "HFHC": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 10,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "HFHUP17": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "HOND17P": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DIMPLE",
+    "groove_side": "",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "SINGLE_TRACK",
+    "dimple_cuts": -1
+  },
+  "HOND4IP": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "HU2R": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "HU63": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DIMPLE",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "DOUBLE_TRACK",
+    "dimple_cuts": -1
+  },
+  "HYN4": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 7,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "HYN7RAP": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 8,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "IDS1R": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "IT2G": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 5.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "IX1": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "JTF1I": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "KNA1": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L002": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 4.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L006": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L05": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 5.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L057": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L058": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 8.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L066": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L067": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L070": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L071": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L08": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 3.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L10": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L11": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L184": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 3.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L185": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 2.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L213": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 7.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L265": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 2.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "L281": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "MORTICE_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "OVAL",
+    "mortice_gauge": 8.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LF120PP": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIPE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 10.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LF165PN": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 3.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LF33": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 10,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LF65PN": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 3.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LF65PP": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIPE",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 10.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LF90PN": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 3.5,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LFDB1": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LFWB": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 8,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LIN2G": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "RIGHT",
+    "flag_profile": "RAISED_RIDGE",
+    "bow_shape": "SQUARE",
+    "mortice_gauge": 6.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LM1": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "LPM5": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "MAZ8DP": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 10,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "ME2R": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "MIN1D": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "MR7": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "MZ10P": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "NE33SP": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "OJJ": {
+    "front_grooves": 3,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "OPJ": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "P1098J": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "PAP5": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "PP5PD": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "REL2": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "SK049": {
+    "front_grooves": 1,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "RIGHT",
+    "flag_profile": "RAISED_RIDGE",
+    "bow_shape": "UNIQUE",
+    "mortice_gauge": 5.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "STA2": {
+    "front_grooves": 2,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "STR6": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 7,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "TB3R": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 0,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "TD3": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 0,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "TI1": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "TY37RP79": {
+    "front_grooves": 3,
+    "back_grooves": 3,
+    "pin_count": 10,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "BOTH",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "VI10": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "VO4P": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 0,
+    "key_type": "DIMPLE",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "SINGLE_TRACK",
+    "dimple_cuts": -1
+  },
+  "WEI9": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "WIK1": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "WT5": {
+    "front_grooves": 1,
+    "back_grooves": 2,
+    "pin_count": 6,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "XL017": {
+    "front_grooves": 0,
+    "back_grooves": 0,
+    "pin_count": 0,
+    "key_type": "DOUBLE_BIT_PIN",
+    "groove_side": "NONE",
+    "flag_profile": "FLAT",
+    "bow_shape": "ROUND",
+    "mortice_gauge": 8.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "ZD18": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 5,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "RIGHT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "COR4PD": {
+    "front_grooves": 2,
+    "back_grooves": 2,
+    "pin_count": 4,
+    "key_type": "CYLINDER",
+    "groove_side": "NONE",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  },
+  "AB110R": {
+    "front_grooves": 1,
+    "back_grooves": 1,
+    "pin_count": 4,
+    "key_type": "DOUBLE_SIDED",
+    "groove_side": "LEFT",
+    "flag_profile": "",
+    "bow_shape": "",
+    "mortice_gauge": -1.0,
+    "dimple_track": "",
+    "dimple_cuts": -1
+  }
+}

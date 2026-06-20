@@ -1,0 +1,13 @@
+{
+  "scrape_date": "2026-05-04T01:00:52Z",
+  "sets_scraped": [
+    "hob",
+    "fra"
+  ],
+  "stats": {
+    "total": 46,
+    "downloaded": 46,
+    "skipped": 0,
+    "failed": 0
+  }
+}

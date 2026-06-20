@@ -1,0 +1,431 @@
+﻿
+> api_routes.py:368:                "tier_limit_exceeded": "You've reached your fair-use cap for this period.",
+  api_routes.py:369:            }
+  api_routes.py:370:            return jsonify({
+  api_routes.py:371:                "error":           "scan_limit_reached",
+> app.py:60:    # Allow Modal's own internal traffic (e.g. cron jobs, internal callbacks)
+  app.py:61:    ua = request.headers.get("User-Agent", "") or ""
+  app.py:62:    if ua.startswith("Modal/") or ua.startswith("modal-client"):
+  app.py:63:        return
+> app.py:431:                    "tier_period_end":        tier_state["tier_period_end"],
+  app.py:432:                    "tier_warned_80pct":      tier_state["tier_warned_80pct"],
+  app.py:433:                    "tier_transition_warned": tier_state["tier_transition_warned"],
+  app.py:434:                    "tier_remaining":         tier_state["tier_remaining"],
+> app.py:2737:        from set_scheduler import load_scheduler_log
+> app.py:2738:        scheduler_runs = load_scheduler_log()
+  app.py:2739:    except Exception:
+> app.py:2740:        scheduler_runs = []
+  app.py:2741:
+  app.py:2742:    return render_template(
+  app.py:2743:        "admin.html",
+> app.py:2749:        scheduler_runs=scheduler_runs,
+  app.py:2750:    )
+  app.py:2751:
+  app.py:2752:
+> app.py:3174:@app.route("/admin/run_scheduler", methods=["POST"])
+  app.py:3175:@admin_required
+> app.py:3176:def admin_run_scheduler():
+> app.py:3177:    from set_scheduler import run_scheduler
+  app.py:3178:    try:
+> app.py:3179:        result = run_scheduler(dry_run=False)
+  app.py:3180:        new_total = sum(len(v.get("new_sets", [])) for v in result.get("tcgs", {}).values())
+  app.py:3181:        if new_total > 0:
+> app.py:3182:            flash(f"✅ Scheduler complete — {new_total} new set(s) found and queued for download.", "ok")
+  app.py:3183:        else:
+> app.py:3184:            flash("✅ Scheduler complete — all TCGs up to date.", "ok")
+  app.py:3185:    except Exception as e:
+> app.py:3186:        flash(f"❌ Scheduler error: {e}", "err")
+  app.py:3187:    return redirect(url_for("admin"))
+  app.py:3188:
+  app.py:3189:
+> app.py:3190:@app.route("/admin/run_scheduler_dry", methods=["POST"])
+  app.py:3191:@admin_required
+> app.py:3192:def admin_run_scheduler_dry():
+> app.py:3193:    from set_scheduler import run_scheduler
+  app.py:3194:    try:
+> app.py:3195:        result = run_scheduler(dry_run=True)
+  app.py:3196:        new_total = sum(len(v.get("new_sets", [])) for v in result.get("tcgs", {}).values())
+  app.py:3197:        if new_total > 0:
+  app.py:3198:            flash(f"🔍 Dry run complete — {new_total} new set(s) detected (not downloaded).", "ok")
+> app.py:4924:                # Persist billing period fields for tier cap tracking
+  app.py:4925:                if new_code and subscription_id and tier in ("monthly", "annual", "founder_yearly"):
+  app.py:4926:                    try:
+  app.py:4927:                        _stripe_sub = stripe.Subscription.retrieve(subscription_id)
+> app.py:4928:                        _ps = _stripe_sub.get("current_period_start")
+> app.py:4929:                        _pe = _stripe_sub.get("current_period_end")
+  app.py:4930:                        if _ps and _pe:
+  app.py:4931:                            from datetime import datetime as _dt
+  app.py:4932:                            _subs = _load_subs()
+> app.py:4934:                                _subs[new_code]["current_period_start"] = 
+_dt.utcfromtimestamp(_ps).isoformat()
+> app.py:4935:                                _subs[new_code]["current_period_end"]   = 
+_dt.utcfromtimestamp(_pe).isoformat()
+  app.py:4936:                                _save_subs(_subs)
+> app.py:4937:                                print(f"[WEBHOOK] Persisted period fields for code={new_code}", 
+flush=True)
+  app.py:4938:                    except Exception as _we:
+> app.py:4939:                        print(f"[WEBHOOK] Period field persist failed: {_we}", flush=True)
+  app.py:4940:
+  app.py:4941:    elif etype == "invoice.paid":
+  app.py:4942:        subscription_id = obj_dict.get("subscription")
+> app.py:4945:            # Persist new billing period on renewal + reset 80% warning flag
+  app.py:4946:            try:
+> app.py:4947:                _ps = obj_dict.get("period_start") or (
+> app.py:4948:                    (obj_dict.get("lines") or {}).get("data") or [{}])[0].get("period", {}).get("start")
+> app.py:4949:                _pe = obj_dict.get("period_end") or (
+> app.py:4950:                    (obj_dict.get("lines") or {}).get("data") or [{}])[0].get("period", {}).get("end")
+  app.py:4951:                if _ps and _pe:
+  app.py:4952:                    from datetime import datetime as _dt
+  app.py:4953:                    _subs = _load_subs()
+> app.py:4956:                            _entry["current_period_start"] = _dt.utcfromtimestamp(_ps).isoformat()
+> app.py:4957:                            _entry["current_period_end"]   = _dt.utcfromtimestamp(_pe).isoformat()
+  app.py:4958:                            _entry["tier_warned_80pct"]       = False
+  app.py:4959:                            _entry["tier_transition_warned"]  = False
+> app.py:4960:                            print(f"[WEBHOOK] Renewed period for code={_code}", flush=True)
+  app.py:4961:                            break
+  app.py:4962:                    _save_subs(_subs)
+  app.py:4963:            except Exception as _re:
+> app.py:4964:                print(f"[WEBHOOK] invoice.paid period update failed: {_re}", flush=True)
+  app.py:4965:
+  app.py:4966:    elif etype == "customer.subscription.deleted":
+  app.py:4967:        subscription_id = obj_dict.get("id")
+> app.py:5557:    """User-action endpoint: marks an in-period warning as dismissed.
+  app.py:5558:    Auth: code validated against subscriptions.json (mirrors push/subscribe pattern).
+  app.py:5559:    Body: {"code": "GRAIL-XXXX-XXXX", "flag": "80pct" | "transition"}
+  app.py:5560:    """
+> app.py:5873:def _ensure_tier_period_backfilled(code: str, sub: dict) -> bool:
+> app.py:5874:    """Fetch Stripe period fields if missing from subscription record and persist.
+  app.py:5875:    Returns True if a backfill write happened (caller should reload subs)."""
+> app.py:5876:    if "current_period_start" in sub and "current_period_end" in sub:
+  app.py:5877:        return False
+  app.py:5878:    sub_id = sub.get("stripe_subscription_id")
+  app.py:5879:    if not sub_id:
+> app.py:5885:        ps = stripe_sub.get("current_period_start")
+> app.py:5886:        pe = stripe_sub.get("current_period_end")
+  app.py:5887:        if ps and pe:
+  app.py:5888:            from datetime import datetime as _dt
+> app.py:5889:            sub["current_period_start"] = _dt.utcfromtimestamp(ps).isoformat()
+> app.py:5890:            sub["current_period_end"]   = _dt.utcfromtimestamp(pe).isoformat()
+  app.py:5891:            subs = _load_subs()
+  app.py:5892:            subs[code] = sub
+  app.py:5893:            _save_subs(subs)
+> app.py:5894:            print(f"[TIER-BACKFILL] Persisted period fields from Stripe for code={code}", flush=True)
+  app.py:5895:            return True
+> app.py:5896:        print(f"[TIER-BACKFILL] Stripe response missing period fields for code={code} — using created_at 
+fallback", flush=True)
+  app.py:5897:        return False
+  app.py:5898:    except Exception as _e:
+  app.py:5899:        print(f"[TIER-BACKFILL] Stripe retrieval unavailable for code={code} (using created_at 
+fallback): {_e}", flush=True)
+> app.py:5923:        # Lazy backfill: ensure period fields exist for capped tiers before gate runs
+  app.py:5924:        if code and tier in ("monthly", "annual", "founder_yearly"):
+  app.py:5925:            sub = subs.get(code, {})
+> app.py:5926:            if _ensure_tier_period_backfilled(code, sub):
+  app.py:5927:                subs = _load_subs()   # reload after write
+  app.py:5928:        result = _db.check_and_record_scan(server_fp, device_id, tier,
+  app.py:5929:                                          code=code, subscriptions_obj=subs)
+> app.py:5940:                    print(f"[TIER-TRANSITION] First top-up consumed for code={code} this period", 
+flush=True)
+  app.py:5941:                else:
+  app.py:5942:                    result["show_transition_toast"] = False
+  app.py:5943:            except Exception as _te:
+> backfill_fix_orig_names.py:25:@app.function(
+  backfill_fix_orig_names.py:26:    image=image,
+  backfill_fix_orig_names.py:27:    volumes={"/modal_data": vol},
+  backfill_fix_orig_names.py:28:    secrets=[
+> backfill_fix_orig_names.py:76:@app.local_entrypoint()
+  backfill_fix_orig_names.py:77:def main():
+  backfill_fix_orig_names.py:78:    fix_orig_names.remote()
+> backfill_fix_thumbnails.py:29:@app.function(
+  backfill_fix_thumbnails.py:30:    image=image,
+  backfill_fix_thumbnails.py:31:    volumes={"/modal_data": vol},
+  backfill_fix_thumbnails.py:32:    secrets=[
+> backfill_fix_thumbnails.py:104:@app.local_entrypoint()
+  backfill_fix_thumbnails.py:105:def main():
+  backfill_fix_thumbnails.py:106:    fix_thumbnails.remote()
+> backfill_hobfra_profiles.py:8:@app.local_entrypoint()
+  backfill_hobfra_profiles.py:9:def main():
+  backfill_hobfra_profiles.py:10:    run.remote()
+  backfill_hobfra_profiles.py:11:
+> backfill_hobfra_profiles.py:12:@app.function(image=image, volumes={"/data": vol}, timeout=900)
+  backfill_hobfra_profiles.py:13:def run():
+  backfill_hobfra_profiles.py:14:    import os, json, time, requests
+  backfill_hobfra_profiles.py:15:
+> backfill_npy_to_sqlite.py:25:@app.function(
+  backfill_npy_to_sqlite.py:26:    image=image,
+  backfill_npy_to_sqlite.py:27:    volumes={"/modal_data": vol},
+  backfill_npy_to_sqlite.py:28:    secrets=[
+> backfill_npy_to_sqlite.py:127:@app.local_entrypoint()
+  backfill_npy_to_sqlite.py:128:def main():
+  backfill_npy_to_sqlite.py:129:    backfill_npy_to_sqlite.remote()
+> backfill_scraped_cards.py:64:# Core registration logic (importable by set_scheduler.py)
+  backfill_scraped_cards.py:65:# ─────────────────────────────────────────────────────────────
+  backfill_scraped_cards.py:66:
+  backfill_scraped_cards.py:67:def register_scraped_cards(
+> backfill_scraped_cards.py:191:@app.function(
+  backfill_scraped_cards.py:192:    image=_image,
+  backfill_scraped_cards.py:193:    volumes={"/modal_data": vol},
+  backfill_scraped_cards.py:194:    timeout=600,
+> backfill_scraped_cards.py:204:@app.local_entrypoint()
+  backfill_scraped_cards.py:205:def main(tcg: str = "all", sets: str = "", dry_run: bool = False):
+  backfill_scraped_cards.py:206:    """
+  backfill_scraped_cards.py:207:    Run with:
+> check_hobfra_profiles.py:8:@app.local_entrypoint()
+  check_hobfra_profiles.py:9:def main():
+  check_hobfra_profiles.py:10:    check.remote()
+  check_hobfra_profiles.py:11:
+> check_hobfra_profiles.py:12:@app.function(image=image, volumes={"/data": vol})
+  check_hobfra_profiles.py:13:def check():
+  check_hobfra_profiles.py:14:    import os, json
+  check_hobfra_profiles.py:15:
+> db.py:359:# billing-anchor-aware period, not necessarily calendar month)
+  db.py:360:# ─────────────────────────────────────────────────────────────
+  db.py:361:
+  db.py:362:def _anchor_day_for_subscription(sub: dict) -> int:
+> db.py:363:    """Day-of-month billing anchor derived from current_period_start or created_at.
+  db.py:364:    Falls back to 1 if neither is available or parseable."""
+  db.py:365:    from datetime import datetime
+> db.py:366:    for field in ("current_period_start", "created_at"):
+  db.py:367:        val = sub.get(field)
+  db.py:368:        if not val:
+  db.py:369:            continue
+> db.py:379:def _period_id_for_tier(anchor_day: int) -> str:
+  db.py:380:    """Returns YYYY-MM string for the current billing window given an anchor day.
+  db.py:381:    If today < anchor_day, we're still in the window that started last month."""
+  db.py:382:    from datetime import datetime
+> db.py:392:def _period_bounds_for_tier(anchor_day: int) -> tuple:
+> db.py:393:    """Returns (period_start_iso, period_end_iso) for the current billing window."""
+  db.py:394:    from datetime import datetime, timedelta
+  db.py:395:    from calendar import monthrange
+  db.py:396:    now = datetime.utcnow()
+> db.py:406:    period_start = datetime(start_year, start_month, start_day)
+  db.py:407:    if start_month == 12:
+  db.py:408:        end_year, end_month = start_year + 1, 1
+  db.py:409:    else:
+> db.py:412:    period_end = datetime(end_year, end_month, end_day) - timedelta(seconds=1)
+> db.py:413:    return period_start.isoformat(), period_end.isoformat()
+  db.py:414:
+  db.py:415:
+  db.py:416:def get_tier_cap(tier: str) -> int | None:
+> db.py:432:    period_id = _period_id_for_tier(anchor_day)
+> db.py:433:    period_start, period_end = _period_bounds_for_tier(anchor_day)
+  db.py:434:    cap = get_tier_cap(tier) or 0
+  db.py:435:    try:
+  db.py:436:        d = modal.Dict.from_name(_SCANS_DICT_NAME, create_if_missing=True)
+> db.py:437:        tier_used = d.get(f"tier:used:{code}:{period_id}", 0) or 0
+  db.py:438:    except Exception:
+  db.py:439:        tier_used = 0
+  db.py:440:    warned = bool(sub.get("tier_warned_80pct", False))
+> db.py:442:    # Both flags reset when a new billing period begins
+> db.py:443:    recorded_end = sub.get("tier_period_end")
+> db.py:444:    if recorded_end and recorded_end != period_end:
+  db.py:445:        warned = False
+  db.py:446:        transition_warned = False
+  db.py:447:    return {
+> db.py:450:        "tier_period_start":       period_start,
+> db.py:451:        "tier_period_end":         period_end,
+  db.py:452:        "tier_warned_80pct":       warned,
+  db.py:453:        "tier_transition_warned":  transition_warned,
+  db.py:454:        "tier_remaining":          max(0, cap - tier_used),
+> db.py:466:    period_id = _period_id_for_tier(anchor_day)
+  db.py:467:    cap = get_tier_cap(tier)
+  db.py:468:    if not cap:
+  db.py:469:        print(f"[TIER] WARNING: no cap configured for tier={tier}, allowing scan", flush=True)
+> db.py:471:    counter_key = f"tier:used:{code}:{period_id}"
+  db.py:472:    try:
+  db.py:473:        d = modal.Dict.from_name(_SCANS_DICT_NAME, create_if_missing=True)
+  db.py:474:        current = d.get(counter_key, 0) or 0
+> db_check.py:11:@app.function(image=image, volumes={"/modal_data": vol}, timeout=120)
+  db_check.py:12:def check():
+  db_check.py:13:    import sqlite3
+  db_check.py:14:    c = sqlite3.connect('/modal_data/MatchITv2_ProductMatch_Data/cards/images.db')
+> db_check.py:60:@app.local_entrypoint()
+  db_check.py:61:def main():
+  db_check.py:62:    check.remote()
+> find_profile.py:7:@app.local_entrypoint()
+  find_profile.py:8:def main():
+  find_profile.py:9:    find.remote()
+  find_profile.py:10:
+> find_profile.py:11:@app.function(image=image, volumes={"/data": vol})
+  find_profile.py:12:def find():
+  find_profile.py:13:    import os, json, sqlite3
+  find_profile.py:14:
+> incremental_embed.py:10:Usage (from scheduler / app code):
+  incremental_embed.py:11:    from incremental_embed import run_incremental_embed
+  incremental_embed.py:12:    result = run_incremental_embed()
+  incremental_embed.py:13:
+> matchit_modal.py:116:@app.function(
+  matchit_modal.py:117:    image=image,
+  matchit_modal.py:118:    gpu="T4",
+  matchit_modal.py:119:    volumes={"/modal_data": vol},
+> matchit_modal.py:136:@modal.concurrent(max_inputs=3)
+> matchit_modal.py:137:@modal.wsgi_app()
+  matchit_modal.py:138:def serve():
+  matchit_modal.py:139:    os.chdir("/app")
+  matchit_modal.py:140:    sys.path.insert(0, "/app")
+> matchit_modal.py:188:@app.function(
+  matchit_modal.py:189:    image=image,
+  matchit_modal.py:190:    gpu="T4",
+  matchit_modal.py:191:    volumes={"/modal_data": vol},
+> matchit_modal.py:200:    schedule=modal.Cron("0 1 * * 1"),  # Every Monday at 1am UTC
+  matchit_modal.py:201:    timeout=1800,
+  matchit_modal.py:202:)
+> matchit_modal.py:203:def scheduled_set_check():
+  matchit_modal.py:204:    import os, sys
+  matchit_modal.py:205:    os.chdir("/app")
+  matchit_modal.py:206:    sys.path.insert(0, "/app")
+> matchit_modal.py:214:    from set_scheduler import run_scheduler
+> matchit_modal.py:215:    result = run_scheduler()
+> matchit_modal.py:216:    print(f"[CRON] Done — {result}", flush=True)
+  matchit_modal.py:217:
+  matchit_modal.py:218:
+> migrate_volume.py:29:@app.function(
+  migrate_volume.py:30:    image=image,
+  migrate_volume.py:31:    volumes={
+  migrate_volume.py:32:        "/v1": vol_v1,
+> migrate_volume.py:123:@app.local_entrypoint()
+  migrate_volume.py:124:def main():
+  migrate_volume.py:125:    migrate.remote()
+> set_scheduler.py:2:set_scheduler.py — Automatic new set detection and ingestion for MatchIT
+  set_scheduler.py:3:=========================================================================
+  set_scheduler.py:4:Detects new sets for all three TCGs, downloads new card images,
+  set_scheduler.py:5:runs incremental embedding, and sends an email summary.
+> set_scheduler.py:8:    1. Manually:   python set_scheduler.py
+> set_scheduler.py:9:    2. As a Modal cron job (see matchit_modal.py integration below)
+> set_scheduler.py:10:    3. Per-TCG:    python set_scheduler.py --tcg POKEMON
+  set_scheduler.py:11:
+  set_scheduler.py:12:Configuration:
+  set_scheduler.py:13:    Edit the CONFIG block below, or set environment variables.
+> set_scheduler.py:17:    @app.function(
+  set_scheduler.py:18:        image=image,
+  set_scheduler.py:19:        gpu="T4",
+  set_scheduler.py:20:        volumes={"/modal_data": vol},
+> set_scheduler.py:21:        schedule=modal.Cron("0 3 * * 1"),  # Every Monday at 3am UTC
+  set_scheduler.py:22:        timeout=1800,
+  set_scheduler.py:23:    )
+> set_scheduler.py:24:    def scheduled_set_check():
+  set_scheduler.py:25:        import os, sys
+  set_scheduler.py:26:        os.chdir("/app")
+  set_scheduler.py:27:        sys.path.insert(0, "/app")
+> set_scheduler.py:29:        from set_scheduler import run_scheduler
+> set_scheduler.py:30:        run_scheduler()
+  set_scheduler.py:31:"""
+  set_scheduler.py:32:
+  set_scheduler.py:33:import argparse
+> set_scheduler.py:99:def _get_scheduler_log_path() -> Path:
+> set_scheduler.py:100:    """JSON log of all scheduler runs — used for admin summary page."""
+> set_scheduler.py:101:    return _get_data_dir() / "scheduler_log.json"
+  set_scheduler.py:102:
+  set_scheduler.py:103:
+  set_scheduler.py:104:# ─────────────────────────────────────────────────────────────
+> set_scheduler.py:457:    lines = [f"GrailSweep Set Scheduler — {now}", "=" * 40, ""]
+  set_scheduler.py:458:    for tcg, data in run_summary.get("tcgs", {}).items():
+  set_scheduler.py:459:        lines.append(f"{tcg}:")
+  set_scheduler.py:460:        new_sets = data.get("new_sets", [])
+> set_scheduler.py:511:        GrailSweep — Set Scheduler
+  set_scheduler.py:512:      </h2>
+  set_scheduler.py:513:      <p style="color:#9b95b8;font-size:0.85rem;">{now}</p>
+  set_scheduler.py:514:      <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+> set_scheduler.py:680:    # CardsDB root — same convention as the rest of the scheduler
+  set_scheduler.py:681:    localappdata = os.environ.get("LOCALAPPDATA", "/modal_data")
+  set_scheduler.py:682:    cards_db_root = Path(localappdata) / "CardsDB"
+  set_scheduler.py:683:    # Modal fallback
+> set_scheduler.py:766:# Scheduler log (for admin summary page)
+  set_scheduler.py:767:# ─────────────────────────────────────────────────────────────
+  set_scheduler.py:768:
+> set_scheduler.py:769:def _save_scheduler_log(run_summary: Dict) -> None:
+> set_scheduler.py:770:    """Append this run to the scheduler log JSON."""
+> set_scheduler.py:771:    log_path = _get_scheduler_log_path()
+  set_scheduler.py:772:    history  = []
+  set_scheduler.py:773:    if log_path.exists():
+  set_scheduler.py:774:        try:
+> set_scheduler.py:786:    logger.info(f"[SCHED] Scheduler log saved to {log_path}")
+  set_scheduler.py:787:
+  set_scheduler.py:788:
+> set_scheduler.py:789:def load_scheduler_log() -> List[Dict]:
+> set_scheduler.py:790:    """Load scheduler run history — used by admin summary page."""
+> set_scheduler.py:791:    log_path = _get_scheduler_log_path()
+  set_scheduler.py:792:    if not log_path.exists():
+  set_scheduler.py:793:        return []
+  set_scheduler.py:794:    try:
+> set_scheduler.py:802:# Main scheduler run
+  set_scheduler.py:803:# ─────────────────────────────────────────────────────────────
+  set_scheduler.py:804:
+> set_scheduler.py:805:def run_scheduler(
+  set_scheduler.py:806:    tcgs:     Optional[List[str]] = None,
+  set_scheduler.py:807:    dry_run:  bool = False,
+  set_scheduler.py:808:    db_root:  Optional[str] = None,
+> set_scheduler.py:811:    Full scheduler run:
+  set_scheduler.py:812:    1. Detect new sets per TCG
+  set_scheduler.py:813:    2. Download new images
+  set_scheduler.py:814:    3. Run incremental embed
+> set_scheduler.py:839:    logger.info(f"[SCHED] Starting scheduler run at {run_at} — TCGs: {tcgs}")
+  set_scheduler.py:840:
+  set_scheduler.py:841:    any_new = False
+  set_scheduler.py:842:
+> set_scheduler.py:913:    _save_scheduler_log(run_summary)
+  set_scheduler.py:914:
+  set_scheduler.py:915:    # ── 4. Send email ──
+  set_scheduler.py:916:    subject, body_html, body_text = _build_email(run_summary)
+> set_scheduler.py:943:        description="MatchIT new set scheduler"
+  set_scheduler.py:944:    )
+  set_scheduler.py:945:    parser.add_argument(
+  set_scheduler.py:946:        "--tcg",
+> set_scheduler.py:974:    result = run_scheduler(
+  set_scheduler.py:975:        tcgs=tcgs,
+  set_scheduler.py:976:        dry_run=args.dry_run,
+  set_scheduler.py:977:        db_root=args.db_root,
+> set_scheduler.py:980:    print("\n=== Scheduler Run Summary ===")
+  set_scheduler.py:981:    for tcg, data in result.get("tcgs", {}).items():
+  set_scheduler.py:982:        new = data.get("new_sets", [])
+  set_scheduler.py:983:        print(f"  {tcg}: {len(new)} new set(s)")
+> smart_upload.py:71:@app.function(volumes={"/data": vol}, timeout=86400)
+  smart_upload.py:72:def remote_upload_db_and_cache(vertical_id, db_bytes, cache_files):
+  smart_upload.py:73:    base = "/data/MatchITv2_ProductMatch_Data/" + vertical_id
+  smart_upload.py:74:    os.makedirs(base, exist_ok=True)
+> smart_upload.py:88:@app.function(volumes={"/data": vol}, timeout=86400)
+  smart_upload.py:89:def remote_upload_image_batch(vertical_id, batch):
+  smart_upload.py:90:    img_dir = "/data/MatchITv2_ProductMatch_Data/" + vertical_id + "/image_db"
+  smart_upload.py:91:    os.makedirs(img_dir, exist_ok=True)
+> smart_upload.py:99:@app.function(volumes={"/data": vol}, timeout=86400)
+  smart_upload.py:100:def remote_upload_profile_batch(batch):
+  smart_upload.py:101:    count = 0
+  smart_upload.py:102:    for rel_path, data in batch:
+> smart_upload.py:112:@app.function(volumes={"/data": vol}, timeout=86400)
+  smart_upload.py:113:def remote_upload_thumbnail_batch(batch):
+  smart_upload.py:114:    count = 0
+  smart_upload.py:115:    for rel_path, data in batch:
+> smart_upload.py:125:@app.function(volumes={"/data": vol}, timeout=86400)
+  smart_upload.py:126:def remote_check_volume():
+  smart_upload.py:127:    print("Volume contents:")
+  smart_upload.py:128:    for root, dirs, files in os.walk("/data"):
+> smart_upload.py:347:@app.local_entrypoint()
+  smart_upload.py:348:def main(
+  smart_upload.py:349:    vertical: str = "all",
+  smart_upload.py:350:    images: bool = False,
+> upload_profiles.py:11:@app.function(volumes={"/modal_data": vol}, timeout=86400)
+  upload_profiles.py:12:def upload_profile_batch(batch):
+  upload_profiles.py:13:    count = 0
+  upload_profiles.py:14:    for rel_path, data in batch:
+> upload_profiles.py:25:@app.local_entrypoint()
+  upload_profiles.py:26:def main():
+  upload_profiles.py:27:    print("Scanning for profile.json files...")
+  upload_profiles.py:28:    profiles = []
+> upload_to_modal.py:11:@app.function(volumes={"/data": vol}, timeout=86400)
+  upload_to_modal.py:12:def upload_vertical(vertical_id, db_bytes, cache_files):
+  upload_to_modal.py:13:    base = "/data/MatchITv2_ProductMatch_Data/" + vertical_id
+  upload_to_modal.py:14:    os.makedirs(base, exist_ok=True)
+> upload_to_modal.py:32:@app.function(volumes={"/data": vol}, timeout=86400)
+  upload_to_modal.py:33:def upload_image_batch(vertical_id, batch):
+  upload_to_modal.py:34:    img_dir = "/data/MatchITv2_ProductMatch_Data/" + vertical_id + "/image_db"
+  upload_to_modal.py:35:    os.makedirs(img_dir, exist_ok=True)
+> upload_to_modal.py:45:@app.function(volumes={"/data": vol}, timeout=86400)
+  upload_to_modal.py:46:def check_volume():
+  upload_to_modal.py:47:    print("Volume contents:")
+  upload_to_modal.py:48:    for root, dirs, files in os.walk("/data"):
+> upload_to_modal.py:65:@app.local_entrypoint()
+  upload_to_modal.py:66:def main(vertical: str = "cards", images: bool = False, check: bool = False):
+  upload_to_modal.py:67:    if check:
+  upload_to_modal.py:68:        check_volume.remote()
+
+

@@ -1,0 +1,194 @@
+import modal
+import os
+import sys
+
+sys.path.insert(0, "/app")
+from modal_config import VOLUME_NAME, vol, image
+from log_config import configure_logging
+
+configure_logging()
+print("[LOG-INIT] modal entry: logging configured -> stdout INFO", flush=True)
+
+app = modal.App("matchit-api")
+
+
+def _fix_vertical_config():
+    import json
+    vpath = "/app/verticals/cards/vertical.json"
+    with open(vpath, "r") as f:
+        vcfg = json.load(f)
+    vcfg["db_root"] = "/modal_data/CardsDB"
+    with open(vpath, "w") as f:
+        json.dump(vcfg, f, indent=2)
+    os.makedirs("/modal_data/CardsDB", exist_ok=True)
+
+
+def _fix_db_paths():
+    import sqlite3
+    db_path = "/modal_data/MatchITv2_ProductMatch_Data/cards/images.db"
+    if not os.path.exists(db_path):
+        return
+    try:
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            "UPDATE images SET path = REPLACE(path, ?, ?)",
+            (
+                "C:\\Users\\c_a_b\\AppData\\Local\\MatchITv2_ProductMatch_Data\\cards\\image_db\\",
+                "/modal_data/MatchITv2_ProductMatch_Data/cards/image_db/",
+            ),
+        )
+        conn.commit()
+        conn.close()
+        print("Fixed image paths for Modal")
+    except Exception as e:
+        print("Path fix skipped: " + str(e))
+
+
+def _make_image_wsgi():
+    """Lightweight Flask mini-app that serves images straight from the volume.
+    No ML models are imported here — this is intentional so that a cold
+    container receiving only image requests never pays the ~30s CLIP/DINOv2
+    load penalty."""
+    from flask import Flask as _Flask, send_file, abort, make_response
+
+    _img = _Flask("matchit_img_server")
+
+    IMAGE_DB_DIR = "/modal_data/MatchITv2_ProductMatch_Data/cards/image_db"
+    QUERY_DIR    = "/modal_data/query"
+    os.makedirs(QUERY_DIR, exist_ok=True)
+    RAS_DIR      = "/app/ras_images"
+
+    @_img.route("/img/db/<image_id>.jpg")
+    def _img_db(image_id):
+        path = os.path.join(IMAGE_DB_DIR, image_id + ".jpg")
+        if not os.path.exists(path):
+            abort(404)
+        resp = make_response(send_file(path, mimetype="image/jpeg"))
+        resp.headers["Cache-Control"] = "public, max-age=86400"
+        return resp
+
+    @_img.route("/img/query/<filename>")
+    def _img_query(filename):
+        if ".." in filename or "/" in filename:
+            abort(404)
+        path = os.path.join(QUERY_DIR, filename)
+        if not os.path.exists(path):
+            abort(404)
+        resp = make_response(send_file(path))
+        resp.headers["Cache-Control"] = "no-store, no-cache"
+        return resp
+
+    @_img.route("/img/ras/<sku>.jpg")
+    def _img_ras(sku):
+        for ext in [".jpg", ".png", ".jpeg", ".webp"]:
+            p = os.path.join(RAS_DIR, sku + "_RAS" + ext)
+            if os.path.exists(p):
+                return send_file(p, mimetype="image/jpeg")
+        abort(404)
+
+    return _img
+
+
+@app.function(
+    image=image,
+    gpu="T4",
+    volumes={"/modal_data": vol},
+    secrets=[
+        modal.Secret.from_name("app-credentials"),
+        modal.Secret.from_name("stripe-credentials"),
+        modal.Secret.from_name("google-vision-credentials"),
+        modal.Secret.from_name("vapid-credentials"),
+        modal.Secret.from_name("external-api-credentials"),
+        modal.Secret.from_name("cf-proxy-secret"),
+        modal.Secret.from_name("resend-api-key"),
+    ],
+    timeout=300,
+    min_containers=0,
+    scaledown_window=120,
+    max_containers=2,
+    enable_memory_snapshot=True,
+    experimental_options={"enable_gpu_snapshot": True},
+)
+@modal.concurrent(max_inputs=3)
+@modal.wsgi_app()
+def serve():
+    os.chdir("/app")
+    sys.path.insert(0, "/app")
+    os.environ["LOCALAPPDATA"] = "/modal_data"
+
+    vol.reload()
+    _fix_vertical_config()
+    _fix_db_paths()
+
+    # Pre-load models during container warmup so snapshot captures them
+    # Skip if already loaded (snapshot restore)
+    import sys as _sys
+    _already_loaded = 'app' in _sys.modules and hasattr(_sys.modules.get('app'), '_EMBEDDER') and _sys.modules['app']._EMBEDDER is not None
+
+    if not _already_loaded:
+        from app import app as _flask_app, get_embedder, load_embedding_cache
+        # Trigger CLIP load
+        try:
+            with _flask_app.app_context():
+                get_embedder()
+        except Exception as _e:
+            print(f"[WARMUP] CLIP load failed: {_e}", flush=True)
+
+        # Trigger embedding cache load — use numpy fast cache if available
+        try:
+            with _flask_app.app_context():
+                load_embedding_cache(force=False)
+        except Exception as _e:
+            print(f"[WARMUP] Cache load failed: {_e}", flush=True)
+
+        print("[WARMUP] All models loaded — container ready for snapshot", flush=True)
+    else:
+        print("[WARMUP] Models already loaded from snapshot — skipping warmup", flush=True)
+        from app import app as _flask_app
+
+    # Image mini-app — ready immediately, no model loading
+    img_wsgi = _make_image_wsgi()
+
+    # Models are pre-loaded above — _get_main_app() just returns the cached app.
+    def _get_main_app():
+        return _flask_app
+
+    def router(environ, start_response):
+        if environ.get("PATH_INFO", "").startswith("/img/"):
+            return img_wsgi(environ, start_response)
+        return _get_main_app()(environ, start_response)
+
+    return router
+
+
+@app.function(
+    image=image,
+    gpu="T4",
+    volumes={"/modal_data": vol},
+    secrets=[
+        modal.Secret.from_name("app-credentials"),
+        modal.Secret.from_name("stripe-credentials"),
+        modal.Secret.from_name("google-vision-credentials"),
+        modal.Secret.from_name("vapid-credentials"),
+        modal.Secret.from_name("external-api-credentials"),
+        modal.Secret.from_name("resend-api-key"),
+    ],
+    schedule=modal.Cron("0 1 * * 1"),  # Every Monday at 1am UTC
+    timeout=1800,
+)
+def scheduled_set_check():
+    import os, sys
+    os.chdir("/app")
+    sys.path.insert(0, "/app")
+    os.environ["LOCALAPPDATA"] = "/modal_data"
+
+    import json as _cj
+    with open("/app/config.json") as _cf:
+        _ccfg = _cj.load(_cf)
+    os.environ["ANTHROPIC_API_KEY"] = _ccfg.get("anthropic_api_key", "")
+
+    from set_scheduler import run_scheduler
+    result = run_scheduler()
+    print(f"[CRON] Done — {result}", flush=True)
+
+

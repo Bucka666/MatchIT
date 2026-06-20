@@ -1,0 +1,28 @@
+# See how many cards 2024 has (dry run)
+python scrape_yugioh.py --db-root "C:\CardsDB" --all-sets --year 2024 --dry-run
+
+# List only 2024 sets
+python scrape_yugioh.py --db-root "C:\CardsDB" --list-sets --year 2024
+
+# Scrape all 2024 sets
+python scrape_yugioh.py --db-root "C:\CardsDB" --all-sets --year 2024 --resume
+
+# Scrape everything from 2020 onwards
+python scrape_yugioh.py --db-root "C:\CardsDB" --all-sets --after 2020-01-01 --resume
+
+# Scrape the entire YGO library
+python scrape_yugioh.py --db-root "C:\CardsDB" --all-sets --resume
+
+
+
+
+python scrape_yugioh.py --db-root "C:\CardsDB" --all-sets --after 2007-01-01 --before 2010-01-01 --dry-run --resume
+
+
+python scrape_yugioh.py --db-root "C:\CardsDB" --all-sets --after 2007-01-01 --before 2010-01-01 --resume
+python scrape_yugioh.py --db-root "C:\CardsDB" --all-sets --after 2010-01-01 --before 2013-01-01 --resume
+python scrape_yugioh.py --db-root "C:\CardsDB" --all-sets --after 2023-01-01 --before 2026-04-05 --resume
+
+
+python scrape_yugioh.py --db-root "C:\CardsDB" --list-sets --year 2007
+python scrape_yugioh.py --db-root "C:\CardsDB" --list-sets --year 2008

@@ -1,0 +1,164 @@
+{
+  "WOODEN_SPOON": {
+    "manufacturer": "Generic",
+    "material": "Wood",
+    "category": "SPOON",
+    "size": "30cm",
+    "color": "Natural",
+    "handle_type": "Integral",
+    "use_type": "Cooking"
+  },
+  "BREAD_KNIFE": {
+    "manufacturer": "Victorinox",
+    "material": "Stainless Steel",
+    "category": "KNIFE",
+    "size": "20cm blade",
+    "color": "Silver",
+    "handle_type": "Plastic",
+    "use_type": "Cutting"
+  },
+  "CHEF_KNIFE": {
+    "manufacturer": "Sabatier",
+    "material": "Stainless Steel",
+    "category": "KNIFE",
+    "size": "20cm blade",
+    "color": "Silver",
+    "handle_type": "Riveted",
+    "use_type": "Cutting"
+  },
+  "STEEL_TONGS": {
+    "manufacturer": "OXO",
+    "material": "Stainless Steel",
+    "category": "TONGS",
+    "size": "30cm",
+    "color": "Silver",
+    "handle_type": "Steel",
+    "use_type": "Serving"
+  },
+  "PLASTIC_TONGS": {
+    "manufacturer": "Generic",
+    "material": "Nylon",
+    "category": "TONGS",
+    "size": "25cm",
+    "color": "Black",
+    "handle_type": "Integral",
+    "use_type": "Serving"
+  },
+  "METAL_LADLE": {
+    "manufacturer": "ProCook",
+    "material": "Stainless Steel",
+    "category": "LADLE",
+    "size": "32cm",
+    "color": "Silver",
+    "handle_type": "Hook End",
+    "use_type": "Serving"
+  },
+  "TEA_SPOON": {
+    "manufacturer": "Generic",
+    "material": "Stainless Steel",
+    "category": "CUTLERY",
+    "size": "13cm",
+    "color": "Silver",
+    "handle_type": "None",
+    "use_type": "Dining"
+  },
+  "DESERT_SPOON": {
+    "manufacturer": "Generic",
+    "material": "Stainless Steel",
+    "category": "CUTLERY",
+    "size": "18cm",
+    "color": "Silver",
+    "handle_type": "None",
+    "use_type": "Dining"
+  },
+  "FORK": {
+    "manufacturer": "Generic",
+    "material": "Stainless Steel",
+    "category": "CUTLERY",
+    "size": "20cm",
+    "color": "Silver",
+    "handle_type": "None",
+    "use_type": "Dining"
+  },
+  "KNIFE": {
+    "manufacturer": "Generic",
+    "material": "Stainless Steel",
+    "category": "CUTLERY",
+    "size": "22cm",
+    "color": "Silver",
+    "handle_type": "None",
+    "use_type": "Dining"
+  },
+  "STEAK_KNIFE": {
+    "manufacturer": "Tramontina",
+    "material": "Stainless Steel",
+    "category": "KNIFE",
+    "size": "12cm blade",
+    "color": "Silver",
+    "handle_type": "Wood",
+    "use_type": "Dining"
+  },
+  "SCISSORS": {
+    "manufacturer": "Fiskars",
+    "material": "Stainless Steel",
+    "category": "SCISSORS",
+    "size": "21cm",
+    "color": "Black",
+    "handle_type": "Plastic",
+    "use_type": "Cutting"
+  },
+  "PIZZA_CUTTER": {
+    "manufacturer": "KitchenCraft",
+    "material": "Stainless Steel",
+    "category": "CUTTER",
+    "size": "20cm",
+    "color": "Silver",
+    "handle_type": "Plastic",
+    "use_type": "Cutting"
+  },
+  "PEELER": {
+    "manufacturer": "Joseph Joseph",
+    "material": "Stainless Steel",
+    "category": "PEELER",
+    "size": "18cm",
+    "color": "Black",
+    "handle_type": "Rubber Grip",
+    "use_type": "Prep"
+  },
+  "BLACK_SPATULA": {
+    "manufacturer": "Tefal",
+    "material": "Nylon",
+    "category": "SPATULA",
+    "size": "30cm",
+    "color": "Black",
+    "handle_type": "Plastic",
+    "use_type": "Cooking"
+  },
+  "SILVER_SPATULA": {
+    "manufacturer": "ProCook",
+    "material": "Stainless Steel",
+    "category": "SPATULA",
+    "size": "32cm",
+    "color": "Silver",
+    "handle_type": "Steel",
+    "use_type": "Cooking"
+  },
+  "CAN_OPENER": {
+    "manufacturer": "OXO",
+    "material": "White plastic",
+    "category": "OPENER",
+    "size": "18cm",
+    "color": "white",
+    "handle_type": "Rubber Grip",
+    "use_type": "Prep"
+  },
+  "PLASTIC_LADLE": {
+    "manufacturer": "Generic",
+    "material": "Nylon",
+    "category": "LADLE",
+    "size": "30cm",
+    "color": "Black",
+    "handle_type": "Integral",
+    "use_type": "Serving"
+  }
+}

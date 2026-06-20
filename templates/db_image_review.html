@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block body %}
+
+<div class="mi-card">
+  <div class="mi-card-head">
+    <h1 class="mi-h1">Image Quality Review</h1>
+    <a class="mi-pill mi-pill-ghost" href="/admin">← Admin</a>
+  </div>
+
+  <!-- Stats bar -->
+  <div class="ir-stats">
+    <div class="ir-stat">
+      <span class="ir-stat-val">{{ total_count }}</span>
+      <span class="ir-stat-lbl">Total Images</span>
+    </div>
+    <div class="ir-stat ir-stat--bad">
+      <span class="ir-stat-val">{{ flagged_count }}</span>
+      <span class="ir-stat-lbl">Flagged</span>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="ir-filters">
+    <form method="get" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <input name="q" value="{{ q }}" placeholder="Search SKU…"
+        style="padding:7px 12px; border-radius:7px; border:1px solid rgba(255,255,255,0.15);
+               background:rgba(255,255,255,0.06); color:var(--mi-text,#eee); font-size:0.85rem; width:180px;">
+      <input type="hidden" name="show" value="{{ show }}">
+      <button type="submit" class="mi-btn mi-btn-sm">Search</button>
+    </form>
+    <div style="display:flex; gap:8px;">
+      <a href="{{ url_for('db_image_review', q=q, show='all') }}"
+         class="mi-pill {{ 'mi-pill-active' if show=='all' else 'mi-pill-ghost' }}">All</a>
+      <a href="{{ url_for('db_image_review', q=q, show='flagged') }}"
+         class="mi-pill {{ 'mi-pill-active' if show=='flagged' else 'mi-pill-ghost' }}">
+        Flagged {% if flagged_count > 0 %}({{ flagged_count }}){% endif %}
+      </a>
+    </div>
+  </div>
+
+  {% if not by_sku %}
+  <div style="color:var(--mi-muted,#aaa); padding:24px 0; font-size:0.88rem;">
+    {% if show == 'flagged' %}No flagged images.{% else %}No images found.{% endif %}
+  </div>
+  {% endif %}
+
+  <!-- SKU groups -->
+  {% for sku, images in by_sku.items() %}
+  <div class="ir-sku-group">
+    <div class="ir-sku-label">
+      {{ sku }}
+      <span class="ir-sku-count">{{ images|length }} image{{ 's' if images|length != 1 else '' }}</span>
+      {% set flagged_in_sku = images | selectattr('flagged', 'equalto', 1) | list | length %}
+      {% if flagged_in_sku > 0 %}
+      <span class="ir-flag-badge">⚑ {{ flagged_in_sku }} flagged</span>
+      {% endif %}
+    </div>
+    <div class="ir-img-grid">
+      {% for img in images %}
+      {% set is_flagged = (img.flagged == 1) %}
+      <div class="ir-img-card {{ 'ir-img-card--flagged' if is_flagged else '' }}" id="card-{{ img.image_id }}">
+        <div class="ir-img-wrap" onclick="irLightbox('{{ url_for('img_db_uuid', image_id=img.image_id) }}')">
+          <img src="{{ url_for('img_db_uuid', image_id=img.image_id) }}" alt="{{ img.original_filename }}" loading="lazy">
+          {% if is_flagged %}
+          <div class="ir-flag-overlay">⚑ Flagged</div>
+          {% endif %}
+        </div>
+        <div class="ir-img-meta">{{ img.original_filename or img.image_id }}</div>
+        <div class="ir-img-actions">
+          {% if is_flagged %}
+          <button class="ir-btn ir-btn--unflag" onclick="irFlag('{{ img.image_id }}', 0)">✓ Unflag</button>
+          <button class="ir-btn ir-btn--replace" onclick="irReplace('{{ img.image_id }}', '{{ sku }}')">↑ Replace</button>
+          {% else %}
+          <button class="ir-btn ir-btn--flag" onclick="irFlag('{{ img.image_id }}', 1)">⚑ Flag</button>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Lightbox -->
+<div class="mi-lightbox" id="irLight" onclick="irLight.style.display='none'" style="display:none;">
+  <img id="irLightImg" alt="full">
+</div>
+
+<!-- Replace modal -->
+<div class="ir-modal-bg" id="irModalBg" style="display:none;" onclick="irModalBg.style.display='none'">
+  <div class="ir-modal" onclick="event.stopPropagation()">
+    <div class="ir-modal-title">Replace Image — <span id="irModalSku"></span></div>
+    <div class="ir-modal-sub">Upload a replacement photo. It will be re-embedded automatically.</div>
+    <form id="irReplaceForm" method="post" enctype="multipart/form-data">
+      <input type="file" name="image" accept="image/*" capture="environment"
+             id="irFileInput" style="display:none;" onchange="irReplaceForm.submit()">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
+        <button type="button" class="mi-btn" onclick="irFileInput.click()">📷 Take / Choose Photo</button>
+        <button type="button" class="ir-btn ir-btn--unflag" onclick="irModalBg.style.display='none'">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.ir-stats { display:flex; gap:16px; margin:16px 0 20px; flex-wrap:wrap; }
+.ir-stat { padding:12px 20px; border-radius:9px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); }
+.ir-stat--bad { border-color:rgba(231,76,60,0.4); background:rgba(231,76,60,0.07); }
+.ir-stat-val { font-size:1.6rem; font-weight:800; color:var(--mi-text,#eee); display:block; }
+.ir-stat--bad .ir-stat-val { color:#e74c3c; }
+.ir-stat-lbl { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--mi-muted,#aaa); }
+
+.ir-filters { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:24px; }
+
+.ir-sku-group { margin-bottom:28px; }
+.ir-sku-label {
+  font-size:0.78rem; font-weight:800; text-transform:uppercase; letter-spacing:0.07em;
+  color:var(--mi-accent,#7c6af7); margin-bottom:10px;
+  display:flex; align-items:center; gap:10px;
+}
+.ir-sku-count { font-weight:400; color:var(--mi-muted,#aaa); text-transform:none; letter-spacing:0; }
+.ir-flag-badge { background:rgba(231,76,60,0.2); color:#e74c3c; border:1px solid rgba(231,76,60,0.3);
+  padding:2px 8px; border-radius:5px; font-size:0.72rem; }
+
+.ir-img-grid { display:flex; flex-wrap:wrap; gap:12px; }
+.ir-img-card {
+  width:140px; border-radius:10px; overflow:hidden;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1);
+  transition:border-color 0.15s;
+}
+.ir-img-card--flagged { border-color:rgba(231,76,60,0.5); background:rgba(231,76,60,0.05); }
+.ir-img-wrap { position:relative; width:140px; height:160px; cursor:zoom-in; overflow:hidden; }
+.ir-img-wrap img { width:100%; height:100%; object-fit:contain; background:#111; }
+.ir-flag-overlay {
+  position:absolute; bottom:0; left:0; right:0;
+  background:rgba(231,76,60,0.85); color:#fff;
+  font-size:0.72rem; font-weight:700; text-align:center; padding:4px;
+}
+.ir-img-meta { font-size:0.68rem; color:var(--mi-muted,#aaa); padding:4px 8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ir-img-actions { display:flex; gap:4px; padding:4px 6px 8px; flex-wrap:wrap; }
+.ir-btn { padding:4px 10px; border-radius:6px; border:none; font-size:0.72rem; font-weight:700; cursor:pointer; transition:opacity 0.15s; }
+.ir-btn:hover { opacity:0.8; }
+.ir-btn--flag   { background:rgba(231,76,60,0.15); color:#e74c3c; border:1px solid rgba(231,76,60,0.3); }
+.ir-btn--unflag { background:rgba(45,206,137,0.15); color:#2dce89; border:1px solid rgba(45,206,137,0.3); }
+.ir-btn--replace { background:rgba(124,106,247,0.15); color:#7c6af7; border:1px solid rgba(124,106,247,0.3); }
+
+.ir-modal-bg {
+  position:fixed; inset:0; z-index:1000;
+  background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center;
+}
+.ir-modal {
+  background:var(--mi-card,#1e1e2e); border-radius:12px; padding:24px 28px;
+  border:1px solid rgba(255,255,255,0.1); max-width:360px; width:90%;
+}
+.ir-modal-title { font-size:1rem; font-weight:800; color:var(--mi-text,#eee); margin-bottom:6px; }
+.ir-modal-sub { font-size:0.82rem; color:var(--mi-muted,#aaa); }
+
+@media (max-width:600px) {
+  .ir-img-card { width:120px; }
+  .ir-img-wrap { width:120px; height:135px; }
+}
+</style>
+
+<script>
+function irFlag(imageId, flagVal) {
+  const card = document.getElementById('card-' + imageId);
+  fetch('/db_flag_image/' + imageId, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'flagged=' + flagVal
+  }).then(() => {
+    // Reload to reflect change
+    window.location.reload();
+  });
+}
+
+function irReplace(imageId, sku) {
+  document.getElementById('irModalSku').textContent = sku;
+  document.getElementById('irReplaceForm').action = '/db_replace_image/' + imageId;
+  document.getElementById('irModalBg').style.display = 'flex';
+}
+
+function irLightbox(src) {
+  document.getElementById('irLightImg').src = src;
+  document.getElementById('irLight').style.display = 'flex';
+}
+</script>
+
+{% endblock %}
