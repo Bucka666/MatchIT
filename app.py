@@ -15,7 +15,7 @@ from typing import Dict, List, Optional, Tuple
 from marketplace import marketplace_search, auto_classify_product, detect_barcode, barcode_to_search_query, build_search_query
 from api_routes import register_api_routes
 from vertical_loader import get_vertical
-from ocr_confirm import ocr_confirm_ranking, ocr_direct_lookup, _get_ocr_reader, _PKM_SETCODE_MAP
+from ocr_confirm import ocr_confirm_ranking, ocr_direct_lookup, _PKM_SETCODE_MAP
 from profile_utils import _load_card_profile_for_sku
 from flask_cors import CORS
 from email_sender import gs_send_email

@@ -29,8 +29,6 @@ image = (
         "transformers>=4.36.0",
         "timm>=0.9.12",
         "huggingface_hub>=0.20.0",
-        "paddlepaddle>=2.6.0",
-        "paddleocr>=2.7.0",
         "stripe>=7.0.0",
         "anthropic>=0.25.0",
         "pywebpush>=2.3.0",
@@ -39,10 +37,8 @@ image = (
     .run_commands(
         "python -c \"import open_clip; open_clip.create_model_and_transforms('ViT-L-14', pretrained='laion2b_s32b_b82k')\"",
         "python -c \"from transformers import AutoModel, AutoImageProcessor; AutoModel.from_pretrained('facebook/dinov2-large'); AutoImageProcessor.from_pretrained('facebook/dinov2-large')\"",
-        "python -c \"from paddleocr import PaddleOCR; PaddleOCR(use_angle_cls=True, lang='en')\"",
     )
     .env({
-        "PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK": "True",
         "HF_HUB_OFFLINE": "1",
         "PYTHONWARNINGS": "ignore::UserWarning",
     })

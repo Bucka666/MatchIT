@@ -10,7 +10,7 @@ Template note — three issues corrected from original spec:
   1. modal_config has no 'app' — standalone modal.App used instead.
   2. Test 5 HTTP endpoint replaced with direct _load_card_profile_for_sku
      calls: no valid API key is available to the test function, and importing
-     the full Flask app pulls in CLIP/DINOv2/PaddleOCR (60-90s cold start).
+     the full Flask app pulls in CLIP/DINOv2 (cold start).
      The direct loader test is more targeted and proves Strategy A2+C.
   3. get_db_root() / get_data_dir() depend on load_vertical() having been
      called — which only 'serve()' does. Paths are hardcoded for Modal.

@@ -1,6 +1,6 @@
 """
-ocr_confirm.py — PaddleOCR-based set code / card number confirmation for MatchIT
-=================================================================================
+ocr_confirm.py — Google Vision-based set code / card number confirmation for MatchIT
+=====================================================================================
 Runs after CLIP + DINOv2 matching to promote the correct print to rank 1
 by reading the set code or card number printed on the card face.
 
@@ -18,7 +18,13 @@ Integration in api_routes.py (after _dinov2_tiebreak call):
         )
 
 Drop into C:\\MatchIT\\ alongside api_routes.py.
-Add to Modal pip_install: "paddleocr>=2.7.0", "paddlepaddle>=2.6.0"
+
+PaddleOCR fallback removed: a 150-card empirical test
+(_paddle_necessity_harness.py) showed it fires 0/150 times with Vision
+working, and when forced on (Vision disabled), throws on 150/150 calls —
+the installed paddleocr version moved reader.ocr(cls=True) to
+reader.predict(), so the old call signature here errored every time. It was
+providing zero function; removing it loses nothing.
 """
 
 import logging
@@ -57,12 +63,6 @@ def _fuzzy_set_code_match(candidate, set_code_map, max_dist=2):
     return None, 999
 
 
-# ─────────────────────────────────────────────────────────────
-# PaddleOCR reader — lazy loaded, cached per process
-# ─────────────────────────────────────────────────────────────
-
-_ocr_reader = None
-_ocr_init_attempted = False
 _last_ocr_confidence = 0.0
 _last_pkm_denominator: Optional[int] = None
 
@@ -111,24 +111,6 @@ _PKM_SETCODE_MAP = {
 }
 
 
-def _get_ocr_reader():
-    """Return cached PaddleOCR reader, initialising once on first call."""
-    global _ocr_reader, _ocr_init_attempted
-    if _ocr_init_attempted:
-        return _ocr_reader
-    try:
-        from paddleocr import PaddleOCR
-        _ocr_reader = PaddleOCR(
-            use_angle_cls=True,
-            lang="en",
-        )
-        _ocr_init_attempted = True
-        logger.info("[OCR] PaddleOCR ready")
-        return _ocr_reader
-    except Exception as e:
-        logger.error(f"[OCR] PaddleOCR could not be initialised: {e}")
-        return None
-
 # ─────────────────────────────────────────────────────────────
 # Image crop helper
 # ─────────────────────────────────────────────────────────────
@@ -141,7 +123,6 @@ def _crop_and_read(
     """
     Crop image to fractional region (left, top, right, bottom),
     send to Google Cloud Vision API, return list of text strings.
-    Falls back to PaddleOCR if Vision API key not configured.
     """
     try:
         import numpy as np
@@ -177,10 +158,8 @@ def _crop_and_read(
             _last_ocr_confidence = 0.95
             return _vision_api_read(crop, api_key)
 
-        # Fallback to PaddleOCR if Vision API key not configured
-        logger.warning("[OCR] Google Vision key not found, falling back to PaddleOCR")
-        paddle_results = _paddle_ocr_read(crop)
-        return [text for text, conf in paddle_results]
+        logger.warning("[OCR] Google Vision key not found — no OCR result")
+        return []
 
     except Exception as e:
         logger.warning(f"[OCR] crop_and_read error: {e}")
@@ -274,33 +253,6 @@ def _vision_api_read(crop_image, api_key: str) -> list:
 
     except Exception as e:
         logger.warning(f"[OCR-VISION] API error: {e}")
-        return []
-
-
-def _paddle_ocr_read(crop_image) -> list:
-    """PaddleOCR reader — returns text results from crop image."""
-    global _last_ocr_confidence
-    import numpy as np
-    reader = _get_ocr_reader()
-    if reader is None:
-        return []
-    try:
-        crop_arr = np.array(crop_image)
-        raw = reader.ocr(crop_arr, cls=True)
-        results = []
-        if raw and raw[0]:
-            for line in raw[0]:
-                text = str(line[1][0]).strip().upper()
-                confidence = float(line[1][1])
-                if text:
-                    results.append((text, confidence))
-        if results:
-            _last_ocr_confidence = max(conf for _, conf in results)
-        else:
-            _last_ocr_confidence = 0.0
-        return results
-    except Exception as e:
-        logger.warning(f"[OCR-PADDLE] error: {e}")
         return []
 
 
