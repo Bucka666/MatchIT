@@ -92,7 +92,7 @@
       {% if _cm_avg > 0 %}
       <div class="res-ia-best">
         <div class="res-ia-best-lbl">BEST ESTIMATE</div>
-        <div class="res-ia-best-val">£{{ "%.2f"|format(_cm_avg * 0.86) }}</div>
+        <div class="res-ia-best-val">£{{ "%.2f"|format(_cm_avg * fx.eur_gbp) }}</div>
         <div class="res-ia-best-sub">Cardmarket avg sell</div>
       </div>
       {% endif %}
@@ -101,14 +101,14 @@
           <div class="res-ia-src-hdr">TCGPlayer</div>
           {% for vk, vd in _tcg.items() %}
             {% if vd is mapping %}{% set pr = (vd.market or vd.mid or vd.low or 0)|float %}{% else %}{% set pr = vd|float %}{% endif %}
-            {% if pr > 0 %}<div class="res-ia-price">£{{ "%.2f"|format(pr * 0.79) }} <small>{{ _tcg_lbl.get(vk, vk) }}</small></div>{% endif %}
+            {% if pr > 0 %}<div class="res-ia-price">£{{ "%.2f"|format(pr * fx.usd_gbp) }} <small>{{ _tcg_lbl.get(vk, vk) }}</small></div>{% endif %}
           {% endfor %}
         </div>
         <div class="res-ia-price-col">
           <div class="res-ia-src-hdr">Cardmarket</div>
           {% for fk, flbl in [('avg_sell','Avg Sell'),('low','Low'),('trend','Trend')] %}
             {% set fv = _cm[fk] if fk in _cm else 0 %}
-            {% if fv and fv|float > 0 %}<div class="res-ia-price">£{{ "%.2f"|format(fv|float * 0.86) }} <small>{{ flbl }}</small></div>{% endif %}
+            {% if fv and fv|float > 0 %}<div class="res-ia-price">£{{ "%.2f"|format(fv|float * fx.eur_gbp) }} <small>{{ flbl }}</small></div>{% endif %}
           {% endfor %}
         </div>
       </div>
@@ -304,7 +304,7 @@
                   {% if vd is mapping %}{% set pr = (vd.market or vd.mid or vd.low or 0)|float %}{% else %}{% set pr = vd|float %}{% endif %}
                   {% if pr > 0 %}
                   <div class="res-price-entry">
-                    <span class="res-price-gbp">£{{ "%.2f"|format(pr * 0.79) }}</span>
+                    <span class="res-price-gbp">£{{ "%.2f"|format(pr * fx.usd_gbp) }}</span>
                     <span class="res-price-secondary">${{ "%.2f"|format(pr) }}</span>
                     <span class="res-price-lbl">{{ _tcg_lbl.get(vk, vk) }}</span>
                   </div>
@@ -321,7 +321,7 @@
                   {% set fv = _cm[fk] if fk in _cm else 0 %}
                   {% if fv and fv|float > 0 %}
                   <div class="res-price-entry">
-                    <span class="res-price-gbp">£{{ "%.2f"|format(fv|float * 0.86) }}</span>
+                    <span class="res-price-gbp">£{{ "%.2f"|format(fv|float * fx.eur_gbp) }}</span>
                     <span class="res-price-secondary">€{{ "%.2f"|format(fv|float) }}</span>
                     <span class="res-price-lbl">{{ flbl }}</span>
                   </div>
@@ -338,7 +338,7 @@
                   {% set fv = _cm[fk] if fk in _cm else 0 %}
                   {% if fv and fv|float > 0 %}
                   <div class="res-price-entry">
-                    <span class="res-price-gbp res-price-gbp--sm">£{{ "%.2f"|format(fv|float * 0.86) }}</span>
+                    <span class="res-price-gbp res-price-gbp--sm">£{{ "%.2f"|format(fv|float * fx.eur_gbp) }}</span>
                     <span class="res-price-secondary">€{{ "%.2f"|format(fv|float) }}</span>
                     <span class="res-price-lbl">{{ flbl }}</span>
                   </div>
@@ -1173,12 +1173,12 @@ document.addEventListener("DOMContentLoaded", function() {
     {% if sdata is mapping %}
       {% for variant, vdata in sdata.items() %}
         {% if vdata is mapping %}
-          {% set price = vdata.market or vdata.mid or vdata.trend or vdata.avg_sell %}
+          {% set price = vdata.market or vdata.trend or vdata.avg_sell or vdata.mid %}
           {% if price and gbp_val == 0 %}
             {% if 'cardmarket' in source %}
-              {% set gbp_val = (price|float * 0.86)|round(2) %}
+              {% set gbp_val = (price|float * fx.eur_gbp)|round(2) %}
             {% else %}
-              {% set gbp_val = (price|float * 0.79)|round(2) %}
+              {% set gbp_val = (price|float * fx.usd_gbp)|round(2) %}
             {% endif %}
           {% endif %}
         {% endif %}
@@ -1195,14 +1195,16 @@ window._cardGbpValue = 0;
 window._cardGrade = {{ (grade | tojson | safe) if grade else 'null' }};
 window._rawPrices = {{ (r1.profile.prices if r1 and r1.profile and r1.profile.prices else {}) | tojson | safe }};
 (function() {
-  var EUR_RATE = 0.86, USD_RATE = 0.79;
-  // Fetch live rates, fall back to hardcoded
+  var EUR_RATE = {{ fx.eur_gbp }}, USD_RATE = {{ fx.usd_gbp }};
+  // Re-confirm from the cache-backed endpoint (already-derived rates, no
+  // client-side division — see fx_rates.py). Server-rendered values above
+  // are already the same cache, this just covers a long-lived page session.
   fetch('/api/fx_rates')
     .then(function(r){ return r.json(); })
     .then(function(d){
-      if (d && d.rates) {
-        USD_RATE = d.rates.GBP || USD_RATE;
-        EUR_RATE = (d.rates.GBP / (d.rates.EUR || 1)) || EUR_RATE;
+      if (d) {
+        USD_RATE = d.usd_gbp || USD_RATE;
+        EUR_RATE = d.eur_gbp || EUR_RATE;
       }
     })
     .catch(function(){})

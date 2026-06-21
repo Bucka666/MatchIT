@@ -20,6 +20,7 @@ from profile_utils import _load_card_profile_for_sku
 from flask_cors import CORS
 from email_sender import gs_send_email
 from r2_util import upload_to_r2
+from fx_rates import get_fx
 import numpy as np
 from PIL import Image, ImageOps
 
@@ -302,6 +303,12 @@ if _flask_secret:
 @app.context_processor
 def inject_config():
     return {"cfg": CFG}
+
+@app.context_processor
+def inject_fx():
+    """Cached FX rates (see fx_rates.py) for any template that converts
+    USD/EUR card prices to GBP. Cache-read only — no network call here."""
+    return {"fx": get_fx()}
 
 # ============================================================
 # Startup safety check: API key configuration
@@ -6365,12 +6372,16 @@ def _safe_grade(image_path):
 
 
 def _extract_gbp_from_profile(profile):
-    """Extract first available GBP price from a profile dict, same logic as results.html."""
+    """Extract first available GBP price from a profile dict, same logic as results.html.
+    Rate comes from the cached fx_rates.json (see fx_rates.py) — cache-read
+    only, no network call here. Pick-order unified with the other 4
+    consumers: market > trend > avg_sell > mid."""
     if not profile:
         return None
     prices = profile.get("prices") if isinstance(profile, dict) else None
     if not prices:
         return None
+    fx = get_fx()
     for src, sdata in prices.items():
         if "ebay" in src.lower() or "amazon" in src.lower():
             continue
@@ -6378,11 +6389,11 @@ def _extract_gbp_from_profile(profile):
             continue
         for _var, vdata in sdata.items():
             if isinstance(vdata, dict):
-                price = vdata.get("market") or vdata.get("mid") or vdata.get("trend") or vdata.get("avg_sell")
+                price = vdata.get("market") or vdata.get("trend") or vdata.get("avg_sell") or vdata.get("mid")
             else:
                 price = vdata
             if price:
-                mult = 0.86 if "cardmarket" in src else 0.79
+                mult = fx["eur_gbp"] if "cardmarket" in src else fx["usd_gbp"]
                 return round(float(price) * mult, 2)
     return None
 
@@ -6968,17 +6979,11 @@ def sets_cards(set_id):
 
 @app.route("/api/fx_rates")
 def fx_rates():
-    try:
-        import urllib.request as _ur
-        req = _ur.Request(
-            "https://api.frankfurter.app/latest?from=USD&to=GBP,EUR",
-            headers={"User-Agent": "Mozilla/5.0"}
-        )
-        with _ur.urlopen(req, timeout=5) as r:
-            data = r.read()
-        return app.response_class(data, mimetype="application/json")
-    except Exception as e:
-        return jsonify({"error": str(e), "rates": {"GBP": 0.79, "EUR": 0.86}}), 200
+    """Cache-backed only — see fx_rates.py. No live frankfurter call per
+    request; the cache is refreshed once daily by a separate cron job.
+    Shape: {"usd_gbp": <rate>, "eur_gbp": <rate>} — both already direct
+    multipliers, no client-side division needed."""
+    return jsonify(get_fx())
 
 
 @app.route("/api/validate_premium", methods=["POST"])

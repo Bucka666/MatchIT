@@ -56,6 +56,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 from email_sender import gs_send_email
+from fx_rates import get_fx
 
 logger = logging.getLogger(__name__)
 
@@ -89,10 +90,11 @@ CONFIG = {
 
 
 # FX conversion rates for alert price calculation.
-# Hardcoded to keep scheduler runs independent of frankfurter.app availability.
-# Matches templates/results.html fallback defaults; FX drift is well below typical alert threshold noise.
-USD_RATE = 0.79
-EUR_RATE = 0.86
+# Read from the cached fx_rates.json (see fx_rates.py) — a FILE READ, not a
+# live network call, so this still keeps scheduler runs independent of
+# frankfurter.app's live availability (same intent as the old hardcoded
+# constants this replaced). get_fx() fails open to {0.79, 0.86} if the cache
+# is missing/stale, so behaviour is unchanged when nothing's been refreshed yet.
 
 
 # ─────────────────────────────────────────────────────────────
@@ -715,6 +717,7 @@ def check_price_alerts() -> None:
         cards_db_root = Path("/modal_data/CardsDB")
 
     triggered: List[int] = []
+    fx = get_fx()  # cache file read, not a live call — see fx_rates.py
 
     for i, alert in enumerate(alerts):
         sku = alert.get("sku", "")
@@ -755,7 +758,7 @@ def check_price_alerts() -> None:
                 continue
             if not isinstance(sdata, dict):
                 continue
-            rate = EUR_RATE if "cardmarket" in src_lower else USD_RATE
+            rate = fx["eur_gbp"] if "cardmarket" in src_lower else fx["usd_gbp"]
 
             for variant, vdata in sdata.items():
                 pr = 0.0
@@ -983,6 +986,18 @@ def run_scheduler(
         except Exception as e:
             logger.error(f"[SCHED] Set card-list rebuild error: {e}")
             run_summary["set_cards"] = {"error": str(e)}
+
+    # ── 2e. Refresh the FX rate cache (single source for all 5 GBP consumers) ──
+    # Same "runs every week regardless of any_new" rationale as 2c/2d. Runs
+    # before step 5 (price alerts) so this same run's alert check uses the
+    # freshly-refreshed rate rather than staying stale until next week.
+    if not dry_run:
+        try:
+            from fx_rates import refresh_fx_rates
+            run_summary["fx_refresh"] = refresh_fx_rates()
+        except Exception as e:
+            logger.error(f"[SCHED] FX rate refresh error: {e}")
+            run_summary["fx_refresh"] = {"error": str(e)}
 
     run_summary["elapsed_s"] = round(time.time() - t_start, 1)
 

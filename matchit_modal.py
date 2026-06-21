@@ -304,6 +304,32 @@ def scheduled_set_check():
 @app.function(
     image=image,
     volumes={"/modal_data": vol},
+    schedule=modal.Cron("0 2 * * *"),  # Every day at 2am UTC
+    timeout=300,
+)
+def scheduled_fx_refresh():
+    """Daily refresh of /modal_data/fx_rates.json — the single cached rate
+    source all 5 GBP-display consumers read from (see fx_rates.py). Also
+    piggybacked into the Monday scheduler (set_scheduler.py run_scheduler
+    step 2e) so the weekly run always uses a fresh rate too; this daily tick
+    just keeps it fresh on the other 6 days."""
+    import os, sys
+    os.chdir("/app")
+    sys.path.insert(0, "/app")
+    os.environ["LOCALAPPDATA"] = "/modal_data"
+    vol.reload()
+    from fx_rates import refresh_fx_rates
+    try:
+        result = refresh_fx_rates()
+        vol.commit()
+        print(f"[FX-CRON] {result}", flush=True)
+    except Exception as e:
+        print(f"[FX-CRON] FAILED: {e}", flush=True)
+
+
+@app.function(
+    image=image,
+    volumes={"/modal_data": vol},
     timeout=3600,
 )
 def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):

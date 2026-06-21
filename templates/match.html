@@ -1104,14 +1104,18 @@ body             { overflow: visible !important; }
 </style>
 
 <script>
-var GBP_RATE = 0.79;
-var EUR_RATE = 0.86;
+var GBP_RATE = {{ fx.usd_gbp }};
+var EUR_RATE = {{ fx.eur_gbp }};
+// Re-confirm from the cache-backed endpoint (already-derived rates — see
+// fx_rates.py). FIX: this used to assign d.rates.EUR (raw USD->EUR) straight
+// into EUR_RATE, which is not a EUR->GBP multiplier — wrong cross-rate.
+// d.eur_gbp is already the correct derived cross-rate, no division needed.
 fetch('/api/fx_rates')
   .then(function(r){return r.json();})
   .then(function(d){
-    if(d && d.rates){
-      if(d.rates.GBP) GBP_RATE = d.rates.GBP;
-      if(d.rates.EUR) EUR_RATE = d.rates.EUR;
+    if(d){
+      if(d.usd_gbp) GBP_RATE = d.usd_gbp;
+      if(d.eur_gbp) EUR_RATE = d.eur_gbp;
     }
   })
   .catch(function(){});

@@ -629,6 +629,7 @@ function captureAndMatch() {
         }
       }
       console.log('DEBUG p.prices=',JSON.stringify(p.prices),'bestPrice=',bestPrice);
+      // STALE BY DESIGN — re-wire to get_fx()/fx_rates.py if ever re-enabled.
       var gbp=bestPrice*0.79;
       var gbpStr=p.prices?'£'+gbp.toFixed(2):'NO_PRICE_DATA';
 
@@ -800,6 +801,7 @@ function openDetail(idx){
   if(p.ygo_card_type)tags+='<span class="detail-tag tag-type">'+p.ygo_card_type.replace(/_/g,' ')+'</span>';
   document.getElementById('detTags').innerHTML=tags;
   var ph='';
+  // STALE BY DESIGN — re-wire to get_fx()/fx_rates.py if ever re-enabled.
   if(c.allPrices){var srcs=Object.keys(c.allPrices);for(var i=0;i<srcs.length;i++){var src=srcs[i],val=c.allPrices[src],curr=src.toLowerCase().indexOf('cardmarket')>=0?'€':'$';var gbpConv=curr==='$'?(val*0.79).toFixed(2):(val*0.86).toFixed(2);ph+='<div class="dp-chip"><span class="dp-source">'+src+'</span><span class="dp-val">'+curr+val.toFixed(2)+' (~£'+gbpConv+')</span></div>';}}
   document.getElementById('detPrices').innerHTML=ph||'<span style="color:var(--muted);font-size:0.7rem;">No price data</span>';
   var enc=encodeURIComponent((c.name+' '+c.set+' '+c.num).trim());
