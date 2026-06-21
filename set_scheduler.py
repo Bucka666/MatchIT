@@ -493,6 +493,13 @@ def _build_email(run_summary: Dict) -> Tuple[str, str, str]:
     if _any_sets and embed.get("new_front", 0) == 0:
         lines += ["", "⚠️  WARNING: sets detected but no embeddings added — investigate registration step"]
 
+    lines += [
+        "",
+        f"{total_new} new EN set(s) ingested this week. JP new-set ingest is "
+        "MANUAL (TCGdex not polled) — if JP sets released, run the JP "
+        "scrape/embed pipeline by hand.",
+    ]
+
     body_text = "\n".join(lines)
 
     # HTML
@@ -562,6 +569,10 @@ def _build_email(run_summary: Dict) -> Tuple[str, str, str]:
       </div>
       {_sync_html}
       {warning_html}
+      <div style="background:rgba(155,149,184,0.08);border:1px solid rgba(155,149,184,0.25);border-radius:8px;padding:12px 16px;margin-top:16px;font-size:0.8rem;color:#9b95b8;">
+        {total_new} new EN set(s) ingested this week. JP new-set ingest is <strong>MANUAL</strong> (TCGdex not polled) —
+        if JP sets released, run the JP scrape/embed pipeline by hand.
+      </div>
     </div>
     </body></html>
     """
@@ -856,6 +867,15 @@ def run_scheduler(
     2. Download new images
     3. Run incremental embed
     4. Send email + save log
+
+    ENGLISH-ONLY BY DESIGN: this scheduler polls pokemontcg.io, Scryfall, and
+    YGOProDeck — none of which carry Japanese cards. Japanese new-set
+    ingestion (scraping new jpn- sets from TCGdex) is a separate MANUAL
+    track, not detected or run automatically here. JP Cardmarket *pricing*
+    for already-known jpn- cards IS automated (scheduled_jp_price_refresh,
+    its own daily Modal cron in matchit_modal.py) — only new JP *sets*
+    require a manual run. The weekly email below flags this each run so it
+    doesn't get forgotten.
 
     Args:
         tcgs:    List of TCGs to check e.g. ['POKEMON', 'MTG'].

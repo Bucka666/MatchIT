@@ -31,7 +31,9 @@ import time
 import argparse
 import requests
 import logging
+import threading
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 # Japanese set names contain CJK characters — force UTF-8 on Windows
@@ -224,11 +226,27 @@ def _extract_gbp_from_profile(profile):
     return None
 
 
-def backfill_cardmarket_prices(db_root: Path, resume: bool, dry_run: bool) -> dict:
+def backfill_cardmarket_prices(db_root: Path, resume: bool, dry_run: bool, mode: str = "backfill") -> dict:
     """Walk existing jpn- card folders that have front.png and add/refresh
     Cardmarket pricing in profile.json. Does not touch images. Cards with
     no resolvable Cardmarket price (404 on TCGdex, or avg is null — repo-
-    only/vintage cards typically) are left untouched, no error."""
+    only/vintage cards typically) are left untouched, no error.
+
+    mode="backfill" (default): the behaviour above, unchanged — `resume`
+    controls whether already-priced cards are skipped or re-checked.
+
+    mode="refresh": a different population and a different dry_run meaning.
+    See refresh_cardmarket_prices() — targets cards that ALREADY have a
+    Cardmarket price (re-fetches to catch upstream changes), skips cards
+    that don't (classify_unpriced already proved those are structurally
+    unpriceable, not transient). `resume` is ignored in this mode. dry_run
+    here is a pure local scope count — no network calls — so it runs in
+    seconds, meant to catch a wrong db_root before paying any throttled cost."""
+    if mode == "refresh":
+        return refresh_cardmarket_prices(db_root, dry_run=dry_run)
+    if mode != "backfill":
+        raise ValueError(f"Unknown mode: {mode!r} (expected 'backfill' or 'refresh')")
+
     pokemon_dir = db_root / "pokemon"
     stats = {"checked": 0, "priced": 0, "unpriced": 0, "skipped_resume": 0, "errors": 0}
 
@@ -284,6 +302,150 @@ def backfill_cardmarket_prices(db_root: Path, resume: bool, dry_run: bool) -> di
         time.sleep(0.05)
 
     print(f"[PRICES] Done. {stats}", flush=True)
+    return stats
+
+
+def _fetch_card_detail_with_backoff(tcgdex_id: str, max_retries: int = 3, timeout: int = 8) -> dict:
+    """Like _fetch_card_detail, but with exponential backoff (1s, 2s, 4s) on
+    429/timeout/errors instead of the original's simple 2-attempt retry, and
+    it RAISES once retries are exhausted instead of swallowing the failure —
+    refresh mode is re-checking cards that are ALREADY priced, so a fetch
+    failure here should count as an error, not get silently treated like the
+    routine 404s the original backfill expects for repo-only/vintage cards."""
+    url = _TCGDEX_CARD_DETAIL_URL.format(id=urllib.parse.quote(tcgdex_id, safe=''))
+    delay = 1
+    last_exc = None
+    for attempt in range(max_retries):
+        try:
+            resp = requests.get(url, timeout=timeout)
+            if resp.status_code == 429:
+                raise RuntimeError(f"429 throttled (attempt {attempt + 1}/{max_retries})")
+            if resp.status_code == 404:
+                return {}
+            resp.raise_for_status()
+            return resp.json()
+        except Exception as e:
+            last_exc = e
+            if attempt < max_retries - 1:
+                time.sleep(delay)
+                delay *= 2
+    raise RuntimeError(f"exhausted {max_retries} retries for {tcgdex_id}: {last_exc}")
+
+
+def _refresh_one(folder: str, pokemon_dir: Path) -> dict:
+    """Refresh a single already-priced jpn card. Never raises — every
+    failure mode is caught and reported in the returned dict so the
+    orchestrating ThreadPoolExecutor pool never has to handle an exception
+    from a worker."""
+    profile_path = pokemon_dir / folder / "profile.json"
+    try:
+        profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        return {"folder": folder, "status": "error", "error": str(e)}
+
+    old_cm = (profile.get("prices") or {}).get("cardmarket") or {}
+    if not old_cm:
+        return {"folder": folder, "status": "skipped_no_price"}
+
+    tcgdex_id = folder[len("jpn-"):]
+    try:
+        detail = _fetch_card_detail_with_backoff(tcgdex_id)
+    except Exception as e:
+        return {"folder": folder, "status": "error", "error": str(e)}
+
+    fields = _build_cardmarket_fields(detail)
+    if fields is None:
+        # TCGdex no longer returns a price for this card (rare) — leave the
+        # existing data in place rather than overwrite it with nothing.
+        return {"folder": folder, "status": "refreshed", "price_changed": False}
+
+    changed = fields["prices"] != old_cm
+    if changed:
+        profile["prices"] = {"tcgplayer": {}, "cardmarket": fields["prices"]}
+        if fields["cardmarket_id"] is not None:
+            profile["cardmarket_id"] = str(fields["cardmarket_id"])
+        if fields["prices_updated"]:
+            profile["prices_updated"] = fields["prices_updated"]
+        profile_path.write_text(
+            json.dumps(profile, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+    return {"folder": folder, "status": "refreshed", "price_changed": changed}
+
+
+def refresh_cardmarket_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8) -> dict:
+    """Re-fetch Cardmarket pricing for jpn- cards that ALREADY have a price
+    (the ~1,261 from the original backfill), skipping cards that don't (the
+    ~3,033 repo-only/vintage cards classify_unpriced already proved are
+    structurally unpriceable — re-checking them daily would waste throttle
+    budget for no gain).
+
+    dry_run=True does NOT touch the network — it's a pure local scope count
+    (which cards would be targeted vs skipped), meant to run in seconds and
+    catch a wrong db_root (silent 0-candidates, or candidates == every
+    imaged card) before paying any throttled cost. This is intentionally a
+    different dry_run meaning than backfill_cardmarket_prices' own.
+
+    Network fetches use bounded concurrency (max_workers, default 8 — NOT
+    32: TCGdex throttles, and higher concurrency made it worse when tried
+    in this same session) with exponential backoff on 429/timeout."""
+    pokemon_dir = db_root / "pokemon"
+    folders = sorted(d for d in os.listdir(pokemon_dir) if d.startswith("jpn-"))
+    print(f"[REFRESH] {len(folders)} jpn- folders found under {pokemon_dir}", flush=True)
+
+    candidates = []
+    stats = {"refreshed": 0, "skipped_no_price": 0, "price_changed": 0, "errors": 0}
+
+    for folder in folders:
+        out_dir = pokemon_dir / folder
+        if not (out_dir / "front.png").exists():
+            continue
+        profile_path = out_dir / "profile.json"
+        if not profile_path.exists():
+            continue
+        try:
+            profile = json.loads(profile_path.read_text(encoding="utf-8"))
+        except Exception:
+            stats["errors"] += 1
+            continue
+        if (profile.get("prices") or {}).get("cardmarket"):
+            candidates.append(folder)
+        else:
+            stats["skipped_no_price"] += 1
+
+    print(f"[REFRESH] {len(candidates)} candidate(s) already priced, "
+          f"{stats['skipped_no_price']} skipped (no existing price)", flush=True)
+
+    if dry_run:
+        stats["refreshed"] = len(candidates)  # "would refresh" — no network calls made
+        print(f"[REFRESH] DRY-RUN — done, no network calls made. {stats}", flush=True)
+        return stats
+
+    completed = 0
+    lock = threading.Lock()
+    total = len(candidates)
+
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        for result in pool.map(lambda f: _refresh_one(f, pokemon_dir), candidates):
+            with lock:
+                completed += 1
+                status = result["status"]
+                if status == "refreshed":
+                    stats["refreshed"] += 1
+                    if result.get("price_changed"):
+                        stats["price_changed"] += 1
+                elif status == "skipped_no_price":
+                    stats["skipped_no_price"] += 1
+                elif status == "error":
+                    stats["errors"] += 1
+                    log.warning("Refresh error for %s: %s", result["folder"], result.get("error"))
+
+                if completed % 50 == 0:
+                    print(f"  ... {completed}/{total} refreshed "
+                          f"(refreshed={stats['refreshed']} changed={stats['price_changed']} errors={stats['errors']})",
+                          flush=True)
+
+    print(f"[REFRESH] Done. {stats}", flush=True)
     return stats
 
 
@@ -646,4 +808,23 @@ def _spot_check_remote():
 @price_app.local_entrypoint()
 def spot_check():
     result = _spot_check_remote.remote()
+    print(json.dumps(result, indent=2))
+
+
+@price_app.function(
+    image=_price_image,
+    volumes={"/modal_data": modal.Volume.from_name("matchit-data-v2", version=2)},
+    timeout=5400,
+)
+def _run_jp_price_refresh_remote(dry_run: bool = True):
+    import sys
+    sys.path.insert(0, "/app")
+    from scrape_pokemon_jpn import refresh_cardmarket_prices
+    result = refresh_cardmarket_prices(Path("/modal_data/CardsDB"), dry_run=dry_run)
+    return result
+
+
+@price_app.local_entrypoint()
+def run_jp_price_refresh(dry_run: bool = True):
+    result = _run_jp_price_refresh_remote.remote(dry_run=dry_run)
     print(json.dumps(result, indent=2))

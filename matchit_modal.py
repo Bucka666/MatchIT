@@ -330,6 +330,47 @@ def scheduled_fx_refresh():
 @app.function(
     image=image,
     volumes={"/modal_data": vol},
+    schedule=modal.Cron("0 3 * * *"),  # Every day at 3am UTC — offset from
+    # the 2am FX cron and the Monday weekly scheduler, so the three jobs
+    # never overlap.
+    timeout=5400,  # ceiling, not a target — this does NOT share the weekly
+    # job's 3600s budget; that's the whole point of a separate cron.
+)
+def scheduled_jp_price_refresh():
+    """Daily refresh of Cardmarket pricing for jpn- cards that ALREADY have
+    a price (see refresh_cardmarket_prices in scrape_pokemon_jpn.py — the
+    ~1,261 from the original backfill; the ~3,033 repo-only/vintage cards
+    with no resolvable price are skipped, not re-walked, since
+    classify_unpriced already proved those are structurally unpriceable).
+
+    No gpu= here — this is pure HTTP fetch + JSON write, CPU-only, same
+    pattern as scheduled_fx_refresh above (same image, just no GPU attached
+    so it's billed as CPU-only despite the image containing the ML deps).
+
+    Lazy-imports scrape_pokemon_jpn inside the function body (not at this
+    module's top level) — that module constructs its own separate
+    modal.App + Image at import time, and deferring the import to call-time
+    avoids that becoming part of matchit-api's own deploy/build graph. This
+    mirrors how scheduled_set_check() above already lazy-imports
+    set_scheduler, which has the identical second-modal.App pattern."""
+    import os, sys
+    os.chdir("/app")
+    sys.path.insert(0, "/app")
+    os.environ["LOCALAPPDATA"] = "/modal_data"
+    vol.reload()
+    from pathlib import Path
+    from scrape_pokemon_jpn import refresh_cardmarket_prices
+    try:
+        result = refresh_cardmarket_prices(Path("/modal_data/CardsDB"), dry_run=False)
+        vol.commit()
+        print(f"[JP-PRICE-CRON] {result}", flush=True)
+    except Exception as e:
+        print(f"[JP-PRICE-CRON] FAILED: {e}", flush=True)
+
+
+@app.function(
+    image=image,
+    volumes={"/modal_data": vol},
     timeout=3600,
 )
 def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
