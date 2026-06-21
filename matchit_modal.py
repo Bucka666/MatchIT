@@ -282,7 +282,7 @@ def scheduled_set_check():
                         continue
                     parts = sku.split("-")
                     if game_folder == "pokemon":
-                        poke_set_id = ("jpn-" + parts[1]) if (parts[0] == "jpn" and len(parts) >= 2) else parts[0]
+                        poke_set_id = ("jpn-" + "-".join(parts[1:-1])) if (parts[0] == "jpn" and len(parts) >= 2) else parts[0]
                         if poke_set_id in new_set_ids:
                             new_skus.append(sku)
                     elif game_folder in ("mtg", "yugioh") and len(parts) >= 3 and parts[1] in new_set_ids:

@@ -2252,15 +2252,15 @@ function openDetail(c){
     var _LBL={normal:'Normal',reverseHolofoil:'Reverse Holo',holofoil:'Holo','1stEdition':'1st Ed',unlimited:'Unlimited','1stEditionHolofoil':'1st Ed Holo',unlimitedHolofoil:'Unlimited Holo',avg_sell:'Avg Sell',low:'Low',trend:'Trend',avg_1d:'1d',avg_7d:'7d',avg_30d:'30d'};
     var _tcg=c.allPrices.tcgplayer||{},_cm=c.allPrices.cardmarket||{};
     // Best estimate headline (cardmarket avg_sell)
-    if(_cm.avg_sell>0){ph+='<div class="dp-best"><span class="dp-best-lbl">BEST ESTIMATE</span><span class="dp-best-val">£'+(_cm.avg_sell*EUR_RATE).toFixed(2)+'</span><span class="dp-best-sub">Cardmarket avg sell</span></div>';}
+    if(_cm.avg_sell>0){ph+='<div class="dp-best"><span class="dp-best-lbl">BEST ESTIMATE</span><span class="dp-best-val">'+_fmtPrice(_cm.avg_sell*EUR_RATE)+'</span><span class="dp-best-sub">Cardmarket avg sell</span></div>';}
     // TCGPlayer section
-    var _th='';Object.keys(_tcg).forEach(function(k){if(_tcg[k]>0)_th+='<div class="dp-chip"><span class="dp-source">'+(_LBL[k]||k)+'</span><span class="dp-val">£'+(_tcg[k]*GBP_RATE).toFixed(2)+'</span></div>';});
+    var _th='';Object.keys(_tcg).forEach(function(k){if(_tcg[k]>0)_th+='<div class="dp-chip"><span class="dp-source">'+(_LBL[k]||k)+'</span><span class="dp-val">'+_fmtPrice(_tcg[k]*GBP_RATE)+'</span></div>';});
     if(_th)ph+='<div class="dp-src-grp"><span class="dp-src-hdr">TCGPlayer</span><div class="dp-src-chips">'+_th+'</div></div>';
     // Cardmarket section
-    var _ch='';['avg_sell','low','trend'].forEach(function(k){if(_cm[k]>0){var _gbp=(_cm[k]*EUR_RATE).toFixed(2),_eur=_cm[k].toFixed(2);_ch+='<div class="dp-chip dp-chip--col"><span class="dp-source">'+(_LBL[k]||k)+'</span><span class="dp-val">£'+_gbp+'</span><span class="dp-secondary">€'+_eur+'</span></div>';}});
+    var _ch='';['avg_sell','low','trend'].forEach(function(k){if(_cm[k]>0){var _eur=_cm[k].toFixed(2);_ch+='<div class="dp-chip dp-chip--col"><span class="dp-source">'+(_LBL[k]||k)+'</span><span class="dp-val">'+_fmtPrice(_cm[k]*EUR_RATE)+'</span><span class="dp-secondary">€'+_eur+'</span></div>';}});
     if(_ch)ph+='<div class="dp-src-grp"><span class="dp-src-hdr">Cardmarket</span><div class="dp-src-chips">'+_ch+'</div></div>';
     // Price Trend section
-    var _pt='';['avg_1d','avg_7d','avg_30d'].forEach(function(k){if(_cm[k]>0){var _gbp=(_cm[k]*EUR_RATE).toFixed(2),_eur=_cm[k].toFixed(2);_pt+='<div class="dp-chip dp-chip--col"><span class="dp-source">'+(_LBL[k]||k)+'</span><span class="dp-val dp-val--sm">£'+_gbp+'</span><span class="dp-secondary">€'+_eur+'</span></div>';}});
+    var _pt='';['avg_1d','avg_7d','avg_30d'].forEach(function(k){if(_cm[k]>0){var _eur=_cm[k].toFixed(2);_pt+='<div class="dp-chip dp-chip--col"><span class="dp-source">'+(_LBL[k]||k)+'</span><span class="dp-val dp-val--sm">'+_fmtPrice(_cm[k]*EUR_RATE)+'</span><span class="dp-secondary">€'+_eur+'</span></div>';}});
     if(_pt)ph+='<div class="dp-src-grp dp-src-grp--trend"><span class="dp-src-hdr">Price Trend</span><div class="dp-src-chips">'+_pt+'</div></div>';
   }
   document.getElementById('detPrices').innerHTML=ph||'<span style="color:var(--cx-muted);font-size:0.7rem;">No price data</span>';
@@ -3204,6 +3204,7 @@ document.getElementById('matchYear') &&
   }
 
   function _fmtPrice(gbp) {
+    if (gbp > 0 && gbp < 0.01) return '<£0.01';
     return '£' + gbp.toFixed(2);
   }
 

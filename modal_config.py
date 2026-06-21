@@ -57,6 +57,10 @@ image = (
             "regression_queries",
             "test_queries",
             "_snapshots",
+            "ondevice_index_v1",
+            "web_spike",
+            "*_pre_*",
+            "*.bak*",
         ],
     )
 )
