@@ -68,6 +68,13 @@ web_spike/
 _snapshots/
 store-submission/
 
+# Manual file-copy backups (_pre_<change>.ext) — git is the version history
+# now; these predate git in this repo and shouldn't keep growing inside it.
+# NOTE: 118 pre-existing _pre_* files are already baked into the F0 commit
+# (33f2bd1) since this pattern wasn't excluded yet at that point — un-bloating
+# those would need a history rewrite, not done here. This only stops NEW ones.
+*_pre_*
+
 # Misc scratch
 q3_secrets_usage.txt
 
