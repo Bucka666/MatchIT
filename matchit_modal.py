@@ -197,6 +197,81 @@ def serve():
     return router
 
 
+# ── CPU twin — 3 light routes only, no GPU, no model load ──────────────────
+# Hosts /api/ondevice/telemetry, /api/card-profile/<sku>, /api/v1/image/<id>
+# on a CPU-only container so they never pay for (or wait behind) the GPU
+# container's CLIP/DINOv2 warmup. Same Flask app as serve() (same code, same
+# routes registered) but the WSGI router below allowlists only these 3
+# prefixes — every other path 404s here instead of falling through to the
+# full app, keeping /match and /api/v1/match practically unreachable on this
+# function. Routing traffic to this URL for those 3 paths is done at the
+# Cloudflare Worker layer (not here) — see matchit_modal.py deploy notes.
+_LIGHT_ALLOWED_PREFIXES = (
+    "/api/ondevice/telemetry",
+    "/api/card-profile/",
+    "/api/v1/image/",
+)
+
+
+def _light_404(environ, start_response):
+    start_response("404 Not Found", [("Content-Type", "text/plain; charset=utf-8")])
+    return [b"Not Found"]
+
+
+@app.function(
+    image=image,
+    volumes={"/modal_data": vol},
+    secrets=[
+        modal.Secret.from_name("app-credentials"),
+        modal.Secret.from_name("stripe-credentials"),
+        modal.Secret.from_name("google-vision-credentials"),
+        modal.Secret.from_name("vapid-credentials"),
+        modal.Secret.from_name("external-api-credentials"),
+        modal.Secret.from_name("cf-proxy-secret"),
+        modal.Secret.from_name("resend-api-key"),
+        modal.Secret.from_name("r2-credentials"),
+    ],
+    timeout=300,
+    min_containers=0,
+    scaledown_window=120,
+    max_containers=2,
+    enable_memory_snapshot=True,
+)
+@modal.concurrent(max_inputs=3)
+@modal.wsgi_app()
+def serve_light():
+    os.chdir("/app")
+    sys.path.insert(0, "/app")
+    os.environ["LOCALAPPDATA"] = "/modal_data"
+
+    vol.reload()
+    _fix_vertical_config()
+    _fix_db_paths()
+
+    _swept_n, _ = _sweep_query_dir()
+    if _swept_n > 0:
+        try:
+            vol.commit()
+            print("[QUERY-SWEEP] vol.commit() OK", flush=True)
+        except Exception as _e:
+            print(f"[QUERY-SWEEP] vol.commit() FAILED: {_e}", flush=True)
+
+    # Deliberately NO get_embedder() / load_embedding_cache() call here — that's
+    # the entire point of this function. The 3 light routes never touch
+    # FRONT_INFO/CLIP/DINOv2 (confirmed in recon: _image_id_for_sku falls back
+    # to a direct sqlite lookup when FRONT_INFO is empty).
+    from app import app as _flask_app
+    print("[LIGHT] serve_light booted — no model load, no embedding cache", flush=True)
+
+    def router(environ, start_response):
+        path = environ.get("PATH_INFO", "")
+        if any(path.startswith(p) for p in _LIGHT_ALLOWED_PREFIXES):
+            return _flask_app(environ, start_response)
+        return _light_404(environ, start_response)
+
+    return router
+
+
 @app.function(
     image=image,
     gpu="T4",
