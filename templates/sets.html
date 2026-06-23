@@ -132,13 +132,16 @@
 .sets-card-thumb {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   cursor: default;
+  width: fit-content;
+  justify-self: center;
+  box-sizing: border-box;
 }
 .sets-card-thumb img {
   width: 70px; height: 98px; object-fit: contain; border-radius: 5px;
-  border: 2px solid transparent;
 }
-.sets-card-thumb--owned img  { border-color: #00ff88; }
-.sets-card-thumb--missing img { border-color: #cc3333; opacity: 0.45; filter: grayscale(0.6); }
+.sets-card-thumb--owned   { border: 2px solid #00ff88; }
+.sets-card-thumb--missing { border: 2px solid #cc3333; }
+.sets-card-thumb--missing img { opacity: 0.45; filter: grayscale(0.6); }
 .sets-card-thumb-num { font-size: 0.6rem; color: #888; text-align: center; }
 .sets-card-thumb-name { font-size: 0.58rem; color: #aaa; text-align: center; line-height: 1.3; max-width: 74px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 

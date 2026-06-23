@@ -189,7 +189,7 @@
 .col-stat-label { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--mi-muted,#aaa); margin-top:4px; }
 
 .col-tcg-breakdown { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
-.col-tcg-card { border-radius:12px; padding:14px 16px; border:1px solid; display:flex; align-items:center; gap:12px; }
+.col-tcg-card { border-radius:12px; padding:14px 16px; border:1px solid; display:flex; align-items:center; gap:12px; cursor:pointer; }
 .col-tcg-card--pokemon { background:rgba(255,203,5,0.06); border-color:rgba(255,203,5,0.2); }
 .col-tcg-card--ygo     { background:rgba(177,77,255,0.06); border-color:rgba(177,77,255,0.2); }
 .col-tcg-card--mtg     { background:rgba(0,229,255,0.06);  border-color:rgba(0,229,255,0.2); }
@@ -739,7 +739,7 @@ function colRender() {
         {key:'mtg',    icon:'🔮',name:'Magic: The Gathering',   cls:'col-tcg-card--mtg'},
     ];
     bd.innerHTML = defs.map(d=>`
-        <div class="col-tcg-card ${d.cls}" style="${tcgs[d.key].cards===0?'opacity:0.4':''}">
+        <div class="col-tcg-card ${d.cls}" style="${tcgs[d.key].cards===0?'opacity:0.4':''}" onclick="document.querySelector('.col-filter-btn--${d.key}')?.click()">
             <div class="col-tcg-icon">${d.icon}</div>
             <div class="col-tcg-info">
                 <div class="col-tcg-name">${d.name}</div>
