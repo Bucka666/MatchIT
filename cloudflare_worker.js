@@ -1,8 +1,10 @@
-// Deployed: 2026-05-10 — added raredex.co redirect + CF proxy secret + PWA validator bypass
+// Repo reference copy — mirrors deployed raredex-proxy (CPU-twin routing live since 2026-06-21)
 const MODAL_HOST = 'c-a-buckley--matchit-api-serve.modal.run';
+const LIGHT_HOST = 'c-a-buckley--matchit-api-serve-light.modal.run';
 
 // Shared secret for origin protection — must match Modal CF_PROXY_SECRET env var
-const CF_PROXY_SECRET = '4cwrAG7UaI-M9pXmmyQUzxJ3jDn1YEb0W3WjDeZTod8';
+// Real value lives only in the deployed Worker + Modal CF_PROXY_SECRET secret — never commit the live value here
+const CF_PROXY_SECRET = 'REDACTED_SEE_DEPLOYED_WORKER';
 
 // Hosts we apply filtering to
 const FILTERED_HOSTS = new Set(['grailsweep.com', 'www.grailsweep.com']);
@@ -97,6 +99,17 @@ export default {
     const host = url.hostname;
     const path = url.pathname;
 
+    // Route 3 lightweight, no-GPU routes to the CPU twin (serve_light).
+    // Placed first so it covers POST telemetry + GET card-profile/image in one
+    // spot, before the method-based early-exit splits them apart.
+    if (
+      path === '/api/ondevice/telemetry' ||
+      path.startsWith('/api/card-profile/') ||
+      path.startsWith('/api/v1/image/')
+    ) {
+      return proxyToModal(request, url, LIGHT_HOST);
+    }
+
     // Legacy domain — permanent redirect to grailsweep.com (no Modal hit)
     if (host === 'raredex.co' || host === 'www.raredex.co') {
       const target = 'https://grailsweep.com' + url.pathname + url.search;
@@ -160,9 +173,9 @@ export default {
   },
 };
 
-function proxyToModal(originalRequest, url) {
+function proxyToModal(originalRequest, url, targetHost = MODAL_HOST) {
   const modalUrl = new URL(url.toString());
-  modalUrl.hostname = MODAL_HOST;
+  modalUrl.hostname = targetHost;
   modalUrl.protocol = 'https:';
 
   const headers = new Headers(originalRequest.headers);
