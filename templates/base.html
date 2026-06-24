@@ -881,6 +881,28 @@
     } catch (e) { return 'next billing date'; }
   }
   </script>
+  <script>
+  /* On-device capability threshold — single source of truth. Defined here (in
+     <head>) so the weak-device marker class lands on <html> before any page's
+     body content parses, avoiding a flash of UI that then gets hidden. Shared
+     by the GSOnDevice gate in match.html (gsDeviceCanRunOnDevice) and the
+     scanner-panel visibility gate (the gs-weak-device class set below). */
+  window.GS_ONDEVICE_MIN_DEVICE_MEMORY = 4;   // GB; skip on-device if <= this. Tune with real device data.
+  window.GS_ONDEVICE_DISABLED_KEY = 'gs_ondevice_disabled_v1';
+
+  window.gsDeviceWeak = function () {
+    try {
+      var forced = localStorage.getItem(window.GS_ONDEVICE_DISABLED_KEY);
+      if (forced === '1') return true;
+      if (forced === '0') return false;
+      var mem = navigator.deviceMemory;
+      return (typeof mem === 'number' && mem > 0 &&
+              mem <= window.GS_ONDEVICE_MIN_DEVICE_MEMORY);
+    } catch (e) { return false; }  // never block scanning on an error
+  };
+
+  try { if (window.gsDeviceWeak()) document.documentElement.classList.add('gs-weak-device'); } catch (e) {}
+  </script>
 </head>
 
 <body class="mi-page">

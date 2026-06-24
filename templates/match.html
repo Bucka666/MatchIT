@@ -778,6 +778,24 @@ body             { overflow: visible !important; }
 .scanner-panel { display: none; }
 @media (max-width: 1024px) { .scanner-panel { display: block; } }
 
+/* ── Weak device: live scanner stays hidden even at mobile widths,
+   mirroring the >1024px desktop "scanner hidden, upload centred" layout ── */
+html.gs-weak-device .scanner-panel { display: none !important; }
+html.gs-weak-device .cx-divider-v  { display: none !important; }
+html.gs-weak-device .cx-wrap {
+  display: flex !important;
+  justify-content: center;
+  align-items: stretch;
+}
+html.gs-weak-device .cx-upload {
+  max-width: 600px;
+  width: 100%;
+  margin: 0 auto;
+  flex-shrink: 0;
+  order: initial !important;
+  flex: initial !important;
+}
+
 /* ── Hide photo panel when scanner is active ── */
 .scanner-active .cx-panel:not(.scanner-panel) { display: none !important; }
 .scanner-active .scanner-panel { height: calc(100dvh - env(safe-area-inset-bottom, 0px)) !important; max-height: none !important; }
@@ -2498,6 +2516,20 @@ function dismissInstallBanner() {
 window.addEventListener('load', initInstallBanner);
 window.addEventListener('load', _gsTierPageLoadCheck);
 
+// ── Weak-device photo-capture nudge (one-time per browser session) ──────────
+function _gsWeakDevicePhotoNudge() {
+  if (typeof window.gsDeviceWeak !== 'function' || !window.gsDeviceWeak()) return;
+  try {
+    if (sessionStorage.getItem('gs_photo_toast_shown_v1')) return;
+    sessionStorage.setItem('gs_photo_toast_shown_v1', '1');
+  } catch (e) { /* if sessionStorage is unavailable, fall through and show once anyway */ }
+  if (typeof gsShowToast === 'function') {
+    gsShowToast('Photo capture is set up for the best results on your device — tap "Take photo" to scan.',
+                { variant: 'info', duration: 6000 });
+  }
+}
+window.addEventListener('load', _gsWeakDevicePhotoNudge);
+
 function detectBrowser() {
   var ua = navigator.userAgent;
   if (window.matchMedia('(display-mode: standalone)').matches) return 'installed';
@@ -2846,8 +2878,28 @@ document.getElementById('matchYear') &&
     return true;
   }
 
+  // --- On-device capability gate -------------------------------------------
+  // Low-RAM devices can OOM-kill the tab when the model+index load. Threshold,
+  // override key, and the actual weak/strong decision all live in base.html's
+  // <head> as window.gsDeviceWeak() (single source of truth, also drives the
+  // scanner-panel visibility gate) — this just inverts the polarity for the
+  // on-device init/warmup call sites below.
+  function gsDeviceCanRunOnDevice() {
+    try {
+      return !window.gsDeviceWeak();
+    } catch (e) {
+      return true; // never let the gate itself break init
+    }
+  }
+
   // ---- init (background; runs on window load, after render) ---------------
   async function gsOnDeviceInit() {
+    if (!gsDeviceCanRunOnDevice()) {
+      window.__gsOnDeviceReady = false;
+      try { gsSetBadge('error'); } catch (e) {}
+      console.log('[ONDEVICE-GATE] on-device disabled for this device; server scan will be used.');
+      return;
+    }
     if (window.__gsOnDeviceInitStarted) return;
     window.__gsOnDeviceInitStarted = true;
     try {
@@ -2999,6 +3051,7 @@ document.getElementById('matchYear') &&
     _gsSession = await window.ort.InferenceSession.create(bytes, { executionProviders: ['wasm'] });
   }
   function gsWarmup() {
+    if (!gsDeviceCanRunOnDevice()) return;
     if (!_gsWarmupP) _gsWarmupP = (async () => { await gsLoadSession(); await gsLoadIndex(); _gsWarm = true; })();
     return _gsWarmupP;
   }
