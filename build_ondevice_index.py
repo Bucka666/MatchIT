@@ -24,14 +24,20 @@ import numpy as np
 import torch, open_clip
 from PIL import Image
 
-INDEX_VERSION    = "gs-ondevice-v1"          # bump together with browser preprocessing
+from ondevice_version import ONDEVICE_INDEX_VERSION
+
+INDEX_VERSION    = ONDEVICE_INDEX_VERSION    # bump together with browser preprocessing
 PREPROC_ID       = "plain-bilinear-shortest256-centercrop256"
 MODEL, PRE       = "MobileCLIP2-S2", "dfndr2b"
-CARDSDB          = r"C:\CardsDB"
+CARDSDB          = "/modal_data/CardsDB" if os.path.exists("/modal_data") else r"C:\CardsDB"
 BATCH            = 256
 CHECKPOINT_EVERY = int(os.environ.get("GS_BUILD_CHECKPOINT_EVERY", "2048"))
 BUILD_LIMIT      = int(os.environ.get("GS_BUILD_LIMIT", "0"))   # 0 = all
-OUT_DIR          = os.environ.get("GS_BUILD_OUT_DIR", "ondevice_index_v1")
+# Staged builds must survive container restarts until Craig's manual R2
+# publish, so default to the Modal volume rather than the ephemeral
+# container filesystem when running on Modal.
+_DEFAULT_OUT_DIR = "/modal_data/ondevice_staged" if os.path.exists("/modal_data") else "ondevice_index_v1"
+OUT_DIR          = os.environ.get("GS_BUILD_OUT_DIR", _DEFAULT_OUT_DIR)
 CKPT_DIR         = os.path.join(OUT_DIR, "_checkpoint")
 DRY_RUN          = os.environ.get("DRY_RUN") == "1"
 
@@ -112,7 +118,7 @@ def main():
 
     if DRY_RUN:
         print("[dry-run] stopping before model load / embedding.", flush=True)
-        return
+        return {"dry_run": True, "planned_count": len(resolved)}
 
     print(f"[load] {MODEL}/{PRE} ...", flush=True)
     dev = "cuda" if torch.cuda.is_available() else "cpu"
@@ -237,9 +243,22 @@ def main():
         print(f"[checkpoint] build complete, removed {CKPT_DIR}", flush=True)
 
     sz = os.path.getsize(vec_path) / 1e6
+    elapsed = time.time() - t0
     print(f"\n[done] vectors={vecs.shape[0]}x{vecs.shape[1]} f16  "
-          f"file={vec_path} ({sz:.1f} MB)  in {time.time()-t0:.0f}s", flush=True)
+          f"file={vec_path} ({sz:.1f} MB)  in {elapsed:.0f}s", flush=True)
     print(f"[done] version={INDEX_VERSION}  preproc={PREPROC_ID}", flush=True)
+
+    return {
+        "dry_run": False,
+        "out_dir": OUT_DIR,
+        "vec_path": vec_path,
+        "sku_path": sku_path,
+        "meta_path": meta_path,
+        "count": int(vecs.shape[0]),
+        "size_mb": round(sz, 1),
+        "elapsed_s": round(elapsed, 0),
+        "index_version": INDEX_VERSION,
+    }
 
 
 if __name__ == "__main__":

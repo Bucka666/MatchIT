@@ -285,7 +285,10 @@ def serve_light():
         modal.Secret.from_name("resend-api-key"),
         modal.Secret.from_name("r2-credentials"),
     ],
-    schedule=modal.Cron("0 1 * * 1"),  # Every Monday at 1am UTC
+    schedule=modal.Cron("0 1 * * *"),  # Every day at 1am UTC (was Monday-only —
+    # the release calendar's state machine needs daily ticks to advance sets
+    # through their states promptly around release_date; see set_scheduler.py
+    # run_scheduler()/_advance_entry).
     timeout=3600,
 )
 def scheduled_set_check():
@@ -336,7 +339,12 @@ def scheduled_set_check():
         print(f"[CRON] vol.commit() FAILED: {e}", flush=True)
     print(f"[CRON] Done — {result}", flush=True)
 
-    # Collect newly scraped SKUs for a fast delta rebuild
+    # Collect newly scraped SKUs for a fast delta rebuild. Two sources feed
+    # this now: the legacy bulk per-TCG path (new_set_ids -> folder scan, as
+    # before) and the calendar state machine's own tracked new_skus
+    # (set_scheduler.run_scheduler's "new_skus" key — sets ingested via
+    # _try_catalog_ingest already know their exact SKU list, no rescan
+    # needed for those).
     new_skus = None
     try:
         new_set_ids = set()
@@ -362,10 +370,21 @@ def scheduled_set_check():
                             new_skus.append(sku)
                     elif game_folder in ("mtg", "yugioh") and len(parts) >= 3 and parts[1] in new_set_ids:
                         new_skus.append(sku)
-            if not new_skus:
-                new_skus = None  # nothing found, fall back to full rebuild
     except Exception as _e:
-        print(f"[CRON] Failed to collect new SKUs: {_e} — falling back to full rebuild", flush=True)
+        print(f"[CRON] Failed to collect legacy-path new SKUs: {_e}", flush=True)
+
+    calendar_new_skus = result.get("new_skus") or []
+    if calendar_new_skus:
+        new_skus = (new_skus or []) + [s for s in calendar_new_skus if s not in (new_skus or [])]
+
+    if not new_skus:
+        new_skus = None  # nothing found this run -> full rebuild
+
+    # Belt-and-braces weekly safety net (Sunday UTC): force a full rebuild
+    # regardless of new_skus, to catch anything the per-set/delta paths
+    # missed. See set_scheduler.run_scheduler's force_full_reconcile flag.
+    if result.get("force_full_reconcile"):
+        print("[CRON] Sunday safety net: forcing full rebuild_lookup_files", flush=True)
         new_skus = None
 
     try:

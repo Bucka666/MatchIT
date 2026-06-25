@@ -1,0 +1,17 @@
+﻿{
+  "sets": [
+    {
+      "game": "pokemon_en",
+      "name": "Mega Evolution: Pitch Black",
+      "source_ids": { "pokemontcg_io": null, "tcgdex_en": null },
+      "release_date": "2026-07-17",
+      "ondevice_eligible": true,
+      "state": "pending",
+      "source_latency": {
+        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
+        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
+      }
+    }
+  ],
+  "discovered_unlisted": []
+}

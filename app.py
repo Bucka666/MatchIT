@@ -3395,9 +3395,10 @@ def public_stats():
 
 @app.route("/api/heartbeat")
 def heartbeat():
+    from ondevice_version import ONDEVICE_INDEX_VERSION
     resp = jsonify({
         "ok": True,
-        "index_version": "gs-ondevice-v1",
+        "index_version": ONDEVICE_INDEX_VERSION,
         "model_sha": "43A9CF56DCA2441626D42DC494ECEA7D22667FEDE6166A27EAF0B39E87BA24F5",
     })
     resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
@@ -5776,6 +5777,105 @@ def rebuild_mtg_set_totals():
     print(f"[MTG-TOTALS] Samples: {samples}", flush=True)
 
     return {"baked": len(totals), "skipped": skipped, "samples": samples}
+
+
+def rebuild_identifier_lookup():
+    """Rebuild identifier_lookup.json (OCR-first SKU lookup) from CardsDB.
+
+    Logic is copied verbatim from the standalone build_identifier_lookup.py
+    (key shape, collision rule, per-game bucketing) — that script stays as
+    Craig's manual local tool against C:\\CardsDB; this is the Modal-aware
+    twin the per-set scheduler chain calls so new sets stop leaving this
+    file stale (it was previously manual-only).
+
+    Always a full rescan, same as rebuild_mtg_set_totals/rebuild_set_card_lists
+    above — collision detection needs the whole existing key set in memory
+    regardless, so a true delta wouldn't save the expensive part anyway.
+    """
+    from vertical_loader import get_db_root as _gdbr
+    cards_root = _gdbr() or "CardsDB"
+
+    lookup = {"pokemon": {}, "mtg": {}, "ygo": {}}
+    collisions = {"pokemon": 0, "mtg": 0, "ygo": 0}
+    counts = {"pokemon": 0, "mtg": 0, "ygo_setcode": 0, "ygo_passcode": 0}
+    skipped = {"pokemon": 0, "mtg": 0, "ygo": 0}
+
+    def add_key(game, key, sku, bucket):
+        if not key:
+            return
+        sub = lookup[game]
+        if key in sub:
+            if sub[key] != sku:
+                collisions[game] += 1
+            return
+        sub[key] = sku
+        counts[bucket] += 1
+
+    for game_dir in ("pokemon", "mtg", "yugioh"):
+        game_path = os.path.join(cards_root, game_dir)
+        if not os.path.isdir(game_path):
+            continue
+        for sku_dir in os.listdir(game_path):
+            profile_path = os.path.join(game_path, sku_dir, "profile.json")
+            if not os.path.isfile(profile_path):
+                continue
+            sku = sku_dir
+            try:
+                with open(profile_path, "r", encoding="utf-8") as f:
+                    p = json.load(f)
+            except Exception as e:
+                print(f"[ID-LOOKUP] WARN could not read {profile_path}: {e}", flush=True)
+                continue
+
+            card_number = str(p.get("card_number") or "").strip()
+            set_id = str(p.get("set_id") or "").strip()
+            category = str(p.get("category") or "").upper().strip()
+
+            if category == "POKEMON":
+                if not card_number or not set_id:
+                    skipped["pokemon"] += 1
+                    continue
+                key = (f"jpn-{set_id}-{card_number}" if sku_dir.startswith("jpn-")
+                       else f"{set_id}-{card_number}").lower()
+                add_key("pokemon", key, sku, "pokemon")
+
+            elif category == "MTG":
+                if not card_number or not set_id:
+                    skipped["mtg"] += 1
+                    continue
+                key = f"{set_id}-{card_number}".lower()
+                add_key("mtg", key, sku, "mtg")
+
+            elif category == "YUGIOH":
+                added_any = False
+                if card_number:
+                    add_key("ygo", card_number.upper(), sku, "ygo_setcode")
+                    added_any = True
+                ygoprodeck_id = str(p.get("ygoprodeck_id") or "").strip()
+                if ygoprodeck_id and re.match(r'^\d{5,8}$', ygoprodeck_id):
+                    add_key("ygo", ygoprodeck_id, sku, "ygo_passcode")
+                    added_any = True
+                if not added_any:
+                    skipped["ygo"] += 1
+
+    tmp_path = IDENTIFIER_LOOKUP_PATH + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(lookup, f, ensure_ascii=False, separators=(",", ":"))
+    os.replace(tmp_path, IDENTIFIER_LOOKUP_PATH)
+
+    total_keys = sum(len(v) for v in lookup.values())
+    print(f"[ID-LOOKUP] Rebuilt {total_keys} keys "
+          f"(pokemon={counts['pokemon']} mtg={counts['mtg']} "
+          f"ygo_setcode={counts['ygo_setcode']} ygo_passcode={counts['ygo_passcode']}) "
+          f"collisions={sum(collisions.values())} skipped={skipped} "
+          f"-> {IDENTIFIER_LOOKUP_PATH}", flush=True)
+
+    # Refresh the in-memory cache the OCR matcher reads from, so a running
+    # server process picks up new keys without a redeploy/restart.
+    _identifier_lookup.clear()
+    _identifier_lookup.update(lookup)
+
+    return {"total_keys": total_keys, "counts": counts, "collisions": collisions, "skipped": skipped}
 
 
 # ── Set-detail card-list sidecars (one per game) ─────────────────────────────
