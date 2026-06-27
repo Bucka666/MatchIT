@@ -2018,6 +2018,7 @@ def _run_match_paired_two_stage(
     query_profile: Optional[Dict] = None,
     auto_front_grooves: int = -1,
     auto_back_grooves: int = -1,
+    exclude_jpn: bool = False,
 ) -> Tuple[List[dict], bool, dict]:
     import time
 
@@ -2170,10 +2171,15 @@ def _run_match_paired_two_stage(
 
     per_sku_count: Dict[str, int] = {}
 
+    _jp_pre_excluded = 0
+
     # FRONT images
     for idx, (image_id, sku, orig_name, desc) in enumerate(FRONT_INFO):
         sku = (sku or "").strip()
         if not sku:
+            continue
+        if exclude_jpn and sku.startswith('jpn-'):
+            _jp_pre_excluded += 1
             continue
         if cap_per_sku > 0:
             per_sku_count.setdefault(sku, 0)
@@ -2195,6 +2201,9 @@ def _run_match_paired_two_stage(
         sku = (sku or "").strip()
         if not sku:
             continue
+        if exclude_jpn and sku.startswith('jpn-'):
+            _jp_pre_excluded += 1
+            continue
         if cap_per_sku > 0:
             per_sku_count.setdefault(sku, 0)
             if per_sku_count[sku] >= cap_per_sku:
@@ -2210,6 +2219,9 @@ def _run_match_paired_two_stage(
 
         if cap_per_sku > 0:
             per_sku_count[sku] = per_sku_count.get(sku, 0) + 1
+
+    if exclude_jpn and _jp_pre_excluded > 0:
+        app.logger.info(f"[JP-PRE-FILTER] excluded {_jp_pre_excluded} jpn- SKUs from candidate pool before CLIP ranking")
 
     if not by_sku_front_qf:
         return [], False, {"error": "no_front_comparables", "query_type": query_type}
@@ -4251,6 +4263,9 @@ def capture_submit():
         if q2_path is not None and q2_path.exists():
             qb = _embed_one_query(emb, str(q2_path), **params_back)
 
+        jp_mode = request.form.get('jp_mode', 'en')
+        exclude_jpn = (jp_mode != 'jp')
+
         results, low_cert, _diag = _run_match_paired_two_stage(
             qf,
             qb,
@@ -4268,6 +4283,7 @@ def capture_submit():
             query_profile=query_profile,
             auto_front_grooves=auto_fg,
             auto_back_grooves=auto_bg,
+            exclude_jpn=exclude_jpn,
         )
 
         # DINOv2 tie-breaker on top 2 if scores are close
@@ -7686,6 +7702,9 @@ def match():
             qb = _embed_one_query(emb, str(query_path2), **params_back)
         _t_emb_back = _time.time()
 
+        jp_mode = request.form.get('jp_mode', 'en')
+        exclude_jpn = (jp_mode != 'jp')
+
         results, low_cert, _diag = _run_match_paired_two_stage(
             qf,
             qb,
@@ -7703,6 +7722,7 @@ def match():
             query_profile=query_profile,
             auto_front_grooves=auto_fg,
             auto_back_grooves=auto_bg,
+            exclude_jpn=exclude_jpn,
         )
         _t_match = _time.time()
 

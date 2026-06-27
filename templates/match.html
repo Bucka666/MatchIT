@@ -1235,6 +1235,7 @@ var soundEnabled = true;
         confFd.append('confirmed_sku', _uploadOcrResult.sku);
         var _keyTypeEl = document.getElementById('cxKeyType');
         confFd.append('key_type', _keyTypeEl ? _keyTypeEl.value : '');
+        confFd.append('jp_mode', _ocrLang);
         try {
           var r = await fetch('/match', { method: 'POST', body: confFd });
           if (r.status === 402) {
@@ -1263,6 +1264,7 @@ var soundEnabled = true;
             odFd.append('confirmed_sku', odr.sku);
             var _odKeyTypeEl = document.getElementById('cxKeyType');
             odFd.append('key_type', _odKeyTypeEl ? _odKeyTypeEl.value : '');
+            odFd.append('jp_mode', _ocrLang);
             var odR = await fetch('/match', { method: 'POST', body: odFd });
             if (odR.status === 402) {
               if (prog) prog.style.display = 'none';
@@ -1285,6 +1287,7 @@ var soundEnabled = true;
       gpuFd.append('query_image', _uploadFile, 'upload.jpg');
       var _keyTypeEl = document.getElementById('cxKeyType');
       gpuFd.append('key_type', _keyTypeEl ? _keyTypeEl.value : '');
+      gpuFd.append('jp_mode', _ocrLang);
       fetch('/match', { method: 'POST', body: gpuFd })
       .then(function(r) {
         if (r.status === 402) {

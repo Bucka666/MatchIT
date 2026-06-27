@@ -333,6 +333,9 @@ def register_api_routes(app):
         TOP_M_PER_SKU = int(CFG.get("top_m_per_sku", 3))
         CAP_PER_SKU = int(CFG.get("cap_per_sku", 30))
 
+        jp_mode = request.form.get('jp_mode', 'en')
+        exclude_jpn = (jp_mode != 'jp')
+
         try:
             results, low_cert, diag = _run_match_paired_two_stage(
                 qf, qb,
@@ -350,6 +353,7 @@ def register_api_routes(app):
                 query_profile=query_profile,
                 auto_front_grooves=auto_fg,
                 auto_back_grooves=auto_bg,
+                exclude_jpn=exclude_jpn,
             )
         except Exception as e:
             return jsonify({"error": f"Matching failed: {e}"}), 500
