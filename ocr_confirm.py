@@ -485,6 +485,8 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
         candidates = _SWSH_TOTAL_MAP.get(total, [])
         if len(candidates) == 1:
             combined = f"{candidates[0]}-{num}"
+            if total:
+                _last_pkm_denominator = total
             logger.info(f"[OCR-PKM] SWSH fingerprint: total={total} → {combined}")
             return combined
         elif len(candidates) > 1:
@@ -496,7 +498,9 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
             _last_pkm_denominator = total
             return num
     if num:
-        logger.info(f"[OCR-PKM] extracted card number only: {num}")
+        if total:
+            _last_pkm_denominator = total
+        logger.info(f"[OCR-PKM] extracted card number only: {num} (denom={total})")
         return num
     return None
 
@@ -706,7 +710,7 @@ def _denominator_blocks_promotion(candidate_sku, ocr_denominator, set_metadata, 
     """
     if not ocr_denominator or not candidate_sku or not set_metadata:
         return False
-    set_id = candidate_sku.split("-")[0]
+    set_id = candidate_sku.rsplit("-", 1)[0]
     meta = _trusted_set_meta(set_id, set_metadata, expected_game)
     if not meta:
         return False
@@ -734,7 +738,7 @@ def _denominator_confirms(candidate_sku, ocr_denominator, set_metadata, expected
     """
     if not ocr_denominator or not candidate_sku or not set_metadata:
         return False
-    set_id = candidate_sku.split("-")[0]
+    set_id = candidate_sku.rsplit("-", 1)[0]
     meta = _trusted_set_meta(set_id, set_metadata, expected_game)
     if not meta:
         return False
@@ -918,8 +922,14 @@ def ocr_confirm_ranking(
             ocr_info["ocr_status"] = "no_sku_match"
         return results, ocr_info
 
-    # Already rank 1 — confirm and return
+    # Already rank 1 — confirm and return (but veto on denominator mismatch first,
+    # same guard the promotion/direct-lookup paths use — closes the rank1_confirmed leak)
     if match_idx == 0:
+        if _denominator_blocks_promotion(results[0]['sku'], ocr_denominator, set_metadata, tcg_upper):
+            logger.info("[OCR-P3] rank1_confirm blocked: %s denom=%s != set total",
+                        results[0]['sku'], ocr_denominator)
+            ocr_info["ocr_status"] = "denominator_mismatch"
+            return results, ocr_info
         logger.info(f"[OCR] Rank 1 confirmed by OCR: {results[0]['sku']}")
         ocr_info["ocr_status"] = "rank1_confirmed"
         return results, ocr_info
@@ -992,6 +1002,22 @@ def ocr_confirm_ranking(
 # Standalone text-only parsers (no image needed)
 # Used by /api/ocr-lookup to parse raw Tesseract output.
 # ─────────────────────────────────────────────────────────────
+
+def parse_pokemon_denominator(texts: list):
+    """Return the printed denominator (TTT in NNN/TTT) from OCR text, or None.
+    Mirrors parse_pokemon_text's _CARD_NUMBER_RE parse but yields the total only.
+    Pure read, no globals, no side effects."""
+    for text in texts:
+        m = _CARD_NUMBER_RE.search(text)
+        if m:
+            try:
+                t = int(m.group(2))
+            except (TypeError, ValueError):
+                continue
+            if t and t <= 300:
+                return t
+    return None
+
 
 def parse_pokemon_text(texts: list) -> Optional[str]:
     """Parse raw OCR text lines from a Pokémon card.

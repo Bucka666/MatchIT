@@ -1910,7 +1910,7 @@ function scCapture() {
     if(!blob){scBusy=false;return;}
     // OCR-first path
     var _ocrResult = await _tryOcrLookup(blob);
-    if (_ocrResult) {
+    if (_ocrResult && !_ocrResult.miss) {
       scBusy = false;
       var p = _ocrResult.profile || {};
       var name = p.name || p.title || _ocrResult.sku || '';
@@ -1965,7 +1965,10 @@ function scCapture() {
     if (window.GSOnDevice && window.GSOnDevice.isReady() && window.GSOnDevice.isWarm()) {
       try {
         const odr = await window.GSOnDevice.match(blob);
-        if (odr && odr.accept) {
+        // On-device denominator backstop: extracted so the existing accept/render/
+        // beacon body (byte-identical to before) can be reused from every fail-open
+        // path below without duplication. Returns true iff it actually accepted.
+        const _acceptOnDevice = async () => {
           const cpResp = await fetch('/api/card-profile/' + encodeURIComponent(odr.sku),
                                      { credentials: 'same-origin' });
           if (cpResp.ok) {
@@ -2007,12 +2010,45 @@ function scCapture() {
               scAddCard({name:name, set:set, num:num, pct:100, price:odGbp, priceStr:odGbpStr, img:odImgUrl, sku:odr.sku||'', rarity:rar, profile:p, allPrices:allPrices, tcgplayerUrl:p.tcgplayer_url||'', cardmarketUrl:p.cardmarket_url||'', grade:null, gradeSkipped:true});
               if (typeof scanIncrement === 'function') { var _ss = scanIncrement(); _updateScanBadge(_ss); }
               window.GSOnDevice.beacon(odr);
-              return;
+              return true;
             }
           }
           // card-profile fetch failed -> fall through to Modal (fail-open)
+          return false;
+        };
+
+        if (odr && odr.accept) {
+          // Conflict check: only suppress on a POSITIVE conflict — denominator read
+          // AND set total known AND they disagree. Any missing/uncertain data falls
+          // through to the normal accept (fail-open — can only add a server round-trip,
+          // never block a legit card).
+          const _denom = (_ocrResult && _ocrResult.ocr_denom) ? _ocrResult.ocr_denom : null;
+          let _suppressed = false;
+          if (_denom) {
+            try {
+              const stResp = await fetch('/api/set-total/' + encodeURIComponent(odr.sku),
+                                         { credentials: 'same-origin' });
+              if (stResp.ok) {
+                const st = await stResp.json();
+                const pt = st.printed_total, tt = st.total;
+                const known = (pt != null) || (tt != null);
+                const matches = (pt != null && _denom === pt) || (tt != null && _denom === tt);
+                if (known && !matches) {
+                  console.log('[ONDEVICE] denom conflict: ocr=' + _denom + ' vs set ' +
+                              st.set_id + ' (' + pt + '/' + tt + ') -> fall through to /match');
+                  _suppressed = true;
+                }
+              }
+              // set-total fetch not ok -> can't prove conflict -> fail-open (not suppressed)
+            } catch (e) {
+              // any error -> fail-open -> not suppressed
+            }
+          }
+          if (!_suppressed) {
+            if (await _acceptOnDevice()) return;
+          }
         }
-        // gate declined -> fall through to Modal
+        // gate declined or suppressed -> fall through to Modal
       } catch (e) { /* fall through to Modal */ }
     }
     // OCR miss — fall through to existing server scan below
@@ -3752,7 +3788,10 @@ async function _tryOcrLookup(imageFile) {
       return data;
     }
     console.log('[OCR] Lookup miss');
-    return null;
+    // Miss can still carry a parsed denominator (e.g. out-of-index card whose
+    // NNN/TTT was read but didn't resolve to a known SKU) — surface it as a
+    // distinct shape (`miss: true`) so callers never mistake it for a hit.
+    return (data && data.ocr_denom) ? { miss: true, ocr_denom: data.ocr_denom } : null;
   } catch(e) {
     console.warn('[OCR] Error:', e);
     return null;

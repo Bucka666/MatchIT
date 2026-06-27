@@ -1,2 +1,15 @@
 
+
 .venv\Scripts\activate
+
+
+
+
+modal app stop matchit-api
+$env:PYTHONIOENCODING="utf-8"; modal deploy matchit_modal.py
+
+
+
+
+
+

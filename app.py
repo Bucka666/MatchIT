@@ -3568,7 +3568,7 @@ def _fuzzy_pokemon_identifier(raw_text, num, setcode_map, lookup):
 @app.route('/api/ocr-lookup', methods=['POST'])
 def ocr_lookup():
     try:
-        from ocr_confirm import parse_pokemon_text, parse_mtg_text, parse_ygo_text
+        from ocr_confirm import parse_pokemon_text, parse_pokemon_denominator, parse_mtg_text, parse_ygo_text
         data = request.get_json(force=True)
         raw_text = (data.get('raw_text') or '').strip()
         game = (data.get('game') or 'pokemon').lower()
@@ -3579,6 +3579,15 @@ def ocr_lookup():
             return jsonify({'status': 'error', 'message': 'No text provided'}), 400
 
         text_lines = [l.strip() for l in raw_text.splitlines() if l.strip()]
+
+        # On-device denominator backstop: surface the printed total on a miss too,
+        # so the client can veto a conflicting on-device pick (Option A).
+        ocr_denom = None
+        try:
+            if game == 'pokemon':
+                ocr_denom = parse_pokemon_denominator(text_lines)
+        except Exception:
+            ocr_denom = None
 
         identifier = None
 
@@ -3627,27 +3636,28 @@ def ocr_lookup():
                     identifier = _fuzzy_id
                 else:
                     print(f'[OCR-LOOKUP] Bare number rejected: {identifier} (source={ocr_source})', flush=True)
-                    return jsonify({'status': 'not_found'})
+                    return jsonify({'status': 'not_found', 'ocr_denom': ocr_denom})
 
         if not identifier:
-            return jsonify({'status': 'not_found'})
+            return jsonify({'status': 'not_found', 'ocr_denom': ocr_denom})
 
         game_lookup = _identifier_lookup.get(game, {})
         sku = game_lookup.get(identifier)
         if not sku:
             print(f'[OCR-LOOKUP] No SKU for: {identifier} (source={ocr_source})', flush=True)
-            return jsonify({'status': 'not_found'})
+            return jsonify({'status': 'not_found', 'ocr_denom': ocr_denom})
 
         db_root = get_db_root()
         profile = _load_card_profile_for_sku(sku, db_root, get_data_dir())
         if not profile:
-            return jsonify({'status': 'not_found'})
+            return jsonify({'status': 'not_found', 'ocr_denom': ocr_denom})
 
         print(f'[OCR-LOOKUP] Hit: {identifier} -> {sku} (source={ocr_source})', flush=True)
         image_id = _image_id_for_sku(sku)
         return jsonify({
             'status': 'ok',
             'source': 'ocr_lookup',
+            'ocr_denom': ocr_denom,
             'sku': sku,
             'profile': profile,
             'image_id': image_id
@@ -5621,6 +5631,23 @@ def _get_set_id_from_sku(sku):
         return parts[1] if len(parts) >= 2 else None
     # Pokémon: sv1-85 → sv1
     return sku.rsplit("-", 1)[0] if "-" in sku else None
+
+@app.route('/api/set-total/<path:sku>')
+def api_set_total(sku):
+    """Read-only set-size lookup for the client's on-device denominator backstop.
+    Reuses _get_set_id_from_sku (handles ygo-/mtg-/Pokémon key shapes) — does not
+    duplicate the rsplit rule inline, so MTG/YGO SKUs key correctly too."""
+    try:
+        meta = _load_set_metadata()
+        set_id = _get_set_id_from_sku(sku)
+        entry = meta.get(set_id) or {}
+        return jsonify({
+            "set_id": set_id,
+            "printed_total": entry.get("printed_total"),
+            "total": entry.get("total"),
+        })
+    except Exception:
+        return jsonify({"set_id": None, "printed_total": None, "total": None})
 
 def _is_promo_set(set_id, game):
     if game == "POKEMON":

@@ -79,7 +79,7 @@ def scan_cardsdb(root: Path) -> Dict[str, Set[str]]:
 
             if game == "POKEMON":
                 if "-" in n:
-                    sets["POKEMON"].add(n.split("-")[0])
+                    sets["POKEMON"].add(n.rsplit("-", 1)[0])
             elif game == "MTG":
                 parts = n.split("-")
                 if len(parts) >= 3 and parts[0] == "mtg":
@@ -119,6 +119,23 @@ def _fetch_json(url: str, label: str):
 
 # ── Pokémon ────────────────────────────────────────────────────────────────
 
+def _fetch_jp_set_totals(set_code: str):
+    """JP printed_total/total via TCGdex CARD-level cardCount (set-level is unreliable
+    for some JP sets, e.g. sv1a=101 vs real 73; card-level reports the correct 73/103).
+    Returns (printed_total, total, name) or (None, None, None) on any failure (fail-open)."""
+    for cnum in ("001", "1"):
+        url = f"https://api.tcgdex.net/v2/ja/cards/{set_code}-{cnum}"
+        data = _fetch_json(url, f"tcgdex ja/{set_code}-{cnum}")
+        if data:
+            sset = data.get("set") or {}
+            cc = sset.get("cardCount") or {}
+            printed = cc.get("official")
+            total = cc.get("total")
+            if printed is not None or total is not None:
+                return printed, total, sset.get("name")
+    return None, None, None
+
+
 def build_pokemon_metadata(set_ids: Set[str]) -> Dict[str, dict]:
     print(f"[POKEMON] Fetching set list from pokemontcg.io ({len(set_ids)} sets to match)...")
     data = _fetch_json(POKEMON_SETS_API, "pokemontcg.io/v2/sets")
@@ -133,17 +150,26 @@ def build_pokemon_metadata(set_ids: Set[str]) -> Dict[str, dict]:
     result: Dict[str, dict] = {}
     missing = 0
     for set_id in sorted(set_ids):
-        entry = api_lookup.get(set_id.lower())
-        if entry:
-            name    = entry.get("name", set_id)
-            total   = entry.get("total")
-            printed = entry.get("printedTotal", total)
+        if set_id.startswith("jpn-"):
+            set_code = set_id[len("jpn-"):]          # jpn-sv1a -> sv1a ; jpn-s-p -> s-p
+            printed, total, jp_name = _fetch_jp_set_totals(set_code)
+            name = jp_name or set_id
+            if printed is None and total is None:
+                print(f"  [WARN-JP] '{set_id}' no TCGdex card data (set_code={set_code})")
+                missing += 1
+            time.sleep(0.1)                          # be polite to TCGdex across ~128 sets
         else:
-            print(f"  [WARN] '{set_id}' not found in pokemontcg.io")
-            name    = set_id
-            total   = None
-            printed = None
-            missing += 1
+            entry = api_lookup.get(set_id.lower())
+            if entry:
+                name    = entry.get("name", set_id)
+                total   = entry.get("total")
+                printed = entry.get("printedTotal", total)
+            else:
+                print(f"  [WARN] '{set_id}' not found in pokemontcg.io")
+                name    = set_id
+                total   = None
+                printed = None
+                missing += 1
 
         result[set_id] = {
             "name":          name,
