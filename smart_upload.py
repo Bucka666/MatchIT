@@ -465,9 +465,16 @@ def main(
     images: bool = False,
     profiles: bool = True,
     thumbnails: bool = False,
-    set_metadata: bool = True,
-    sku_game_map: bool = True,
-    identifier_lookup: bool = True,
+    # Defaults False — these three are volume-authoritative lookup sidecars.
+    # needs_upload() only compares against THIS machine's last-upload state,
+    # not the volume's current content, so it can't tell "remote was fixed
+    # since my local copy was last touched" from "remote is stale" — a stale
+    # local file would silently clobber a correct remote one. Pass the flag
+    # explicitly (--set-metadata / --sku-game-map / --identifier-lookup) to
+    # upload one of these on purpose.
+    set_metadata: bool = False,
+    sku_game_map: bool = False,
+    identifier_lookup: bool = False,
     all_data: bool = False,
     dry_run: bool = False,
     reset: bool = False,
@@ -479,7 +486,9 @@ def main(
       --images          also upload image_db files for the vertical(s)
       --profiles        upload profile.json files from CardsDB (default: on)
       --thumbnails      upload thumbnail images from CardsDB (front.png etc.)
-      --set-metadata    upload set_metadata.json to volume root (default: on)
+      --set-metadata        upload set_metadata.json to volume root (default: OFF — pass explicitly)
+      --sku-game-map        upload sku_game_map.json to volume root (default: OFF — pass explicitly)
+      --identifier-lookup   upload identifier_lookup.json to volume root (default: OFF — pass explicitly)
       --all-data        shorthand for --images --thumbnails
       --dry-run         show what would be uploaded without actually uploading
       --reset           clear upload state so everything is re-uploaded from scratch

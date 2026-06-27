@@ -285,6 +285,17 @@ def load_or_create_config() -> dict:
     # PERF: Background-preload DINOv2 at startup so first
     # tie-break doesn't incur 30s cold-start penalty.
     cfg.setdefault("dinov2_tiebreak_preload", True)
+    # ACCURACY: DINOv2 must beat CLIP rank1 by at least this margin to swap —
+    # a bare d1 > d0 is not enough (#10 fix). Starting value; tune from
+    # [DINO-DIAG] instrumentation.
+    cfg.setdefault("dinov2_swap_margin", 0.05)
+
+    # ── OCR PROMOTION GATE (15c) ─────────────────────
+    # A weak OCR match (bare card number, no denominator corroboration) must
+    # not override a CLIP rank1 that is itself confident. Starting values;
+    # tune from [OCR-GATE] instrumentation.
+    cfg.setdefault("clip_promote_block_floor", 0.55)
+    cfg.setdefault("clip_promote_block_gap", 0.05)
 
     # Save back (best effort)
     #try:
@@ -2557,23 +2568,25 @@ def _preload_tiebreak_embedder():
         print(f"[DINO-TIEBREAK] Background preload failed: {e}", flush=True)
 
 
-def _dinov2_tiebreak(results: List[dict], query_front_path: str) -> List[dict]:
+def _dinov2_tiebreak(results: List[dict], query_front_path: str) -> Tuple[List[dict], dict]:
     """
     If top 2 CLIP scores are within eps, re-score with DINOv2.
-    May swap rank 1 and 2. Returns modified results list.
+    Swaps rank 1 and 2 only if DINOv2 clears its own swap margin.
+    Returns (results, dino_diag) — dino_diag is {"fired": False, ...} when
+    the tiebreak didn't run, or the full instrumentation dict when it did.
     """
     if not bool(CFG.get("dinov2_tiebreak_enabled", True)):
-        return results
+        return results, {"fired": False, "reason": "disabled"}
     if len(results) < 2:
-        return results
+        return results, {"fired": False, "reason": "lt_2_results"}
 
     eps = float(CFG.get("dinov2_tiebreak_eps", 0.008))
     gap = float(results[0]["score"]) - float(results[1]["score"])
     if gap > eps:
-        return results  # clear winner — no tie-break needed
+        return results, {"fired": False, "reason": "clear_clip_winner", "clip_gap": float(gap)}
 
     if not query_front_path or not os.path.exists(query_front_path):
-        return results
+        return results, {"fired": False, "reason": "no_query_image"}
 
     try:
         dino = _get_tiebreak_embedder()
@@ -2630,7 +2643,7 @@ def _dinov2_tiebreak(results: List[dict], query_front_path: str) -> List[dict]:
 
             if not db_path:
                 print(f"[DINO-TIEBREAK] Cannot resolve path for {sku} — aborting", flush=True)
-                return results
+                return results, {"fired": False, "reason": "no_db_path", "clip_gap": float(gap)}
 
             c_emb = dino.embed_path(db_path, multi_crop=False, suppress_bg=True)
             c_emb = np.asarray(c_emb, dtype=np.float32).reshape(-1)
@@ -2639,28 +2652,48 @@ def _dinov2_tiebreak(results: List[dict], query_front_path: str) -> List[dict]:
 
         sku0, sku1 = results[0]["sku"], results[1]["sku"]
         d0, d1 = dino_sims[0], dino_sims[1]
+        dino_gap = float(d1) - float(d0)
+        swap_margin = float(CFG.get("dinov2_swap_margin", 0.05))
+        swapped = dino_gap >= swap_margin
 
-        if d1 > d0:
-            # DINOv2 says #2 is actually better — swap
+        if swapped:
+            # DINOv2 prefers #2 by at least the swap margin — swap
             results[0], results[1] = results[1], results[0]
             results[0]["rank"] = 1
             results[1]["rank"] = 2
             print(
                 f"[DINO-TIEBREAK] SWAPPED: {sku1} (dino={d1:.4f}) beat {sku0} (dino={d0:.4f}) "
-                f"| CLIP gap was {gap:.4f}",
+                f"| CLIP gap was {gap:.4f} | dino_gap={dino_gap:.4f} >= margin={swap_margin:.4f}",
                 flush=True,
             )
         else:
             print(
                 f"[DINO-TIEBREAK] Confirmed: {sku0} (dino={d0:.4f}) vs {sku1} (dino={d1:.4f}) "
-                f"| CLIP gap was {gap:.4f}",
+                f"| CLIP gap was {gap:.4f} | dino_gap={dino_gap:.4f} < margin={swap_margin:.4f}",
                 flush=True,
             )
 
+        dino_diag = {
+            "fired": True,
+            "clip_gap": float(gap),
+            "d0": float(d0),
+            "d1": float(d1),
+            "dino_gap": float(dino_gap),
+            "swapped": bool(swapped),
+            "sku_rank1_before": sku0,
+            "sku_rank2_before": sku1,
+            "sku_rank1_after": (sku1 if swapped else sku0),
+            "margin_used": float(swap_margin),
+        }
+        print(
+            "[DINO-DIAG] " + " ".join(f"{k}={v}" for k, v in dino_diag.items()),
+            flush=True,
+        )
+        return results, dino_diag
+
     except Exception as e:
         print(f"[DINO-TIEBREAK] Failed: {e}", flush=True)
-
-    return results
+        return results, {"fired": False, "reason": f"exception:{e}"}
 
 
 def _save_dataurl_to_query_jpg(data_url: str) -> str:
@@ -7679,9 +7712,12 @@ def match():
 
     # DINOv2 tie-breaker on top 2 if scores are close
     _t_dino_start = _time.time()
+    _dino_diag = {"fired": False, "reason": "not_run"}
     if results:
-        results = _dinov2_tiebreak(results, str(query_path1))
+        results, _dino_diag = _dinov2_tiebreak(results, str(query_path1))
     _t_dino_end = _time.time()
+    if isinstance(_diag, dict):
+        _diag["dino"] = _dino_diag
 
     # ── TIMING SUMMARY ──
     _t_total = _t_dino_end - _t_total_start

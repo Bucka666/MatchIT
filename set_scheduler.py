@@ -91,6 +91,13 @@ CONFIG = {
     "pokemon_known_unavailable": ["mcd14", "mcd15", "mcd17", "mcd18"],
 }
 
+# Calendar state-machine daily window: pokemon_en entries whose release_date
+# is more than this many days from today (either direction) are skipped
+# cheaply by _advance_entry, before any network call — narrows the daily
+# tick to a check around imminent/recent releases instead of churning every
+# tracked entry regardless of date.
+CALENDAR_WINDOW_DAYS = 7
+
 
 # FX conversion rates for alert price calculation.
 # Read from the cached fx_rates.json (see fx_rates.py) — a FILE READ, not a
@@ -559,8 +566,13 @@ def _build_email(run_summary: Dict, extra_html: str = "", extra_text: str = "") 
         len(v.get("new_sets", []))
         for v in run_summary.get("tcgs", {}).values()
     )
+    # "detected", not "added" — the legacy bulk loop is detect-and-flag only
+    # for all three games now (see run_scheduler step 1); it never adds
+    # anything to CardsDB itself. This base subject is usually overridden
+    # below anyway when action_needed/has_flags fire, but must not claim
+    # ingestion happened when it didn't.
     subject = (
-        f"GrailSweep — {total_new} new set(s) added [{now}]"
+        f"GrailSweep — {total_new} new set(s) detected [{now}]"
         if total_new > 0
         else f"GrailSweep — No new sets found [{now}]"
     )
@@ -774,6 +786,44 @@ def _build_action_section(action_needed: List[Dict]) -> Tuple[str, str]:
     return text, html
 
 
+def _build_flagged_manual_section(flagged_manual: Dict) -> Tuple[str, str]:
+    """ACTION NEEDED — new sets detected but NOT auto-ingested (legacy bulk
+    loop's detect-and-flag policy for all three games). Distinct, additive
+    reason from _build_action_section's prelive_hold go-live section above —
+    both can appear in the same email. Mirrors the same section-builder
+    pattern (empty in/out when there's nothing to report)."""
+    if not flagged_manual or not any(flagged_manual.values()):
+        return "", ""
+    text = (
+        "NEW SET(S) DETECTED — MANUAL INGESTION REQUIRED\n" + "=" * 40 + "\n"
+        "These sets were detected upstream but NOT auto-ingested (policy).\n"
+        "For Pokemon-EN, seed into set_release_calendar.json so the calendar\n"
+        "state machine ingests them with the final-print gate. For MTG/YGO,\n"
+        "trigger manual ingestion.\n"
+    )
+    for game, sets in flagged_manual.items():
+        for s in sets:
+            text += f"  - {game}: {s.get('id')} — {s.get('name')}\n"
+    text += "\n"
+    items = "".join(
+        f"<li><strong>{game}</strong>: {s.get('id')} — {s.get('name')}</li>"
+        for game, sets in flagged_manual.items()
+        for s in sets
+    )
+    html = (
+        '<div style="background:rgba(255,82,82,0.08);border:2px solid #ff5252;'
+        'border-radius:8px;padding:14px 18px;margin-bottom:16px;">'
+        '<div style="color:#ff5252;font-weight:700;font-size:0.95rem;margin-bottom:8px;">'
+        '⚠️ NEW SET(S) DETECTED — MANUAL INGESTION REQUIRED</div>'
+        '<div style="color:#9b95b8;font-size:0.82rem;margin-bottom:8px;">'
+        'Detected upstream but NOT auto-ingested (policy). For Pokemon-EN, seed into '
+        '<code>set_release_calendar.json</code> so the calendar state machine ingests '
+        'them with the final-print gate. For MTG/YGO, trigger manual ingestion.</div>'
+        f'<ul style="margin:0;padding-left:18px;color:#f0ecff;">{items}</ul></div>'
+    )
+    return text, html
+
+
 def _build_progress_section(other_transitions: List[Dict]) -> Tuple[str, str]:
     """Informational-only progress (detected / catalog_ingested /
     indexed_server) — not action-needed, listed below the action section."""
@@ -837,28 +887,34 @@ def _maybe_send_consolidated_email(
 
     Monday: ALWAYS sends the existing weekly summary (_build_email,
     UNCHANGED content incl. the JP-manual line) — enriched with this run's
-    ACTION NEEDED / progress / discovery sections at the top.
+    ACTION NEEDED / flagged-manual / progress / discovery sections at the top.
 
-    Non-Monday: sends a lightweight event digest ONLY if something
-    happened (>=1 transition OR >=1 notify-worthy discovery this run).
-    Otherwise sends nothing — a quiet day produces zero emails.
+    Non-Monday: sends a lightweight event digest if something happened
+    (>=1 transition, >=1 notify-worthy discovery, OR >=1 newly flagged-manual
+    set this run). Otherwise sends nothing — a quiet day produces zero emails.
 
     Subject priority (B4): ACTION NEEDED always wins (even on Monday,
     overriding the weekly subject) > Monday's own subject > non-Monday
-    event-update subject."""
+    event-update subject. flagged_manual is its own ACTION NEEDED reason,
+    additive to (not replacing) the existing prelive_hold go-live reason —
+    both can fire in the same email."""
     action_needed      = [t for t in transitions if t["to"] == "prelive_hold"]
     other_transitions  = [t for t in transitions if t["to"] != "prelive_hold"]
 
-    if not is_monday and not transitions and not notify_worthy:
+    flagged    = run_summary.get("flagged_manual") or {}
+    has_flags  = any(flagged.values())
+
+    if not is_monday and not transitions and not notify_worthy and not has_flags:
         logger.info("[SCHED-EMAIL] Quiet non-Monday run — nothing happened, no email sent")
         return False
 
     action_text, action_html = _build_action_section(action_needed)
+    flagged_text, flagged_html = _build_flagged_manual_section(flagged)
     progress_text, progress_html = _build_progress_section(other_transitions)
     discovery_text, discovery_html = _build_discovery_section(notify_worthy)
 
-    extra_text = action_text + progress_text + discovery_text
-    extra_html = action_html + progress_html + discovery_html
+    extra_text = action_text + flagged_text + progress_text + discovery_text
+    extra_html = action_html + flagged_html + progress_html + discovery_html
 
     if is_monday:
         subject, body_html, body_text = _build_email(run_summary, extra_html=extra_html, extra_text=extra_text)
@@ -878,11 +934,23 @@ def _maybe_send_consolidated_email(
         </body></html>
         """
 
-    if action_needed:
+    n_flagged = sum(len(v) for v in flagged.values())
+    if action_needed and has_flags:
+        subject = (
+            f"[GrailSweep] ACTION: {len(action_needed)} ready for go-live + "
+            f"{n_flagged} detected — manual ingestion needed"
+        )
+    elif action_needed:
         subject = (
             f"[GrailSweep] ACTION: {action_needed[0]['name']} ready for go-live"
             if len(action_needed) == 1
             else f"[GrailSweep] ACTION: {len(action_needed)} sets ready for go-live"
+        )
+    elif has_flags:
+        subject = (
+            f"[GrailSweep] ACTION: 1 new set detected — manual ingestion needed"
+            if n_flagged == 1
+            else f"[GrailSweep] ACTION: {n_flagged} new sets detected — manual ingestion needed"
         )
     elif not is_monday:
         if len(transitions) == 1:
@@ -1363,6 +1431,9 @@ def _try_index_server(entry: Dict, today: str, dry_run: bool) -> Dict:
     if dry_run:
         return {"ok": True, "dry_run": True}
 
+    # GUARDRAIL: incremental_embed is APPEND-ONLY (~new cards). NEVER replace
+    # with a full whole-index re-embed on any automatic/cron path — full GPU
+    # re-embed is manual-only (cost).
     try:
         from incremental_embed import run_incremental_embed
         embed_result = run_incremental_embed(hot_reload=True)
@@ -1459,6 +1530,21 @@ def _advance_entry(entry: Dict, today: str, db_root: str, dry_run: bool) -> Dict
     the legacy bulk path in run_scheduler unchanged."""
     if entry.get("game") != "pokemon_en":
         return {"ok": False, "skipped": "game_not_supported_by_calendar_state_machine"}
+
+    # ±CALENDAR_WINDOW_DAYS window: skip cheaply (no network call) for any
+    # entry whose release_date is far from today in either direction. A
+    # missing/unparseable release_date fails open (does NOT skip) — a
+    # newly-seeded entry with no date yet should stay visible, same as
+    # today's behaviour.
+    release_date = entry.get("release_date", "")
+    if release_date:
+        try:
+            rd = datetime.strptime(release_date, "%Y-%m-%d")
+            td = datetime.strptime(today, "%Y-%m-%d")
+            if abs((td - rd).days) > CALENDAR_WINDOW_DAYS:
+                return {"ok": True, "skipped": "outside_window", "release_date": release_date, "today": today}
+        except ValueError:
+            pass  # unparseable date — fail open, let it through
 
     state = entry.get("state", "pending")
 
@@ -1711,8 +1797,9 @@ def run_scheduler(
 
     any_new = False
 
-    # ── 1. Legacy bulk detect + download per TCG (unchanged, minus
-    # calendar-claimed Pokemon set ids — see _detect_new_pokemon_sets) ──
+    # ── 1. Legacy bulk detect-and-FLAG per TCG (no download/scrape — see
+    # policy comment below; minus calendar-claimed Pokemon set ids, see
+    # _detect_new_pokemon_sets) ──
     for tcg in tcgs:
         tcg = tcg.upper()
         logger.info(f"[SCHED] Checking {tcg}...")
@@ -1731,31 +1818,26 @@ def run_scheduler(
 
             tcg_result["new_sets"] = new_sets
 
-            if new_sets and not dry_run:
-                if tcg == "POKEMON":
-                    dl = _scrape_pokemon(new_sets, db_root)
-                elif tcg == "MTG":
-                    dl = _scrape_mtg(new_sets, db_root)
-                elif tcg == "YUGIOH":
-                    dl = _scrape_yugioh(new_sets, db_root)
-                else:
-                    dl = {}
-                tcg_result.update(dl)
-
-                # Register newly scraped images into images.db so
-                # incremental_embed can find them in the next step
-                try:
-                    from backfill_scraped_cards import register_scraped_cards
-                    reg = register_scraped_cards(
-                        tcg=tcg.lower(),
-                        sets=[s["id"] for s in new_sets],
-                    )
-                    tcg_result["registered"] = reg.get(tcg.lower(), {})
-                except Exception as _reg_err:
-                    logger.error(f"[SCHED] Registration error for {tcg}: {_reg_err}")
-                    tcg_result["registered"] = {"error": str(_reg_err)}
-
-                any_new = True
+            if new_sets and tcg in ("POKEMON", "MTG", "YUGIOH"):
+                # Policy: ALL THREE games are detect-and-FLAG only in the
+                # legacy bulk loop — no auto-scrape, download, or embed.
+                # Craig reviews and triggers ingestion manually (see ACTION
+                # NEEDED in the Tier 1 email). Pokémon-EN ingestion now flows
+                # exclusively through the calendar state machine
+                # (_advance_entry -> _try_catalog_ingest -> _scrape_pokemon),
+                # which keeps the final-print + release-date gates; this
+                # legacy path no longer scrapes Pokémon at all. This
+                # deliberately does NOT set any_new — no images were added
+                # to CardsDB, so there is nothing for step 2's incremental
+                # embed (or part C's sidecar rebuilds) to pick up yet.
+                run_summary.setdefault("flagged_manual", {})[tcg] = [
+                    {"id": s.get("id"), "name": s.get("name", s.get("id"))}
+                    for s in new_sets
+                ]
+                logger.info(
+                    f"[SCHED] {tcg}: {len(new_sets)} new set(s) flagged for "
+                    f"manual action (no auto-scrape)"
+                )
 
         except Exception as e:
             logger.error(f"[SCHED] {tcg} error: {e}")
@@ -1764,6 +1846,9 @@ def run_scheduler(
         run_summary["tcgs"][tcg] = tcg_result
 
     # ── 2. Incremental embed (legacy bulk path) ──
+    # GUARDRAIL: incremental_embed is APPEND-ONLY (~new cards). NEVER replace
+    # with a full whole-index re-embed on any automatic/cron path — full GPU
+    # re-embed is manual-only (cost).
     if any_new and not dry_run:
         logger.info("[SCHED] Running incremental embed...")
         try:
@@ -1840,10 +1925,16 @@ def run_scheduler(
     if not dry_run:
         _save_release_calendar(calendar)
 
+    # Combined "did anything actually change today" signal for 2c/2d below.
+    # any_new alone is legacy-path only (Pokémon's _scrape_pokemon branch);
+    # calendar-driven Pokémon changes show up in run_summary["new_skus"]
+    # instead (populated by step 3 above) — must check both.
+    changed = bool(any_new) or bool(run_summary.get("new_skus"))
+
     # ── 2c. Rebuild MTG set totals sidecar ──
-    # Runs every day regardless of any_new, since profile.json corrections
-    # to existing sets (not just brand-new sets) should also be picked up.
-    if not dry_run:
+    # Now gated on `changed` — only runs when something was actually
+    # scraped/ingested today, not unconditionally every day.
+    if not dry_run and changed:
         try:
             from app import rebuild_mtg_set_totals
             run_summary["mtg_totals"] = rebuild_mtg_set_totals()
@@ -1852,8 +1943,8 @@ def run_scheduler(
             run_summary["mtg_totals"] = {"error": str(e)}
 
     # ── 2d. Rebuild set card-list sidecars (pokemon/mtg/ygo) ──
-    # Same "runs every day regardless of any_new" rationale as 2c.
-    if not dry_run:
+    # Same `changed` gate as 2c.
+    if not dry_run and changed:
         try:
             from app import rebuild_set_card_lists
             run_summary["set_cards"] = rebuild_set_card_lists()
@@ -1873,11 +1964,11 @@ def run_scheduler(
             logger.error(f"[SCHED] FX rate refresh error: {e}")
             run_summary["fx_refresh"] = {"error": str(e)}
 
-    # Weekly full-reconcile flag — matchit_modal.py reads this to force a
-    # full (not delta) rebuild_lookup_files call on Sundays regardless of
-    # new_skus, as a belt-and-braces safety net for anything the per-set
-    # path missed. Daily runs otherwise use delta only.
-    run_summary["force_full_reconcile"] = (datetime.utcnow().weekday() == 6)  # Sunday=6
+    # Full reconcile is now manual-only (delta-only policy — see
+    # matchit_modal.py rebuild_lookup_files invocation, which no longer
+    # forces a full rebuild on Sundays or ever automatically). Key kept
+    # at False rather than removed, in case anything still inspects it.
+    run_summary["force_full_reconcile"] = False
 
     run_summary["elapsed_s"] = round(time.time() - t_start, 1)
 
@@ -1886,8 +1977,9 @@ def run_scheduler(
 
     # ── Tier 1 Part B: consolidated event-driven email (or Monday summary) ──
     # Monday always sends; non-Monday only if something happened this run
-    # (a transition or a notify-worthy discovery) — never two emails, never
-    # a new send path (still _send_email under the hood).
+    # (a transition, a notify-worthy discovery, or a newly flagged-manual
+    # set) — never two emails, never a new send path (still _send_email
+    # under the hood).
     is_monday = (datetime.utcnow().weekday() == 0)  # Monday=0
     transitions = _collect_transitions(run_summary)
     run_summary["calendar"]["transitions"] = transitions

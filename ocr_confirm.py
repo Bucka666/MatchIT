@@ -489,6 +489,11 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
             return combined
         elif len(candidates) > 1:
             logger.info(f"[OCR-PKM] SWSH ambiguous total={total}, candidates={candidates}")
+            # The set is ambiguous, but the /TTT denominator itself was read
+            # cleanly — record it so _denominator_blocks_promotion can still
+            # veto a candidate whose set total doesn't match, even though we
+            # can't pick a set ourselves (15a fix).
+            _last_pkm_denominator = total
             return num
     if num:
         logger.info(f"[OCR-PKM] extracted card number only: {num}")
@@ -676,15 +681,33 @@ def ocr_direct_lookup(image_path: str, tcg: str) -> Optional[str]:
     return db_match
 
 
-def _denominator_blocks_promotion(candidate_sku, ocr_denominator, set_metadata):
+def _trusted_set_meta(set_id, set_metadata, expected_game):
+    """Return set_metadata[set_id] only if its game matches expected_game.
+
+    Guards against bare-id collisions where a Pokémon set_id (e.g. me1, me2,
+    me3 — "Mega Evolution"/"Phantasmal Flames"/"Perfect Order") shares its
+    key with an unrelated MTG set ("Masters Edition" I/II/III) in
+    set_metadata.json. Without this check, callers would silently trust the
+    wrong game's (null) totals for a real Pokémon SKU (15b-code fix).
+    """
+    if not set_id or not set_metadata:
+        return None
+    meta = set_metadata.get(set_id)
+    if not meta or meta.get("game") != expected_game:
+        return None
+    return meta
+
+
+def _denominator_blocks_promotion(candidate_sku, ocr_denominator, set_metadata, expected_game):
     """Fail-open veto. Returns True only when we have positive proof the OCR
-    set is wrong: a parsed denominator, a known set total, and a mismatch
-    against BOTH printed_total and total. Any missing/null data -> False (allow).
+    set is wrong: a parsed denominator, a known set total FOR THE EXPECTED
+    GAME, and a mismatch against BOTH printed_total and total. Any
+    missing/null/wrong-game data -> False (allow).
     """
     if not ocr_denominator or not candidate_sku or not set_metadata:
         return False
     set_id = candidate_sku.split("-")[0]
-    meta = set_metadata.get(set_id)
+    meta = _trusted_set_meta(set_id, set_metadata, expected_game)
     if not meta:
         return False
     try:
@@ -700,6 +723,32 @@ def _denominator_blocks_promotion(candidate_sku, ocr_denominator, set_metadata):
     except (TypeError, ValueError):
         return False
     return True  # denominator known on both sides and matches neither -> block
+
+
+def _denominator_confirms(candidate_sku, ocr_denominator, set_metadata, expected_game):
+    """Positive-match counterpart of _denominator_blocks_promotion — True only
+    when the OCR denominator matches the candidate's printed_total or total
+    FOR THE EXPECTED GAME. Used by the 15c match-strength gate to tell a
+    denominator-corroborated ("strong") OCR match from a bare-number
+    ("weak") one. Any missing/null/wrong-game data -> False (not confirmed).
+    """
+    if not ocr_denominator or not candidate_sku or not set_metadata:
+        return False
+    set_id = candidate_sku.split("-")[0]
+    meta = _trusted_set_meta(set_id, set_metadata, expected_game)
+    if not meta:
+        return False
+    try:
+        denom = int(ocr_denominator)
+        printed = meta.get("printed_total")
+        full = meta.get("total")
+    except (TypeError, ValueError):
+        return False
+    if printed is not None and denom == int(printed):
+        return True
+    if full is not None and denom == int(full):
+        return True
+    return False
 
 
 # Main entry point
@@ -836,7 +885,7 @@ def ocr_confirm_ranking(
             if not allow_pokemon_promote and _is_pokemon_sku(db_match):
                 ocr_info["ocr_status"] = "skipped_pokemon_promote"
                 return results, ocr_info
-            if _denominator_blocks_promotion(db_match, ocr_denominator, set_metadata):
+            if _denominator_blocks_promotion(db_match, ocr_denominator, set_metadata, tcg_upper):
                 logger.info("[OCR-P3] direct_lookup blocked: %s denom=%s != set total",
                             db_match, ocr_denominator)
                 ocr_info["ocr_status"] = "denominator_mismatch"
@@ -880,11 +929,47 @@ def ocr_confirm_ranking(
     if not allow_pokemon_promote and _is_pokemon_sku(matched_sku):
         ocr_info["ocr_status"] = "skipped_pokemon_promote"
         return results, ocr_info
-    if _denominator_blocks_promotion(matched_sku, ocr_denominator, set_metadata):
+    if _denominator_blocks_promotion(matched_sku, ocr_denominator, set_metadata, tcg_upper):
         logger.info("[OCR-P3] top5 promotion blocked: %s denom=%s != set total",
                     matched_sku, ocr_denominator)
         ocr_info["ocr_status"] = "denominator_mismatch"
         return results, ocr_info
+
+    # ── 15c: era/format gate — a WEAK OCR match (bare number, no denominator
+    # corroboration) must not override a CLIP rank1 that is itself confident.
+    # A STRONG match (exact set-code+number, or denominator-confirmed via the
+    # 15a fix) is never blocked here.
+    has_set_code = isinstance(extracted, str) and "-" in extracted
+    denom_confirmed = _denominator_confirms(matched_sku, ocr_denominator, set_metadata, tcg_upper)
+    match_strength = "strong" if (has_set_code or denom_confirmed) else "weak"
+
+    try:
+        from app import CFG as _APP_CFG
+        clip_promote_block_floor = float(_APP_CFG.get("clip_promote_block_floor", 0.55))
+        clip_promote_block_gap = float(_APP_CFG.get("clip_promote_block_gap", 0.05))
+    except Exception:
+        clip_promote_block_floor = 0.55
+        clip_promote_block_gap = 0.05
+
+    clip0 = float(results[0].get("score", 0.0)) if results else 0.0
+    clip1 = float(results[1].get("score", 0.0)) if len(results) > 1 else 0.0
+    clip_gap = clip0 - clip1
+    clip_confident = (clip0 >= clip_promote_block_floor) and (clip_gap >= clip_promote_block_gap)
+
+    blocked_reason = None
+    if match_strength == "weak" and clip_confident:
+        blocked_reason = "weak_ocr_vs_confident_clip"
+
+    logger.info(
+        "[OCR-GATE] match_strength=%s clip0=%.4f clip1=%.4f clip_gap=%.4f promoted=%s blocked_reason=%s",
+        match_strength, clip0, clip1, clip_gap, (blocked_reason is None), blocked_reason,
+    )
+
+    if blocked_reason:
+        ocr_info["ocr_status"] = "clip_confident_block"
+        ocr_info["match_strength"] = match_strength
+        return results, ocr_info
+
     promoted = results.pop(match_idx)
     promoted["ocr_promoted"] = True
     results.insert(0, promoted)

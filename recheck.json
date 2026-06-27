@@ -1,0 +1,1930 @@
+{
+  "meta": {
+    "label": "recheck",
+    "target_url": "https://grailsweep.com",
+    "timestamp": "2026-06-25T20:10:29.289681+00:00",
+    "count": 40
+  },
+  "rows": {
+    "PXL_20260614_142116011.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-ENE04-8581705",
+      "camera": {
+        "final_sku": "ygo-SGX3-ENE04-8581705",
+        "score": 0.8517,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-ENE04",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-ENE04-8581705",
+            "score": 0.8517
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DCR-071-8581705",
+            "score": 0.8517
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-DR1-EN233-8581705",
+            "score": 0.8517
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-DCR-069-35798491",
+            "score": 0.8294
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-DR1-EN231-35798491",
+            "score": 0.8294
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-ENE04-8581705",
+        "name": "Infernalqueen Archfiend",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-ENE04",
+        "score": 65.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142125789.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-ENE07-35798491",
+      "camera": {
+        "final_sku": "ygo-SGX3-ENE07-35798491",
+        "score": 0.7745,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-ENE07",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-ENE07-35798491",
+            "score": 0.7745
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DCR-069-35798491",
+            "score": 0.7745
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-DR1-EN231-35798491",
+            "score": 0.7745
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-DCR-097-94463200",
+            "score": 0.7603
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-DR1-EN259-94463200",
+            "score": 0.7603
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-ENE07-35798491",
+        "name": "Darkbishop Archfiend",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-ENE07",
+        "score": 39.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142132953.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-MGED-EN082-79747096",
+      "camera": {
+        "final_sku": "ygo-MGED-EN082-79747096",
+        "score": 0.7716,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "MGED-EN082",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-MGED-EN082-79747096",
+            "score": 0.7716
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-BLAR-EN021-79747096",
+            "score": 0.7716
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MGED-EN050-41850466",
+            "score": 0.7499
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-ALIN-EN087-1665819",
+            "score": 0.7371
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-ALIN-EN044-5088741",
+            "score": 0.7294
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-MGED-EN082-79747096",
+        "name": "Number C1: Numeron Chaos Gate Sunya",
+        "set": "Maximum Gold: El Dorado #MGED-EN082",
+        "score": 42.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142142661.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-RA04-EN032-32600024",
+      "camera": {
+        "final_sku": "ygo-RA04-EN032-32600024",
+        "score": 0.7088,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "RA04-EN032",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-RA04-EN032-32600024",
+            "score": 0.7088
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-ETCO-EN026-32600024",
+            "score": 0.7088
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MGED-EN022-32600024",
+            "score": 0.7088
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-BLMM-EN062-32600024",
+            "score": 0.7088
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-OP28-EN002-32600024",
+            "score": 0.7088
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-RA04-EN032-32600024",
+        "name": "Chamber Dragonmaid",
+        "set": "Quarter Century Stampede #RA04-EN032",
+        "score": 20.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142152584.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-RA04-EN045-29280200",
+      "camera": {
+        "final_sku": "ygo-RA04-EN045-29280200",
+        "score": 0.8813,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "RA04-EN045",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-RA04-EN045-29280200",
+            "score": 0.8813
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-WISU-EN019-29280200",
+            "score": 0.8813
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MP15-EN209-14799437",
+            "score": 0.8515
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-SECE-EN019-14799437",
+            "score": 0.8515
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-BLTR-EN065-14799437",
+            "score": 0.8515
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-RA04-EN045-29280200",
+        "name": "Vanquish Soul Dr. Mad Love",
+        "set": "Quarter Century Stampede #RA04-EN045",
+        "score": 74.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142202218.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-END20-6799227",
+      "camera": {
+        "final_sku": "ygo-SGX3-END20-6799227",
+        "score": 0.95,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-END20",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-END20-6799227",
+            "score": 0.95
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-PHNI-EN080-12682213",
+            "score": 0.8532
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MP25-EN058-12682213",
+            "score": 0.8532
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-DOCS-EN071-799183",
+            "score": 0.8531
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-MP16-EN157-799183",
+            "score": 0.8531
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-END20-6799227",
+        "name": "Half Counter",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-END20",
+        "score": 100.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142211660.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SDBT-EN007-88078306",
+      "camera": {
+        "final_sku": "ygo-SDBT-EN007-88078306",
+        "score": 0.8576,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SDBT-EN007",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SDBT-EN007-88078306",
+            "score": 0.8576
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DUOV-EN054-88078306",
+            "score": 0.8576
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-LART-EN056-88078306",
+            "score": 0.8576
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-SDBT-EN042-1688285",
+            "score": 0.8041
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-BLHR-EN049-73639099",
+            "score": 0.798
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SDBT-EN007-88078306",
+        "name": "Traptrix Genlisea",
+        "set": "Structure Deck: Beware of Traptrix #SDBT-EN007",
+        "score": 71.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142218935.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-END18-80193355",
+      "camera": {
+        "final_sku": "ygo-SGX3-END18-80193355",
+        "score": 0.95,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-END18",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-END18-80193355",
+            "score": 0.95
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DCR-050-28121403",
+            "score": 0.8188
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-DR1-EN212-28121403",
+            "score": 0.8188
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-TU08-EN018-28121403",
+            "score": 0.8188
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-BP03-EN228-44509898",
+            "score": 0.8151
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-END18-80193355",
+        "name": "Dramatic Rescue",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-END18",
+        "score": 100.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142231592.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-END16-67987611",
+      "camera": {
+        "final_sku": "ygo-SGX3-END16-67987611",
+        "score": 0.6735,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-END16",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-END16-67987611",
+            "score": 0.6735
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-MFC-096-67987611",
+            "score": 0.6735
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-DR1-EN151-67987611",
+            "score": 0.6735
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-GLD3-EN046-67987611",
+            "score": 0.6735
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-SS02-ENC15-67987611",
+            "score": 0.6735
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-END16-67987611",
+        "name": "Amazoness Archers",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-END16",
+        "score": 3.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142240207.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-END14-36100154",
+      "camera": {
+        "final_sku": "ygo-SGX3-END14-36100154",
+        "score": 0.8051,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-END14",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-END14-36100154",
+            "score": 0.8051
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DREV-EN054-36100154",
+            "score": 0.8051
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-CBLZ-EN048-96381979",
+            "score": 0.7423
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-CT11-EN001-96381979",
+            "score": 0.7423
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-PGLD-EN045-96381979",
+            "score": 0.7423
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-END14-36100154",
+        "name": "Amazoness Fighting Spirit",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-END14",
+        "score": 51.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142249204.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-ENE01-61370518",
+      "camera": {
+        "final_sku": "ygo-SGX3-ENE01-61370518",
+        "score": 0.8532,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-ENE01",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-ENE01-61370518",
+            "score": 0.8532
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DCR-073-61370518",
+            "score": 0.8532
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-DR1-EN235-61370518",
+            "score": 0.8532
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-BP01-EN006-61370518",
+            "score": 0.8532
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-CDIP-EN009-85313220",
+            "score": 0.8418
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-ENE01-61370518",
+        "name": "Skull Archfiend of Lightning",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-ENE01",
+        "score": 68.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142259295.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-MGED-EN109-81119816",
+      "camera": {
+        "final_sku": "ygo-MGED-EN109-81119816",
+        "score": 0.8023,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "MGED-EN109",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-MGED-EN109-81119816",
+            "score": 0.8023
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-HISU-EN014-81119816",
+            "score": 0.8023
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-HISU-EN019-81997228",
+            "score": 0.7268
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-MGED-EN113-81997228",
+            "score": 0.7268
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-TSHD-EN034-47346845",
+            "score": 0.716
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-MGED-EN109-81119816",
+        "name": "Prank-Kids Fansies",
+        "set": "Maximum Gold: El Dorado #MGED-EN109",
+        "score": 49.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142313225.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-RA04-EN057-73580471",
+      "camera": {
+        "final_sku": "ygo-RA04-EN057-73580471",
+        "score": 0.95,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "RA04-EN057",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-RA04-EN057-73580471",
+            "score": 0.95
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-LIOV-EN035-40139997",
+            "score": 0.8553
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MP22-EN077-40139997",
+            "score": 0.8553
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-CSOC-EN039-73580471",
+            "score": 0.8505
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-CT05-EN003-73580471",
+            "score": 0.8505
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-RA04-EN057-73580471",
+        "name": "Black Rose Dragon",
+        "set": "Quarter Century Stampede #RA04-EN057",
+        "score": 100.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142324969.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-RA04-EN066-63746411",
+      "camera": {
+        "final_sku": "ygo-RA04-EN066-63746411",
+        "score": 0.8606,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "RA04-EN066",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-RA04-EN066-63746411",
+            "score": 0.8606
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-YCSW-EN006-63746411",
+            "score": 0.8606
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-PGL3-EN075-63746411",
+            "score": 0.8606
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-LED9-EN053-63746411",
+            "score": 0.8606
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-DRLG-EN049-55888045",
+            "score": 0.8374
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-RA04-EN066-63746411",
+        "name": "Number 106: Giant Hand",
+        "set": "Quarter Century Stampede #RA04-EN066",
+        "score": 68.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142334884.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-RA04-EN064-12014404",
+      "camera": {
+        "final_sku": "ygo-RA04-EN064-12014404",
+        "score": 0.7946,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "RA04-EN064",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-RA04-EN064-12014404",
+            "score": 0.7946
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-ETCO-EN052-84121193",
+            "score": 0.795
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-INOV-EN051-64414267",
+            "score": 0.7965
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-ABYR-EN041-12014404",
+            "score": 0.7946
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-AP05-EN002-12014404",
+            "score": 0.7946
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-RA04-EN064-12014404",
+        "name": "Gagaga Cowboy",
+        "set": "Quarter Century Stampede #RA04-EN064",
+        "score": 48.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142342775.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-MGED-EN115-43886072",
+      "camera": {
+        "final_sku": "ygo-MGED-EN115-43886072",
+        "score": 0.8678,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "GED-EN115",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-MGED-EN115-43886072",
+            "score": 0.8678
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-HISU-EN021-43886072",
+            "score": 0.8678
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MP25-EN236-23920796",
+            "score": 0.7643
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-INFO-EN092-23920796",
+            "score": 0.7643
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-FLOD-EN045-75452921",
+            "score": 0.7614
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-MGED-EN115-43886072",
+        "name": "Prank-Kids Bow-Wow-Bark",
+        "set": "Maximum Gold: El Dorado #MGED-EN115",
+        "score": 71.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142343980.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-MGED-EN115-43886072",
+      "camera": {
+        "final_sku": "ygo-MGED-EN115-43886072",
+        "score": 0.8746,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "GED-EN115",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-MGED-EN115-43886072",
+            "score": 0.8746
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-HISU-EN021-43886072",
+            "score": 0.8746
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MP25-EN236-23920796",
+            "score": 0.777
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-INFO-EN092-23920796",
+            "score": 0.777
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-MP15-EN026-32446630",
+            "score": 0.7657
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-MGED-EN115-43886072",
+        "name": "Prank-Kids Bow-Wow-Bark",
+        "set": "Maximum Gold: El Dorado #MGED-EN115",
+        "score": 73.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142356212.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-MP25-EN027-46502744",
+      "camera": {
+        "final_sku": "ygo-MP25-EN027-46502744",
+        "score": 0.8427,
+        "status": "low_confidence",
+        "ocr_confirmed": false,
+        "ocr_text": "CLUDESANEFFE",
+        "dinov2_fired": null,
+        "accept": false,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-MP25-EN027-46502744",
+            "score": 0.8427
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-CORE-EN045-46502744",
+            "score": 0.8427
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MP16-EN076-46502744",
+            "score": 0.8427
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-OP04-EN007-46502744",
+            "score": 0.8427
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-GFP2-EN108-46502744",
+            "score": 0.8427
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-MP25-EN027-46502744",
+        "name": null,
+        "set": null,
+        "score": 63.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142404352.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SDBT-EN005-28201945",
+      "camera": {
+        "final_sku": "ygo-SDBT-EN005-28201945",
+        "score": 0.8399,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SDBT-EN005",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SDBT-EN005-28201945",
+            "score": 0.8399
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-JOTL-EN034-28201945",
+            "score": 0.8399
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MP14-EN087-28201945",
+            "score": 0.8399
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-PGL2-EN038-28201945",
+            "score": 0.8399
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-SDBT-EN001-49027020",
+            "score": 0.8149
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SDBT-EN005-28201945",
+        "name": "Traptrix Nepenthes",
+        "set": "Structure Deck: Beware of Traptrix #SDBT-EN005",
+        "score": 62.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142414276.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-MGED-EN068-9753964",
+      "camera": {
+        "final_sku": "ygo-MGED-EN068-9753964",
+        "score": 0.8824,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "MGED-EN068",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-MGED-EN068-9753964",
+            "score": 0.8824
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-HSRD-EN041-9753964",
+            "score": 0.8824
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-DUPO-EN057-9753964",
+            "score": 0.8824
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-SDCK-EN042-9753964",
+            "score": 0.8824
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-HSRD-EN040-39765958",
+            "score": 0.8803
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-MGED-EN068-9753964",
+        "name": "Hot Red Dragon Archfiend Abyss",
+        "set": "Maximum Gold: El Dorado #MGED-EN068",
+        "score": 76.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142426760.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SDBT-EN008-28868394",
+      "camera": {
+        "final_sku": "ygo-SDBT-EN008-28868394",
+        "score": 0.8565,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SDBT-EN008",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SDBT-EN008-28868394",
+            "score": 0.8565
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-LIOV-EN016-28868394",
+            "score": 0.8565
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MP22-EN063-28868394",
+            "score": 0.8565
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-MP15-EN018-45803070",
+            "score": 0.8436
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-PGL2-EN041-45803070",
+            "score": 0.8436
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SDBT-EN008-28868394",
+        "name": "Traptrix Vesiculo",
+        "set": "Structure Deck: Beware of Traptrix #SDBT-EN008",
+        "score": 69.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142434918.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SDBT-EN006-45803070",
+      "camera": {
+        "final_sku": "ygo-SDBT-EN006-45803070",
+        "score": 0.8422,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SDBT-EN006",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SDBT-EN006-45803070",
+            "score": 0.8422
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-MP15-EN018-45803070",
+            "score": 0.8422
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-PGL2-EN041-45803070",
+            "score": 0.8422
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-PRIO-EN025-45803070",
+            "score": 0.8422
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-MAGO-EN075-45803070",
+            "score": 0.8422
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SDBT-EN006-45803070",
+        "name": "Traptrix Dionaea",
+        "set": "Structure Deck: Beware of Traptrix #SDBT-EN006",
+        "score": 63.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142447926.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-DREV-EN087-79965360",
+      "camera": {
+        "final_sku": "ygo-DREV-EN087-79965360",
+        "score": 0.8288,
+        "status": "low_confidence",
+        "ocr_confirmed": false,
+        "ocr_text": "THEFIRSTTIME",
+        "dinov2_fired": null,
+        "accept": false,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-DREV-EN087-79965360",
+            "score": 0.8288
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-SS02-ENC14-79965360",
+            "score": 0.8288
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-SGX3-END12-79965360",
+            "score": 0.8288
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-SDSB-EN023-52155219",
+            "score": 0.7859
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-BLCR-EN087-52155219",
+            "score": 0.7859
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-DREV-EN087-79965360",
+        "name": null,
+        "set": null,
+        "score": 59.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142455597.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-END13-712559",
+      "camera": {
+        "final_sku": "ygo-SGX3-END13-712559",
+        "score": 0.8109,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-END13",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-END13-712559",
+            "score": 0.8109
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DREV-EN053-712559",
+            "score": 0.8109
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-LCJW-EN104-712559",
+            "score": 0.8109
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-LEDU-EN014-712559",
+            "score": 0.8109
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-SS02-ENV03-712559",
+            "score": 0.8109
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-END13-712559",
+        "name": "Amazoness Village",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-END13",
+        "score": 51.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142509362.jpg": {
+      "bucket": "variant",
+      "expected": "me2pt5-28",
+      "camera": {
+        "final_sku": "me2pt5-28",
+        "score": 0.8623,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "me2pt5-28",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "me2pt5-28",
+            "score": 0.8623
+          },
+          {
+            "rank": 2,
+            "sku": "sm4-14",
+            "score": 0.864
+          },
+          {
+            "rank": 3,
+            "sku": "pl3-18",
+            "score": 0.8491
+          },
+          {
+            "rank": 4,
+            "sku": "sm11-24",
+            "score": 0.8453
+          },
+          {
+            "rank": 5,
+            "sku": "dp6-47",
+            "score": 0.8325
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "me2pt5-28",
+        "name": "Camerupt",
+        "set": "Ascended Heroes #28",
+        "score": 73.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142522795.jpg": {
+      "bucket": "variant",
+      "expected": "swsh6-18",
+      "camera": {
+        "final_sku": "swsh6-18",
+        "score": 0.8507,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "18",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "swsh6-18",
+            "score": 0.8507
+          },
+          {
+            "rank": 2,
+            "sku": "swshp-SWSH277",
+            "score": 0.8377
+          },
+          {
+            "rank": 3,
+            "sku": "sv6-16",
+            "score": 0.7577
+          },
+          {
+            "rank": 4,
+            "sku": "dp1-17",
+            "score": 0.727
+          },
+          {
+            "rank": 5,
+            "sku": "pl3-9",
+            "score": 0.7235
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "swsh6-18",
+        "name": "Rillaboom",
+        "set": "Chilling Reign #18",
+        "score": 68.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142532460.jpg": {
+      "bucket": "variant",
+      "expected": "me2pt5-99",
+      "camera": {
+        "final_sku": "me2pt5-99",
+        "score": 0.8628,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "me2pt5-99",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "me2pt5-99",
+            "score": 0.8628
+          },
+          {
+            "rank": 2,
+            "sku": "sv8pt5-44",
+            "score": 0.8642
+          },
+          {
+            "rank": 3,
+            "sku": "sv6-95",
+            "score": 0.8604
+          },
+          {
+            "rank": 4,
+            "sku": "sv6pt5-72",
+            "score": 0.7676
+          },
+          {
+            "rank": 5,
+            "sku": "sv6-96",
+            "score": 0.7625
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "me2pt5-99",
+        "name": "Munkidori",
+        "set": "Ascended Heroes #99",
+        "score": 71.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142549494.jpg": {
+      "bucket": "variant",
+      "expected": "me2pt5-12",
+      "camera": {
+        "final_sku": "me2pt5-12",
+        "score": 0.8166,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "me2pt5-12",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "me2pt5-12",
+            "score": 0.8166
+          },
+          {
+            "rank": 2,
+            "sku": "sm8-25",
+            "score": 0.7798
+          },
+          {
+            "rank": 3,
+            "sku": "pl1-44",
+            "score": 0.7699
+          },
+          {
+            "rank": 4,
+            "sku": "dp1-44",
+            "score": 0.764
+          },
+          {
+            "rank": 5,
+            "sku": "dp1-63",
+            "score": 0.7623
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "me2pt5-12",
+        "name": "Silcoon",
+        "set": "Ascended Heroes #12",
+        "score": 58.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142600245.jpg": {
+      "bucket": "variant",
+      "expected": "sv4pt5-47",
+      "camera": {
+        "final_sku": "sv4pt5-47",
+        "score": 0.8733,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "sv4pt5-47",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "sv4pt5-47",
+            "score": 0.8733
+          },
+          {
+            "rank": 2,
+            "sku": "sv4pt5-171",
+            "score": 0.8361
+          },
+          {
+            "rank": 3,
+            "sku": "sv1-109",
+            "score": 0.8295
+          },
+          {
+            "rank": 4,
+            "sku": "bwp-BW59",
+            "score": 0.8044
+          },
+          {
+            "rank": 5,
+            "sku": "swsh8-139",
+            "score": 0.7992
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "sv4pt5-47",
+        "name": "Annihilape",
+        "set": "Paldean Fates #47",
+        "score": 73.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142612080.jpg": {
+      "bucket": "variant",
+      "expected": "me2pt5-102",
+      "camera": {
+        "final_sku": "me2pt5-102",
+        "score": 0.8811,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "me2pt5-102",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "me2pt5-102",
+            "score": 0.8811
+          },
+          {
+            "rank": 2,
+            "sku": "dp6-101",
+            "score": 0.796
+          },
+          {
+            "rank": 3,
+            "sku": "pop6-12",
+            "score": 0.794
+          },
+          {
+            "rank": 4,
+            "sku": "swsh9-72",
+            "score": 0.7857
+          },
+          {
+            "rank": 5,
+            "sku": "xy3-49",
+            "score": 0.7854
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "me2pt5-102",
+        "name": "Hitmontop",
+        "set": "Ascended Heroes #102",
+        "score": 78.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142622036.jpg": {
+      "bucket": "variant",
+      "expected": "me2pt5-60",
+      "camera": {
+        "final_sku": "me2pt5-60",
+        "score": 0.8286,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "me2pt5-60",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "me2pt5-60",
+            "score": 0.8286
+          },
+          {
+            "rank": 2,
+            "sku": "zsv10pt5-31",
+            "score": 0.8441
+          },
+          {
+            "rank": 3,
+            "sku": "ex11-22",
+            "score": 0.8022
+          },
+          {
+            "rank": 4,
+            "sku": "svp-109",
+            "score": 0.7928
+          },
+          {
+            "rank": 5,
+            "sku": "mcd22-8",
+            "score": 0.7882
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "me2pt5-60",
+        "name": "Eelektrik",
+        "set": "Ascended Heroes #60",
+        "score": 59.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142635747.jpg": {
+      "bucket": "variant",
+      "expected": "sv8-14",
+      "camera": {
+        "final_sku": "sv8-14",
+        "score": 0.8499,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "sv8-14",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "sv8-14",
+            "score": 0.8499
+          },
+          {
+            "rank": 2,
+            "sku": "swsh11-104",
+            "score": 0.7965
+          },
+          {
+            "rank": 3,
+            "sku": "sm10-105",
+            "score": 0.7938
+          },
+          {
+            "rank": 4,
+            "sku": "ex16-52",
+            "score": 0.7871
+          },
+          {
+            "rank": 5,
+            "sku": "sm7-4",
+            "score": 0.7832
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "sv8-14",
+        "name": "Rabsca",
+        "set": "Surging Sparks #14",
+        "score": 67.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142644963.jpg": {
+      "bucket": "variant",
+      "expected": "me1-84",
+      "camera": {
+        "final_sku": "me1-84",
+        "score": 0.8667,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "me1-84",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "me1-84",
+            "score": 0.8667
+          },
+          {
+            "rank": 2,
+            "sku": "swsh8-139",
+            "score": 0.7864
+          },
+          {
+            "rank": 3,
+            "sku": "me4-61",
+            "score": 0.7853
+          },
+          {
+            "rank": 4,
+            "sku": "sm2-9",
+            "score": 0.7833
+          },
+          {
+            "rank": 5,
+            "sku": "swsh7-87",
+            "score": 0.7781
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "me1-84",
+        "name": "Garganacl",
+        "set": "Mega Evolution #84",
+        "score": 75.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142654342.jpg": {
+      "bucket": "variant",
+      "expected": "sv8-141",
+      "camera": {
+        "final_sku": "sv8-141",
+        "score": 0.9033,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "sv8-141",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "sv8-141",
+            "score": 0.9033
+          },
+          {
+            "rank": 2,
+            "sku": "me2-69",
+            "score": 0.7947
+          },
+          {
+            "rank": 3,
+            "sku": "sv9-187",
+            "score": 0.7849
+          },
+          {
+            "rank": 4,
+            "sku": "bw5-54",
+            "score": 0.7838
+          },
+          {
+            "rank": 5,
+            "sku": "sv9-114",
+            "score": 0.7795
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "sv8-141",
+        "name": "Eternatus",
+        "set": "Surging Sparks #141",
+        "score": 83.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142704322.jpg": {
+      "bucket": "variant",
+      "expected": "sv3-141",
+      "camera": {
+        "final_sku": "sv3-141",
+        "score": 0.95,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "sv3-141",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "sv3-141",
+            "score": 0.95
+          },
+          {
+            "rank": 2,
+            "sku": "ex10-108",
+            "score": 0.7416
+          },
+          {
+            "rank": 3,
+            "sku": "dp5-29",
+            "score": 0.7326
+          },
+          {
+            "rank": 4,
+            "sku": "swsh12pt5-86",
+            "score": 0.7321
+          },
+          {
+            "rank": 5,
+            "sku": "sm8-126",
+            "score": 0.7143
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "sv3-141",
+        "name": "Scizor",
+        "set": "Obsidian Flames #141",
+        "score": 100.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142715908.jpg": {
+      "bucket": "variant",
+      "expected": "sv8pt5-49",
+      "camera": {
+        "final_sku": "sv8pt5-49",
+        "score": 0.8912,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "sv8pt5-49",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "sv8pt5-49",
+            "score": 0.8912
+          },
+          {
+            "rank": 2,
+            "sku": "sv4-93",
+            "score": 0.8873
+          },
+          {
+            "rank": 3,
+            "sku": "xy5-84",
+            "score": 0.8106
+          },
+          {
+            "rank": 4,
+            "sku": "dp6-6",
+            "score": 0.8101
+          },
+          {
+            "rank": 5,
+            "sku": "neo1-9",
+            "score": 0.8023
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "sv8pt5-49",
+        "name": "Groudon",
+        "set": "Prismatic Evolutions #49",
+        "score": 83.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142726129.jpg": {
+      "bucket": "variant",
+      "expected": "rsv10pt5-68",
+      "camera": {
+        "final_sku": "rsv10pt5-68",
+        "score": 0.8675,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "rsv10pt5-68",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "rsv10pt5-68",
+            "score": 0.8675
+          },
+          {
+            "rank": 2,
+            "sku": "rsv10pt5-148",
+            "score": 0.8354
+          },
+          {
+            "rank": 3,
+            "sku": "swsh5-4",
+            "score": 0.7691
+          },
+          {
+            "rank": 4,
+            "sku": "sm4-66",
+            "score": 0.7549
+          },
+          {
+            "rank": 5,
+            "sku": "sv4-127",
+            "score": 0.7503
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "rsv10pt5-68",
+        "name": "Ferroseed",
+        "set": "White Flare #68",
+        "score": 75.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142735982.jpg": {
+      "bucket": "variant",
+      "expected": "sv3-85",
+      "camera": {
+        "final_sku": "sv3-85",
+        "score": 0.8791,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "85",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "sv3-85",
+            "score": 0.8791
+          },
+          {
+            "rank": 2,
+            "sku": "svp-38",
+            "score": 0.8063
+          },
+          {
+            "rank": 3,
+            "sku": "ex12-1",
+            "score": 0.761
+          },
+          {
+            "rank": 4,
+            "sku": "np-32",
+            "score": 0.7605
+          },
+          {
+            "rank": 5,
+            "sku": "base1-5",
+            "score": 0.7537
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "sv3-85",
+        "name": "Togekiss",
+        "set": "Obsidian Flames #85",
+        "score": 77.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142743518.jpg": {
+      "bucket": "variant",
+      "expected": "swsh11-26",
+      "camera": {
+        "final_sku": "swsh11-26",
+        "score": 0.6552,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "26",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "swsh11-26",
+            "score": 0.6552
+          },
+          {
+            "rank": 2,
+            "sku": "ex14-4",
+            "score": 0.6796
+          },
+          {
+            "rank": 3,
+            "sku": "pl3-34",
+            "score": 0.6625
+          },
+          {
+            "rank": 4,
+            "sku": "sm2-13",
+            "score": 0.6555
+          },
+          {
+            "rank": 5,
+            "sku": "base6-3",
+            "score": 0.6521
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "swsh11-26",
+        "name": "Chandelure",
+        "set": "Lost Origin #26",
+        "score": 2.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142756027.jpg": {
+      "bucket": "variant",
+      "expected": "swsh11-36",
+      "camera": {
+        "final_sku": "swsh11-36",
+        "score": 0.8865,
+        "status": "ok",
+        "ocr_confirmed": false,
+        "ocr_text": "35",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "swsh11-36",
+            "score": 0.8865
+          },
+          {
+            "rank": 2,
+            "sku": "ex7-12",
+            "score": 0.8315
+          },
+          {
+            "rank": 3,
+            "sku": "pl1-29",
+            "score": 0.8304
+          },
+          {
+            "rank": 4,
+            "sku": "swsh11-41",
+            "score": 0.8238
+          },
+          {
+            "rank": 5,
+            "sku": "ecard2-58",
+            "score": 0.8223
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "swsh11-36",
+        "name": null,
+        "set": null,
+        "score": 77.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    }
+  }
+}

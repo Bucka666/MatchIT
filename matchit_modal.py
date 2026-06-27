@@ -377,22 +377,18 @@ def scheduled_set_check():
     if calendar_new_skus:
         new_skus = (new_skus or []) + [s for s in calendar_new_skus if s not in (new_skus or [])]
 
-    if not new_skus:
-        new_skus = None  # nothing found this run -> full rebuild
-
-    # Belt-and-braces weekly safety net (Sunday UTC): force a full rebuild
-    # regardless of new_skus, to catch anything the per-set/delta paths
-    # missed. See set_scheduler.run_scheduler's force_full_reconcile flag.
-    if result.get("force_full_reconcile"):
-        print("[CRON] Sunday safety net: forcing full rebuild_lookup_files", flush=True)
-        new_skus = None
-
-    try:
-        rebuild_lookup_files.remote(new_skus=new_skus)
-        mode = f"delta ({len(new_skus)} SKUs)" if new_skus else "full"
-        print(f"[CRON] rebuild_lookup_files completed ({mode})", flush=True)
-    except Exception as e:
-        print(f"[CRON] rebuild_lookup_files FAILED: {e}", flush=True)
+    # Delta-only policy: a no-new day does nothing. No full-rebuild
+    # fallback when new_skus is empty, and no Sunday force-full safety net
+    # (removed — full reconcile is manual-only now; force_full_reconcile
+    # is always False from set_scheduler.py and no longer read here).
+    if new_skus:
+        try:
+            rebuild_lookup_files.remote(new_skus=new_skus)
+            print(f"[CRON] rebuild_lookup_files completed (delta ({len(new_skus)} SKUs))", flush=True)
+        except Exception as e:
+            print(f"[CRON] rebuild_lookup_files FAILED: {e}", flush=True)
+    else:
+        print("[CRON] no new SKUs — skipping rebuild_lookup_files (delta-only policy)", flush=True)
 
 
 @app.function(
@@ -546,8 +542,10 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                     except Exception as e:
                         print(f"[REBUILD] WARN {profile_path}: {e}", flush=True)
                     break
-        with open(sku_map_path, "w", encoding="utf-8") as f:
+        _sku_map_tmp = sku_map_path + ".tmp"
+        with open(_sku_map_tmp, "w", encoding="utf-8") as f:
             json.dump(sku_game_map, f, separators=(",", ":"))
+        os.replace(_sku_map_tmp, sku_map_path)
         print(f"[REBUILD] sku_game_map.json: {len(sku_game_map)} entries (+{added_skus} new)", flush=True)
     else:
         # Full: scan every game folder
@@ -574,8 +572,10 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                         counts["unknown"] += 1
                 except Exception as e:
                     print(f"[REBUILD] WARN {profile_path}: {e}", flush=True)
-        with open(sku_map_path, "w", encoding="utf-8") as f:
+        _sku_map_tmp = sku_map_path + ".tmp"
+        with open(_sku_map_tmp, "w", encoding="utf-8") as f:
             json.dump(sku_game_map, f, separators=(",", ":"))
+        os.replace(_sku_map_tmp, sku_map_path)
         print(
             f"[REBUILD] sku_game_map.json: {len(sku_game_map)} entries "
             f"(P={counts['POKEMON']} M={counts['MTG']} Y={counts['YUGIOH']} ?={counts['unknown']})",
@@ -747,8 +747,10 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
             new_sets += 1
 
     if new_sets or new_skus is not None:
-        with open(meta_path, "w", encoding="utf-8") as f:
+        _meta_tmp = meta_path + ".tmp"
+        with open(_meta_tmp, "w", encoding="utf-8") as f:
             json.dump(new_meta, f)
+        os.replace(_meta_tmp, meta_path)
 
     vol.commit()
     print(

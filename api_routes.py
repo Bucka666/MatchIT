@@ -359,10 +359,15 @@ def register_api_routes(app):
             return jsonify({"matches": [], "low_confidence": True, "reason": "score_too_low", "show_transition_toast": False}), 200
 
         # DINOv2 tiebreaker
+        _dino_diag = {"fired": False, "reason": "not_run"}
         if results:
             _req_mode = request.form.get("mode", "precise")
             if _req_mode != "fast":
-                results = _dinov2_tiebreak(results, str(query_path1))
+                results, _dino_diag = _dinov2_tiebreak(results, str(query_path1))
+            else:
+                _dino_diag = {"fired": False, "reason": "mode_fast_skip"}
+        if diag is not None:
+            diag["dino"] = _dino_diag
 
         # OCR set-code confirmation — promotes correct print to rank 1
         if results:

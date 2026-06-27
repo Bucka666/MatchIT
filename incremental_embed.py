@@ -367,6 +367,8 @@ def run_incremental_embed(
     # 1. Load existing cache
     front_matrix, back_matrix, front_info, back_info, extra = _load_existing_cache()
 
+    # GUARDRAIL: cold/missing matrix must HARD-STOP here, never fall through
+    # to a full re-embed.
     if front_matrix is None:
         logger.error("[INCR] No existing front_matrix.npy found — run full embed first")
         summary["status"] = "error_no_existing_matrix"

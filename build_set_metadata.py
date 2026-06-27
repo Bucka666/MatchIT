@@ -273,7 +273,19 @@ def main():
 
     metadata: Dict[str, dict] = {}
     metadata.update(pokemon_meta)
-    metadata.update(mtg_meta)
+    # Collision-aware merge: some set_ids (e.g. me1/me2/me3 — Pokémon "Mega
+    # Evolution"/"Phantasmal Flames"/"Perfect Order" vs MTG "Masters Edition"
+    # I/II/III) exist in both CardsDB/pokemon and CardsDB/mtg. An unconditional
+    # update() here let mtg_meta silently clobber the correct Pokémon totals
+    # with null MTG ones. Pokémon wins on collision — never overwrite a key
+    # pokemon_meta already populated.
+    mtg_collisions = sorted(set(mtg_meta) & set(metadata))
+    if mtg_collisions:
+        print(f"  [COLLISION] {len(mtg_collisions)} set_id(s) in both Pokémon and MTG — "
+              f"keeping Pokémon entry: {mtg_collisions}")
+    for k, v in mtg_meta.items():
+        if k not in metadata:
+            metadata[k] = v
     metadata.update(ygo_meta)
 
     # ── 3. Write output ───────────────────────────────────────────────────
