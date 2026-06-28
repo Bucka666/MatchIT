@@ -216,7 +216,7 @@
       <div class="gs-feature">
         <div class="gs-feature-icon">🔬</div>
         <h3 class="gs-feature-title">AI Condition Grading</h3>
-        <p class="gs-feature-desc">Every photo match and scan gets an instant auto-grade. Pro users can request a Claude Vision deep grade — assessing centering, corners, edges and surface with a detailed breakdown. Monthly: 10/month · Annual: 20/month. <span class="gs-feature-pro-tag">Pro</span></p>
+        <p class="gs-feature-desc">Every photo match and scan gets an instant auto-grade. Pro users can request a Claude Vision deep grade — assessing centering, corners, edges and surface with a detailed breakdown. Monthly: 10/month · Ultimate Plan: 20/month. <span class="gs-feature-pro-tag">Pro</span></p>
       </div>
 
       <div class="gs-feature">
@@ -246,7 +246,7 @@
         <div class="gs-price-amount">£0</div>
         <div class="gs-price-period">forever</div>
         <ul class="gs-price-features">
-          <li>✓ 25 card scans per month</li>
+          <li>✓ 150 card scans per month</li>
           <li>✓ All 3 TCGs (Pokémon, Yu-Gi-Oh, MTG)</li>
           <li>✓ Live GBP price reference</li>
           <li>✓ AI card identification</li>
@@ -262,7 +262,7 @@
         <div class="gs-price-amount">£3.99</div>
         <div class="gs-price-period">per month</div>
         <ul class="gs-price-features">
-          <li>✓ 1,000 scans/month</li>
+          <li>✓ Unlimited fair usage scanning</li>
           <li>✓ Everything in Free</li>
           <li>✓ Collection manager</li>
           <li>✓ Excel export + CSV import</li>
@@ -280,44 +280,17 @@
       <!-- Card 3: Pro Annual -->
       <div class="gs-price-card gs-price-card--annual">
         <span class="gs-price-badge">SAVE 27%</span>
-        <h3 class="gs-price-name">Pro Annual</h3>
+        <h3 class="gs-price-name">Ultimate Plan</h3>
         <div class="gs-price-amount">£34.99</div>
         <div class="gs-price-period">per year (~£2.92/mo)</div>
         <ul class="gs-price-features">
-          <li>✓ 1,200 scans/month</li>
+          <li>✓ Unlimited fair usage scanning</li>
           <li>✓ Everything in Monthly</li>
           <li>✓ AI deep grade (20/month)</li>
           <li>✓ Save ~27% — best value</li>
         </ul>
         <button class="gs-price-cta gs-price-cta--annual"
                 onclick="lpUpgrade('annual')">Subscribe</button>
-      </div>
-
-      <!-- Card 4: Founder Yearly -->
-      {% set founder_remaining = ssr_founder_remaining|default(100) %}
-      {% set founder_sold_out = ssr_founder_sold_out|default(false) %}
-      <div class="gs-price-card gs-price-card--founder{% if founder_sold_out %} is-sold-out{% endif %}">
-        <span class="gs-price-badge">⚡ LIMITED — FIRST 100</span>
-        <h3 class="gs-price-name">Founder Yearly</h3>
-        <div class="gs-price-amount">£19.99</div>
-        <div class="gs-price-period">per year (~£1.67/mo)</div>
-        <ul class="gs-price-features">
-          <li>✓ Everything in Annual</li>
-          <li>✓ Founder pricing locked in</li>
-          <li>✓ All future Pro features</li>
-          <li>✓ Limited to first 100 customers</li>
-        </ul>
-        {% if founder_sold_out %}
-        <div class="gs-price-cta" style="background:rgba(128,128,128,0.2);color:rgba(255,255,255,0.5);cursor:not-allowed;text-align:center;padding:10px;">
-          Sold Out
-        </div>
-        {% else %}
-        <button class="gs-price-cta gs-price-cta--founder"
-                onclick="lpUpgrade('founder_yearly')">Become a Founder</button>
-        {% endif %}
-        <div class="gs-price-spots">
-          ⚡ {{ founder_remaining }} spots remaining
-        </div>
       </div>
 
     </div>
@@ -752,20 +725,6 @@
   color: #1a1a2e;
   border: none;
 }
-.gs-price-card--founder {
-  border: 2px solid rgba(255,215,0,0.5);
-  background: linear-gradient(180deg, rgba(255,215,0,0.08), transparent);
-  box-shadow: 0 4px 24px rgba(255,215,0,0.12);
-}
-.gs-price-card--founder .gs-price-badge {
-  background: linear-gradient(135deg, #ffd700, #ff8c00);
-  color: #1a1a2e;
-  border: none;
-}
-.gs-price-card--founder.is-sold-out {
-  opacity: 0.55;
-  filter: grayscale(0.4);
-}
 .gs-price-cta {
   display: inline-block;
   width: 100%;
@@ -804,11 +763,6 @@
 }
 .gs-price-cta--annual:hover {
   background: linear-gradient(135deg, #14ffa0, #14d6ff);
-}
-.gs-price-cta--founder {
-  background: linear-gradient(135deg, #ffd700, #ff8c00);
-  color: #1a1a2e;
-  font-weight: 700;
 }
 .gs-price-spots {
   font-size: 0.75rem;
@@ -1050,9 +1004,6 @@ async function lpUpgrade(tier) {
     const data = await resp.json();
     if (data.url) {
       window.location.href = data.url;
-    } else if (resp.status === 410 && data.error === 'sold_out') {
-      alert(data.message || 'Founder Yearly is sold out.');
-      window.location.reload();
     } else {
       alert('Could not start checkout: ' + (data.error || 'unknown error'));
     }

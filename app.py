@@ -3507,7 +3507,7 @@ def ondevice_telemetry():
     if event == "scan" and gate_decision == "accept":
         try:
             _db.check_and_record_scan(server_fp, device_id, tier,
-                                      code=code, subscriptions_obj=subs)
+                                      code=code, subscriptions_obj=subs, sku=sku)
         except Exception as _q_exc:
             print(f"[ONDEVICE-TELEMETRY] quota error (fail-open): {_q_exc}", flush=True)
         try:
@@ -4309,15 +4309,16 @@ def capture_submit():
         _top_score = (results[0].get('score', 0) if isinstance(results[0], dict) else getattr(results[0], 'score', 0))
         if _top_score < 0.65:
             return render_template("match.html", error="No confident match found.")
-        scan_decision = _evaluate_scan_decision(request)
+        _sku_for_charge_cs = results[0].get("sku", "") if isinstance(results[0], dict) else getattr(results[0], "sku", "")
+        scan_decision = _evaluate_scan_decision(request, sku=_sku_for_charge_cs)
         if not scan_decision.get("allowed", True):
             return jsonify({
                 "error": "free_scan_limit_reached",
-                "limit": scan_decision.get("limit", 25),
-                "count": scan_decision.get("count", 25),
+                "limit": scan_decision.get("limit", 150),
+                "count": scan_decision.get("count", 150),
                 "remaining": 0,
                 "tier": "free",
-                "message": "You've used all 25 free scans this month. Top-up to continue scanning."
+                "message": "You've used all 150 free scans this month. Top-up to continue scanning."
             }), 402
         _increment_scan_counter()
 
@@ -5238,7 +5239,7 @@ def redeem_topup():
 
     # Mark as redeemed — atomic via _save_subs()
     from datetime import datetime
-    credits = entry.get("credits_remaining", entry.get("credits_total", 75))
+    credits = entry.get("credits_remaining", entry.get("credits_total", 125))
     entry["status"] = "redeemed"
     entry["redeemed_at"] = datetime.utcnow().isoformat()
     entry["redeemed_by_device"] = device_id
@@ -5291,7 +5292,7 @@ def topup_status():
         return jsonify({
             "ok": True,
             "free_used":       free_state.get("count", 0),
-            "free_limit":      free_state.get("limit", 25),
+            "free_limit":      free_state.get("limit", 150),
             "free_remaining":  free_state.get("remaining", 0),
             "topup_remaining": topup_state.get("credits", 0),
         })
@@ -5375,7 +5376,7 @@ def _process_stripe_event(event, payload_dict):
             if tier == "topup_75":
                 # One-time scan top-up — issue TOPUP- code, not GRAIL-
                 payment_intent = obj_dict.get("payment_intent")
-                _issue_new_topup_code(email, credits=75, payment_intent_id=payment_intent)
+                _issue_new_topup_code(email, credits=125, payment_intent_id=payment_intent)
             else:
                 # Subscription tier — existing GRAIL- code flow
                 new_code = _issue_new_code(email, tier, subscription_id, ref_code=ref_code_used)
@@ -6602,7 +6603,7 @@ def _issue_new_code(email, tier, subscription_id, ref_code=""):
 
     tier_label = {
         "monthly": "Pro Monthly",
-        "annual": "Pro Annual",
+        "annual": "Ultimate Plan",
         "founder_yearly": "Founder Yearly",
         "lifetime": "Lifetime",
     }.get(tier, "Pro")
@@ -6681,7 +6682,7 @@ The GrailSweep team
     return code
 
 
-def _issue_new_topup_code(email, credits=75, payment_intent_id=None):
+def _issue_new_topup_code(email, credits=125, payment_intent_id=None):
     """
     Issue a one-time top-up redemption code (TOPUP-XXXX-XXXX).
 
@@ -6694,7 +6695,7 @@ def _issue_new_topup_code(email, credits=75, payment_intent_id=None):
 
     Args:
         email: purchaser's email from Stripe checkout
-        credits: number of scan credits to grant on redemption (default 75)
+        credits: number of scan credits to grant on redemption (default 125)
         payment_intent_id: Stripe payment_intent ID for traceability
     """
     import random
@@ -7388,12 +7389,15 @@ def _ensure_tier_period_backfilled(code: str, sub: dict) -> bool:
     return False
 
 
-def _evaluate_scan_decision(req):
+def _evaluate_scan_decision(req, sku=None):
     """
     Compute the server fingerprint + resolve tier for the current request,
     then call db.check_and_record_scan(). Returns the decision dict.
     FAIL-OPEN: on any error returns allowed=True so a counter failure
     never blocks /match.
+
+    sku: matched card SKU, if known — forwarded to check_and_record_scan
+        for the 60s per-SKU quota dedupe.
     """
     try:
         import db as _db
@@ -7414,7 +7418,7 @@ def _evaluate_scan_decision(req):
             if _ensure_tier_period_backfilled(code, sub):
                 subs = _load_subs()   # reload after write
         result = _db.check_and_record_scan(server_fp, device_id, tier,
-                                          code=code, subscriptions_obj=subs)
+                                          code=code, subscriptions_obj=subs, sku=sku)
         # Detect first-time tier → top-up transition and set flag
         if (result.get("reason") == "topup_consumed_premium"
                 and code and tier in ("monthly", "annual", "founder_yearly")):
@@ -7574,7 +7578,7 @@ def match():
             except Exception as _pe:
                 print(f"[CONFIRMED-SKU] profile enrich error: {_pe}", flush=True)
             grade = _safe_grade(str(query_path1))
-            scan_decision = _evaluate_scan_decision(request)
+            scan_decision = _evaluate_scan_decision(request, sku=confirmed_sku)
             if not scan_decision.get("allowed"):
                 return jsonify({
                     "error": "free_scan_limit_reached",
@@ -7582,7 +7586,7 @@ def match():
                     "count": scan_decision.get("count"),
                     "remaining": 0,
                     "tier": scan_decision.get("tier"),
-                    "message": "You've used all 25 free scans this month. Top-ups coming soon.",
+                    "message": "You've used all 150 free scans this month.",
                 }), 402
             _save_match_history(query_filename, query_filename2, _confirmed_results, False)
             _increment_scan_counter()
@@ -7652,7 +7656,7 @@ def match():
                 except Exception as _pe:
                     print(f"[OCR-FIRST] profile enrich error: {_pe}", flush=True)
                 grade = _safe_grade(str(query_path1))
-                scan_decision = _evaluate_scan_decision(request)
+                scan_decision = _evaluate_scan_decision(request, sku=_ocr_direct_sku)
                 if not scan_decision.get("allowed"):
                     return jsonify({
                         "error": "free_scan_limit_reached",
@@ -7660,7 +7664,7 @@ def match():
                         "count": scan_decision.get("count"),
                         "remaining": 0,
                         "tier": scan_decision.get("tier"),
-                        "message": "You've used all 25 free scans this month. Top-ups coming soon.",
+                        "message": "You've used all 150 free scans this month.",
                     }), 402
                 _save_match_history(query_filename, query_filename2, _ocr_direct_results, False)
                 _increment_scan_counter()
@@ -7865,7 +7869,10 @@ def match():
                             _r2.profile = _prof2
                 except Exception as _pe:
                     print(f"[OCR-HI] profile enrich error: {_pe}", flush=True)
-                scan_decision = _evaluate_scan_decision(request)
+                _sku_for_charge = _ocr_info.get("matched_sku") or (
+                    results[0].get("sku", "") if isinstance(results[0], dict) else getattr(results[0], "sku", "")
+                )
+                scan_decision = _evaluate_scan_decision(request, sku=_sku_for_charge)
                 if not scan_decision.get("allowed"):
                     return jsonify({
                         "error": "free_scan_limit_reached",
@@ -7873,7 +7880,7 @@ def match():
                         "count": scan_decision.get("count"),
                         "remaining": 0,
                         "tier": scan_decision.get("tier"),
-                        "message": "You've used all 25 free scans this month. Top-ups coming soon.",
+                        "message": "You've used all 150 free scans this month.",
                     }), 402
                 _save_match_history(query_filename, query_filename2, results, low_cert)
                 _increment_scan_counter()
@@ -7926,7 +7933,10 @@ def match():
         )
 
     # OCR confirmed — enforce scan limit, save history, charge counter
-    scan_decision = _evaluate_scan_decision(request)
+    _sku_for_charge_fb = _ocr_info.get("matched_sku") or (
+        results[0].get("sku", "") if isinstance(results[0], dict) else getattr(results[0], "sku", "")
+    )
+    scan_decision = _evaluate_scan_decision(request, sku=_sku_for_charge_fb)
     if not scan_decision.get("allowed"):
         return jsonify({
             "error": "free_scan_limit_reached",
@@ -7934,7 +7944,7 @@ def match():
             "count": scan_decision.get("count"),
             "remaining": 0,
             "tier": scan_decision.get("tier"),
-            "message": "You've used all 25 free scans this month. Top-ups coming soon.",
+            "message": "You've used all 150 free scans this month.",
         }), 402
 
     # Save to match history

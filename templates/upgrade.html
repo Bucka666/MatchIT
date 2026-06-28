@@ -13,11 +13,10 @@
     <h1 class="mi-h1" style="font-size:1.8rem;margin-bottom:8px;">Upgrade to GrailSweep Pro</h1>
     <p style="color:var(--mi-muted,#aaa);font-size:0.95rem;max-width:480px;margin:0 auto;">
       Unlock generous monthly scanning, collection tracking, AI condition grading and more.
-      Monthly subscribers get 10 deep grades/month — upgrade to Annual for 20,
-      or grab Founder Yearly while it lasts.
+      Monthly subscribers get 10 deep grades/month — upgrade to Ultimate Plan for 20.
     </p>
     <div id="scanWarning" style="display:none;margin-top:16px;background:rgba(255,45,111,0.1);border:1px solid rgba(255,45,111,0.3);border-radius:10px;padding:12px 20px;color:#ff2d6f;font-size:0.88rem;">
-      🚫 You've used all 25 free scans this month. Upgrade to Pro for 1,000+ scans/month, or wait until next month.
+      🚫 You've used all 150 free scans this month. Upgrade to Pro for unlimited fair usage scanning, or wait until next month.
     </div>
   </div>
 
@@ -35,11 +34,11 @@
       <div class="upgrade-tier-price">£0</div>
       <div class="upgrade-tier-period">forever</div>
       <ul class="upgrade-features">
-        <li class="upgrade-feature">✅ 25 card scans per month</li>
+        <li class="upgrade-feature">✅ 150 card scans per month</li>
         <li class="upgrade-feature">✅ AI card identification (Pokémon, MTG, Yu-Gi-Oh)</li>
         <li class="upgrade-feature">✅ Live GBP price reference</li>
         <li class="upgrade-feature">✅ Auto condition grade</li>
-        <li class="upgrade-feature upgrade-feature--no">❌ Only 25 scans/month</li>
+        <li class="upgrade-feature upgrade-feature--no">❌ Only 150 scans/month</li>
         <li class="upgrade-feature upgrade-feature--no">❌ Collection manager &amp; more</li>
       </ul>
       {% if not ssr_is_premium %}<div class="upgrade-tier-cta upgrade-tier-cta--free">Current Plan</div>{% endif %}
@@ -51,7 +50,7 @@
       <div class="upgrade-tier-price">£3.99</div>
       <div class="upgrade-tier-period">per month</div>
       <ul class="upgrade-features">
-        <li class="upgrade-feature">✅ 1,000 scans/month</li>
+        <li class="upgrade-feature">✅ Unlimited fair usage scanning</li>
         <li class="upgrade-feature">✅ Everything in Free</li>
         <li class="upgrade-feature">✅ Collection manager + Excel/CSV</li>
         <li class="upgrade-feature">✅ Price alerts + live scanner</li>
@@ -69,11 +68,11 @@
     <!-- Annual tier -->
     <div class="upgrade-tier upgrade-tier--annual">
       <div class="upgrade-tier-badge">⭐ BEST VALUE</div>
-      <div class="upgrade-tier-name">Pro Annual</div>
+      <div class="upgrade-tier-name">Ultimate Plan</div>
       <div class="upgrade-tier-price">£34.99</div>
       <div class="upgrade-tier-period">per year <span style="color:#00ff88;font-size:0.75rem;">(~£2.92/mo)</span></div>
       <ul class="upgrade-features">
-        <li class="upgrade-feature">✅ 1,200 scans/month</li>
+        <li class="upgrade-feature">✅ Unlimited fair usage scanning</li>
         <li class="upgrade-feature">✅ Everything in Monthly</li>
         <li class="upgrade-feature">✅ AI deep grade (20/month)</li>
         <li class="upgrade-feature">✅ Save ~27% vs monthly</li>
@@ -86,32 +85,6 @@
         </button>
       {% endif %}
       <div style="text-align:center;font-size:0.72rem;color:#9b95b8;margin-top:8px;">Save ~27% vs monthly</div>
-    </div>
-
-    <!-- Founder Yearly tier -->
-    <div class="upgrade-tier upgrade-tier--founder" id="founderCard">
-      <div class="upgrade-tier-badge upgrade-tier-badge--gold" id="founderBadge">⚡ LIMITED — FIRST 100</div>
-      <div class="upgrade-tier-name">Founder Yearly</div>
-      <div class="upgrade-tier-price">£19.99</div>
-      <div class="upgrade-tier-period">per year (~£1.67/mo)</div>
-      <ul class="upgrade-features">
-        <li class="upgrade-feature">✅ Everything in Annual</li>
-        <li class="upgrade-feature">✅ Founder pricing locked in for life of subscription</li>
-        <li class="upgrade-feature">✅ 40 deep grades per month</li>
-        <li class="upgrade-feature">✅ All current and future Pro features</li>
-      </ul>
-      {% if ssr_is_premium and ssr_sub and ssr_sub.tier == 'founder_yearly' %}
-        <div class="upgrade-tier-cta upgrade-tier-cta--current">✓ Current Plan</div>
-      {% else %}
-        <button type="button" class="upgrade-tier-cta upgrade-tier-cta--founder"
-                id="founderButton"
-                onclick="handleUpgrade('founder_yearly')">
-          Claim Founder offer on grailsweep.com
-        </button>
-      {% endif %}
-      <div class="upgrade-tier-footnote" id="founderFootnote">
-        ⚡ <span id="founderSpotsRemaining">Limited spots</span> remaining
-      </div>
     </div>
 
   </div>
@@ -200,10 +173,6 @@
 .upgrade-tier--annual {
     border-color: rgba(0,255,136,0.3);
     background: rgba(0,255,136,0.05);
-}
-.upgrade-tier--founder {
-    border-color: rgba(255,215,0,0.3);
-    background: rgba(255,215,0,0.05);
 }
 
 .upgrade-tier-badge {
@@ -309,11 +278,6 @@
     color: #1a1830;
 }
 .upgrade-tier-cta--annual:hover { opacity: 0.85; transform: translateY(-1px); }
-.upgrade-tier-cta--founder {
-    background: linear-gradient(135deg, #ffd700, #ff8c00);
-    color: #1a1830;
-}
-.upgrade-tier-cta--founder:hover { opacity: 0.85; transform: translateY(-1px); }
 
 .upgrade-tier-cta--current {
     background: rgba(255,255,255,0.1);
@@ -331,10 +295,6 @@
     text-align: center;
     padding: 12px;
     border-radius: 8px;
-}
-
-.upgrade-tier--founder.is-sold-out {
-    opacity: 0.6;
 }
 
 .upgrade-tier-footnote {
@@ -407,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
         _sw.textContent = _tr + ' top-up scan' + (_tr === 1 ? '' : 's') + ' remaining — or upgrade to Pro for unlimited.';
         _sw.style.display = 'block';
     } else if (typeof scanIsBlocked === 'function' && scanIsBlocked()) {
-        _sw.textContent = '🚫 You\'ve used all 25 free scans this month. Upgrade to Pro for 1,000+ scans/month, or wait until next month.';
+        _sw.textContent = '🚫 You\'ve used all 150 free scans this month. Upgrade to Pro for unlimited fair usage scanning, or wait until next month.';
         _sw.style.display = 'block';
     }
 });
@@ -423,9 +383,6 @@ async function handleUpgrade(tier) {
         const data = await resp.json();
         if (data.url) {
             gsNavigateToCheckout(data.url);
-        } else if (resp.status === 410 && data.error === 'sold_out') {
-            showFounderSoldOut();
-            alert(data.message || 'Founder Yearly is sold out.');
         } else {
             alert('Error: ' + (data.error || 'Could not create checkout session'));
         }
@@ -501,52 +458,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-async function loadFounderStatus() {
-    const card      = document.getElementById('founderCard');
-    const button    = document.getElementById('founderButton');
-    const badge     = document.getElementById('founderBadge');
-    const footnote  = document.getElementById('founderFootnote');
-    const spotsSpan = document.getElementById('founderSpotsRemaining');
-
-    if (!card) return; // founder card not on page (e.g. user already founder tier)
-
-    try {
-        const resp = await fetch('/api/founder-status');
-        const data = await resp.json();
-
-        if (data.sold_out) {
-            showFounderSoldOut();
-            return;
-        }
-
-        if (badge && spotsSpan && typeof data.remaining === 'number') {
-            badge.textContent = `⚡ ${data.remaining} SPOTS LEFT`;
-            spotsSpan.textContent = `${data.remaining} spots`;
-        }
-    } catch (e) {
-        console.warn('Founder status check failed', e);
-        // On error, leave card in default "Limited" state
-    }
-}
-
-function showFounderSoldOut() {
-    const card     = document.getElementById('founderCard');
-    const button   = document.getElementById('founderButton');
-    const badge    = document.getElementById('founderBadge');
-    const footnote = document.getElementById('founderFootnote');
-
-    if (!card) return;
-    card.classList.add('is-sold-out');
-    if (badge)    badge.textContent = '⚡ SOLD OUT';
-    if (footnote) footnote.innerHTML = 'All 100 founder spots have been claimed.';
-    if (button) {
-        const soldOutDiv = document.createElement('div');
-        soldOutDiv.className = 'upgrade-tier-cta upgrade-tier-cta--sold-out';
-        soldOutDiv.textContent = 'Sold Out';
-        button.parentNode.replaceChild(soldOutDiv, button);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', loadFounderStatus);
 </script>
 {% endblock %}

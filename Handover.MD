@@ -1,232 +1,193 @@
-# Handover: Resend Email Migration — Part 3 (updated end of session)
+# GrailSweep — Session Handover
 
-## Status: migration functionally complete; test codes revoked; awaiting 48h monitor + cleanup
+**Date:** 2026-06-27 (end of session; updated after PM Japanese out-of-index sprint)
+**Next session focus:** UI/UX changes + new pricing tiers + Stripe work (exact details TBC in new window)
 
-Previous session (Part 2) ran end-to-end migration from SMTP to Resend across all five live email paths. All deployed, all verified delivering through Resend. Part 3 session revoked the two outstanding test codes from the Modal volume and added a reusable `/admin/delete_code` endpoint. Two non-migration items remain: passive monitoring (Step 8) and decommissioning the old SMTP infrastructure (Step 9).
-
----
-
-## What's done
-
-### Resend account (unchanged from Part 2)
-- Domain `grailsweep.com` verified (eu-west-1, Ireland)
-- DKIM, SPF, DMARC all passing per Microsoft header inspection (`spf=pass dkim=pass dmarc=pass compauth=pass reason=100`)
-- API key `grailsweep-modal-prod`, Sending access scope
-- Modal secret `resend-api-key` wired into both `@app.function()` decorators in `matchit_modal.py`
-
-### Files created
-- `email_sender.py` (project root) — thin Resend wrapper exposing `gs_send_email(to, subject, html, text, reply_to, from_address)`. Includes `print()` calls alongside `logger.info()` for Modal log visibility (see backlog #3 for why).
-
-### Code migrated to Resend
-All five live transactional paths now use `gs_send_email()`:
-
-| Path | File:function | Audience | Status |
-|---|---|---|---|
-| Weekly digest | `set_scheduler.py:_send_email` (line ~413) | Internal (you) | Live, multiple deliveries verified |
-| Alert confirmation | `app.py:_send_alert_confirmation` (line ~4207) | Customer | Live, multiple deliveries verified |
-| Alert firing | `set_scheduler.py:_send_alert_email` (line ~588) | Customer | Code migrated. Runtime trigger blocked by pre-existing bug — see backlog #2 |
-| Subscription codes (GRAIL-) | `app.py:_issue_new_code` (line ~5324) | **Customer (revenue)** | Live, verified via admin test endpoint |
-| Top-up codes (TOPUP-) | `app.py:_issue_new_topup_code` (line ~5409) | **Customer (revenue)** | Live, verified via admin test endpoint |
-
-### Code deleted (during Part 2)
-- Dead `send_email()` function at `matchit_modal.py:92` (zero callers — confirmed by recon)
-- Top-of-file imports removed from `matchit_modal.py`: `smtplib`, `ssl`, `from email.mime.multipart import MIMEMultipart`, `from email.mime.text import MIMEText`
-- Diff: 28 lines removed, 0 added. File parses, imports, serves traffic.
-
-### Template redesign (Step 5a-v2 pattern, applied to all customer emails)
-Original templates used promotional patterns that triggered Outlook spam classification (didn't actually move SCL — see backlog #1 — but cleaner regardless):
-- Removed: emoji in subjects/bodies, neon `#00ff88` price colour, "buy signal" / "sell signal" language, dark `#1a1830` body backgrounds, `linear-gradient` headings, gradient buttons
-- Added: white body backgrounds, monospace code displays in `#f6f4fb` panels with `#b14dff` left border, `#7c3aed` solid CTA buttons, clean transactional layout, plain text bodies alongside HTML
-
-### Debug infrastructure (still in place)
-- **`/admin/test_email_paths` route** (in `app.py`, after `admin_run_scheduler_dry` around line 3206) — POST endpoint that calls `_issue_new_code` and `_issue_new_topup_code` directly with test parameters. Admin-gated. Used to verify Step 6 without firing Stripe webhooks. **Remove during Step 9.**
-- **`print()` calls in `email_sender.py`** — added alongside existing `logger.info()` calls because `logger.info` is silently dropped in Modal. Three call sites: success path, HTTPError path, general exception path. **Keep these — they cost nothing and the underlying logger issue isn't fixed yet.**
-
-### Added during Part 3 session
-- **`/admin/delete_code` endpoint** in `app.py` (~line 3207, between `admin_run_scheduler_dry` and `admin_test_email_paths`). Admin-gated via `@admin_required`. Accepts `{"code": "GRAIL-..." | "TOPUP-..."}` JSON body. Returns `ok: True` with full `deleted_entry` on success, 404 on not found, 400 on invalid format. Uses `_load_subs` / `_save_subs` so writes go through `_atomic_write_json`. Logs `[ADMIN] Deleted code ...` via `print()`. Deployed but functionally untested end-to-end (see backlog #6).
-- **Backup file:** `app.py.bak_admin_delete_code` (pre-endpoint state).
-- **Test codes revoked.** Both `GRAIL-XRGG-QEYA` and `TOPUP-UWMF-G28M` confirmed absent from `/modal_data/subscriptions.json` (verified via `modal volume get`). No longer redeemable.
+> **PM update:** A long afternoon sprint closed the Japanese out-of-index false-match problem end to end across all three matchers. See new **Section 1A** below before touching anything in the scan/OCR/denominator path — it documents the three-matcher trap that caused repeated "fixed, then broken again" cycles.
 
 ---
 
-## What's left
+## 1. Project Snapshot
 
-### Step 8 — Monitor 48 hours (passive)
+GrailSweep (grailsweep.com) — multi-TCG AI card scanner + collection manager (Pokémon EN/JP, MTG, YGO; ~144k cards, ~302 Pokémon sets / 33,012 SKUs). Sole dev: Craig (UK, mobile-first). Business partner owns commercial decisions; all technical calls are Craig's.
 
-Watch the Resend dashboard daily. Things to check:
-- **Total volume** — any unexpected spikes?
-- **Bounce rate** — should be near zero (these are real customer emails, not bulk sends)
-- **Complaint rate** — anyone marking as spam reports back to Resend
-- **Modal logs** for `[EMAIL ERROR]`, `[RESEND] HTTPError`, `[RESEND] Failed`, `[TOPUP EMAIL ERROR]` — none expected
+**Infra:** Flask on Modal (workspace `c-a-buckley`, app `matchit-api`, T4 GPU, volume `matchit-data-v2`), Cloudflare proxy (Worker `raredex-proxy`), R2 for images (`grailsweep-cards`, `images.grailsweep.com`) + on-device model hosting (`models.grailsweep.com`).
 
-If clean after 48h, proceed to Step 9.
+**Matching:** CLIP ViT-L-14 + DINOv2 tiebreaker (server, numpy `.npy`, incremental append). OCR (Google Vision server / ML Kit TWA) as confirmation. On-device: MobileCLIP2-S2 FP16 ONNX in-browser (~102k vectors, manual rebuild only).
 
-If problems appear, diagnose before cleanup.
+---
 
-### Step 9 — Decommission Namecheap SMTP + remove test infrastructure
+## 1A. Japanese Out-of-Index False-Match — RESOLVED across all three matchers (2026-06-27 PM)
 
-**Pre-flight grep — confirm nothing still uses SMTP env vars:**
+**The problem.** Out-of-index Japanese cards — MEGA-era (M5 Abyss Eye, M1L Mega Brave, etc.), and by the same mechanism Chinese/Korean — visually land on a `jpn-` "twin" in the index and were being returned as confident **wrong** matches (e.g. Abyss Eye `001/081` → `jpn-sv1a-001`). These sets are not embedded (TCGdex has no images for them yet), so the only correct outcome is **no match**. The goal was never to make them scan correctly — it was to stop the confident wrong answer.
+
+**THE THREE-MATCHER TRAP (root cause of the repeated "fixed then broken again" loop).** A card match is finalised in **three independent places**. A veto/gate/denominator change wired into only the one visible in the current log silently leaves the others open. This was missed ~5 times across sessions. The three:
+- **(A) Server PROMOTION** — `ocr_confirm_ranking`, rank-N→rank-1, logs `[OCR-P3] top5 promotion blocked`. `_denominator_blocks_promotion` lives here.
+- **(B) Server RANK-1-CONFIRM** — `ocr_confirm_ranking`, `status=rank1_confirmed`, fires when CLIP already top-ranks the candidate and OCR confirms on a **bare number** only. Logs `[OCR-P3] rank1_confirm blocked` after this session's fix.
+- **(C) ON-DEVICE MobileCLIP** — client-side (`match.html` / `gsOnDeviceMatch`), a **separate matcher** that never calls `ocr_confirm_ranking` or any server veto. Its entire check is the gate predicate (`accept iff game != YGO AND gap >= 0.02 AND top1_sim >= 0.80`). Emits only the quiet `[ONDEVICE-TELEMETRY]` beacon. **Camera scans hit this path** — this is the one that kept resolving the all-day test card wrong while the loud server logs looked fixed.
+- Note: the two server scan HANDLERS (`/match` app.py ~7318 + `/api/v1/match` api_routes.py ~382) both feed A/B — that handler-duality is *separate* from this three-matcher duality.
+
+**What shipped (all deployed + verified in live camera scans):**
+1. **Denominator parser fix** (`ocr_confirm.py`): `_extract_pokemon_number` was dropping the parsed `total` on 2 of 4 return paths (bare-number fallthrough + SWSH-unique). Now records `_last_pkm_denominator` on all paths. Without this the veto got `None` and failed open. Logs now show `extracted card number only: N (denom=T)`.
+2. **JP set-keying fix** (`build_set_metadata.py` + `ocr_confirm.py`): `scan_cardsdb` and the gate both collapsed `jpn-sv1a-001` → `"jpn"` via `split("-")[0]`, producing ONE meaningless `"jpn"` metadata bucket with null totals → veto failed open for ALL JP cards. Fixed to `rsplit("-",1)[0]` (strips only the trailing card number; also necessary for the `jpn-s-p` promo whose set code contains a dash). JP set totals enriched from **TCGdex card-level** `cardCount` (`/v2/ja/cards/<setcode>-001` → `set.cardCount.official`/`.total`) — NOTE: TCGdex **set-level** cardCount is unreliable (sv1a reports 101 vs real 73); **card-level** is correct (73/103). pokemontcg.io has no JP sets. New helper `_fetch_jp_set_totals` + `parse_pokemon_denominator`. `set_metadata.json` rebuilt (now ~1188 entries; jpn-sv1a=73/103, jpn-sv3a=62/92, jpn-sv1s=78/108 verified) and pushed to volume.
+3. **Veto applied to ALL THREE server exit paths** (`ocr_confirm.py`): direct-lookup already had it; added the same `_denominator_blocks_promotion` call to **rank1_confirmed** (was the leak — confirmed on bare-number match only, no denom check) and confirmed promotion path. All three now veto before finalising.
+4. **On-device backstop (Option A)** — closes matcher (C):
+   - `/api/ocr-lookup` now returns `ocr_denom` even on a `not_found` miss (via `parse_pokemon_denominator`). Previously the denominator was discarded one frame down and the client had nothing to compare against.
+   - New read-only endpoint `/api/set-total/<sku>` (uses `_get_set_id_from_sku` — NOT inline rsplit, which would mis-key MTG; on-device accepts MTG too).
+   - `match.html` camera on-device accept branch: if OCR read a denominator AND the on-device pick's known set total conflicts, **suppress the on-device accept and fall through to `/match`** (which has the server veto). **Fail-open**: suppresses only on a positive, data-backed conflict; missing denom / unknown total / any error → normal on-device accept. Worst case for a legit card = one extra `/match` round-trip that confirms correctly. Logs `[ONDEVICE] denom conflict: ocr=N vs set ... -> fall through to /match` (client console only).
+   - `_tryOcrLookup` miss now returns `{miss:true, ocr_denom}` instead of `null`; the OCR-hit check was hardened from `if (_ocrResult)` to `if (_ocrResult && !_ocrResult.miss)` (a truthy miss object would otherwise have been mistaken for a hit).
+
+**Verified (live camera, 2026-06-27 PM):** Abyss Eye `001/081` now blocks on BOTH server doors (`top5 promotion blocked` when CLIP ranks it #2, `rank1_confirm blocked` when #1) → `denominator_mismatch`, no wrong card, no price. The fact these reach the server at all proves the on-device backstop suppressed and handed off. `051/081` → `no_sku_match`. EN regression card (`sv8pt5-77`) routed normally, untouched.
+
+**Known remaining edge (NOT a regression — tracked separately):** the on-device backstop fires only when OCR actually *reads* a denominator off the frame. A scan where OCR gets nothing (glare/blur/angle) still rides on-device visual confidence alone. This is the **swsh4-102 blind spot** (Backlog §5.A.1) — same gap, untouched by this work.
+
+**Backups:** `ocr_confirm_pre_denomfix.py`, `ocr_confirm_pre_jpkey.py` + `build_set_metadata_pre_jpkey.py`, `ocr_confirm_pre_rank1veto.py`, `ocr_confirm_pre_ondevice_denom.py` + `app_pre_ondevice_denom.py` + `match_pre_ondevice_denom.html`, `set_metadata_pre_jpkey.json` — all in both backup locations.
+
+**STANDING RULE (carry forward):** For ANY scan-path / match-finalisation change, enumerate **all three** resolution points (server promotion, server rank-1-confirm, on-device gate) BEFORE proposing a fix, and confirm which path the user's actual scan took (server `/match` vs on-device beacon) rather than reasoning from whichever log line is loudest. The on-device path logs only one quiet telemetry line — it's the easy one to miss.
+
+---
+
+## 2. Standing Conventions (MUST persist)
+
+- All code edits via Claude Code, as batched instruction blocks prepared in chat, handed over at end.
+- Recon (read-only) before every edit. Backup to two locations before touching files: `c:\MatchIT\` and `C:\Users\c_a_b\grailsweep-backups\`, suffix `_pre_<feature>`. Distinct suffix per edit so recovery points aren't overwritten.
+- `ast.parse` / `node --check` before deploy.
+- Deploy (Craig runs, PowerShell): `$env:PYTHONIOENCODING="utf-8"; modal deploy matchit_modal.py` — always the prefix.
+- If behaviour unchanged after deploy: `modal app stop matchit-api`, then redeploy.
+- All modal/git commands run by Craig in PowerShell — never via Claude Code's bash. Cloudflare Worker edits + full purge (all pages) done manually by Craig via dashboard.
+- **Dual-handler rule:** scan-path changes touch BOTH `app.py /match` (~7318) AND `api_routes.py /api/v1/match` (~382). Core matching functions `_run_match_paired_two_stage`, `_dinov2_tiebreak`, `ocr_confirm_ranking` are SHARED — one change covers both legs. The dual-handler rule applies to call-site gates, not these shared funcs.
+- Testing: mobile-first — phone PWA + phone TWA only for scanner. Camera scanner does NOT work on laptop/PC Chrome or MS Store. Upload is fallback, not default for scanner testing.
+- Matching accuracy is an absolute constraint — never traded for performance/cost.
+- No full GPU re-embed ever runs automatically (cost guardrail). Full server/on-device re-embed is manual-only.
+- Craig sets his own pace. No suggestions to stop/break/wrap up.
+
+---
+
+## 3. What Shipped This Session
+
+### A. JP-in-tiebreak pre-rank exclusion fix — DEPLOYED + VERIFIED
+
+**The bug:** With `jp_mode=en`, Japanese (`jpn-`) SKUs competed during CLIP ranking + DINOv2 tiebreak, only stripped after the fact by `[JP-FILTER]`. The real defect was that `jpn-` rows consumed shortlist/top-K slots (caps of 120 and 20) during ranking, crowding out the correct EN card — so today's bug presents as **wrong EN card promoted**, not empty result.
+
+**What was built (all three files edited, verified `ast.parse` clean):**
+
+- `app.py` — `exclude_jpn=False` param added to `_run_match_paired_two_stage`; `jpn-` skip + `_jp_pre_excluded` counter in both FRONT_INFO and BACK_INFO bucketing loops (before CLIP ranking); `[JP-PRE-FILTER]` log line after both loops. Note: log uses `app.logger.info(...)` not bare `logger.info` — Claude Code corrected this from the instruction block.
+- `api_routes.py` — `jp_mode`/`exclude_jpn` threaded into the `/api/v1/match` call site (~337). Existing `[JP-FILTER]` belt-and-braces strip at ~415 left untouched.
+- `app.py` — same threading into `/match` (~7689) and `/capture_submit` (~4254, orphaned but wired for consistency).
+- `match.html` — upload form JS wired to send `jp_mode` from the existing `_ocrLang` toggle variable. Three FormData objects (`confFd`, `odFd`, `gpuFd`) all updated. `confFd`/`odFd` bypass ranking so `jp_mode` is inert there today but wired for consistency.
+
+**Backups:** `app_pre_jpfix.py`, `api_routes_pre_jpfix.py`, `match_pre_jpfix.html` — both locations.
+
+**DEPLOYED + VERIFIED.** Deploy + full Cloudflare purge done; `[JP-PRE-FILTER]` confirmed in logs on a JP-card-in-EN-mode scan.
+
+**Harness note:** No `jpn-` fixture in `groundtruth.csv` yet — additive, not blocking. Add a `jp_mode=en` scan of a JP card to get a real before/after diff.
+
+---
+
+### B. me2pt5 (Ascended Heroes) TCGdex price backfill — COMPLETE, NO DEPLOY NEEDED
+
+**The problem:** pokemontcg.io has never populated TCGplayer prices for me2pt5 — confirmed upstream gap, not a GrailSweep bug. Known since the April handover, no longer waiting.
+
+**The solution:** New standalone Modal script `backfill_en_tcgdex_prices.py` — fetches both TCGplayer + Cardmarket prices from TCGdex EN API (free, no key needed), writes into profile JSONs on the Modal volume. Atomic writes. Idempotent (safe to re-run).
+
+**Run result:** `{'updated': 196, 'skipped': 0, 'failed': 99}` — 196/295 cards now have prices. The 99 failures are cards 1–99 which TCGdex hasn't indexed upstream yet (partial coverage from their side, not a bug). App reads by mtime so prices are already live — no redeploy needed.
+
+**Set ID mapping in `_SETID_MAP`:**
+
+```
+me2pt5 → me02.5
+me1    → me01
+me2    → me02
+me3    → me03
+```
+
+**Re-run when TCGdex indexes cards 1–99:**
 
 ```powershell
-Select-String -Path *.py -Pattern "SMTP_HOST|SMTP_USER|SMTP_PASS|smtplib|MIMEText|MIMEMultipart" -Context 0,0
+$env:PYTHONIOENCODING="utf-8"; modal run backfill_en_tcgdex_prices.py::run_price_backfill
 ```
 
-Expected: zero matches in `matchit_modal.py` (deleted in Step 7). Some matches expected in `app.py` and `set_scheduler.py` only if cleanup of those imports/env reads hasn't happened yet — review and remove.
+---
 
-**Steps to execute, in order:**
+## 4. Pending Verification (carry forward from previous session)
 
-1. **Remove the test endpoint.** Delete the `admin_test_email_paths` route from `app.py` (around line 3206). It was added between `admin_run_scheduler_dry` and `reset_db` per Step 6-test instructions. Use `str_replace` to remove the whole function block including decorators.
+### Scheduler fix 01:00 UTC run
 
-2. **Decide on `/admin/delete_code`.** Keep (recommended — see backlog #6 to add a UI) or remove. If keeping, leave it alone in this step.
+The Item 3 scheduler fix (deployed 2026-06-27 before this session) still needs its first clean 01:00 run verified. Check Modal logs for:
 
-3. **Remove unused SMTP imports from `app.py` and `set_scheduler.py`.** First grep to confirm they're truly unused after migration, then remove:
-   - `app.py`: `import smtplib`, `import ssl`, `from email.mime.text import MIMEText`, `from email.mime.multipart import MIMEMultipart` — only if grep confirms zero remaining usage
-   - `set_scheduler.py`: same four imports — only if grep confirms zero remaining usage
+- `[CRON] no new SKUs — skipping rebuild_lookup_files` ← KEY LINE (overrun path dead)
+- `[SCHED] Done` well under 3600s
+- Pitch Black (~2026-07-17) showing `skipped: outside_window`
+- Quiet-day email suppression intact
 
-4. **Remove SMTP env var reads.** Grep for `os.environ["SMTP_*"]` and `os.environ.get("SMTP_*")` patterns. Should be zero matches after migration. If any remain, remove them.
-
-5. **Deploy.** `$env:PYTHONIOENCODING="utf-8"; modal deploy matchit_modal.py`
-
-6. **Smoke test.** Hit `/admin`, `/match`, `/` and confirm 200 OK. Trigger `/admin/run_scheduler` and confirm a digest email arrives in your inbox.
-
-7. **Decommission the Modal `email-credentials` secret.** Either delete it from Modal dashboard (cleanest) or just leave it unused. If deleting:
-   - Modal dashboard → Secrets → `email-credentials` → delete
-   - The secret is still referenced in `secrets=[...]` lists in `matchit_modal.py` — those references need removing too, before deletion or Modal will error on next deploy.
-
-8. **Remove backup files** (housekeeping):
-
-```powershell
-Remove-Item *.bak_step3, *.bak_step4, *.bak_step5a, *.bak_step5a_v2, *.bak_step5b, *.bak_step6, *.bak_step6test, *.bak_step7, *.bak_debug, *.bak_admin_delete_code
-```
-
-9. **Leave Namecheap MX DNS records untouched** — those handle **inbound** mail to support@grailsweep.com. Only outbound SMTP is being decommissioned.
-
-10. **Optionally remove `print()` debug calls in `email_sender.py`.** These are harmless and have proven useful, so I'd leave them. If you want to remove them, restore from `email_sender.py.bak_debug` (which was the pre-debug state).
+The 2026-06-27 01:00 log showed OLD behaviour (full rebuild on zero-new day, 1837.8s) — that was before the fix deployed. Next 01:00 is the "after."
 
 ---
 
-## Discovered during Part 2 — backlog (separate projects)
+## 5. Outstanding Backlog — Priority Order
 
-### 1. Outlook deliverability — new-domain reputation
-**Symptom:** All test emails to Outlook addresses (3 separate addresses tested) land in Junk with `SCL: 5`. Identical SCL between aggressive original template and clean redesigned template — confirms content was never the issue.
+### A. Matching Accuracy (highest — absolute constraint)
 
-**Cause:** Brand-new sending domain. Microsoft has no engagement history with `grailsweep.com` → defaults to suspicion → SCL 5 → Junk.
+1. **swsh4-102 CLIP blind spot** — CLIP returns a different wrong card almost every scan for the 102/203 Zamazenta (Vivid Voltage); OCR rescues server-side but on-device has no OCR backstop. Diagnosis: unstable query-side embedding, likely holo-foil glare. NOT a code fix — measure first. Re-scan on phone now that `[DINO-DIAG]`/`[OCR-GATE]` are live, capture margins, then decide: re-embed vs flag-as-low-confidence. **(2026-06-27 PM note:** the on-device denominator backstop from §1A does NOT cover this — that backstop only fires when OCR reads a denominator; the swsh4-102 case is a no-OCR-read / glare scenario, so it still rides on-device visual confidence alone. This is now the cleanest remaining hole in the on-device path.**)**
+2. **Add named repro cards as permanent harness fixtures** — `smp-SM210`, `sv4-230`, `base6-10`, `base6-17` not in the 150-card harness. Additive, not blocking.
 
-**Authentication is perfect:** SPF, DKIM (both `grailsweep.com` and `amazonses.com`), DMARC, compauth — all `pass`. Headers verified across two test recipients.
+### B. Release / TWA
 
-**Resolution:** Time. 2-4 weeks of legitimate sending without bounces or complaints. Self-resolves naturally. No code action.
+3. **Code 8 TWA batch** (closed Alpha) — includes OcrService self-timeout fix. Code 7 currently live, 11/12 testers enrolled.
 
-**Resend's separate recommendation:** Switch From address to a sending subdomain (e.g. `mail@send.grailsweep.com` instead of `support@grailsweep.com`). Real best practice, separate small project — DNS change, Resend config change, single `DEFAULT_FROM` constant change in `email_sender.py`. Don't bundle with this migration.
+### C. Prices / Data
 
-**Also worth doing later:** Once Outlook delivery improves (probably 3-4 weeks), upgrade DMARC from `p=none` to `p=quarantine` for stronger protection.
+4. **me02.5 re-run** — when TCGdex finishes indexing cards 1–99 for Ascended Heroes, re-run `backfill_en_tcgdex_prices.py` to fill the remaining 99 cards.
+5. **me01/me02/me03 price audit** — now the `_SETID_MAP` exists, confirm these three sets have populated `prices.tcgplayer` in their profiles. If not, same script with `--set-id me01` etc.
 
-### 2. `check_price_alerts()` runtime bug
-**Symptom:** Migrated `_send_alert_email` (Step 5b) was tested by setting `target_high: £0.01` alerts via the UI on Chandelure, Dromokas Command, Tinkaton, Miltank — multiple cards. Triggered `/admin/run_scheduler` which calls `check_price_alerts()` at `set_scheduler.py:910`. Function ran (no errors logged), but `_send_alert_email` was never invoked. Zero `[RESEND] Sent ... subject='Price alert: ...'` log lines.
+### D. Product / Pricing / Minor
 
-**Likely cause:** SKU-to-profile.json price lookup inside `check_price_alerts()` returning None or 0.0 for all tested SKUs, so the threshold comparison never trips. The function reads from `CardsDB/{game}/{sku}/profile.json` per recon.
+6. **UI/UX changes + new pricing tiers + Stripe work** — next session focus. Exact details TBC.
+7. **EN price source preference** (product call for partner) — EN prices come from TCGplayer market (USD-derived); UK users may perceive as low vs eBay UK / Cardmarket. Decide: change source preference, or label as "TCGplayer market (USD-derived)."
+8. **results.html:103-104 breakdown field-order inconsistency** (minor display) — breakdown panel uses `market→mid→low`; headline selector uses `market→trend→avg_sell→mid`. Latent; no impact on cards with populated TCGplayer market.
+9. **`/api/price_history` request fan-out** (perf, non-urgent) — 182-card collection fires one price-history call per card (~150+ sequential requests on collection load, ~1.1s each). Candidate for a single batched endpoint.
+10. **Background thread-leak warnings** (minor) — `Detected N background thread(s) still running after container exit` adds up to 30s to shutdown. Likely background price/stats saves not joining.
 
-**Pre-existed this migration** — `check_price_alerts()` body wasn't touched. Migration only swapped the email-send block inside `_send_alert_email`.
+### E. Time-Gated (passive — no action until date)
 
-**To diagnose next time:** Add `print()` instrumentation inside `check_price_alerts()` and the price-compute helper to see what the function actually returns for a test SKU. ~30 min focused task.
+11. **Pitch Black probe data** (release 2026-07-17) — source-latency probe records pokemontcg.io vs TCGdex-EN listing/imaging timestamps. First real test of ±7-day calendar window. Evidence base for deferred TCGdex-image-primary / Scrydex migration decision.
 
-### 3. Modal logger silently dropped
-**Symptom:** `logger.info()`, `logger.warning()`, `logger.error()` calls in `set_scheduler.py`, `email_sender.py`, and elsewhere produce zero lines in `modal app logs`. Only `print()` reaches stdout.
+### F. Multi-Game Extension (future, staged)
 
-**Workaround applied:** Added `print()` alongside `logger.*` in `email_sender.py`. This is why we can see `[RESEND] Sent to ...` lines.
+12. **MTG calendar/probe extension** — Scryfall is fresh, lag barely exists. Extend only where it adds value.
+13. **YGO extension** — hardest (weak sources, excluded from on-device). Handle last.
+14. **Tier 2 date-discovery agent** — reads announcement pages (Bulbapedia/Serebii/PokéBeach), proposes release dates for Craig's approval. Build ONLY if Tier 1 alerts prove too late. Deliberately deferred.
 
-**Real fix (~15 min, backlog):** Configure root logger at app startup. Likely add this near the top of `app.py` and `matchit_modal.py`:
+### G. On-Device Hardening (deferred — low urgency while manual)
 
-```python
-import logging, sys
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
-    stream=sys.stdout,
-    force=True,
-)
-```
-
-Then audit existing modules that use `logger = logging.getLogger(__name__)` and confirm they work after.
-
-### 4. Stale `MatchITv2_ProductMatch_Data` path reference
-**Symptom:** During Step 7 deploy, a single cold-start container hit `PermissionError: [Errno 1] Operation not permitted: '/modal_data/MatchITv2_ProductMatch_Data'` on first `/admin` request. Subsequent requests served fine. Pre-existing intermittent issue.
-
-**Location:** `app.py:81-86` — `get_data_dir()` and `get_images_db_path()`. Still references the pre-rebrand directory name.
-
-**Fix:** Update path constants to match current GrailSweep naming, or just confirm the directory exists once on the volume (whichever is cleaner).
-
-### 5. Lingering background thread on container exit
-**Symptom:** `WARNING:modal-client: Detected 1 background thread(s) [WSGI_1] still running after container exit. This will prevent runner shutdown for up to 30 seconds.` Cosmetic, costs a few seconds of container time per scale-down.
-
-**Likely cause:** Flask thread (probably inside `flask_cors` or a `threading.Thread` started somewhere in startup code). Not Resend-related.
-
-**Fix:** Identify the thread, give it a clean shutdown hook, or set `daemon=True` so it doesn't block exit.
+15. **Atomic-write fix for `build_ondevice_index.py`** — final outputs written non-atomically. Latent corruption risk on interrupted manual runs.
+16. **On-device standalone Modal function + R2 upload script** — no clean entry point for manual rebuild.
+17. **Incremental on-device build** — replace full ~102k re-embed with load-existing → embed-only-new → concatenate. Build only if manual full rebuilds become a frequent chore.
 
 ---
 
-## Discovered during Part 3 — backlog (separate projects)
+## 6. Scrydex — Decision Deferred
 
-### 6. Admin UI button for `/admin/delete_code` endpoint
+Scrydex (the commercial successor to pokemontcg.io, same team) has full EN Pokémon pricing including me2pt5, but cheapest plan is $29/month. Deferred until post-launch income exists. TCGdex (free) solved the immediate me2pt5 problem.
 
-**Status:** Endpoint exists and is live at `POST /admin/delete_code` (added to `app.py` ~line 3207, between `admin_run_scheduler_dry` and `admin_test_email_paths`). Admin-gated via `@admin_required`. Accepts `{"code": "GRAIL-..."}` or `{"code": "TOPUP-..."}` JSON body. Returns `ok: True` with full `deleted_entry` on success, 404 on not found, 400 on invalid format. Uses `_load_subs` / `_save_subs` so writes go through `_atomic_write_json`. Logs `[ADMIN] Deleted code ...` via `print()`.
-
-**Verified:** Endpoint deployed. End-to-end verification via PowerShell hit a session-cookie issue (302 redirects to `/login` on follow-up requests after a successful login) — not investigated, because the underlying task (revoke two test codes) was completed via direct `modal volume` edit instead. Endpoint is functionally untested in production but logically sound from code review.
-
-**What's needed:** Small UI on the `/admin` HTML page — text input for the code, "Delete" button, confirmation modal (destructive op), result display showing the deleted entry as a receipt. ~15-20 min Claude Code task.
-
-**Why this matters:** Chargebacks, fraud, mis-issued codes during testing. Right now revoking a code requires either fighting PowerShell session cookies or doing a `modal volume get` → edit JSON → `modal volume put` dance with manual JSON validation. A button removes both routes.
-
-**Bonus consideration:** Could extend the same UI to support backlog #7 — i.e. a "Cancel" action that sets `status: "cancelled"` rather than deleting, preserving audit trail.
-
-### 7. `_ssr_subscription` doesn't check status field
-
-**Symptom:** `_ssr_subscription` helper at `app.py:5175` checks only whether a code exists in `subscriptions.json` and reads its `tier`. It does **not** check the `status` field. Result: a `"cancelled"` code still grants `is_premium: True` on SSR-rendered pages until the client-side `validate_premium` call fires and corrects it.
-
-**Real-world impact:** When a real cancellation happens (chargeback, refund, Stripe `customer.subscription.deleted` webhook), the user keeps seeing premium SSR-rendered content on page loads for a brief window. The client-side check eventually catches it, but server-rendered HTML is wrong in the meantime.
-
-**Pre-existed Resend migration** — found during recon for the test code revocation task in Part 3.
-
-**Fix:** Add status check to `_ssr_subscription`. If `status in ("cancelled", "revoked")`, return non-premium. Mirror whatever set of "good" statuses `validate_premium` accepts (currently it only rejects `"cancelled"`, so this needs aligning across both functions for consistency).
-
-**Estimated effort:** ~10 min focused task. Recommended pairing with backlog #6 since they touch the same data model.
+No Scrydex key exists anywhere in the codebase, Modal secrets, or local env. If revisited post-launch, it would need a new dedicated Modal secret and integration work. The April handover and scheduler refactor doc already reference it as a planned future migration.
 
 ---
 
-## Session lessons (carry forward)
+## 7. Manual Operations Available
 
-- **Don't reach for HTTP scripting when the data lives on a Modal volume.** `modal volume get` → edit → `modal volume put` is faster and uses zero usage budget compared to building auth-gated endpoints. Reserve endpoint-building for things that need to happen repeatedly or from a UI.
-- **PowerShell session-cookie auth with Flask through Modal is unreliable** — root cause unknown, possibly Modal's container snapshot/restore interacting with Flask's `SECRET_KEY` between containers. Worth investigating only if multiple future tasks need it; otherwise bypass via volume edits or build proper UI.
-
----
-
-## Working conventions (carry forward)
-
-- One change at a time, deploy, verify, then next
-- Backup before editing existing files (`Copy-Item file.py file.py.bak_stepN`)
-- Recon-only first pass before risky integrations
-- "STOP. DO NOT DEPLOY." footer on every Claude Code instruction
-- Concise messages, no padding
-- Modal deploy command: `$env:PYTHONIOENCODING="utf-8"; modal deploy matchit_modal.py`
-- **For one-off data fixes on the Modal volume, use `modal volume get` / `modal volume put` rather than building endpoints.**
+- **me2pt5 price re-run (when TCGdex catches up):** `modal run backfill_en_tcgdex_prices.py::run_price_backfill`
+- **Other EN sets price backfill:** `modal run backfill_en_tcgdex_prices.py::run_price_backfill --set-id me01` (me01/me02/me03 already in `_SETID_MAP`)
+- **Manual full lookup rebuild:** `modal run matchit_modal.py::rebuild_lookup_files`
+- **set_metadata regen:** `python build_set_metadata.py` → eyeball me1/me2/me3 → `modal volume put matchit-data-v2 set_metadata.json /set_metadata.json --force`
+- **Regression harness:** `python equivalence_harness.py --target-url https://grailsweep.com --from-modal-secret --access-code <CODE> --label <L> --out <f>.json` then `--diff baseline_gpu.json <after>.json`
 
 ---
 
-## Key identifiers
+## 8. Key Context Notes
 
-- Modal workspace: `c-a-buckley`
-- Modal app: `matchit-api`
-- Modal volume: `matchit-data-v2` at `/modal_data`
-- Resend domain: `grailsweep.com` (verified, eu-west-1)
-- Resend API key name: `grailsweep-modal-prod`, scope: Sending access
-- Modal secret name: `resend-api-key`, env var: `RESEND_API_KEY`
-- Modal secret to remove in Step 9: `email-credentials`
-- From address: `GrailSweep <support@grailsweep.com>` (visible) — Resend handles bounce path via `send.grailsweep.com`
-- Resend dashboard: https://resend.com/emails
-- Admin auth: `@admin_required` decorator at `app.py:600`. Reads `session["is_admin"]`. Set via `POST /login` with form field `password` matching `ADMIN_PASSWORD` env var (or `admin_password` in config.json).
-- Subscriptions data: `/modal_data/subscriptions.json` on Modal volume. Loaders: `_load_subs()` line 5084, `_save_subs()` line 5104 → `_atomic_write_json()` line 5033.
-
----
-
-## Test data status
-
-All previously outstanding test codes have been revoked. No test data currently outstanding on the volume.
+- **Three call sites, not two, for `_run_match_paired_two_stage`:** camera leg (`api_routes.py:337`), upload leg (`app.py:7689`), and orphaned `/capture_submit` (`app.py:4254`) — nothing in the repo references `/capture_submit` from the live UI today. All three were threaded with the JP fix.
+- **Two shortlist/top-K caps exist** between bucketing and final results: `shortlist_n=120` (after Stage-1 scoring) and `top_k_sku=20` (final cap). Harness diffs after the JP fix may legitimately show non-JP cards changing — this is fix-working, not a regression.
+- **me2pt5 vs TCGdex naming:** pokemontcg.io calls it `me2pt5`, TCGdex calls it `me02.5`. Full mapping is in `_SETID_MAP` in `backfill_en_tcgdex_prices.py`.
+- **Local CardsDB vs Modal volume divergence:** JP `profile.json` files on local `C:\CardsDB` have no `prices` key at all — Cardmarket prices only exist on the live Modal volume (`/modal_data/CardsDB`). Don't use local profiles to check JP pricing.
+- **Scheduler overrun reference:** "Research on Phynite" chat (`3d84c7a6-...`) holds original set-scheduler refactor design. The ±7-day window was specced there but never built until this sprint — treat any unbuilt design items from old chats as outstanding, not done.

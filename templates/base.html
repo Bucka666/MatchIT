@@ -1108,8 +1108,8 @@
 // ────────────────────────────────────────────────────────────────────────────
 </script>
 <script>
-// ── Scan system: 25 free scans per calendar month ──────────────────────────
-const FREE_TIER_MONTHLY_LIMIT = 25;
+// ── Scan system: 150 free scans per calendar month ──────────────────────────
+const FREE_TIER_MONTHLY_LIMIT = 150;
 
 function _getCurrentPeriod() {
     const d = new Date();
@@ -1245,10 +1245,6 @@ function gsIsWatchlisted(sku) {
         return wl.some(function(i) { return i.sku === sku; });
     } catch(_e) { return false; }
 }
-function scanRemaining() {
-    if (localStorage.getItem('matchit_premium_v1') === 'unlocked') return 999999;
-    return Math.max(0, SCAN_LIMIT - scanGetCount());
-}
 </script>
 <!-- Footer stats are server-rendered via {{ footer_total_scans }} and {{ footer_today_scans }}.
      The hero stats poller on / updates footer elements too when on the landing page.
@@ -1264,7 +1260,7 @@ function scanRemaining() {
 
     <h2 id="gsTopupTitle" style="margin:0 0 6px;font-size:1.15rem;color:#fff;">Out of free scans</h2>
     <p id="gsTopupSubtitle" style="margin:0 0 20px;font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.5;">
-      You've used all 25 free scans this month. Choose an option below to keep scanning.
+      You've used all 150 free scans this month. Choose an option below to keep scanning.
     </p>
 
     <!-- Redeem code -->
@@ -1291,8 +1287,8 @@ function scanRemaining() {
       <button id="gsCtaTopup75" onclick="gsTopupBuy('topup_75')"
               style="padding:12px 16px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.35);border-radius:10px;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">
         <span>
-          <span style="font-weight:700;">75 scans — purchase on grailsweep.com</span>
-          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">75 scans · use whenever · no monthly reset</span>
+          <span style="font-weight:700;">125 scans — purchase on grailsweep.com</span>
+          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">125 scans · use whenever · no monthly reset</span>
         </span>
         <span style="font-weight:700;color:#00e5ff;white-space:nowrap;">£1.79</span>
       </button>
@@ -1300,7 +1296,7 @@ function scanRemaining() {
               style="padding:12px 16px;background:linear-gradient(135deg,rgba(177,77,255,0.15),rgba(0,229,255,0.1));border:1px solid rgba(177,77,255,0.4);border-radius:10px;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">
         <span>
           <span style="font-weight:700;">Pro — subscribe on grailsweep.com</span>
-          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">1,000+ scans/month + collection + alerts</span>
+          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Unlimited fair usage scanning + collection + alerts</span>
         </span>
         <span style="font-weight:700;color:#b14dff;white-space:nowrap;">£3.99/mo</span>
       </button>
@@ -1308,21 +1304,12 @@ function scanRemaining() {
       <button id="gsCtaAnnual" class="gs-cta-annual" onclick="gsTopupBuy('annual')"
               style="display:none;padding:12px 16px;background:linear-gradient(135deg,rgba(0,229,255,0.15),rgba(177,77,255,0.1));border:1px solid rgba(0,229,255,0.4);border-radius:10px;color:#fff;cursor:pointer;text-align:left;justify-content:space-between;align-items:center;">
         <span>
-          <span style="font-weight:700;">Annual — subscribe on grailsweep.com</span>
-          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Save ~27% · 1,000+ scans/month · billed yearly</span>
+          <span style="font-weight:700;">Ultimate Plan — subscribe on grailsweep.com</span>
+          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Save ~27% · Unlimited fair usage scanning · billed yearly</span>
         </span>
         <span style="font-weight:700;color:#00e5ff;white-space:nowrap;">£34.99/yr</span>
       </button>
-      <!-- Founder Yearly — shown for monthly-tier cap if seats remain (Phase 2C) -->
-      <button id="gsCtaFounder" class="gs-cta-founder" onclick="gsTopupBuy('founder_yearly')"
-              style="display:none;padding:12px 16px;background:linear-gradient(135deg,rgba(255,215,0,0.12),rgba(177,77,255,0.08));border:1px solid rgba(255,215,0,0.4);border-radius:10px;color:#fff;cursor:pointer;text-align:left;justify-content:space-between;align-items:center;">
-        <span>
-          <span style="font-weight:700;">Founder Yearly — claim on grailsweep.com <span style="font-size:0.68rem;background:rgba(255,215,0,0.2);color:#ffd700;border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle;">LIMITED</span></span>
-          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">First 100 customers · locked-in founder pricing</span>
-        </span>
-        <span style="font-weight:700;color:#ffd700;white-space:nowrap;">£19.99/yr</span>
-      </button>
-      <!-- Feedback link — shown for annual/founder-tier cap (Phase 2C) -->
+      <!-- Feedback link — shown for annual-tier cap (Phase 2C) -->
       <a id="gsCtaFeedback" class="gs-cta-feedback"
          href="mailto:support@grailsweep.com?subject=GrailSweep%20usage%20feedback"
          style="display:none;text-align:center;font-size:0.78rem;color:rgba(255,255,255,0.45);text-decoration:none;padding:6px 0;">
@@ -1376,12 +1363,10 @@ function scanRemaining() {
     // Copy matrix — title + subtitle per tier
     var COPY = {
       free:           { title: 'Out of free scans',
-                        subtitle: 'You\'ve used all 25 free scans this month. Choose an option below to keep scanning.' },
+                        subtitle: 'You\'ve used all 150 free scans this month. Choose an option below to keep scanning.' },
       monthly:        { title: 'Monthly cap reached',
-                        subtitle: 'You\'ve used all 1,000 included scans this period. Top up, or upgrade to Annual for a higher allowance.' },
-      annual:         { title: 'Annual cap reached',
-                        subtitle: 'You\'ve hit your fair-use cap this period. Top up to keep scanning, or let us know if you hit this regularly.' },
-      founder_yearly: { title: 'Founder cap reached',
+                        subtitle: 'You\'ve used your included scans this period. Top up, or upgrade to Ultimate Plan for a higher allowance.' },
+      annual:         { title: 'Ultimate Plan cap reached',
                         subtitle: 'You\'ve hit your fair-use cap this period. Top up to keep scanning, or let us know if you hit this regularly.' }
     };
     var copy = COPY[tier] || COPY['free'];
@@ -1390,7 +1375,7 @@ function scanRemaining() {
       var _tr = window.GS_SCAN_STATE.topup_remaining;
       copy = {
         title: _tr + ' top-up scan' + (_tr === 1 ? '' : 's') + ' remaining',
-        subtitle: 'You\'ve used all 25 free scans this month. Top up further or upgrade to Pro for unlimited.'
+        subtitle: 'You\'ve used all 150 free scans this month. Top up further or upgrade to Pro for unlimited.'
       };
     }
     var titleEl    = document.getElementById('gsTopupTitle');
@@ -1409,18 +1394,7 @@ function scanRemaining() {
     _vis('gsCtaTopup75',  true);
     _vis('gsCtaMonthly',  tier === 'free');
     _vis('gsCtaAnnual',   tier === 'monthly');
-    _vis('gsCtaFounder',  false);   // conditionally revealed by fetch below
     _vis('gsCtaFeedback', tier === 'annual' || tier === 'founder_yearly');
-
-    // Conditional founder seat check for monthly users
-    if (tier === 'monthly') {
-      try {
-        fetch('/api/founder-status')
-          .then(function(r) { return r.json(); })
-          .then(function(d) { if (d && !d.sold_out) _vis('gsCtaFounder', true); })
-          .catch(function() {});
-      } catch(e) {}
-    }
 
     var el = document.getElementById('gsTopupModal');
     if (!el) return;
@@ -1513,8 +1487,7 @@ function gsShowUsage() {
   var tierNames = {
     'free':           'Free',
     'monthly':        'Pro Monthly',
-    'annual':         'Annual',
-    'founder_yearly': 'Founder Yearly',
+    'annual':         'Ultimate Plan',
     'legacy':         'Legacy',
     'lifetime':       'Lifetime'
   };
@@ -1527,22 +1500,11 @@ function gsShowUsage() {
   var html       = '';
 
   if (hasLimit) {
-    var used     = gs.tier_used || 0;
-    var limit    = gs.tier_limit;
-    var pct      = Math.min(100, Math.round((used / limit) * 100));
-    var barColor = pct >= 95 ? '#ff4d4d' : (pct >= 80 ? '#ffa500' : '#00e5ff');
     var resetDate = gs.tier_period_end && typeof _fmtIsoDate === 'function'
                     ? _fmtIsoDate(gs.tier_period_end) : '—';
     html = ''
       + '<div style="margin-bottom:18px;">'
-      +   '<div style="font-size:0.95rem;color:#fff;margin-bottom:8px;">'
-      +     '<strong>' + used.toLocaleString() + '</strong> / '
-      +     limit.toLocaleString() + ' used this period'
-      +   '</div>'
-      +   '<div style="background:rgba(255,255,255,0.08);border-radius:6px;height:10px;overflow:hidden;">'
-      +     '<div style="background:' + barColor + ';height:100%;width:' + pct + '%;transition:width 0.4s;"></div>'
-      +   '</div>'
-      +   '<div style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin-top:4px;">' + pct + '%</div>'
+      +   '<div style="font-size:0.95rem;color:#fff;">Fair usage policy</div>'
       + '</div>'
       + '<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:0.85rem;color:rgba(255,255,255,0.75);margin-bottom:20px;">'
       +   '<div style="color:rgba(255,255,255,0.5);">Resets:</div><div>' + resetDate + '</div>'
@@ -1560,7 +1522,7 @@ function gsShowUsage() {
       + '</div>';
   } else {
     var fUsed     = gs.count || 0;
-    var fLimit    = gs.limit || 25;
+    var fLimit    = gs.limit || 150;
     var fPct      = Math.min(100, Math.round((fUsed / fLimit) * 100));
     var fBarColor = fPct >= 95 ? '#ff4d4d' : (fPct >= 80 ? '#ffa500' : '#00e5ff');
     html = ''

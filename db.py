@@ -15,7 +15,8 @@ from datetime import datetime, timezone
 import modal
 
 _SCANS_DICT_NAME     = "scan-counters"
-FREE_TIER_MONTHLY_LIMIT = 25
+FREE_TIER_MONTHLY_LIMIT = 150
+SKU_DEDUP_WINDOW_SECONDS = 60
 
 
 # ─────────────────────────────────────────────────────────────
@@ -514,6 +515,7 @@ def check_and_record_scan(
     tier: str | None,
     code: str | None = None,
     subscriptions_obj: dict | None = None,
+    sku: str | None = None,
 ) -> dict:
     """
     Single enforcement decision: check tier → check count → (if ok) increment.
@@ -526,6 +528,9 @@ def check_and_record_scan(
         tier: resolved tier string ("legacy", "monthly", "annual", etc.) or None
         code: GRAIL-XXXX-XXXX access code (required for capped premium tiers)
         subscriptions_obj: pre-loaded dict from _load_subs() (avoids circular import)
+        sku: matched card SKU, if known. When provided, a repeat of the same
+            SKU by the same identity within SKU_DEDUP_WINDOW_SECONDS is allowed
+            but not charged against quota (allowed=True, counted=False).
 
     Returns:
         {
@@ -558,6 +563,45 @@ def check_and_record_scan(
                 "ms":                round((time.monotonic() - t_start) * 1000, 2),
             }
 
+        # Branch 1b — per-SKU dedupe: a repeat of the same card by the same
+        # identity within the window is allowed but not charged again.
+        # FAIL-OPEN: any error here falls through to the normal charge logic
+        # below rather than blocking or mis-skipping a legitimate scan.
+        if sku:
+            try:
+                _dd = modal.Dict.from_name(_SCANS_DICT_NAME, create_if_missing=True)
+                _dedup_key = f"dedup:{server_fp}:{device_id}:{sku}"
+                _last = _dd.get(_dedup_key)
+                _now = time.time()
+                if _last is not None and (_now - _last) < SKU_DEDUP_WINDOW_SECONDS:
+                    if tier in _PREMIUM_TIERS_CAPPED and code and subscriptions_obj is not None:
+                        _tier_state = read_tier_state(code, tier, subscriptions_obj)
+                    else:
+                        _tier_state = None
+                    if _tier_state:
+                        _dd_limit = _tier_state["tier_limit"]
+                        _dd_count = _tier_state["tier_used"]
+                    else:
+                        _free_state = read_free_scans(server_fp, device_id)
+                        _dd_limit = FREE_TIER_MONTHLY_LIMIT
+                        _dd_count = _free_state.get("count", 0) if _free_state.get("ok") else 0
+                    _dd_remaining = max(0, _dd_limit - _dd_count) if _dd_limit is not None else None
+                    return {
+                        "ok":                True,
+                        "allowed":           True,
+                        "counted":           False,
+                        "reason":            "sku_deduped",
+                        "deduped":           True,
+                        "tier":              tier,
+                        "limit":             _dd_limit,
+                        "count":             _dd_count,
+                        "remaining":         _dd_remaining,
+                        "limit_just_crossed": False,
+                        "ms":                round((time.monotonic() - t_start) * 1000, 2),
+                    }
+            except Exception:
+                pass
+
         # Branch 2 — capped premium tiers (monthly, annual, founder_yearly)
         if tier in _PREMIUM_TIERS_CAPPED:
             if not code or subscriptions_obj is None:
@@ -572,6 +616,13 @@ def check_and_record_scan(
                 }
             tier_result = check_and_consume_tier(code, tier, subscriptions_obj)
             if tier_result.get("allowed"):
+                if sku:
+                    try:
+                        modal.Dict.from_name(_SCANS_DICT_NAME, create_if_missing=True).put(
+                            f"dedup:{server_fp}:{device_id}:{sku}", time.time()
+                        )
+                    except Exception:
+                        pass
                 return {
                     "ok":                True,
                     "allowed":           True,
@@ -660,6 +711,13 @@ def check_and_record_scan(
             raise Exception(inc_result.get("error", "increment_free_scans failed"))
 
         new_count = inc_result["new_count"]
+        if sku:
+            try:
+                modal.Dict.from_name(_SCANS_DICT_NAME, create_if_missing=True).put(
+                    f"dedup:{server_fp}:{device_id}:{sku}", time.time()
+                )
+            except Exception:
+                pass
         return {
             "ok":                True,
             "allowed":           True,

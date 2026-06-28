@@ -1329,14 +1329,11 @@ function _updateScanBadge(_legacyState) {
     if (freeBadge) freeBadge.style.display = 'none';
     if (redeemRow) redeemRow.style.display = 'none';
     if (!tierBadge) return;
-    var used = gs.tier_used || 0;
-    var limit = gs.tier_limit;
-    var remaining = (typeof gs.tier_remaining === 'number') ? gs.tier_remaining : Math.max(0, limit - used);
     var resetDate = gs.tier_period_end && typeof _fmtIsoDate === 'function' ? _fmtIsoDate(gs.tier_period_end) : 'next billing date';
     tierBadge.dataset.expanded = '0';
     tierBadge.style.position = '';
     tierBadge.innerHTML =
-      '<span style="cursor:default;">' + used + ' / ' + limit + ' scans</span>' +
+      '<span style="cursor:default;">Fair usage policy</span>' +
       '<span style="margin:0 8px;opacity:0.4;">·</span>' +
       '<span style="opacity:0.85;">resets ' + resetDate + '</span>' +
       ' <button id="scTierInfoBtn" type="button" aria-label="Show usage details" ' +
@@ -1384,12 +1381,12 @@ function _updateScanBadge(_legacyState) {
     badge.style.background = 'rgba(255,165,0,0.1)';
     badge.style.border = '1px solid rgba(255,165,0,0.3)';
     badge.style.color = '#ffa500';
-    badge.innerHTML = count + ' of ' + ((window.GS_SCAN_STATE && window.GS_SCAN_STATE.limit) || 25) + ' free scans used · <strong>' + remaining + ' left</strong> · resets ' + nextReset + _usageLink;
+    badge.innerHTML = count + ' of ' + ((window.GS_SCAN_STATE && window.GS_SCAN_STATE.limit) || 150) + ' free scans used · <strong>' + remaining + ' left</strong> · resets ' + nextReset + _usageLink;
   } else {
     badge.style.background = 'transparent';
     badge.style.border = 'none';
     badge.style.color = 'rgba(255,255,255,0.3)';
-    badge.innerHTML = count + ' of ' + ((window.GS_SCAN_STATE && window.GS_SCAN_STATE.limit) || 25) + ' free scans used this month' + _usageLink;
+    badge.innerHTML = count + ' of ' + ((window.GS_SCAN_STATE && window.GS_SCAN_STATE.limit) || 150) + ' free scans used this month' + _usageLink;
   }
 }
 
@@ -1403,9 +1400,6 @@ function _gsToggleTierBadge() {
     _updateScanBadge(gs);
     return;
   }
-  var used = gs.tier_used || 0;
-  var limit = gs.tier_limit;
-  var remaining = (typeof gs.tier_remaining === 'number') ? gs.tier_remaining : Math.max(0, limit - used);
   var resetDate = gs.tier_period_end && typeof _fmtIsoDate === 'function' ? _fmtIsoDate(gs.tier_period_end) : 'next billing date';
   var topup = gs.topup_remaining || 0;
   var topupLine = (topup > 0)
@@ -1415,9 +1409,9 @@ function _gsToggleTierBadge() {
   tierBadge.dataset.expanded = '1';
   tierBadge.style.position = 'relative';
   tierBadge.innerHTML =
-    '<div><strong>' + used + ' / ' + limit + '</strong> scans used this period</div>' +
+    '<div><strong>Fair usage policy</strong></div>' +
     '<div style="margin-top:4px;font-size:0.82rem;opacity:0.85;">' +
-      remaining + ' remaining · resets ' + resetDate + '</div>' +
+      'Resets ' + resetDate + '</div>' +
     topupLine +
     '<button id="scTierInfoBtn" type="button" aria-label="Hide usage details" ' +
       'style="background:transparent;border:0;color:inherit;cursor:pointer;' +
@@ -1429,24 +1423,11 @@ function _gsToggleTierBadge() {
 }
 
 // ── 80% page-load warning ────────────────────────────────────────────────────
-function _gsTierPageLoadCheck() {
-  var gs = window.GS_SCAN_STATE || {};
-  if (!gs.tier_limit) return;
-  if (gs.tier_warned_80pct) return;
-  var used = gs.tier_used || 0;
-  var limit = gs.tier_limit;
-  if (used / limit < 0.8) return;
-  var resetDate = gs.tier_period_end && typeof _fmtIsoDate === 'function' ? _fmtIsoDate(gs.tier_period_end) : 'next billing date';
-  var msg = "You've used " + used + " of your " + limit +
-            " scans this period. Resets " + resetDate + ".";
-  if (typeof gsShowToast === 'function') {
-    gsShowToast(msg, {
-      variant: 'warn',
-      duration: 8000,
-      onDismiss: function() { _gsDismissWarning('80pct'); }
-    });
-  }
-}
+// Disabled — capped tiers (monthly/annual/founder_yearly) now show a static
+// "Fair usage policy" label instead of a numeric cap, so a warning that named
+// the cap would contradict the badge. No-op kept so the addEventListener
+// below stays valid.
+function _gsTierPageLoadCheck() {}
 
 // Alias for inline redemption (Task 9c Phase D3)
 window.cxRedeemTopupInline = function() {
@@ -2072,10 +2053,9 @@ function scCapture() {
     .then(function(data){
       if(data===null) return;
       if(data && data.show_transition_toast) {
-        var _tlim = (window.GS_SCAN_STATE && window.GS_SCAN_STATE.tier_limit) || 1000;
         if (typeof gsShowToast === 'function') {
           gsShowToast(
-            "You've used all " + _tlim + " included scans this period — now consuming top-ups.",
+            "You've used your included scans this period — now using top-ups.",
             { variant: 'info', duration: 8000, onDismiss: function() { _gsDismissWarning('transition'); } }
           );
         }

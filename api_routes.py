@@ -433,12 +433,13 @@ def register_api_routes(app):
         _ocr_confirmed_api = _ocr_status_api in ("rank1_confirmed", "direct_lookup", "promoted")
         scan_decision = {"allowed": True, "show_transition_toast": False}
         if _ocr_confirmed_api:
-            scan_decision = _evaluate_scan_decision(request)
+            _sku_for_charge_api = locals().get("_ocr_info", {}).get("matched_sku") or results[0].get("sku", "")
+            scan_decision = _evaluate_scan_decision(request, sku=_sku_for_charge_api)
             if not scan_decision.get("allowed", True):
                 _reason = scan_decision.get("reason", "free_limit_exceeded")
                 _tier   = scan_decision.get("tier", "free") or "free"
                 _messages = {
-                    "free_limit_exceeded": "You've used all 25 free scans this month.",
+                    "free_limit_exceeded": "You've used all 150 free scans this month.",
                     "tier_limit_exceeded": "You've reached your fair-use cap for this period.",
                 }
                 return jsonify({
