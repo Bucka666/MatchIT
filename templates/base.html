@@ -1290,7 +1290,7 @@ function gsIsWatchlisted(sku) {
           <span style="font-weight:700;">125 scans — purchase on grailsweep.com</span>
           <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">125 scans · use whenever · no monthly reset</span>
         </span>
-        <span style="font-weight:700;color:#00e5ff;white-space:nowrap;">£1.79</span>
+        <span style="font-weight:700;color:#00e5ff;white-space:nowrap;">£1.89</span>
       </button>
       <button id="gsCtaMonthly" onclick="gsTopupBuy('monthly')"
               style="padding:12px 16px;background:linear-gradient(135deg,rgba(177,77,255,0.15),rgba(0,229,255,0.1));border:1px solid rgba(177,77,255,0.4);border-radius:10px;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">
@@ -1298,14 +1298,14 @@ function gsIsWatchlisted(sku) {
           <span style="font-weight:700;">Pro — subscribe on grailsweep.com</span>
           <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Unlimited fair usage scanning + collection + alerts</span>
         </span>
-        <span style="font-weight:700;color:#b14dff;white-space:nowrap;">£3.99/mo</span>
+        <span style="font-weight:700;color:#b14dff;white-space:nowrap;">£4.39/mo</span>
       </button>
       <!-- Annual upgrade — shown for monthly-tier cap (Phase 2C) -->
       <button id="gsCtaAnnual" class="gs-cta-annual" onclick="gsTopupBuy('annual')"
               style="display:none;padding:12px 16px;background:linear-gradient(135deg,rgba(0,229,255,0.15),rgba(177,77,255,0.1));border:1px solid rgba(0,229,255,0.4);border-radius:10px;color:#fff;cursor:pointer;text-align:left;justify-content:space-between;align-items:center;">
         <span>
           <span style="font-weight:700;">Ultimate Plan — subscribe on grailsweep.com</span>
-          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Save ~27% · Unlimited fair usage scanning · billed yearly</span>
+          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Save ~34% · Unlimited fair usage scanning · billed yearly</span>
         </span>
         <span style="font-weight:700;color:#00e5ff;white-space:nowrap;">£34.99/yr</span>
       </button>
@@ -1394,7 +1394,7 @@ function gsIsWatchlisted(sku) {
     _vis('gsCtaTopup75',  true);
     _vis('gsCtaMonthly',  tier === 'free');
     _vis('gsCtaAnnual',   tier === 'monthly');
-    _vis('gsCtaFeedback', tier === 'annual' || tier === 'founder_yearly');
+    _vis('gsCtaFeedback', tier === 'annual');
 
     var el = document.getElementById('gsTopupModal');
     if (!el) return;

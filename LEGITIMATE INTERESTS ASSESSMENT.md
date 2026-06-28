@@ -18,7 +18,7 @@ A fingerprint hash is computed from each request reaching the `/match` endpoint.
 **(b) Storage of monthly scan counters**
 A counter is incremented each time a free-tier user completes a successful card identification scan. Counters are keyed by both the device fingerprint described above and a separate randomly generated device identifier stored in the user's browser. Counters reset on the first day of each calendar month UTC.
 
-These activities are technically distinct but functionally inseparable: the fingerprint and counter together enforce the published 25-scans-per-month free tier limit. Neither is meaningful without the other.
+These activities are technically distinct but functionally inseparable: the fingerprint and counter together enforce the published 150-scans-per-month free tier limit. Neither is meaningful without the other.
 
 ---
 
@@ -84,7 +84,7 @@ What is the impact on a user whose data is processed?
 - **No marketing impact.** The data is not used to send any communication, target advertising, or build behavioural profiles.
 - **No third-party impact.** The data is not shared with any third party for their own purposes.
 - **Minimal disclosure impact.** A user can exercise their UK GDPR rights (access, deletion, objection) at any time by contacting support, with no friction beyond email.
-- **The only practical consequence** is that the user is correctly limited to 25 free scans per calendar month, as advertised.
+- **The only practical consequence** is that the user is correctly limited to 150 free scans per calendar month, as advertised.
 
 ### 4.4 Safeguards
 

@@ -351,7 +351,7 @@ def diagnostic_dump(fingerprint: str | None, device_id: str | None) -> dict:
 
 _LEGACY_TIER          = "legacy"
 _PREMIUM_TIERS_EXEMPT = {"legacy", "lifetime"}       # truly no-billing — always free
-_PREMIUM_TIERS_CAPPED = {"monthly", "annual", "founder_yearly"}  # paid tiers with monthly scan caps
+_PREMIUM_TIERS_CAPPED = {"monthly", "annual"}  # paid tiers with monthly scan caps
 
 
 # ─────────────────────────────────────────────────────────────
@@ -602,7 +602,7 @@ def check_and_record_scan(
             except Exception:
                 pass
 
-        # Branch 2 — capped premium tiers (monthly, annual, founder_yearly)
+        # Branch 2 — capped premium tiers (monthly, annual)
         if tier in _PREMIUM_TIERS_CAPPED:
             if not code or subscriptions_obj is None:
                 # Caller didn't supply code/subs — degrade gracefully, allow but log

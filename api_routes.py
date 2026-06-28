@@ -429,11 +429,11 @@ def register_api_routes(app):
             print(f"[JP-FILTER] jp_mode=en, {len(results)} result(s) remain after jpn- strip", flush=True)
 
         # Option B (restored): charge quota only on OCR-confirmed match
-        _ocr_status_api = locals().get("_ocr_info", {}).get("ocr_status", "not_run")
+        _ocr_status_api = _ocr_info.get("ocr_status", "not_run")
         _ocr_confirmed_api = _ocr_status_api in ("rank1_confirmed", "direct_lookup", "promoted")
         scan_decision = {"allowed": True, "show_transition_toast": False}
         if _ocr_confirmed_api:
-            _sku_for_charge_api = locals().get("_ocr_info", {}).get("matched_sku") or results[0].get("sku", "")
+            _sku_for_charge_api = _ocr_info.get("matched_sku") or results[0].get("sku", "")
             scan_decision = _evaluate_scan_decision(request, sku=_sku_for_charge_api)
             if not scan_decision.get("allowed", True):
                 _reason = scan_decision.get("reason", "free_limit_exceeded")
@@ -608,7 +608,7 @@ def register_api_routes(app):
 
         response = {
             "matches": matches,
-            "low_confidence": bool(low_cert) and locals().get("_ocr_info", {}).get("ocr_status") not in ("promoted", "rank1_confirmed", "direct_lookup"),
+            "low_confidence": bool(low_cert) and _ocr_info.get("ocr_status") not in ("promoted", "rank1_confirmed", "direct_lookup"),
             "ocr_confirmed": _ocr_confirmed_api,
             "show_transition_toast": bool(scan_decision.get("show_transition_toast", False)),
             "query_id": query_id,

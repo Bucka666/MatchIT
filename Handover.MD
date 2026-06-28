@@ -191,3 +191,34 @@ No Scrydex key exists anywhere in the codebase, Modal secrets, or local env. If 
 - **me2pt5 vs TCGdex naming:** pokemontcg.io calls it `me2pt5`, TCGdex calls it `me02.5`. Full mapping is in `_SETID_MAP` in `backfill_en_tcgdex_prices.py`.
 - **Local CardsDB vs Modal volume divergence:** JP `profile.json` files on local `C:\CardsDB` have no `prices` key at all — Cardmarket prices only exist on the live Modal volume (`/modal_data/CardsDB`). Don't use local profiles to check JP pricing.
 - **Scheduler overrun reference:** "Research on Phynite" chat (`3d84c7a6-...`) holds original set-scheduler refactor design. The ±7-day window was specced there but never built until this sprint — treat any unbuilt design items from old chats as outstanding, not done.
+
+
+
+## Session: Stripe/pricing pass + founder teardown (2026-06-28)
+
+**Status: complete, validated, deployed.**
+
+### Pricing changes (live Stripe Price IDs)
+- Monthly £3.99 → £4.39 — `price_1TnOOUFl8aS11HhgA6pNelu0`
+- Top-up → £1.89 / 125 scans — `price_1TnORuFl8aS11Hhg0EOQQAlN` (config key renamed `stripe_price_topup_75` → `_125`)
+- Ultimate £34.99/YEAR — `price_1TnPN7Fl8aS11HhgbfvwvFos` (NEW; old annual `price_1TSXyrFl8aS11Hhg2qrU45sS` was mis-set to MONTHLY interval — replaced, archive on cleanup)
+- Referral first month £2.99 → £3.39 (display only; coupon `GRAILSWEEP_REFERRAL` £1.00-off/once already correct & live)
+- Saving badge ~27% → ~34% (hardcoded; all instances incl. base.html extras)
+
+### Founder teardown
+Fully removed — 22 app.py sites, config.json, db.py `_PREMIUM_TIERS_CAPPED`, JS tier checks (base/match/collection/results.html), copy.md, LIA.md. Post-removal grep clean.
+
+### Other
+- 11 files changed; backups suffix `_pre_pricing_2026` (both locations) + `_pre_ultimate_fix_2026` (config.json, app.py)
+- api_routes.py: 3× `locals().get("_ocr_info")` → direct ref
+- match.html: `_gsTierPageLoadCheck` no-op + listener removed
+- Docs: 25 → 150 scans, Annual → Ultimate Plan
+
+### DEPLOY CHECKLIST (pending)
+1. regression harness → 2. deploy → 3. CF purge → 4. phone PWA checkout test (verify Ultimate = £34.99/**year**) → 5. ARCHIVE old Prices LAST: old £3.99 monthly, old top-up, founder, old annual `price_1TSXyrFl8aS11Hhg2qrU45sS`
+
+### Backlog additions
+- Dead CSS in upgrade.html: `.upgrade-tier-cta--current` / `--sold-out` (orphaned, trivial)
+- Admin diagnostic token `?token=scans-diag-2026` — secret-or-remove
+- `[TIMING2]` probe strip (backup: app_pre_timing_probe.py)
+- me2pt5 cards 1–99 price re-run when TCGdex indexes them

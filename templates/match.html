@@ -1320,7 +1320,7 @@ var soundEnabled = true;
 function _updateScanBadge(_legacyState) {
   // Prefer server-injected GS_SCAN_STATE over legacy localStorage state.
   var gs = window.GS_SCAN_STATE || {};
-  // Capped premium tier users (monthly/annual/founder_yearly) — checked first so
+  // Capped premium tier users (monthly/annual) — checked first so
   // the legacy matchit_premium_v1 flag doesn't short-circuit their tier badge.
   if (gs.tier_limit && gs.tier_limit > 0) {
     var tierBadge = document.getElementById('scTierBadge');
@@ -1423,11 +1423,9 @@ function _gsToggleTierBadge() {
 }
 
 // ── 80% page-load warning ────────────────────────────────────────────────────
-// Disabled — capped tiers (monthly/annual/founder_yearly) now show a static
+// Disabled — capped tiers (monthly/annual) now show a static
 // "Fair usage policy" label instead of a numeric cap, so a warning that named
-// the cap would contradict the badge. No-op kept so the addEventListener
-// below stays valid.
-function _gsTierPageLoadCheck() {}
+// the cap would contradict the badge.
 
 // Alias for inline redemption (Task 9c Phase D3)
 window.cxRedeemTopupInline = function() {
@@ -2358,7 +2356,7 @@ function _gsGradeMonthKey() {
 }
 function gsGetDeepGradeLimit() {
   var tier = localStorage.getItem('matchit_tier_v1') || 'monthly';
-  if (tier === 'lifetime' || tier === 'founder_yearly') return 40;
+  if (tier === 'lifetime') return 40;
   if (tier === 'annual') return 20;
   return 10;
 }
@@ -2533,7 +2531,6 @@ function dismissInstallBanner() {
 }
 
 window.addEventListener('load', initInstallBanner);
-window.addEventListener('load', _gsTierPageLoadCheck);
 
 // ── Weak-device photo-capture nudge (one-time per browser session) ──────────
 function _gsWeakDevicePhotoNudge() {

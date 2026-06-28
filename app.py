@@ -440,7 +440,7 @@ def inject_scan_state():
             # Truly exempt — no cap, no counter
             state = {"allowed": True, "reason": "premium_exempt", "tier": tier,
                      "count": None, "remaining": None, "limit": None}
-        elif tier in {"monthly", "annual", "founder_yearly"}:
+        elif tier in {"monthly", "annual"}:
             # Capped premium — read tier usage state (never increments)
             tier_state = None
             try:
@@ -2751,12 +2751,9 @@ def index():
     except Exception:
         _total = 0
         _today = 0
-    _founder = _compute_founder_status()
     return render_template("landing.html",
         total_scans=_total,
-        today_scans=_today,
-        ssr_founder_remaining=_founder["remaining"],
-        ssr_founder_sold_out=_founder["sold_out"])
+        today_scans=_today)
 
 
 @app.route("/login/")
@@ -3497,7 +3494,7 @@ def ondevice_telemetry():
         code      = _up.unquote(code_raw).strip().upper() or None
         subs      = _load_subs()
         tier      = _db.resolve_tier_from_code(code, CFG.get("premium_codes", []), subs)
-        if code and tier in ("monthly", "annual", "founder_yearly"):
+        if code and tier in ("monthly", "annual"):
             sub = subs.get(code, {})
             if _ensure_tier_period_backfilled(code, sub):
                 subs = _load_subs()
@@ -4478,7 +4475,7 @@ def match_history():
 # Collection
 # ============================================================
 
-_PREMIUM_TIERS = {"monthly", "annual", "lifetime", "legacy", "founder_yearly"}
+_PREMIUM_TIERS = {"monthly", "annual", "lifetime", "legacy"}
 
 
 def _ssr_subscription():
@@ -5047,7 +5044,7 @@ def tier_usage_diagnostic():
     tier = sub.get("tier")
     if action == "read":
         tier_state = None
-        if tier in ("monthly", "annual", "founder_yearly"):
+        if tier in ("monthly", "annual"):
             try:
                 tier_state = _db.read_tier_state(code, tier, subs)
             except Exception as _e:
@@ -5094,29 +5091,13 @@ def create_checkout_session():
         "monthly":        CFG.get("stripe_price_monthly"),
         "annual":         CFG.get("stripe_price_annual"),
         "lifetime":       CFG.get("stripe_price_lifetime"),
-        "founder_yearly": CFG.get("stripe_price_founder_yearly"),
-        "topup_75":       CFG.get("stripe_price_topup_75"),
+        "topup_75":       CFG.get("stripe_price_topup_125"),
     }
 
     price_id = price_map.get(tier)
     print(f"[STRIPE] Price ID for {tier}: {price_id}", flush=True)
     if not price_id:
         return jsonify({"error": "Invalid tier"}), 400
-
-    # Founder Yearly cap enforcement (first 100, accept overshoot on race)
-    if tier == "founder_yearly":
-        _subs_for_count = _load_subs()
-        _founder_count = sum(
-            1 for _entry in _subs_for_count.values()
-            if _entry.get("tier") == "founder_yearly"
-        )
-        _founder_cap = CFG.get("founder_yearly_cap", 100)
-        print(f"[FOUNDER CAP] count={_founder_count} cap={_founder_cap}", flush=True)
-        if _founder_count >= _founder_cap:
-            return jsonify({
-                "error": "sold_out",
-                "message": "Founder Yearly is sold out — only the first 100 spots were available. Please choose Monthly or Annual instead."
-            }), 410
 
     mode = "payment" if tier in ("lifetime", "topup_75") else "subscription"
 
@@ -5141,48 +5122,6 @@ def create_checkout_session():
         return jsonify({"url": session.url})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
-def _compute_founder_status():
-    """Shared founder seat status — used by /api/founder-status and landing SSR."""
-    subs = _load_subs()
-    sold = sum(
-        1 for entry in subs.values()
-        if entry.get("tier") == "founder_yearly"
-    )
-    cap = CFG.get("founder_yearly_cap", 100)
-    remaining = max(0, cap - sold)
-    return {
-        "sold": sold,
-        "cap": cap,
-        "remaining": remaining,
-        "sold_out": sold >= cap,
-    }
-
-
-@app.route("/api/founder-status", methods=["GET"])
-def founder_status():
-    from flask import jsonify
-    try:
-        status = _compute_founder_status()
-        return jsonify({
-            "sold_out": status["sold_out"],
-            "remaining": status["remaining"],
-            "cap": status["cap"],
-            "sold": status["sold"],
-        })
-    except Exception as e:
-        print(f"[FOUNDER STATUS ERROR] {e}", flush=True)
-        # Fail safe: return sold_out=true so frontend hides
-        # the founder card if status check fails. Better to
-        # under-show than oversell.
-        return jsonify({
-            "sold_out": True,
-            "remaining": 0,
-            "cap": CFG.get("founder_yearly_cap", 100),
-            "sold": 0,
-            "error": "status_unavailable"
-        }), 200
 
 
 @app.route("/api/redeem-topup", methods=["POST"])
@@ -5381,7 +5320,7 @@ def _process_stripe_event(event, payload_dict):
                 # Subscription tier — existing GRAIL- code flow
                 new_code = _issue_new_code(email, tier, subscription_id, ref_code=ref_code_used)
                 # Persist billing period fields for tier cap tracking
-                if new_code and subscription_id and tier in ("monthly", "annual", "founder_yearly"):
+                if new_code and subscription_id and tier in ("monthly", "annual"):
                     try:
                         _stripe_sub = stripe.Subscription.retrieve(subscription_id)
                         _ps = _stripe_sub.get("current_period_start")
@@ -6585,7 +6524,7 @@ def _issue_new_code(email, tier, subscription_id, ref_code=""):
 
     if tier == "lifetime":
         expires = None
-    elif tier in ("annual", "founder_yearly"):
+    elif tier == "annual":
         expires = (datetime.utcnow() + timedelta(days=366)).isoformat()
     else:
         expires = (datetime.utcnow() + timedelta(days=32)).isoformat()
@@ -6604,7 +6543,6 @@ def _issue_new_code(email, tier, subscription_id, ref_code=""):
     tier_label = {
         "monthly": "Pro Monthly",
         "annual": "Ultimate Plan",
-        "founder_yearly": "Founder Yearly",
         "lifetime": "Lifetime",
     }.get(tier, "Pro")
     expiry_text = (
@@ -6845,7 +6783,7 @@ def tier_dismiss_warning():
         if not sub_record:
             return jsonify({"ok": False, "error": "code_not_found"}), 404
         tier = sub_record.get("tier")
-        if tier not in ("monthly", "annual", "founder_yearly"):
+        if tier not in ("monthly", "annual"):
             return jsonify({"ok": False, "error": "not_capped_tier"}), 400
         if flag == "80pct":
             sub_record["tier_warned_80pct"] = True
@@ -7413,7 +7351,7 @@ def _evaluate_scan_decision(req, sku=None):
         subs      = _load_subs()
         tier      = _db.resolve_tier_from_code(code, CFG.get("premium_codes", []), subs)
         # Lazy backfill: ensure period fields exist for capped tiers before gate runs
-        if code and tier in ("monthly", "annual", "founder_yearly"):
+        if code and tier in ("monthly", "annual"):
             sub = subs.get(code, {})
             if _ensure_tier_period_backfilled(code, sub):
                 subs = _load_subs()   # reload after write
@@ -7421,7 +7359,7 @@ def _evaluate_scan_decision(req, sku=None):
                                           code=code, subscriptions_obj=subs, sku=sku)
         # Detect first-time tier → top-up transition and set flag
         if (result.get("reason") == "topup_consumed_premium"
-                and code and tier in ("monthly", "annual", "founder_yearly")):
+                and code and tier in ("monthly", "annual")):
             try:
                 _sub_record = subs.get(code, {})
                 if not _sub_record.get("tier_transition_warned", False):

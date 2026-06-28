@@ -1242,7 +1242,7 @@ function _gsGradeMonthKey() {
 }
 function gsGetDeepGradeLimit() {
   var tier = localStorage.getItem('matchit_tier_v1') || 'monthly';
-  if (tier === 'lifetime' || tier === 'founder_yearly') return 40;
+  if (tier === 'lifetime') return 40;
   if (tier === 'annual') return 20;
   return 10;
 }
