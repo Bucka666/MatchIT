@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Search Cards — GrailSweep</title>
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gs-violet:#b14dff; --gs-cyan:#00e5ff; --gs-gold:#ffd700; --gs-green:#00ff88;
+      --gs-bg:#0a0816; --gs-panel:rgba(255,255,255,0.04); --gs-muted:rgba(255,255,255,0.5);
+    }
+    * { box-sizing:border-box; }
+    body {
+      margin:0; background:var(--gs-bg); color:#fff;
+      font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+      min-height:100vh; -webkit-font-smoothing:antialiased;
+    }
+    .gs-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px; border-bottom:1px solid rgba(255,255,255,0.08);
+      position:sticky; top:0; background:rgba(10,8,22,0.92);
+      -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); z-index:10;
+    }
+    .gs-logo { font-family:'Orbitron',sans-serif; font-weight:900; font-size:1.1rem;
+      background:linear-gradient(90deg,var(--gs-violet),var(--gs-cyan));
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+    .gs-scanlink { font-size:0.78rem; font-weight:700; color:var(--gs-cyan);
+      text-decoration:none; border:1px solid rgba(0,229,255,0.3);
+      padding:7px 12px; border-radius:8px; white-space:nowrap; }
+    .gs-wrap { max-width:680px; margin:0 auto; padding:18px 16px 60px; }
+    .gs-search-box { position:relative; }
+    #gsSearchInput {
+      width:100%; padding:15px 16px; font-size:1.05rem; color:#fff;
+      background:var(--gs-panel); border:1.5px solid rgba(255,255,255,0.14);
+      border-radius:12px; outline:none; font-family:inherit;
+    }
+    #gsSearchInput:focus { border-color:var(--gs-violet); }
+    #gsSearchInput::placeholder { color:rgba(255,255,255,0.3); }
+    .gs-search-box.loading::after {
+      content:''; position:absolute; right:16px; top:50%; width:18px; height:18px;
+      margin-top:-9px; border:2px solid rgba(255,255,255,0.2);
+      border-top-color:var(--gs-cyan); border-radius:50%;
+      animation:gsSpin 0.7s linear infinite;
+    }
+    @keyframes gsSpin { to { transform:rotate(360deg); } }
+    .gs-hint { font-size:0.72rem; color:var(--gs-muted); margin:10px 2px 0; }
+    .gs-grid {
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+      gap:12px; margin-top:18px;
+    }
+    .gs-card {
+      background:var(--gs-panel); border:1px solid rgba(255,255,255,0.08);
+      border-radius:12px; overflow:hidden; display:flex; flex-direction:column;
+    }
+    .gs-card-img {
+      width:100%; aspect-ratio:5/7; object-fit:contain; background:rgba(0,0,0,0.25);
+    }
+    .gs-card-body { padding:9px 10px 11px; }
+    .gs-card-name { font-size:0.82rem; font-weight:700; line-height:1.25;
+      margin:0 0 2px; word-break:break-word; }
+    .gs-card-set { font-size:0.68rem; color:var(--gs-muted); margin:0 0 6px; }
+    .gs-card-price { font-family:'Orbitron',sans-serif; font-weight:700;
+      font-size:0.9rem; color:var(--gs-gold); }
+    .gs-card-price.none { color:var(--gs-muted); font-size:0.72rem; font-family:inherit; }
+    .gs-price-updated { font-size:0.62rem; color:rgba(255,255,255,0.35); margin-top:3px; }
+    .gs-state { text-align:center; color:var(--gs-muted); padding:48px 16px; font-size:0.9rem; }
+    .gs-state.hidden { display:none; }
+  </style>
+</head>
+<body>
+  <header class="gs-header">
+    <span class="gs-logo">GrailSweep</span>
+    <a class="gs-scanlink" href="/match">📷 Scanner</a>
+  </header>
+
+  <main class="gs-wrap">
+    <div class="gs-search-box" id="gsSearchBox">
+      <input id="gsSearchInput" type="text" autocomplete="off" autocapitalize="off"
+             spellcheck="false" autofocus
+             placeholder="Card name or number, e.g. Charizard or 032/165">
+    </div>
+    <p class="gs-hint">English Pokémon cards. Type a name or collector number.</p>
+
+    <div class="gs-state" id="gsEmptyState">Start typing to search…</div>
+    <div class="gs-state hidden" id="gsNoResults">No cards found. Try a different name or number.</div>
+    <div class="gs-grid" id="gsResults"></div>
+  </main>
+
+  <script>
+    var EUR_RATE = 0.86, GBP_RATE = 0.79; // fallbacks; refreshed from /api/fx_rates
+    (function loadFx() {
+      fetch('/api/fx_rates').then(function(r){ return r.json(); }).then(function(d){
+        if (d && d.eur_gbp) EUR_RATE = d.eur_gbp;
+        if (d && d.usd_gbp) GBP_RATE = d.usd_gbp;
+      }).catch(function(){});
+    })();
+
+    var input = document.getElementById('gsSearchInput');
+    var box = document.getElementById('gsSearchBox');
+    var grid = document.getElementById('gsResults');
+    var emptyState = document.getElementById('gsEmptyState');
+    var noResults = document.getElementById('gsNoResults');
+    var debTimer = null, lastQuery = '';
+
+    // Normalize the query. For "number/total" keep BOTH parts (server filters on
+    // card_number prefix AND exact set_total), stripping leading zeros on each
+    // numeric part so "032/165" -> "32/165". Plain queries strip leading zeros
+    // when fully numeric so "032" -> "32" matches the unpadded card_number.
+    function normalizeQuery(raw) {
+      var q = raw.trim();
+      var slash = q.indexOf('/');
+      if (slash >= 0) {
+        var left = q.slice(0, slash).trim();
+        var right = q.slice(slash + 1).trim();
+        if (/^\d+$/.test(left)) left = String(parseInt(left, 10));
+        if (/^\d+$/.test(right)) right = String(parseInt(right, 10));
+        return right ? (left + '/' + right) : left;
+      }
+      if (/^\d+$/.test(q)) q = String(parseInt(q, 10));
+      return q;
+    }
+
+    function fmtGbp(value, currency) {
+      if (value == null || !(value > 0)) return null;
+      var rate = (currency === 'EUR') ? EUR_RATE : GBP_RATE;
+      var gbp = value * rate;
+      if (gbp > 0 && gbp < 0.01) return '<£0.01';
+      return '£' + gbp.toFixed(2);
+    }
+
+    function render(results) {
+      grid.innerHTML = '';
+      results.forEach(function(c) {
+        var priceStr = fmtGbp(c.best_price, c.best_currency);
+        var card = document.createElement('div');
+        card.className = 'gs-card';
+        var img = c.image_url
+          ? '<img class="gs-card-img" loading="lazy" alt="" src="' + c.image_url + '">'
+          : '<div class="gs-card-img"></div>';
+        var price = priceStr
+          ? '<div class="gs-card-price">' + priceStr + '</div>'
+          : '<div class="gs-card-price none">No price</div>';
+        var freshness = '';
+        if (c.prices_updated) {
+          var _d = new Date(c.prices_updated);
+          if (!isNaN(_d)) {
+            freshness = '<div class="gs-price-updated">Prices from ' +
+              _d.toLocaleDateString('en-GB', {month: 'short', year: 'numeric'}) + '</div>';
+          }
+        }
+        card.innerHTML = img +
+          '<div class="gs-card-body">' +
+            '<p class="gs-card-name">' + c.name + '</p>' +
+            '<p class="gs-card-set">' + (c.set_name || '') + ' · #' + c.number + (c.set_total ? '/' + c.set_total : '') + '</p>' +
+            price + freshness +
+          '</div>';
+        grid.appendChild(card);
+      });
+    }
+
+    function doSearch(raw) {
+      var q = normalizeQuery(raw);
+      if (q.length < 2) {
+        grid.innerHTML = '';
+        noResults.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+      box.classList.add('loading');
+      var thisQuery = q;
+      lastQuery = q;
+      fetch('/api/pokemon-search?q=' + encodeURIComponent(q))
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (thisQuery !== lastQuery) return; // stale response, ignore
+          box.classList.remove('loading');
+          var results = (d && d.results) || [];
+          if (!results.length) {
+            grid.innerHTML = '';
+            noResults.classList.remove('hidden');
+          } else {
+            noResults.classList.add('hidden');
+            render(results);
+          }
+        })
+        .catch(function(){
+          if (thisQuery !== lastQuery) return;
+          box.classList.remove('loading');
+        });
+    }
+
+    input.addEventListener('input', function() {
+      var raw = input.value;
+      if (debTimer) clearTimeout(debTimer);
+      debTimer = setTimeout(function(){ doSearch(raw); }, 300);
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(function(){});
+    }
+  </script>
+</body>
+</html>

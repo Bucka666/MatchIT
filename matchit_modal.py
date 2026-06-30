@@ -145,7 +145,12 @@ def serve():
     os.environ["LOCALAPPDATA"] = "/modal_data"
 
     vol.reload()
+    # _fix_vertical_config() MUST run before app.py is imported — app.py caches
+    # the vertical config (db_root) at import (VERTICAL = load_vertical(...)), so
+    # importing first would pin db_root to the unfixed local "C:\\CardsDB".
     _fix_vertical_config()
+    import app as _app_module
+    _app_module._vol_commit_fn = vol.commit
     _fix_db_paths()
 
     _swept_n, _ = _sweep_query_dir()
@@ -197,8 +202,9 @@ def serve():
     return router
 
 
-# ── CPU twin — 3 light routes only, no GPU, no model load ──────────────────
-# Hosts /api/ondevice/telemetry, /api/card-profile/<sku>, /api/v1/image/<id>
+# ── CPU twin — light routes only, no GPU, no model load ────────────────────
+# Hosts /api/ondevice/telemetry, /api/card-profile/<sku>, /api/v1/image/<id>,
+# /api/pokemon-search and /search (text search needs no CLIP/DINOv2)
 # on a CPU-only container so they never pay for (or wait behind) the GPU
 # container's CLIP/DINOv2 warmup. Same Flask app as serve() (same code, same
 # routes registered) but the WSGI router below allowlists only these 3
@@ -210,6 +216,8 @@ _LIGHT_ALLOWED_PREFIXES = (
     "/api/ondevice/telemetry",
     "/api/card-profile/",
     "/api/v1/image/",
+    "/api/pokemon-search",
+    "/search",
 )
 
 
@@ -245,7 +253,12 @@ def serve_light():
     os.environ["LOCALAPPDATA"] = "/modal_data"
 
     vol.reload()
+    # _fix_vertical_config() MUST run before app.py is imported — app.py caches
+    # the vertical config (db_root) at import (VERTICAL = load_vertical(...)), so
+    # importing first would pin db_root to the unfixed local "C:\\CardsDB".
     _fix_vertical_config()
+    import app as _app_module
+    _app_module._vol_commit_fn = vol.commit
     _fix_db_paths()
 
     _swept_n, _ = _sweep_query_dir()
@@ -456,6 +469,34 @@ def scheduled_jp_price_refresh():
         print(f"[JP-PRICE-CRON] {result}", flush=True)
     except Exception as e:
         print(f"[JP-PRICE-CRON] FAILED: {e}", flush=True)
+
+
+@app.function(
+    image=image,
+    volumes={"/modal_data": vol},
+    schedule=modal.Cron("0 4 * * *"),  # 4am UTC — after the 3am JP price refresh
+    timeout=5400,
+)
+def scheduled_en_price_refresh():
+    """Daily refresh of TCGplayer + Cardmarket pricing for English (non-jpn-)
+    Pokémon cards via TCGdex EN (see refresh_en_prices.py). Same CPU-only,
+    lazy-import + direct-call + vol.commit pattern as scheduled_jp_price_refresh
+    above; refresh_en_prices.py constructs its own separate modal.App at import,
+    so the import is deferred to call time to keep it out of matchit-api's deploy
+    graph."""
+    import os, sys
+    os.chdir("/app")
+    sys.path.insert(0, "/app")
+    os.environ["LOCALAPPDATA"] = "/modal_data"
+    vol.reload()
+    from pathlib import Path
+    from refresh_en_prices import refresh_en_prices
+    try:
+        result = refresh_en_prices(Path("/modal_data/CardsDB"), dry_run=False)
+        vol.commit()
+        print(f"[EN-PRICE-CRON] {result}", flush=True)
+    except Exception as e:
+        print(f"[EN-PRICE-CRON] FAILED: {e}", flush=True)
 
 
 @app.function(

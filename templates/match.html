@@ -47,14 +47,6 @@
     <div class="cx-panel-body">
       <form class="cx-form" method="POST" enctype="multipart/form-data" action="/match" id="cxForm">
 
-        <div class="cx-search-row cx-desktop-only">
-          <input type="text" id="cxXrefInput"
-                 placeholder="Search by name, e.g. Charizard, base1-4…"
-                 class="cx-search-input" autocomplete="off"
-                 onkeydown="if(event.key==='Enter'){cxXrefSearch();}">
-          <button type="button" class="cx-search-btn" onclick="cxXrefSearch()">Search</button>
-        </div>
-
         <div class="cx-or-divider cx-desktop-only"><span>or match by photo</span></div>
 
         <div class="cx-drop cx-desktop-only" id="cxDrop">
@@ -328,6 +320,12 @@
       <div class="detail-grade" id="detGrade" style="padding:10px;background:rgba(255,255,255,0.04);border-radius:8px;font-size:0.8rem;color:var(--cx-muted);">
         <button id="detGradeBtn" onclick="scRunDeepGrade()" style="width:100%;padding:10px;border:none;border-radius:8px;background:linear-gradient(135deg,#b14dff,#00e5ff);color:#fff;font-weight:700;font-size:0.8rem;cursor:pointer;">🔬 AI Deep Analysis (Pro)</button>
       </div>
+      <div class="res-grade-auth gs-hidden" id="detGradeAuth">
+        <div class="res-auth-badge" id="detAuthBadge"></div>
+        <p class="res-auth-note" id="detAuthNote"></p>
+        <div class="res-auth-flags gs-hidden" id="detAuthFlags"></div>
+        <p class="res-auth-disclaimer">AI assessment only — not a substitute for physical inspection.</p>
+      </div>
     </div>
     <div class="detail-section">
       <div class="detail-section-title">Prices</div>
@@ -480,18 +478,6 @@ body             { overflow: visible !important; }
   gap: 10px;
 }
 
-/* Search */
-.cx-search-row { display: flex; gap: 8px; flex-shrink: 0; }
-.cx-search-input {
-  flex: 1; padding: 9px 12px; border-radius: 8px;
-  border: 1px solid rgba(177,77,255,0.2);
-  background: rgba(0,0,0,0.25); color: var(--cx-text);
-  font-size: 0.8rem; outline: none; transition: border-color 0.15s;
-}
-.cx-search-input:focus { border-color: var(--cx-violet); }
-.cx-search-input::placeholder { color: rgba(255,255,255,0.22); }
-.cx-search-btn { padding: 9px 14px; border-radius: 8px; border: none; background: var(--cx-violet); color: #fff; font-size: 0.78rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
-.cx-search-btn:hover { opacity: 0.85; }
 
 /* Or divider */
 .cx-or-divider { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,0.3); font-size: 0.64rem; flex-shrink: 0; }
@@ -1119,6 +1105,15 @@ html.gs-weak-device .cx-upload {
 #scFailGate .sfg-btn-primary { padding:12px 24px; border:none; border-radius:10px; background:linear-gradient(135deg,#b14dff,#00e5ff); color:#fff; font-weight:700; font-size:0.85rem; cursor:pointer; margin-bottom:10px; width:100%; }
 #scFailGate .sfg-btn-secondary { padding:10px 24px; border:1px solid rgba(255,255,255,0.2); border-radius:10px; background:transparent; color:rgba(255,255,255,0.7); font-size:0.8rem; cursor:pointer; width:100%; }
 #scFailGate .sfg-highlight { color:#00e5ff; }
+
+.res-grade-auth { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); }
+.res-auth-badge { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+.res-auth-badge.auth-genuine { color: #4caf50; }
+.res-auth-badge.auth-uncertain { color: #ff9800; }
+.res-auth-badge.auth-fake { color: #f44336; }
+.res-auth-note { font-size: 0.75rem; color: rgba(255,255,255,0.55); margin: 4px 0; }
+.auth-flag { font-size: 0.75rem; color: rgba(255,255,255,0.65); margin-top: 3px; }
+.res-auth-disclaimer { font-size: 0.68rem; color: rgba(255,255,255,0.30); margin-top: 8px; font-style: italic; }
 </style>
 
 <script>
@@ -1430,11 +1425,6 @@ function _gsToggleTierBadge() {
 // Alias for inline redemption (Task 9c Phase D3)
 window.cxRedeemTopupInline = function() {
   if (typeof gsTopupModalOpen === 'function') gsTopupModalOpen();
-};
-
-window.cxXrefSearch = function() {
-  var q = document.getElementById('cxXrefInput').value.trim();
-  if (q) window.location.href = '/xref-search?q=' + encodeURIComponent(q);
 };
 
 // ── SCANNER ───────────────────────────────────────────────
@@ -2251,16 +2241,18 @@ function openDetail(c){
   document.getElementById('detConf').textContent=c.pct+'% match confidence';
   // Reset grade section on new card
   var _gd = document.getElementById('detGrade');
-  if (_gd) {
+  try { if (_gd) {
     var _qg = c.grade;
+    var _qgScore = _qg && _qg.score != null ? Number(_qg.score) : null;
+    var _qgHigh = _qg && _qg.score_high != null ? Number(_qg.score_high) : null;
     var _qgHtml = '';
-    if (_qg && _qg.score) {
+    if (_qg && _qgScore) {
       var _qgColor = _qg.score >= 8.5 ? '#00ff88' : _qg.score >= 6.0 ? '#ffd700' : '#ff6b6b';
       _qgHtml =
         '<div style="padding:10px;background:rgba(0,255,136,0.05);border:1px solid rgba(0,255,136,0.15);border-radius:8px;margin-bottom:8px;">' +
           '<div style="font-size:0.7rem;color:#00ff88;font-weight:700;margin-bottom:6px;">✓ Est. Grade (Free)</div>' +
           '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">' +
-            '<div style="font-size:1.6rem;font-weight:900;color:' + _qgColor + ';font-family:Orbitron,sans-serif;">' + _qg.score.toFixed(1) + (_qg.score_high ? '–' + _qg.score_high.toFixed(1) : '') + '</div>' +
+            '<div style="font-size:1.6rem;font-weight:900;color:' + _qgColor + ';font-family:Orbitron,sans-serif;">' + _qgScore.toFixed(1) + (_qg.score_high ? '–' + _qgHigh.toFixed(1) : '') + '</div>' +
             '<div style="font-size:0.9rem;font-weight:700;color:' + _qgColor + ';">' + _qg.label + '</div>' +
           '</div>' +
           '<div style="font-size:0.68rem;color:#aaa;">Visual estimate — centering, edges &amp; surface. Lighting conditions may affect accuracy. For full AI assessment use Deep Grade.</div>' +
@@ -2274,6 +2266,16 @@ function openDetail(c){
     }
     _gd.innerHTML = _qgHtml +
       '<button id="detGradeBtn" onclick="scRunDeepGrade()" style="width:100%;padding:12px;border:none;border-radius:8px;background:linear-gradient(135deg,#b14dff,#00e5ff);color:#fff;font-weight:700;font-size:0.8rem;cursor:pointer;">🔬 AI Deep Analysis (Pro)</button>';
+  } } catch(_gradeErr) { console.warn('[GRADE-DIAG] openDetail grade block failed:', _gradeErr); if (_gd) _gd.innerHTML = '<button id="detGradeBtn" onclick="scRunDeepGrade()" style="width:100%;padding:12px;border:none;border-radius:8px;background:linear-gradient(135deg,#b14dff,#00e5ff);color:#fff;font-weight:700;font-size:0.8rem;cursor:pointer;">🔬 AI Deep Analysis (Pro)</button>'; }
+  var _authReset = document.getElementById('detGradeAuth');
+  if (_authReset) {
+    _authReset.classList.add('gs-hidden');
+    var _ab = document.getElementById('detAuthBadge');
+    var _an = document.getElementById('detAuthNote');
+    var _af = document.getElementById('detAuthFlags');
+    if (_ab) { _ab.textContent = ''; _ab.className = 'res-auth-badge'; }
+    if (_an) _an.textContent = '';
+    if (_af) { _af.innerHTML = ''; _af.classList.add('gs-hidden'); }
   }
   var p=c.profile||{};
   var tags='';
@@ -2286,8 +2288,22 @@ function openDetail(c){
   if(c.allPrices){
     var _LBL={normal:'Normal',reverseHolofoil:'Reverse Holo',holofoil:'Holo','1stEdition':'1st Ed',unlimited:'Unlimited','1stEditionHolofoil':'1st Ed Holo',unlimitedHolofoil:'Unlimited Holo',avg_sell:'Avg Sell',low:'Low',trend:'Trend',avg_1d:'1d',avg_7d:'7d',avg_30d:'30d'};
     var _tcg=c.allPrices.tcgplayer||{},_cm=c.allPrices.cardmarket||{};
-    // Best estimate headline (cardmarket avg_sell)
-    if(_cm.avg_sell>0){ph+='<div class="dp-best"><span class="dp-best-lbl">BEST ESTIMATE</span><span class="dp-best-val">'+_fmtPrice(_cm.avg_sell*EUR_RATE)+'</span><span class="dp-best-sub">Cardmarket avg sell</span></div>';}
+    // Best estimate — most recently updated source wins (matches server-side
+    // _best_price_hint). Values come from allPrices; per-source timestamps from
+    // the profile (cardmarket_updated/tcgplayer_updated). Falls back to
+    // Cardmarket when timestamps are absent (old profiles pre-refresh).
+    var _cmVal = (_cm.avg_sell>0)?_cm.avg_sell:((_cm.trend>0)?_cm.trend:((_cm.low>0)?_cm.low:0));
+    var _tcgVal = (_tcg.holofoil>0)?_tcg.holofoil:0;
+    if(!(_tcgVal>0)){for(var _tk in _tcg){if(_tcg[_tk]>0){_tcgVal=_tcg[_tk];break;}}}
+    var _cmTs=p.cardmarket_updated, _tcgTs=p.tcgplayer_updated;
+    var _bestGbp=0,_bestLbl='';
+    function _pickCM(){if(_cmVal>0){_bestGbp=_cmVal*EUR_RATE;_bestLbl='Cardmarket avg sell';}}
+    function _pickTCG(){if(_tcgVal>0){_bestGbp=_tcgVal*GBP_RATE;_bestLbl='TCGPlayer market';}}
+    if(_cmVal>0&&_tcgVal>0&&_cmTs&&_tcgTs){(String(_tcgTs)>String(_cmTs))?_pickTCG():_pickCM();}
+    else if(_cmTs&&!_tcgTs){_pickCM();}
+    else if(_tcgTs&&!_cmTs){_pickTCG();}
+    else {_pickCM(); if(!(_bestGbp>0))_pickTCG();}
+    if(_bestGbp>0){ph+='<div class="dp-best"><span class="dp-best-lbl">BEST ESTIMATE</span><span class="dp-best-val">'+_fmtPrice(_bestGbp)+'</span><span class="dp-best-sub">'+_bestLbl+'</span></div>';}
     // TCGPlayer section
     var _th='';Object.keys(_tcg).forEach(function(k){if(_tcg[k]>0)_th+='<div class="dp-chip"><span class="dp-source">'+(_LBL[k]||k)+'</span><span class="dp-val">'+_fmtPrice(_tcg[k]*GBP_RATE)+'</span></div>';});
     if(_th)ph+='<div class="dp-src-grp"><span class="dp-src-hdr">TCGPlayer</span><div class="dp-src-chips">'+_th+'</div></div>';
@@ -2433,6 +2449,27 @@ window.scRunDeepGrade = async function() {
       }
     } catch(_e) {
       console.warn('[GRADE-DIAG] scRunDeepGrade persistence failed:', _e);
+    }
+    // Authenticity badge
+    const detAuthWrap = document.getElementById('detGradeAuth');
+    if (data.authenticity && detAuthWrap) {
+      const auth = data.authenticity;
+      let cls = 'auth-genuine', txt = '✅ Likely Genuine';
+      if (auth.verdict === 'likely_fake') { cls = 'auth-fake'; txt = '🚫 Likely Fake'; }
+      else if (auth.verdict === 'uncertain') { cls = 'auth-uncertain'; txt = '⚠️ Uncertain'; }
+      const badge = document.getElementById('detAuthBadge');
+      const note = document.getElementById('detAuthNote');
+      const flags = document.getElementById('detAuthFlags');
+      badge.className = 'res-auth-badge ' + cls;
+      badge.textContent = txt;
+      note.textContent = auth.note || '';
+      if (auth.flags && auth.flags.length) {
+        flags.innerHTML = auth.flags.map(f => '<div class="auth-flag">• ' + f + '</div>').join('');
+        flags.classList.remove('gs-hidden');
+      } else {
+        flags.classList.add('gs-hidden');
+      }
+      detAuthWrap.classList.remove('gs-hidden');
     }
   } catch(e) {
     gradeDiv.innerHTML = '<div style="color:#ff6b6b;font-size:0.75rem;">Grade error. Try again.</div>';
@@ -2801,13 +2838,14 @@ document.getElementById('matchYear') &&
   // ---- IndexedDB ----------------------------------------------------------
   function gsIdbOpen() {
     return new Promise((resolve, reject) => {
+      if (!window.indexedDB) { reject(new Error('indexedDB unavailable')); return; }
       const req = indexedDB.open(GS_IDB_NAME, 1);
       req.onupgradeneeded = () => {
         const db = req.result;
         if (!db.objectStoreNames.contains(GS_IDB_STORE)) db.createObjectStore(GS_IDB_STORE);
       };
       req.onsuccess = () => resolve(req.result);
-      req.onerror   = () => reject(req.error);
+      req.onerror   = () => reject(req.error || new Error('IDB open failed (storage blocked?)'));
     });
   }
   async function gsIdbGet(key) {
@@ -2815,7 +2853,7 @@ document.getElementById('matchYear') &&
     return new Promise((resolve, reject) => {
       const r = db.transaction(GS_IDB_STORE, 'readonly').objectStore(GS_IDB_STORE).get(key);
       r.onsuccess = () => resolve(r.result === undefined ? null : r.result);
-      r.onerror   = () => reject(r.error);
+      r.onerror   = () => reject(r.error || new Error('IDB get failed'));
     });
   }
   async function gsIdbPut(key, val) {
@@ -2824,7 +2862,7 @@ document.getElementById('matchYear') &&
       const tx = db.transaction(GS_IDB_STORE, 'readwrite');
       tx.objectStore(GS_IDB_STORE).put(val, key);
       tx.oncomplete = () => resolve();
-      tx.onerror    = () => reject(tx.error);
+      tx.onerror    = () => reject(tx.error || new Error('IDB put failed (storage blocked?)'));
     });
   }
   async function gsAllFilesPresent() {
@@ -2837,6 +2875,7 @@ document.getElementById('matchYear') &&
 
   // ---- integrity ----------------------------------------------------------
   async function gsSha256Hex(arrayBuffer) {
+    if (!window.crypto || !window.crypto.subtle) { throw new Error('crypto.subtle unavailable (insecure context or unsupported browser)'); }
     const digest = await crypto.subtle.digest('SHA-256', arrayBuffer);
     return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
   }
@@ -2930,6 +2969,14 @@ document.getElementById('matchYear') &&
       try { window.GSOnDevice.warmup().catch(function(){}); } catch (e) {}
     } catch (e) {
       console.warn('[gsOnDevice] init failed -> server mode:', e);
+      var _emsg = (e && e.message) ? e.message : String(e);
+      var _ename = (e && e.name) ? e.name : 'none';
+      // IDB storage failures (common on iOS private mode / restricted WebViews) are
+      // tracked separately from genuine model/vector load errors. Both still fall to
+      // server mode — this only splits the telemetry event for observability.
+      var _isIdb = /IDB |indexedDB/.test(_emsg) || /(QuotaExceeded|Unknown|InvalidState|Security|Version|Abort|Constraint)Error/.test(_ename);
+      if (_isIdb) window._gsIdbUnavailable = true;
+      try { fetch('/api/ondevice/telemetry', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ event: _isIdb ? 'init_idb_blocked' : 'init_error', error: 'name=' + _ename + ' msg=' + _emsg + ' stack=' + (e && e.stack ? e.stack.split('\n').slice(0,2).join(' >> ') : 'none') }) }); } catch(_) {}
       gsSetBadge('error');
     }
   }
@@ -3276,6 +3323,7 @@ document.getElementById('matchYear') &&
     if (gbp > 0 && gbp < 0.01) return '<£0.01';
     return '£' + gbp.toFixed(2);
   }
+  window._fmtPrice = _fmtPrice;
 
   // Slot machine digit scramble
   function _slotMachine(el, realStr, doneCb) {

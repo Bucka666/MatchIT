@@ -1402,9 +1402,11 @@ def _try_catalog_ingest(entry: Dict, detected: Dict, db_root: str, dry_run: bool
 
     try:
         from app import rebuild_mtg_set_totals, rebuild_set_card_lists, rebuild_identifier_lookup
+        from build_pokemon_search_index import build_pokemon_search_index
         result["mtg_totals"] = rebuild_mtg_set_totals()
         result["set_cards"] = rebuild_set_card_lists()
         result["identifier_lookup"] = rebuild_identifier_lookup()
+        result["pokemon_search_index"] = build_pokemon_search_index()
     except Exception as e:
         logger.error(f"[SCHED-STATE] Sidecar rebuild error for {set_id}: {e}")
         result["sidecar_error"] = str(e)

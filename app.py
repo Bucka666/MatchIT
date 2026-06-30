@@ -53,6 +53,34 @@ app.secret_key = os.environ.get("MATCHIT_SECRET", "dev-secret-change-me")
 CORS(app)
 register_api_routes(app)
 
+# ── Stripe webhook worker durability ─────────────────────────────────────────
+# Stripe events are processed off-request in daemon threads. To survive Modal
+# container scaledown/shutdown without dropping a paid checkout, we (a) track
+# live worker threads and join them on SIGTERM, and (b) only mark an event
+# processed in the idempotency Dict AFTER its side effects succeed (see
+# _process_stripe_event_safe). _vol_commit_fn is wired by matchit_modal.py to
+# vol.commit so subscriptions.json writes are flushed before the container dies;
+# it stays None (no-op) in local dev / non-Modal contexts.
+import signal as _signal
+_vol_commit_fn = None  # set by matchit_modal.py after vol is available
+_active_stripe_threads = []
+_active_stripe_threads_lock = threading.Lock()
+
+def _handle_sigterm(signum, frame):
+    print("[WEBHOOK] SIGTERM — draining Stripe worker threads...", flush=True)
+    with _active_stripe_threads_lock:
+        threads = list(_active_stripe_threads)
+    for _t in threads:
+        _t.join(timeout=10)
+    print("[WEBHOOK] Stripe worker drain complete.", flush=True)
+
+# signal.signal() only works on the main thread of the main interpreter; guard
+# so an off-main-thread import can't crash app load.
+try:
+    _signal.signal(_signal.SIGTERM, _handle_sigterm)
+except ValueError as _sig_e:
+    print(f"[WEBHOOK] SIGTERM handler not registered (non-main thread): {_sig_e}", flush=True)
+
 # ── CF Proxy Secret enforcement ──────────────────────────────────────────────
 # Blocks direct .modal.run access. The Cloudflare Worker injects
 # X-CF-Proxy-Secret on every request; requests without it (or with the wrong
@@ -3473,10 +3501,11 @@ def ondevice_telemetry():
     gap            = data.get("gap")
     game           = (data.get("game") or "").strip()
     version_tuple  = (data.get("version_tuple") or "").strip()
+    error          = data.get("error")
     print(
         f"[ONDEVICE-TELEMETRY] event={event!r} gate={gate_decision!r} "
         f"decline_reason={decline_reason!r} top1_sim={top1_sim} gap={gap} "
-        f"game={game!r} version={version_tuple!r} sku={sku!r}",
+        f"game={game!r} version={version_tuple!r} sku={sku!r} error={error!r}",
         flush=True,
     )
     # Derive identity server-side — security boundary.
@@ -3683,6 +3712,136 @@ def card_profile(sku):
     except Exception as e:
         print(f'[CARD-PROFILE] Error for {sku!r}: {e}', flush=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+def _best_price_hint(prices, cm_updated=None, tcp_updated=None):
+    """Pick a best-estimate price + its source currency from a profile.prices dict.
+
+    Freshness-aware: if both sources have a value AND both have an 'updated'
+    timestamp, the more recently updated source wins (TCGdex ISO-8601 'Z'
+    timestamps compare correctly lexicographically). If only one source has a
+    timestamp, that source is preferred. If neither has a timestamp (old
+    profiles pre-refresh), falls back to the original behaviour: prefer
+    Cardmarket avg_sell (EUR), else TCGPlayer market (USD).
+
+    Returns (value, currency) or (None, None). The client multiplies by the
+    matching live fx rate — server does no conversion."""
+    if not isinstance(prices, dict):
+        return None, None
+
+    cm = prices.get("cardmarket") or {}
+    cm_val = None
+    if isinstance(cm, dict):
+        v = cm.get("avg_sell") or cm.get("trend") or cm.get("low")
+        if isinstance(v, (int, float)) and v > 0:
+            cm_val = float(v)
+
+    tcg = prices.get("tcgplayer") or {}
+    tcg_val = None
+    if isinstance(tcg, dict):
+        holo = tcg.get("holofoil") or {}
+        if isinstance(holo, dict) and isinstance(holo.get("market"), (int, float)) and holo["market"] > 0:
+            tcg_val = float(holo["market"])
+        else:
+            for _variant, _vd in tcg.items():
+                if isinstance(_vd, dict) and isinstance(_vd.get("market"), (int, float)) and _vd["market"] > 0:
+                    tcg_val = float(_vd["market"])
+                    break
+
+    # Both values + both timestamps → newer source wins.
+    if cm_val is not None and tcg_val is not None and cm_updated and tcp_updated:
+        if str(tcp_updated) > str(cm_updated):
+            return tcg_val, "USD"
+        return cm_val, "EUR"
+    # Only one timestamp present → prefer that source (if it has a value).
+    if cm_updated and not tcp_updated and cm_val is not None:
+        return cm_val, "EUR"
+    if tcp_updated and not cm_updated and tcg_val is not None:
+        return tcg_val, "USD"
+    # No timestamps (old profiles) → original behaviour: Cardmarket first.
+    if cm_val is not None:
+        return cm_val, "EUR"
+    if tcg_val is not None:
+        return tcg_val, "USD"
+    return None, None
+
+
+@app.route("/api/pokemon-search")
+def pokemon_search():
+    raw = request.args.get("q", "").strip()
+
+    matches = []
+    if "/" in raw:
+        # "number/total" → match card_number prefix AND exact set_total.
+        # Leading zeros stripped on each numeric part so "032/165" matches "32"/"165".
+        num_part, _, total_part = raw.partition("/")
+        num_part = num_part.strip()
+        total_part = total_part.strip()
+        if num_part.isdigit():
+            num_part = str(int(num_part))
+        if total_part.isdigit():
+            total_part = str(int(total_part))
+        if not num_part:
+            return jsonify({"results": [], "count": 0})
+        for entry in _pokemon_search_index:
+            num_match = entry["number"].startswith(num_part)
+            total_match = (str(entry.get("set_total") or "") == total_part) if total_part else True
+            if num_match and total_match:
+                matches.append(entry)
+                if len(matches) >= 12:
+                    break
+    else:
+        q = raw.lower()
+        if len(q) < 2:
+            return jsonify({"results": [], "count": 0})
+        for entry in _pokemon_search_index:
+            if entry["name"].lower().startswith(q) or entry["number"].startswith(q):
+                matches.append(entry)
+                if len(matches) >= 12:
+                    break
+
+    db_root = get_db_root()
+    data_dir = get_data_dir()
+    enriched = []
+    for r in matches:
+        sku = r["sku"]
+        profile = _load_card_profile_for_sku(sku, db_root, data_dir)
+        prices = profile.get("prices") if profile else None
+        best_val, best_ccy = _best_price_hint(
+            prices,
+            profile.get("cardmarket_updated") if profile else None,
+            profile.get("tcgplayer_updated") if profile else None,
+        )
+        image_id = None
+        try:
+            image_id = _image_id_for_sku(sku)
+        except Exception:
+            image_id = None
+        if image_id:
+            image_url = f"https://images.grailsweep.com/{image_id}.jpg"
+        elif profile and profile.get("image_url_small"):
+            image_url = profile.get("image_url_small")
+        else:
+            image_url = ""
+        enriched.append({
+            "sku":            sku,
+            "name":           r["name"],
+            "number":         r["number"],
+            "set_name":       r["set_name"],
+            "set_total":      r.get("set_total"),
+            "image_url":      image_url,
+            "prices":         prices,
+            "prices_updated": profile.get("prices_updated") if profile else None,
+            "best_price":     best_val,
+            "best_currency":  best_ccy,
+        })
+
+    return jsonify({"results": enriched, "count": len(enriched)})
+
+
+@app.route("/search")
+def search_page():
+    return render_template("search.html")
 
 
 @app.route("/sitemap.xml")
@@ -4801,6 +4960,17 @@ def deep_grade():
             f"You are an expert trading card grader with years of experience grading "
             f"Pokemon TCG, Magic: The Gathering, and Yu-Gi-Oh cards.\n\n"
             f"Analyse this image of {card_name} and provide a condition grade.\n\n"
+            f"STEP 0 — AUTHENTICITY CHECK (complete before condition assessment)\n"
+            f"Examine this card for signs of being counterfeit. Assess whichever are visible:\n"
+            f"- Print quality: sharpness, colour accuracy, no blurring, pixelation or colour bleed\n"
+            f"- Font: correct weight, spacing and style for all text (card name, HP, attacks, copyright)\n"
+            f"- Borders: even and consistent width on all four sides\n"
+            f"- Card-specific markers:\n"
+            f"  * Pokémon: holo foil pattern, energy symbol accuracy, HP within plausible range for era, rarity symbol shape, copyright line format, Poké Ball pattern on card back if visible\n"
+            f"  * MTG: border colour correct for set era, set symbol matches collector number, mana cost symbols, copyright line\n"
+            f"  * YGO: hologram sticker at bottom right, foil on name bar and effect box, ATK/DEF format, Konami copyright line\n"
+            f'If image quality prevents a confident assessment, use verdict "uncertain" with confidence "low" and explain why in the note.\n'
+            f'Output as JSON field "authenticity": {{"verdict": "likely_genuine"|"uncertain"|"likely_fake", "confidence": "high"|"medium"|"low", "flags": [array of specific concerns, empty array if none], "note": "one sentence summary"}}\n\n'
             f"STEP 1 — Hard defect check. You MUST check for each of these before scoring.\n"
             f"RULE A — Corner or crease damage: If ANY corner has physically absent material, tearing, or jagged edges, OR if the card body has any visible crease, fold, or bend → score MUST be 3.0 or below, label Very Good or below.\n"
             f"RULE C — Surface crease or deep scratch: If there is a heavy surface crease or deep scratch → score MUST be 5.0 or below, label Excellent or below.\n"
@@ -4814,6 +4984,7 @@ def deep_grade():
             f"Be strict — align with PSA/BGS conservatism. When in doubt, grade lower.\n\n"
             f"Respond with ONLY valid JSON in this exact format, no other text:\n"
             f'{{\n'
+            f'  "authenticity": {{"verdict": "likely_genuine", "confidence": "high", "flags": [], "note": "Print quality and card markers consistent with a genuine card."}},\n'
             f'  "score": <number 1-10 with one decimal>,\n'
             f'  "label": "<one of: Gem Mint / Mint / Near Mint-Mint / Near Mint / Excellent-Mint / Excellent / Very Good-Excellent / Very Good / Good / Poor>",\n'
             f'  "centering": "<Poor/Fair/Good/Excellent>",\n'
@@ -4847,6 +5018,13 @@ def deep_grade():
         text = text.replace("```json", "").replace("```", "").strip()
         result = _json.loads(text)
         result["method"] = "deep"
+        authenticity = result.get("authenticity", {
+            "verdict": "uncertain",
+            "confidence": "low",
+            "flags": [],
+            "note": "Authenticity assessment unavailable."
+        })
+        result["authenticity"] = authenticity
         return jsonify(result)
 
     except Exception as e:
@@ -4896,6 +5074,18 @@ def deep_grade_url():
 
 Analyse this image of {card_name} and provide a condition grade.
 
+STEP 0 — AUTHENTICITY CHECK (complete before condition assessment)
+Examine this card for signs of being counterfeit. Assess whichever are visible:
+- Print quality: sharpness, colour accuracy, no blurring, pixelation or colour bleed
+- Font: correct weight, spacing and style for all text (card name, HP, attacks, copyright)
+- Borders: even and consistent width on all four sides
+- Card-specific markers:
+  * Pokémon: holo foil pattern, energy symbol accuracy, HP within plausible range for era, rarity symbol shape, copyright line format, Poké Ball pattern on card back if visible
+  * MTG: border colour correct for set era, set symbol matches collector number, mana cost symbols, copyright line
+  * YGO: hologram sticker at bottom right, foil on name bar and effect box, ATK/DEF format, Konami copyright line
+If image quality prevents a confident assessment, use verdict "uncertain" with confidence "low" and explain why in the note.
+Output as JSON field "authenticity": {{"verdict": "likely_genuine"|"uncertain"|"likely_fake", "confidence": "high"|"medium"|"low", "flags": [array of specific concerns, empty array if none], "note": "one sentence summary"}}
+
 STEP 1 — Hard defect check. You MUST check for each of these before scoring.
 RULE A — Corner or crease damage: If ANY corner has physically absent material, tearing, or jagged edges, OR if the card body has any visible crease, fold, or bend → score MUST be 3.0 or below, label Very Good or below.
 RULE C — Surface crease or deep scratch: If there is a heavy surface crease or deep scratch → score MUST be 5.0 or below, label Excellent or below.
@@ -4912,6 +5102,7 @@ Be strict — align with PSA/BGS conservatism. When in doubt, grade lower.
 
 Respond with ONLY valid JSON in this exact format, no other text:
 {{
+  "authenticity": {{"verdict": "likely_genuine", "confidence": "high", "flags": [], "note": "Print quality and card markers consistent with a genuine card."}},
   "score": <number 1-10 with one decimal>,
   "label": "<one of: Gem Mint / Mint / Near Mint-Mint / Near Mint / Excellent-Mint / Excellent / Very Good-Excellent / Very Good / Good / Poor>",
   "centering": "<Poor/Fair/Good/Excellent>",
@@ -4944,6 +5135,13 @@ Respond with ONLY valid JSON in this exact format, no other text:
         text = text.replace("```json", "").replace("```", "").strip()
         result = _json.loads(text)
         result["method"] = "deep"
+        authenticity = result.get("authenticity", {
+            "verdict": "uncertain",
+            "confidence": "low",
+            "flags": [],
+            "note": "Authenticity assessment unavailable."
+        })
+        result["authenticity"] = authenticity
         return jsonify(result)
 
     except Exception as e:
@@ -5270,15 +5468,20 @@ def stripe_webhook():
         if _d.get(event_id, None) is not None:
             print(f"[WEBHOOK] Duplicate event {event_id} (type={etype}) — skipping", flush=True)
             return jsonify({"status": "ok"})
-        _d.put(event_id, {"type": etype, "ts": time.time()})
     except Exception as _idem_e:
         print(f"[WEBHOOK] Idempotency check failed for {event_id}: {_idem_e} — proceeding anyway", flush=True)
 
-    threading.Thread(
+    # Key is written AFTER work succeeds (inside _process_stripe_event_safe), not
+    # here — so a container killed mid-processing leaves the event un-marked and
+    # Stripe's retry reprocesses it cleanly instead of being silently deduped out.
+    _t = threading.Thread(
         target=_process_stripe_event_safe,
         args=(event, payload_dict),
         daemon=True,
-    ).start()
+    )
+    with _active_stripe_threads_lock:
+        _active_stripe_threads.append(_t)
+    _t.start()
 
     return jsonify({"status": "ok"})
 
@@ -5288,15 +5491,29 @@ def _process_stripe_event_safe(event, payload_dict):
     etype = event["type"]
     try:
         _process_stripe_event(event, payload_dict)
+        # Mark processed AFTER work succeeds — never before.
+        try:
+            import modal as _modal
+            _dd = _modal.Dict.from_name("stripe-webhook-events", create_if_missing=True)
+            _dd.put(event_id, {"ts": time.time(), "type": etype})
+        except Exception:
+            pass
+        # Flush volume write so subscriptions.json survives container shutdown.
+        try:
+            if _vol_commit_fn:
+                _vol_commit_fn()
+        except Exception:
+            pass
         print(f"[WEBHOOK] Successfully processed {event_id} (type={etype})", flush=True)
     except Exception as _bg_e:
         print(f"[WEBHOOK] BACKGROUND PROCESSING FAILED for {event_id}: {_bg_e}", flush=True)
-        try:
-            import modal as _modal
-            _d = _modal.Dict.from_name("stripe-webhook-events", create_if_missing=True)
-            _d.pop(event_id, None)
-        except Exception:
-            pass
+        # Key was never set — Stripe retry will reprocess naturally.
+    finally:
+        with _active_stripe_threads_lock:
+            try:
+                _active_stripe_threads.remove(threading.current_thread())
+            except ValueError:
+                pass
 
 
 def _process_stripe_event(event, payload_dict):
@@ -5543,6 +5760,23 @@ def _preload_identifier_lookup():
 
 
 _preload_identifier_lookup()
+
+
+POKEMON_SEARCH_INDEX_PATH = "/modal_data/pokemon_search_index.json" if _os.path.exists("/modal_data") else "pokemon_search_index.json"
+_pokemon_search_index = []  # list of {sku,name,number,set_id,set_name}
+
+
+def _preload_pokemon_search_index():
+    global _pokemon_search_index
+    try:
+        with open(POKEMON_SEARCH_INDEX_PATH, "r", encoding="utf-8") as f:
+            _pokemon_search_index = json.load(f)
+        print(f"[SEARCH] Loaded {len(_pokemon_search_index)} Pokémon entries", flush=True)
+    except Exception as e:
+        print(f"[SEARCH] No pokemon_search_index.json loaded — search unavailable: {e}", flush=True)
+
+
+_preload_pokemon_search_index()
 
 def _load_set_metadata():
     global _set_metadata_cache, _set_metadata_mtime
@@ -6445,7 +6679,7 @@ def _rule_based_grade(image_path):
             corner_score    * 0.05
         )
         score_high = round(min(10, max(1, score)), 1)
-        score_low = round(max(1, score_high - 2.0), 1)
+        score_low = round(max(1, score_high - 1.0), 1)
 
         if score_low >= 10.0:  label = "Gem Mint"
         elif score_low >= 9.0: label = "Mint"

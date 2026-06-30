@@ -163,6 +163,12 @@
       <button type="button" class="res-grade-deep-btn" id="resDeepGradeBtn" onclick="gsDeepGrade()">🔬 AI Deep Analysis (Pro)</button>
       <p class="grade-limit-note" id="gradeRemainingNote"></p>
       <div class="res-grade-loading gs-hidden" id="resGradeLoading">Analysing with Claude Vision…</div>
+      <div class="res-grade-auth gs-hidden" id="resGradeAuth">
+        <div class="res-auth-badge" id="resGradeAuthBadge"></div>
+        <p class="res-auth-note" id="resGradeAuthNote"></p>
+        <div class="res-auth-flags gs-hidden" id="resGradeAuthFlags"></div>
+        <p class="res-auth-disclaimer">AI assessment only — not a substitute for physical inspection.</p>
+      </div>
     </div>
     {% endif %}
 
@@ -1059,6 +1065,15 @@
   cursor: pointer;
   font-family: 'DM Sans', sans-serif;
 }
+
+.res-grade-auth { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); }
+.res-auth-badge { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
+.res-auth-badge.auth-genuine { color: #4caf50; }
+.res-auth-badge.auth-uncertain { color: #ff9800; }
+.res-auth-badge.auth-fake { color: #f44336; }
+.res-auth-note { font-size: 0.75rem; color: rgba(255,255,255,0.55); margin: 4px 0; }
+.auth-flag { font-size: 0.75rem; color: rgba(255,255,255,0.65); margin-top: 3px; }
+.res-auth-disclaimer { font-size: 0.68rem; color: rgba(255,255,255,0.30); margin-top: 8px; font-style: italic; }
 </style>
 
 <!-- Lightbox -->
@@ -1327,6 +1342,27 @@ function gsDeepGrade() {
       var sumEl = document.getElementById('resGradeSummary');
       sumEl.textContent = d.summary;
       sumEl.classList.remove('gs-hidden');
+    }
+    // Authenticity badge
+    const authWrap = document.getElementById('resGradeAuth');
+    if (d.authenticity && authWrap) {
+      const auth = d.authenticity;
+      let cls = 'auth-genuine', txt = '✅ Likely Genuine';
+      if (auth.verdict === 'likely_fake') { cls = 'auth-fake'; txt = '🚫 Likely Fake'; }
+      else if (auth.verdict === 'uncertain') { cls = 'auth-uncertain'; txt = '⚠️ Uncertain'; }
+      const badge = document.getElementById('resGradeAuthBadge');
+      const note = document.getElementById('resGradeAuthNote');
+      const flags = document.getElementById('resGradeAuthFlags');
+      badge.className = 'res-auth-badge ' + cls;
+      badge.textContent = txt;
+      note.textContent = auth.note || '';
+      if (auth.flags && auth.flags.length) {
+        flags.innerHTML = auth.flags.map(f => '<div class="auth-flag">• ' + f + '</div>').join('');
+        flags.classList.remove('gs-hidden');
+      } else {
+        flags.classList.add('gs-hidden');
+      }
+      authWrap.classList.remove('gs-hidden');
     }
   })
   .catch(function() {
