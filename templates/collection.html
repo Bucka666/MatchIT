@@ -65,15 +65,25 @@
 .prem-benefit:last-child { border-bottom: none; }
 </style>
 
-  <div class="mi-card-head" style="flex-direction:column;align-items:flex-start;gap:12px;">
+  <div class="mi-card-head" style="flex-direction:column;align-items:center;gap:12px;">
     <h1 class="mi-h1">My Collection</h1>
     <button id="gsEnablePushBtn" onclick="gsSubscribePush()" style="display:none;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid rgba(177,77,255,0.4);background:rgba(177,77,255,0.1);color:#b14dff;font-size:0.75rem;font-weight:600;cursor:pointer;">🔔 Enable Price Alerts via Notifications</button>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;width:100%;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;">
       <a href="/match" class="mi-btn" style="background:rgba(255,255,255,0.06)!important;border:1px solid rgba(255,255,255,0.12)!important;box-shadow:none!important;color:var(--mi-muted,#aaa)!important;font-size:0.8rem!important;">← Match</a>
       <button class="mi-btn" onclick="colExportCSV()">📥 Export Excel</button>
       <button class="col-csv-export-btn" onclick="gsExportCSV()">📤 Export CSV</button>
       <button class="col-import-btn" onclick="gsShowImport()">📥 Import CSV <span class="pro-badge">PRO</span></button>
       <button class="mi-btn" onclick="colClearAll()" style="background:rgba(255,45,111,0.15)!important;border:1px solid rgba(255,45,111,0.3)!important;color:#ff2d6f!important;box-shadow:none!important;">🗑 Clear All</button>
+
+      <!-- Shop Northwest TCG — own row below the action buttons -->
+      <div style="flex-basis:100%;display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:4px;">
+        <!-- TODO: once a commission/affiliate tag is added to this link, add a visible "Ad" or "Sponsored" label per ASA disclosure rules -->
+        <a class="mi-btn" href="https://www.tiktok.com/@northwest_tcg" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
+          <img src="/static/assets/NWTCG.jpeg" alt="Northwest TCG" loading="lazy" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">
+          SHOP NORTHWEST TCG
+        </a>
+        <div style="font-size:0.72rem;color:#9b95b8;text-align:center;">Find new cards to add to your collection</div>
+      </div>
     </div>
   </div>
 

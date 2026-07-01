@@ -697,6 +697,7 @@
       left: 0 !important;
       right: 0 !important;
       z-index: 999 !important;
+      padding-bottom: env(safe-area-inset-bottom) !important;
     }
 
     /* ── Floating card silhouettes ── */
@@ -726,6 +727,7 @@
       .mi-float-card { display: none; }
       .mi-top {
         padding: 4px 8px !important;
+        padding-top: calc(4px + env(safe-area-inset-top)) !important;
         gap: 4px !important;
         flex-wrap: wrap !important;
         width: 100vw !important;
