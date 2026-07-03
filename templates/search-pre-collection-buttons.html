@@ -69,18 +69,9 @@
     .gs-price-updated { font-size:0.62rem; color:rgba(255,255,255,0.35); margin-top:3px; }
     .gs-state { text-align:center; color:var(--gs-muted); padding:48px 16px; font-size:0.9rem; }
     .gs-state.hidden { display:none; }
-    .gs-card-actions { display:flex; gap:6px; margin-top:8px; }
-    .gs-card-btn {
-      flex:1; padding:6px 4px; font-size:0.68rem; font-weight:700; text-align:center;
-      border-radius:6px; cursor:pointer; font-family:'DM Sans',sans-serif;
-      background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); color:#fff;
-    }
-    .gs-card-btn-col { background:rgba(255,215,0,0.08); border-color:rgba(255,215,0,0.3); color:#ffd700; }
-    .gs-card-btn-wl { background:rgba(0,229,255,0.08); border-color:rgba(0,229,255,0.3); color:#00e5ff; }
   </style>
 </head>
 <body>
-  {% include "_gs_card_actions.html" %}
   <header class="gs-header">
     <span class="gs-logo">GrailSweep</span>
     <a class="gs-scanlink" href="/match">📷 Scanner</a>
@@ -166,22 +157,7 @@
             '<p class="gs-card-name">' + c.name + '</p>' +
             '<p class="gs-card-set">' + (c.set_name || '') + ' · #' + c.number + (c.set_total ? '/' + c.set_total : '') + '</p>' +
             price + freshness +
-            '<div class="gs-card-actions">' +
-              '<button type="button" class="gs-card-btn gs-card-btn-col">+ Collection</button>' +
-              '<button type="button" class="gs-card-btn gs-card-btn-wl">+ Wishlist</button>' +
-            '</div>' +
           '</div>';
-        // Attach via closure over c (not inline onclick) — card names like
-        // "Farfetch'd" contain apostrophes that would break a JSON.stringify(c)
-        // dumped into a single-quoted onclick attribute.
-        var colBtn = card.querySelector('.gs-card-btn-col');
-        var wlBtn = card.querySelector('.gs-card-btn-wl');
-        colBtn.addEventListener('click', function() {
-          if (typeof gsAddToCollection === 'function') gsAddToCollection(c, colBtn);
-        });
-        wlBtn.addEventListener('click', function() {
-          if (typeof gsAddToWatchlist === 'function') gsAddToWatchlist(c, wlBtn);
-        });
         grid.appendChild(card);
       });
     }

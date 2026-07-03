@@ -1,0 +1,1585 @@
+﻿<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>{{ vbrand.page_title }}</title>
+  <link rel="stylesheet" href="/static/style.css?v=3">
+  <link rel="icon" type="image/x-icon" href="/static/assets/favicon.ico?v=2">
+  <link rel="icon" type="image/png" href="/static/assets/grailsweep_favicon.png?v=2">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="/static/vendor/lucide.min.js?v=1"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <!-- PWA -->
+  <link rel="manifest" href="/static/manifest.json">
+  <meta name="theme-color" content="#1a1830">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/static/assets/grailsweep_app_icon.png">
+  <script>window.GS_SCANNER_KEY = '{{ cfg.get("grailsweep_scanner_key", "") }}';</script>
+
+  <!-- ── Theme override: Lighter Purple ── -->
+  <style>
+    :root {
+      --mi-bg: #1a1830;
+      --mi-card: #252248;
+      --mi-text: #f0ecff;
+      --mi-muted: #9b95b8;
+      --mi-accent: #b14dff;
+      --mi-accent2: #00e5ff;
+      --mi-gold: #ffd700;
+      --mi-emerald: #00ff88;
+      --mi-ruby: #ff2d6f;
+      --mi-sapphire: #4d8eff;
+    }
+
+    /* ── Toast component ── */
+    .gs-toast-container {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 8500;
+      pointer-events: none;
+      width: calc(100% - 2rem);
+      max-width: 420px;
+    }
+    .gs-toast {
+      pointer-events: auto;
+      background: rgba(26, 26, 46, 0.97);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(0, 229, 255, 0.45);
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      padding: 14px 44px 14px 18px;
+      color: var(--mi-text, #f0ecff);
+      font-size: 0.92rem;
+      line-height: 1.4;
+      position: relative;
+      margin-bottom: 8px;
+      opacity: 0;
+      transform: translateY(-12px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .gs-toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .gs-toast-warn {
+      border-color: rgba(255, 165, 0, 0.55);
+    }
+    .gs-toast-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border: 0;
+      background: transparent;
+      color: var(--mi-muted, #9b95b8);
+      font-size: 1.2rem;
+      line-height: 1;
+      cursor: pointer;
+      border-radius: 6px;
+    }
+    .gs-toast-close:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--mi-text, #f0ecff);
+    }
+
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+
+    body.mi-page {
+      background: #1a1830;
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      color: var(--mi-text);
+    }
+
+    /* ── Animated background ── */
+    .mi-bg-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1a1830, #1e1a3a, #221e42);
+    
+    }
+    .mi-bg-canvas::before {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      background:
+        radial-gradient(ellipse at 25% 20%, rgba(177,77,255,0.25) 0%, transparent 50%),
+        radial-gradient(ellipse at 75% 80%, rgba(0,229,255,0.2) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(255,45,111,0.12) 0%, transparent 40%),
+        radial-gradient(ellipse at 10% 90%, rgba(0,255,136,0.1) 0%, transparent 40%),
+        radial-gradient(ellipse at 90% 10%, rgba(255,215,0,0.12) 0%, transparent 40%);
+      animation: bgDrift 20s ease-in-out infinite alternate;
+    }
+    .mi-bg-canvas::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(0deg, transparent, transparent 100px, rgba(255,255,255,0.015) 100px, rgba(255,255,255,0.015) 101px),
+        repeating-linear-gradient(90deg, transparent, transparent 100px, rgba(255,255,255,0.015) 100px, rgba(255,255,255,0.015) 101px);
+    }
+    @keyframes bgDrift {
+      0% { transform: translate(0,0) rotate(0deg); }
+      100% { transform: translate(-3%,-2%) rotate(2deg); }
+    }
+
+    .mi-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      animation: orbFloat 15s ease-in-out infinite alternate;
+    }
+    .mi-orb-1 { width: 450px; height: 450px; background: #b14dff; top: -10%; left: -5%; opacity: 0.5; }
+    .mi-orb-2 { width: 400px; height: 400px; background: #00e5ff; bottom: -10%; right: -5%; animation-delay: -5s; opacity: 0.5; }
+    .mi-orb-3 { width: 350px; height: 350px; background: #ff2d6f; top: 40%; left: 60%; animation-delay: -10s; opacity: 0.3; }
+    .mi-orb-4 { width: 300px; height: 300px; background: #00ff88; top: 60%; left: 10%; animation-delay: -7s; opacity: 0.25; }
+    @keyframes orbFloat {
+      0% { transform: translate(0,0) scale(1); }
+      50% { transform: translate(30px,-20px) scale(1.1); }
+      100% { transform: translate(-20px,30px) scale(0.95); }
+    }
+
+    /* Content above background */
+    .mi-shell-main {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Global reset ── */
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      overflow-x: hidden !important;
+      box-sizing: border-box !important;
+    }
+    .mi-shell {
+      width: 100% !important;
+      max-width: 100% !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      padding-top: env(safe-area-inset-top, 0px) !important;
+      box-sizing: border-box !important;
+      overflow-x: hidden !important;
+    }
+
+    /* ── Header restyle ── */
+    .mi-top {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: rgba(30,28,55,0.7) !important;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.08) !important;
+      padding: 1rem 1.5rem !important;
+      padding-top: max(8px, env(safe-area-inset-top, 8px)) !important;
+    }
+
+    /* Gradient brand name */
+    .mi-brand {
+      justify-self: center;
+    }
+    .mi-brand-name {
+      font-family: 'Orbitron', monospace !important;
+      font-weight: 900 !important;
+      background: linear-gradient(90deg, #b14dff, #00e5ff, #00ff88) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+      letter-spacing: 0.05em !important;
+    }
+
+    .mi-brand-sub {
+      color: var(--mi-muted) !important;
+      font-size: 0.7rem !important;
+    }
+
+    .mi-logo-wrap img {
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgba(177,77,255,0.3);
+    }
+
+    /* ── Card/shell styling ── */
+    .mi-card {
+      background: rgba(37,34,72,0.95) !important;
+      border: 1px solid rgba(255,255,255,0.08) !important;
+      border-radius: 16px !important;
+    }
+
+    .mi-h1 {
+      font-family: 'Orbitron', monospace !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.05em !important;
+      background: linear-gradient(90deg, #ffd700, #ffe566) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+    }
+
+    .mi-pill-ghost {
+      border-color: rgba(177,77,255,0.3) !important;
+      color: #b14dff !important;
+    }
+    .mi-pill-ghost:hover {
+      background: rgba(177,77,255,0.15) !important;
+    }
+
+    /* ── History link restyle ── */
+    .mi-history-link {
+      background: rgba(177,77,255,0.08) !important;
+      border: 1px solid rgba(177,77,255,0.2) !important;
+      color: #b14dff !important;
+    }
+    .mi-history-link:hover {
+      background: rgba(177,77,255,0.2) !important;
+      border-color: rgba(177,77,255,0.4) !important;
+    }
+
+    /* ── Header right area ── */
+    .mi-top-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    .mi-back-btn, .mi-collection-nav, .mi-sets-nav, .mi-watchlist-nav, .mi-upgrade-nav, .nav-benefits-btn {
+      font-size: clamp(0.6rem, 2vw, 0.78rem) !important;
+      padding: clamp(4px, 1.5vw, 8px) clamp(6px, 2vw, 12px) !important;
+      white-space: nowrap;
+    }
+    .mi-back-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: var(--mi-muted, #aaa);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .mi-back-btn:hover {
+      background: rgba(177,77,255,0.15);
+      border-color: rgba(177,77,255,0.3);
+      color: #b14dff;
+    }
+    .mi-collection-nav {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,215,0,0.2);
+      background: rgba(255,215,0,0.06);
+      color: #ffd700;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .mi-collection-nav:hover {
+      background: rgba(255,215,0,0.15);
+      border-color: rgba(255,215,0,0.4);
+    }
+    .mi-watchlist-nav {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(0,229,255,0.2);
+      background: rgba(0,229,255,0.06);
+      color: #00e5ff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .mi-watchlist-nav:hover {
+      background: rgba(0,229,255,0.15);
+      border-color: rgba(0,229,255,0.4);
+    }
+    .mi-sets-nav {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(167,139,250,0.25);
+      background: rgba(167,139,250,0.07);
+      color: #a78bfa;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .mi-sets-nav:hover {
+      background: rgba(167,139,250,0.16);
+      border-color: rgba(167,139,250,0.45);
+    }
+    .mi-upgrade-nav {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(177,77,255,0.3);
+      background: rgba(177,77,255,0.08);
+      color: #b14dff;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .mi-upgrade-nav:hover {
+      background: rgba(177,77,255,0.2);
+      border-color: rgba(177,77,255,0.5);
+    }
+
+    .nav-benefits-btn {
+      background: linear-gradient(90deg, #b14dff22, #00e5ff22);
+      border: 1px solid #b14dff55;
+      color: #b14dff;
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 0.75rem;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .nav-benefits-btn:hover {
+      background: linear-gradient(90deg, #b14dff44, #00e5ff44);
+      border-color: #b14dff;
+    }
+
+    /* ── Search box layout + restyle ── */
+    .mi-xr-form { display: flex; align-items: center; }
+    .mi-xr-wrap {
+      display: flex;
+      align-items: center;
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.05) !important;
+      border: 1px solid rgba(255,255,255,0.1) !important;
+    }
+    .mi-xr-wrap:focus-within {
+      border-color: #00e5ff !important;
+      box-shadow: 0 0 15px rgba(0,229,255,0.15);
+    }
+    .mi-xr-input {
+      flex: 1;
+      min-width: 160px;
+      padding: 7px 10px;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #f0ecff;
+      font-size: 0.82rem;
+    }
+    .mi-xr-input::placeholder { color: rgba(255,255,255,0.3); }
+    .mi-xr-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 10px;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mi-xr-btn:hover {
+      background: rgba(177,77,255,0.2) !important;
+      color: #b14dff !important;
+    }
+
+    /* ── History link ── */
+    .mi-history-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    /* ── Upload area ── */
+    .mi-dropzone {
+      border-color: rgba(177,77,255,0.3) !important;
+      background: rgba(35,32,65,0.6) !important;
+      transition: all 0.3s;
+    }
+    .mi-dropzone:hover, .mi-dropzone.drag {
+      border-color: #b14dff !important;
+      background: rgba(177,77,255,0.05) !important;
+    }
+
+    /* ── Buttons ── */
+    .mi-btn:not(.mi-btn-ghost):not(.mi-btn-secondary), button[type="submit"].mi-btn {
+      background: linear-gradient(135deg, #b14dff, #4d8eff, #00e5ff) !important;
+      color: white !important;
+      font-family: 'Orbitron', monospace !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.06em !important;
+      text-transform: uppercase !important;
+      border: none !important;
+      box-shadow: 0 4px 25px rgba(177,77,255,0.3) !important;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s !important;
+    }
+    .mi-btn:not(.mi-btn-ghost):not(.mi-btn-secondary):hover {
+      box-shadow: 0 6px 35px rgba(177,77,255,0.5) !important;
+      transform: translateY(-2px);
+    }
+
+    /* ── Flash messages ── */
+    .mi-flash.ok {
+      background: rgba(0,255,136,0.08) !important;
+      border-color: rgba(0,255,136,0.2) !important;
+      color: #00ff88 !important;
+    }
+    .mi-flash.err {
+      background: rgba(255,45,111,0.08) !important;
+      border-color: rgba(255,45,111,0.2) !important;
+      color: #ff2d6f !important;
+    }
+
+    /* ── Footer ── */
+    .gs-hidden { display: none !important; }
+    .mi-footer-stat-num { color: #00e5ff; font-weight: 700; }
+    .mi-footer-stats {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 8px;
+      padding: 6px 14px;
+      background: rgba(0,229,255,0.06);
+      border: 1px solid rgba(0,229,255,0.15);
+      border-radius: 20px;
+      display: inline-block;
+    }
+    .mi-footer {
+      background: transparent !important;
+      border-top: 1px solid rgba(255,255,255,0.06) !important;
+      position: relative;
+      z-index: 1;
+    }
+    .mi-footer div:first-child {
+      color: var(--mi-muted) !important;
+    }
+    .mi-social-row {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      margin: 16px 0 4px;
+    }
+    .mi-social-label {
+      font-family: 'DM Sans', sans-serif; font-size: 0.65rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255,255,255,0.35);
+    }
+    .mi-social-links {
+      display: flex; gap: 16px; align-items: center; flex-wrap: wrap; justify-content: center;
+    }
+    .mi-social-link {
+      display: flex; align-items: center; gap: 7px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 600;
+      color: rgba(255,255,255,0.45); text-decoration: none;
+      transition: color 0.2s ease, transform 0.2s ease;
+    }
+    .mi-social-link:hover { color: #00e5ff; }
+    .mi-social-link:hover svg { opacity: 1; }
+    .mi-social-link svg { opacity: 0.5; transition: opacity 0.2s ease; flex-shrink: 0; }
+    @media (prefers-reduced-motion: no-preference) {
+      .mi-social-link:hover { transform: scale(1.05); }
+    }
+
+    /* ── Result card overrides (from results.html) ── */
+    .res-card--top {
+      border-color: rgba(255,215,0,0.3) !important;
+      background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(177,77,255,0.04)) !important;
+    }
+    .res-card--mid {
+      border-color: rgba(255,165,0,0.25) !important;
+    }
+    .res-card--low {
+      border-color: rgba(255,45,111,0.2) !important;
+    }
+    .res-card--top .res-sku {
+      background: linear-gradient(90deg, #ffd700, #ffe566) !important;
+      -webkit-background-clip: text !important;
+      -webkit-text-fill-color: transparent !important;
+      background-clip: text !important;
+    }
+    .res-card--top .res-rank-num { color: #ffd700 !important; }
+    .res-card--mid .res-rank-num { color: #ff8c00 !important; }
+    .res-card--low .res-rank-num { color: #ff2d6f !important; }
+
+    /* Match strength bars */
+    .res-conf-fill--high {
+      background: linear-gradient(90deg, #00e5ff, #00ff88) !important;
+    }
+    .res-conf-fill--mid {
+      background: linear-gradient(90deg, #ffd700, #ff8c00) !important;
+    }
+    .res-conf-fill--low {
+      background: linear-gradient(90deg, #ff2d6f, #ff0040) !important;
+    }
+    .res-conf-val--high { color: #00ff88 !important; }
+    .res-conf-val--mid { color: #ffd700 !important; }
+    .res-conf-val--low { color: #ff2d6f !important; }
+
+    .res-conf-lead--strong { background: rgba(0,255,136,0.1) !important; color: #00ff88 !important; }
+    .res-conf-lead--moderate { background: rgba(0,229,255,0.1) !important; color: #00e5ff !important; }
+    .res-conf-lead--slim { background: rgba(255,215,0,0.1) !important; color: #ffd700 !important; }
+
+    /* Score bars */
+    .res-card--top .res-barfill { background: #00ff88 !important; }
+    .res-card--mid .res-barfill { background: #ffd700 !important; }
+    .res-card--low .res-barfill { background: #ff2d6f !important; }
+
+    /* Card name & set */
+    .res-card-name {
+      font-family: 'Orbitron', monospace !important;
+      background: linear-gradient(90deg, #ffd700, #ffe566);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .res-card-set { color: #00e5ff !important; }
+
+    /* Rarity tags — neon glow */
+    .res-price-tag {
+      color: #00ff88 !important;
+      background: rgba(0,255,136,0.06) !important;
+      border-color: rgba(0,255,136,0.15) !important;
+    }
+
+    /* Marketplace links */
+    .res-mp-buy {
+      color: #00ff88 !important;
+      background: rgba(0,255,136,0.05) !important;
+      border-color: rgba(0,255,136,0.15) !important;
+    }
+    .res-mp-buy:hover {
+      background: rgba(0,255,136,0.15) !important;
+      border-color: rgba(0,255,136,0.35) !important;
+      box-shadow: 0 0 12px rgba(0,255,136,0.12);
+    }
+    .res-mp-sell {
+      color: #ffd700 !important;
+      background: rgba(255,215,0,0.05) !important;
+      border-color: rgba(255,215,0,0.15) !important;
+    }
+    .res-mp-sell:hover {
+      background: rgba(255,215,0,0.15) !important;
+      border-color: rgba(255,215,0,0.35) !important;
+      box-shadow: 0 0 12px rgba(255,215,0,0.12);
+    }
+
+    /* Cross-ref links */
+    .res-xref-link {
+      background: rgba(77,142,255,0.05) !important;
+      border-color: rgba(77,142,255,0.15) !important;
+      color: #4d8eff !important;
+    }
+    .res-xref-link:hover {
+      background: rgba(77,142,255,0.15) !important;
+      box-shadow: 0 0 10px rgba(77,142,255,0.12);
+    }
+
+    /* Thumbnails — #1 gets floating glow */
+    .res-card--top .res-thumb,
+    .res-card--top .res-thumb--ras {
+      border-color: rgba(255,215,0,0.4) !important;
+      animation: topCardFloat 4s ease-in-out infinite, topCardShimmer 6s ease-in-out infinite;
+    }
+    @keyframes topCardFloat {
+      0%, 100% { transform: translateY(0); box-shadow: 0 0 20px rgba(255,215,0,0.15), 0 0 40px rgba(177,77,255,0.08); }
+      50% { transform: translateY(-5px); box-shadow: 0 10px 35px rgba(255,215,0,0.3), 0 0 60px rgba(177,77,255,0.15); }
+    }
+    @keyframes topCardShimmer {
+      0%, 100% { border-color: rgba(255,215,0,0.4); }
+      33% { border-color: rgba(177,77,255,0.4); }
+      66% { border-color: rgba(0,229,255,0.4); }
+    }
+
+    /* Desktop hover for other cards */
+    @media (hover: hover) {
+      .res-card:not(.res-card--top) .res-thumb:hover {
+        transform: scale(1.08);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.3), 0 0 25px rgba(177,77,255,0.2);
+        border-color: rgba(177,77,255,0.4) !important;
+      }
+    }
+
+    /* Feedback bar */
+    .res-feedback, .res-fb-followup {
+      background: rgba(37,34,72,0.95) !important;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top-color: rgba(177,77,255,0.2) !important;
+    }
+    .res-fb-yes {
+      background: rgba(0,255,136,0.15) !important;
+      color: #00ff88 !important;
+      border-color: rgba(0,255,136,0.3) !important;
+    }
+    .res-fb-no {
+      background: rgba(255,45,111,0.1) !important;
+      color: #ff2d6f !important;
+      border-color: rgba(255,45,111,0.2) !important;
+    }
+    .res-fb-pick {
+      background: rgba(255,255,255,0.04) !important;
+      border-color: rgba(255,255,255,0.1) !important;
+    }
+    .res-fb-pick:hover {
+      background: rgba(177,77,255,0.15) !important;
+      border-color: rgba(177,77,255,0.3) !important;
+    }
+
+
+    /* Lightbox */
+    .mi-lightbox {
+      background: rgba(26,24,48,0.95) !important;
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      z-index: 99999 !important;
+    }
+    
+    .mi-lightbox img {
+      box-shadow: 0 0 80px rgba(177,77,255,0.25), 0 0 40px rgba(0,229,255,0.15) !important;
+    }
+
+    /* Section titles */
+    .res-section-title {
+      color: #9b95b8 !important;
+    }
+    .res-xref-title {
+      color: #9b95b8 !important;
+    }
+
+    /* Guidance box */
+    .res-guidance {
+      background: rgba(177,77,255,0.06) !important;
+      border-color: rgba(177,77,255,0.15) !important;
+    }
+    .res-guidance-feedback {
+      color: #00e5ff !important;
+    }
+
+    .res-feedback, .res-fb-followup, .res-fb-thanks {
+      position: fixed !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 999 !important;
+      padding-bottom: env(safe-area-inset-bottom) !important;
+    }
+
+    /* ── Floating card silhouettes ── */
+    .mi-float-card {
+      position: fixed;
+      border-radius: 8px;
+      border: 1px solid;
+      pointer-events: none;
+      z-index: 0;
+      animation: miCardDrift linear infinite;
+    }
+    .mi-fc-1 { width: 58px; height: 81px; border-color: rgba(177,77,255,0.14); left: 7%; animation-duration: 22s; animation-delay: 0s; }
+    .mi-fc-2 { width: 42px; height: 59px; border-color: rgba(0,229,255,0.11); right: 10%; animation-duration: 19s; animation-delay: -6s; }
+    .mi-fc-3 { width: 66px; height: 92px; border-color: rgba(255,215,0,0.09); left: 62%; animation-duration: 27s; animation-delay: -12s; }
+    .mi-fc-4 { width: 36px; height: 50px; border-color: rgba(0,255,136,0.11); left: 27%; animation-duration: 21s; animation-delay: -8s; }
+    .mi-fc-5 { width: 50px; height: 70px; border-color: rgba(255,45,111,0.09); right: 5%; animation-duration: 31s; animation-delay: -17s; }
+    @keyframes miCardDrift {
+      0%   { transform: translateY(110vh) rotate(-6deg); opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: 1; }
+      100% { transform: translateY(-15vh) rotate(6deg); opacity: 0; }
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      .mi-orb { display: none; }
+      .mi-float-card { display: none; }
+      .mi-top {
+        padding: 4px 8px !important;
+        padding-top: calc(4px + env(safe-area-inset-top)) !important;
+        gap: 4px !important;
+        flex-wrap: wrap !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        box-sizing: border-box !important;
+        overflow-x: hidden !important;
+      }
+      .mi-top-right {
+        flex-wrap: wrap !important;
+        gap: 4px !important;
+      }
+      .mi-top-right a,
+      .mi-top-right button,
+      .mi-top .nav-btn,
+      .mi-top .mi-nav-link {
+        font-size: 0.72rem !important;
+        padding: 5px 8px !important;
+        white-space: nowrap !important;
+      }
+    }
+  </style>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="GrailSweep — UK's first AI-powered trading card scanner. Instantly identify Pokémon, MTG and Yu-Gi-Oh cards, get live GBP prices from TCGPlayer & Cardmarket, and grade card condition in seconds.">
+    <meta name="keywords" content="pokemon card scanner, trading card value checker, MTG card identifier, Yu-Gi-Oh card price, TCG card scanner, trading card grading UK, pokemon card price checker, magic the gathering scanner, yugioh card identifier, TCG price checker UK, tcg uk pricing, trading cards UK, sell trading cards UK, best trading cards to collect UK, pokemon cards UK, card condition grading, TCG collection tracker, grailsweep">
+    <meta name="author" content="GrailSweep">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#0f0f1a">
+    <meta name="geo.region" content="GB">
+    <meta name="geo.country" content="GB">
+    <link rel="canonical" href="https://grailsweep.com{{ request.path }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="GrailSweep">
+    <meta name="application-name" content="GrailSweep">
+
+    <!-- Open Graph (Facebook, WhatsApp, Discord previews) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://grailsweep.com/">
+    <meta property="og:title" content="GrailSweep — AI Trading Card Scanner & Price Checker">
+    <meta property="og:description" content="Instantly identify Pokémon, MTG and Yu-Gi-Oh cards with AI. Get live GBP prices, condition grading and marketplace links. Free to use.">
+    <meta property="og:image" content="https://grailsweep.com/static/assets/grailsweep_og.png">
+    <meta property="og:site_name" content="GrailSweep">
+    <meta property="og:locale" content="en_GB">
+
+    <!-- Twitter/X Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://grailsweep.com/">
+    <meta name="twitter:title" content="GrailSweep — AI Trading Card Scanner & Price Checker">
+    <meta name="twitter:description" content="Instantly identify Pokémon, MTG and Yu-Gi-Oh cards with AI. Get live GBP prices and condition grading. Free to use.">
+    <meta name="twitter:image" content="https://grailsweep.com/static/assets/grailsweep_og.png">
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "GrailSweep — AI Trading Card Scanner",
+      "alternateName": "GrailSweep",
+      "url": "https://grailsweep.com",
+      "description": "UK's first AI-powered trading card scanner and price checker for Pokémon TCG, Magic: The Gathering and Yu-Gi-Oh. Instantly identify cards, get live GBP prices from TCGPlayer and Cardmarket, grade card condition, and track your collection. Free to use.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web, iOS, Android",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "GBP"
+      },
+      "featureList": [
+        "AI card identification",
+        "Live GBP pricing from TCGPlayer and Cardmarket",
+        "Condition grading",
+        "Pokémon TCG support",
+        "Magic: The Gathering support",
+        "Yu-Gi-Oh support",
+        "Collection tracking"
+      ],
+      "inLanguage": "en-GB",
+      "countryOfOrigin": "GB"
+    }
+    </script>
+  <script>
+    // Cookie-migration: write gs_access_code cookie from localStorage if not already set.
+    // Runs on every page so existing Pro users get a cookie without needing to re-enter their code.
+    (function() {
+      try {
+        if (document.cookie.indexOf('gs_access_code=') !== -1) return;
+        var lsCode = localStorage.getItem('matchit_access_code_v1');
+        if (lsCode) {
+          document.cookie = 'gs_access_code=' + encodeURIComponent(lsCode) + ';path=/;max-age=31536000;samesite=lax';
+        }
+      } catch(e) {}
+    })();
+  </script>
+  <script>
+    // Phase C1 — Topup scan state bootstrap (Task 9c)
+    // Populated by inject_scan_state() context processor on every SSR page.
+    window.GS_SCAN_STATE = {{ gs_scan_state | tojson | safe if gs_scan_state is defined else '{}' }};
+  </script>
+  <script>
+  /* Toast component + tier helpers — loaded in <head> so body scripts can call them */
+  function gsShowToast(message, options) {
+    options = options || {};
+    var root = document.getElementById('gsToastRoot');
+    if (!root) return;
+    var duration = (typeof options.duration === 'number') ? options.duration : 8000;
+    var variant = options.variant || 'info';
+    var onDismiss = options.onDismiss || null;
+    var toast = document.createElement('div');
+    toast.className = 'gs-toast' + (variant === 'warn' ? ' gs-toast-warn' : '');
+    toast.setAttribute('role', 'status');
+    if (options.title) {
+      var ttl = document.createElement('div');
+      ttl.className = 'gs-toast-title';
+      ttl.textContent = options.title;
+      toast.appendChild(ttl);
+    }
+    var msg = document.createElement('div');
+    msg.textContent = message;
+    toast.appendChild(msg);
+    var btn = document.createElement('button');
+    btn.className = 'gs-toast-close';
+    btn.setAttribute('aria-label', 'Dismiss');
+    btn.innerHTML = '&times;';
+    toast.appendChild(btn);
+    root.appendChild(toast);
+    requestAnimationFrame(function() { toast.classList.add('visible'); });
+    var dismissed = false;
+    function dismiss() {
+      if (dismissed) return;
+      dismissed = true;
+      toast.classList.remove('visible');
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+      if (onDismiss) { try { onDismiss(); } catch (e) {} }
+    }
+    btn.addEventListener('click', dismiss);
+    if (duration > 0) { setTimeout(dismiss, duration); }
+    return { dismiss: dismiss };
+  }
+  function _gsGetCode() {
+    var m = document.cookie.match(/(?:^|;\s*)gs_access_code=([^;]+)/);
+    return m ? decodeURIComponent(m[1]).trim().toUpperCase() : null;
+  }
+  function _gsDismissWarning(flag) {
+    var code = _gsGetCode();
+    if (!code) return;
+    try {
+      fetch('/api/tier/dismiss-warning', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code, flag: flag })
+      }).catch(function() {});
+    } catch (e) {}
+  }
+  function _fmtIsoDate(isoStr) {
+    try {
+      var d = new Date(isoStr);
+      if (isNaN(d.getTime())) return 'next billing date';
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+    } catch (e) { return 'next billing date'; }
+  }
+  </script>
+  <script>
+  /* On-device capability threshold — single source of truth. Defined here (in
+     <head>) so the weak-device marker class lands on <html> before any page's
+     body content parses, avoiding a flash of UI that then gets hidden. Shared
+     by the GSOnDevice gate in match.html (gsDeviceCanRunOnDevice) and the
+     scanner-panel visibility gate (the gs-weak-device class set below). */
+  window.GS_ONDEVICE_MIN_DEVICE_MEMORY = 4;   // GB; skip on-device if <= this. Tune with real device data.
+  window.GS_ONDEVICE_DISABLED_KEY = 'gs_ondevice_disabled_v1';
+
+  window.gsDeviceWeak = function () {
+    try {
+      var forced = localStorage.getItem(window.GS_ONDEVICE_DISABLED_KEY);
+      if (forced === '1') return true;
+      if (forced === '0') return false;
+      var mem = navigator.deviceMemory;
+      return (typeof mem === 'number' && mem > 0 &&
+              mem <= window.GS_ONDEVICE_MIN_DEVICE_MEMORY);
+    } catch (e) { return false; }  // never block scanning on an error
+  };
+
+  try { if (window.gsDeviceWeak()) document.documentElement.classList.add('gs-weak-device'); } catch (e) {}
+  </script>
+</head>
+
+<body class="mi-page">
+  <!-- Animated background -->
+  <div class="mi-bg-canvas">
+    <div class="mi-orb mi-orb-1"></div>
+    <div class="mi-orb mi-orb-2"></div>
+    <div class="mi-orb mi-orb-3"></div>
+    <div class="mi-orb mi-orb-4"></div>
+  </div>
+  <!-- Particles + floating cards sit ABOVE background, BELOW content -->
+  <canvas id="miParticleCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:0;"></canvas>
+  <div class="mi-float-card mi-fc-1"></div>
+  <div class="mi-float-card mi-fc-2"></div>
+  <div class="mi-float-card mi-fc-3"></div>
+  <div class="mi-float-card mi-fc-4"></div>
+  <div class="mi-float-card mi-fc-5"></div>
+
+  <!-- Toast notification root — floats above all content -->
+  <div id="gsToastRoot" class="gs-toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <div class="mi-shell mi-shell-main">
+    <header class="mi-top">
+      <a class="mi-brand" href="/match">
+        <div class="mi-logo-wrap" aria-hidden="true">
+          <img src="/static/assets/grailsweep_app_icon.png" alt="GrailSweep">
+        </div>
+        <div class="mi-brand-text">
+          <div class="mi-brand-name">{{ vbrand.name }}</div>
+          <div class="mi-brand-sub">{{ vbrand.subtitle }}</div>
+        </div>
+      </a>
+
+      <div class="mi-top-right">
+        <button type="button" onclick="window.location.href='/match'" class="mi-back-btn" title="Go to Match">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+            </svg>
+            Match
+        </button>
+        <a href="/collection" class="mi-collection-nav" title="My Collection">🃏 Collection</a>
+        <a href="/sets" class="mi-sets-nav" title="Set Completion">⊞ Sets</a>
+        <a href="/watchlist" class="mi-watchlist-nav" title="My Watchlist">★ Watchlist</a>
+        <a href="/upgrade" class="mi-upgrade-nav" title="Upgrade to Pro">⚡ Pro</a>
+        <a href="/" class="nav-benefits-btn">✨ Pro Benefits</a>
+      </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="mi-flash-wrap">
+          {% for category, msg in messages %}
+            <div class="mi-flash {{ 'err' if category=='err' else 'ok' }}">
+              {{ msg }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block body %}{% endblock %}
+  </div>
+
+  <footer class="mi-footer">
+    <div>© <span id="miYear"></span> <span style="background:linear-gradient(90deg,#b14dff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">GrailSweep</span>. All rights reserved.</div>
+    <div style="margin-top:8px;">
+      <a href="/privacy" style="color:var(--mi-muted,#aaa);text-decoration:none;font-size:0.75rem;">Privacy</a>
+      <span style="color:var(--mi-muted,#aaa);font-size:0.75rem;"> · </span>
+      <a href="/terms" style="color:var(--mi-muted,#aaa);text-decoration:none;font-size:0.75rem;">Terms</a>
+      <span style="color:var(--mi-muted,#aaa);font-size:0.75rem;"> · </span>
+      <a href="/contact" style="color:var(--mi-muted,#aaa);text-decoration:none;font-size:0.75rem;">Contact</a>
+    </div>
+
+    <div class="mi-social-row">
+      <span class="mi-social-label">Follow GrailSweep</span>
+      <div class="mi-social-links">
+        <a href="https://www.instagram.com/grailsweep" target="_blank" rel="noopener noreferrer" class="mi-social-link mi-social-ig" aria-label="GrailSweep on Instagram">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="4.5" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="17.5" cy="6.5" r="1.1" fill="currentColor"/>
+          </svg>
+          <span>@grailsweep</span>
+        </a>
+        <a href="https://www.tiktok.com/@grailsweep" target="_blank" rel="noopener noreferrer" class="mi-social-link mi-social-tt" aria-label="GrailSweep on TikTok">
+          <svg width="20" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.85a8.24 8.24 0 0 0 4.83 1.56V6.96a4.85 4.85 0 0 1-1.07-.27z" fill="currentColor"/>
+          </svg>
+          <span>@grailsweep</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="mi-footer-stats" id="miFooterStats">
+      <span id="miFooterTotal" class="mi-footer-stat-num">{{ footer_total_scans|default(0) }}</span> cards identified &nbsp;·&nbsp;
+      <span id="miFooterToday" class="mi-footer-stat-num">{{ footer_today_scans|default(0) }}</span> scanned today
+    </div>
+    <div class="mi-disclaimer">{{ vbrand.disclaimer }}</div>
+  </footer>
+
+  <script>
+    (function(){
+      var y = new Date().getFullYear();
+      var el = document.getElementById("miYear");
+      if (el) el.textContent = y;
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+          .then(function() { gsInitPush(); })
+          .catch(function(){});
+      }
+
+      // Init Lucide icons after DOM is ready
+      if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    })();
+  </script>
+
+  <!-- Floating particle system -->
+  <script>
+  (function(){
+    var canvas = document.getElementById('miParticleCanvas');
+    if (!canvas) return;
+    var ctx = canvas.getContext('2d');
+    var W, H;
+    var isMobile = window.innerWidth < 768;
+    var COUNT = isMobile ? 15 : 42;
+    if (COUNT === 0) return;
+    var COLORS = ['rgba(177,77,255,','rgba(0,229,255,','rgba(0,255,136,','rgba(255,215,0,','rgba(255,45,111,'];
+
+    function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function makeParticle() {
+      return {
+        x: Math.random() * W,
+        y: H + Math.random() * 60,
+        size: Math.random() * 2.5 + 1,
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: -(Math.random() * 0.55 + 0.2),
+        life: 0,
+        maxLife: Math.random() * 300 + 140,
+        isCard: Math.random() > 0.72
+      };
+    }
+
+    var particles = [];
+    for (var i = 0; i < COUNT; i++) {
+      var p = makeParticle();
+      p.y = Math.random() * H;
+      p.life = Math.floor(Math.random() * p.maxLife);
+      particles.push(p);
+    }
+
+    function loop() {
+      ctx.clearRect(0, 0, W, H);
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.life++;
+        var alpha = p.life < 40 ? (p.life / 40) * 0.65
+          : p.life > p.maxLife - 40 ? ((p.maxLife - p.life) / 40) * 0.65 : 0.65;
+        if (p.life > p.maxLife || p.y < -20) { particles[i] = makeParticle(); continue; }
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        if (p.isCard) {
+          ctx.strokeStyle = p.color + '0.9)';
+          ctx.lineWidth = 0.8;
+          var w = p.size * 5, h = p.size * 7;
+          ctx.strokeRect(p.x - w / 2, p.y - h / 2, w, h);
+        } else {
+          ctx.fillStyle = p.color + '1)';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      requestAnimationFrame(loop);
+    }
+    loop();
+  })();
+  </script>
+<script>
+// ── Device identity bootstrap ────────────────────────────────────────────────
+(function bootstrapDeviceIdentity() {
+    const KEY = 'matchit_device_id_v1';
+    // Read existing value: cookie first (server-readable), localStorage as fallback
+    const cookieMatch = document.cookie.match(new RegExp('(^| )' + KEY + '=([^;]+)'));
+    let deviceId = cookieMatch ? cookieMatch[2] : localStorage.getItem(KEY);
+    if (!deviceId) {
+        if (window.crypto && crypto.randomUUID) {
+            deviceId = crypto.randomUUID();
+        } else {
+            deviceId = 'dev-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        }
+        localStorage.setItem(KEY, deviceId);
+    }
+    // Mirror device_id to cookie so server can read it (Phase 2 enforcement)
+    document.cookie = `${KEY}=${deviceId}; path=/; max-age=${60*60*24*365*5}; SameSite=Lax`;
+    window.MATCHIT_DEVICE_ID = deviceId;
+})();
+// ────────────────────────────────────────────────────────────────────────────
+</script>
+<script>
+// ── Scan system: 150 free scans per calendar month ──────────────────────────
+const FREE_TIER_MONTHLY_LIMIT = 150;
+
+function _getCurrentPeriod() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function _getNextResetDate() {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    d.setDate(1);
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+}
+function scanGetState() {
+    const currentPeriod = _getCurrentPeriod();
+    let state;
+    try { state = JSON.parse(localStorage.getItem('matchit_scans_v2') || 'null'); } catch(e) { state = null; }
+    if (!state || state.period !== currentPeriod) {
+        state = { count: 0, period: currentPeriod };
+        localStorage.setItem('matchit_scans_v2', JSON.stringify(state));
+    }
+    return { count: state.count, period: state.period,
+             remaining: Math.max(0, FREE_TIER_MONTHLY_LIMIT - state.count),
+             limitReached: state.count >= FREE_TIER_MONTHLY_LIMIT };
+}
+function scanIncrement() {
+    if (localStorage.getItem('matchit_premium_v1') === 'unlocked') return scanGetState();
+    const s = scanGetState();
+    const ns = { count: s.count + 1, period: s.period };
+    localStorage.setItem('matchit_scans_v2', JSON.stringify(ns));
+    return scanGetState();
+}
+function scanCanProceed() {
+    if (localStorage.getItem('matchit_premium_v1') === 'unlocked') return true;
+    return !scanGetState().limitReached;
+}
+// Legacy aliases (scanIsBlocked / scanGetCount / scanRemaining) kept for upgrade.html compatibility
+function scanIsBlocked() { return !scanCanProceed(); }
+function scanGetCount()  { return scanGetState().count; }
+function scanRemaining() {
+    if (localStorage.getItem('matchit_premium_v1') === 'unlocked') return 999999;
+    return scanGetState().remaining;
+}
+// ────────────────────────────────────────────────────────────────────────────
+
+async function gsInitPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (localStorage.getItem('matchit_premium_v1') !== 'unlocked') return;
+  var code = localStorage.getItem('matchit_access_code_v1');
+  if (!code) return;
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var existing = await reg.pushManager.getSubscription();
+    if (existing) return; // already subscribed
+    // Show enable button instead of auto-prompting
+    var btn = document.getElementById('gsEnablePushBtn');
+    if (btn) btn.style.display = 'inline-flex';
+  } catch(e) {}
+}
+
+window.gsSubscribePush = async function() {
+  var btn = document.getElementById('gsEnablePushBtn');
+  if (btn) btn.style.display = 'none';
+  try {
+    var reg = await navigator.serviceWorker.ready;
+    var permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+    var vapidKey = '{{ cfg.get("vapid_public_key", "") }}';
+    console.log('[PUSH] vapidKey length:', vapidKey.length, 'code:', localStorage.getItem('matchit_access_code_v1'), 'premium:', localStorage.getItem('matchit_premium_v1'));
+    if (!vapidKey) return;
+    var sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: vapidKey
+    });
+    var code = localStorage.getItem('matchit_access_code_v1');
+    await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({code: code.trim().toUpperCase(), subscription: sub.toJSON()})
+    });
+    if (btn) { btn.textContent = '✓ Notifications enabled'; btn.style.display = 'inline-flex'; btn.disabled = true; btn.style.background = 'rgba(0,255,136,0.15)'; btn.style.borderColor = 'rgba(0,255,136,0.4)'; btn.style.color = '#00ff88'; }
+  } catch(e) { if (btn) btn.style.display = 'inline-flex'; }
+}
+function gsSyncCollection() {
+    var code = localStorage.getItem('matchit_access_code_v1');
+    if (!code || localStorage.getItem('matchit_premium_v1') !== 'unlocked') return;
+    try {
+        var items = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+        fetch('/api/collection/sync', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({code: code.trim().toUpperCase(), items: items})
+        }).catch(function(){});
+    } catch(_e) {}
+}
+function gsSyncWatchlist() {
+    var code = localStorage.getItem('matchit_access_code_v1');
+    if (!code || localStorage.getItem('matchit_premium_v1') !== 'unlocked') return;
+    try {
+        var items = JSON.parse(localStorage.getItem('matchit_watchlist_v1') || '[]');
+        fetch('/api/watchlist/sync', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({code: code.trim().toUpperCase(), items: items})
+        }).then(function(r){ console.log('[WATCHLIST] sync', r.status); }).catch(function(e){ console.warn('[WATCHLIST] sync failed', e); });
+    } catch(_e) {}
+}
+function gsAddToWatchlist(card) {
+    try {
+        var wl = JSON.parse(localStorage.getItem('matchit_watchlist_v1') || '[]');
+        if (wl.some(function(i) { return i.sku === card.sku; })) return;
+        wl.push({
+            sku:        card.sku || '',
+            name:       card.name || '',
+            set_name:   card.set_name || '',
+            img:        card.img || '',
+            gbp_at_add: card.gbp_at_add || 0,
+            added:      new Date().toISOString()
+        });
+        localStorage.setItem('matchit_watchlist_v1', JSON.stringify(wl));
+        gsSyncWatchlist();
+    } catch(_e) {}
+}
+function gsRemoveFromWatchlist(sku) {
+    try {
+        var wl = JSON.parse(localStorage.getItem('matchit_watchlist_v1') || '[]');
+        wl = wl.filter(function(i) { return i.sku !== sku; });
+        localStorage.setItem('matchit_watchlist_v1', JSON.stringify(wl));
+        gsSyncWatchlist();
+    } catch(_e) {}
+}
+function gsIsWatchlisted(sku) {
+    try {
+        var wl = JSON.parse(localStorage.getItem('matchit_watchlist_v1') || '[]');
+        return wl.some(function(i) { return i.sku === sku; });
+    } catch(_e) { return false; }
+}
+</script>
+<!-- Footer stats are server-rendered via {{ footer_total_scans }} and {{ footer_today_scans }}.
+     The hero stats poller on / updates footer elements too when on the landing page.
+     No standalone footer polling — avoids racing SSR values with a stale/failed fetch. -->
+
+
+<!-- ── Top-up modal (Task 9c Phase C2) ── -->
+<div id="gsTopupModal" role="dialog" aria-modal="true" aria-labelledby="gsTopupTitle"
+     style="display:none;position:fixed;inset:0;z-index:9000;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);padding:16px;">
+  <div style="background:#1a1a2e;border:1px solid rgba(177,77,255,0.4);border-radius:16px;max-width:420px;width:100%;padding:28px 24px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+    <button onclick="gsTopupModalClose()" aria-label="Close"
+            style="position:absolute;top:12px;right:14px;background:none;border:none;color:rgba(255,255,255,0.5);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+
+    <h2 id="gsTopupTitle" style="margin:0 0 6px;font-size:1.15rem;color:#fff;">Out of free scans</h2>
+    <p id="gsTopupSubtitle" style="margin:0 0 20px;font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.5;">
+      You've used all 150 free scans this month. Choose an option below to keep scanning.
+    </p>
+
+    <!-- Redeem code -->
+    <div style="margin-bottom:16px;">
+      <div style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Redeem a top-up code</div>
+      <div style="display:flex;gap:8px;">
+        <input id="gsTopupCodeInput" type="text" placeholder="TOPUP-XXXX-XXXX"
+               style="flex:1;padding:9px 12px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;font-size:0.88rem;outline:none;"
+               oninput="this.value=this.value.toUpperCase()" autocomplete="off">
+        <button onclick="gsRedeemTopupCode()" id="gsRedeemBtn"
+                style="padding:9px 16px;background:rgba(0,229,255,0.15);border:1px solid #00e5ff;color:#00e5ff;border-radius:8px;font-size:0.85rem;cursor:pointer;white-space:nowrap;font-weight:600;">
+          Redeem
+        </button>
+      </div>
+      <div id="gsTopupRedeemMsg" style="font-size:0.78rem;margin-top:6px;min-height:18px;"></div>
+    </div>
+
+    <div style="border-top:1px solid rgba(255,255,255,0.1);margin:16px 0;"></div>
+
+    <!-- Buy options -->
+    <div style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Buy more scans</div>
+    <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin:0 0 10px;line-height:1.5;">Purchases complete on grailsweep.com. After payment you'll receive a redemption code by email — enter it in the box above.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button id="gsCtaTopup75" onclick="gsTopupBuy('topup_75')"
+              style="padding:12px 16px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.35);border-radius:10px;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">
+        <span>
+          <span style="font-weight:700;">125 scans — purchase on grailsweep.com</span>
+          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">125 scans · use whenever · no monthly reset</span>
+        </span>
+        <span style="font-weight:700;color:#00e5ff;white-space:nowrap;">£1.89</span>
+      </button>
+      <button id="gsCtaMonthly" onclick="gsTopupBuy('monthly')"
+              style="padding:12px 16px;background:linear-gradient(135deg,rgba(177,77,255,0.15),rgba(0,229,255,0.1));border:1px solid rgba(177,77,255,0.4);border-radius:10px;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">
+        <span>
+          <span style="font-weight:700;">Pro — subscribe on grailsweep.com</span>
+          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Unlimited fair usage scanning + collection + alerts</span>
+        </span>
+        <span style="font-weight:700;color:#b14dff;white-space:nowrap;">£4.39/mo</span>
+      </button>
+      <!-- Annual upgrade — shown for monthly-tier cap (Phase 2C) -->
+      <button id="gsCtaAnnual" class="gs-cta-annual" onclick="gsTopupBuy('annual')"
+              style="display:none;padding:12px 16px;background:linear-gradient(135deg,rgba(0,229,255,0.15),rgba(177,77,255,0.1));border:1px solid rgba(0,229,255,0.4);border-radius:10px;color:#fff;cursor:pointer;text-align:left;justify-content:space-between;align-items:center;">
+        <span>
+          <span style="font-weight:700;">Ultimate Plan — subscribe on grailsweep.com</span>
+          <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Save ~34% · Unlimited fair usage scanning · billed yearly</span>
+        </span>
+        <span style="font-weight:700;color:#00e5ff;white-space:nowrap;">£34.99/yr</span>
+      </button>
+      <!-- Feedback link — shown for annual-tier cap (Phase 2C) -->
+      <a id="gsCtaFeedback" class="gs-cta-feedback"
+         href="mailto:support@grailsweep.com?subject=GrailSweep%20usage%20feedback"
+         style="display:none;text-align:center;font-size:0.78rem;color:rgba(255,255,255,0.45);text-decoration:none;padding:6px 0;">
+        Hitting the cap regularly? Tell us about it →
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Usage info modal (Phase 2B) -->
+<div id="gsUsageModal" role="dialog" aria-modal="true" aria-labelledby="gsUsageTitle"
+     style="display:none;position:fixed;inset:0;z-index:9001;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);padding:16px;">
+  <div style="background:#1a1a2e;border:1px solid rgba(177,77,255,0.4);border-radius:16px;max-width:420px;width:100%;padding:28px 24px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+    <button onclick="gsUsageClose()" aria-label="Close"
+            style="position:absolute;top:12px;right:14px;background:none;border:none;color:rgba(255,255,255,0.5);font-size:1.4rem;cursor:pointer;line-height:1;">✕</button>
+    <h2 id="gsUsageTitle" style="margin:0 0 18px;font-size:1.15rem;color:#fff;">Your scan usage</h2>
+    <div id="gsUsageBody"></div>
+  </div>
+</div>
+
+<script>
+  // === TWA detection + Stripe redirect helpers ===
+  function gsIsRunningInTWA() {
+    if (sessionStorage.getItem('gs_isTWA') === 'true') return true;
+    if (document.referrer && document.referrer.startsWith('android-app://')) {
+      sessionStorage.setItem('gs_isTWA', 'true');
+      return true;
+    }
+    return false;
+  }
+
+  function gsNavigateToCheckout(checkoutUrl) {
+    if (gsIsRunningInTWA()) {
+      var stripped = checkoutUrl.replace(/^https:\/\//, '');
+      var intentUrl =
+        'intent://' + stripped +
+        '#Intent;scheme=https;package=com.android.chrome;end';
+      window.location.href = intentUrl;
+    } else {
+      window.location.href = checkoutUrl;
+    }
+  }
+  // === end TWA helpers ===
+
+(function() {
+  // ── Top-up modal helpers (Task 9c Phase C2) ──
+  function gsTopupModalOpen(reason, tier) {
+    reason = reason || 'manual_open';
+    tier   = tier   || (window.GS_SCAN_STATE && window.GS_SCAN_STATE.tier) || 'free';
+
+    // Copy matrix — title + subtitle per tier
+    var COPY = {
+      free:           { title: 'Out of free scans',
+                        subtitle: 'You\'ve used all 150 free scans this month. Choose an option below to keep scanning.' },
+      monthly:        { title: 'Monthly cap reached',
+                        subtitle: 'You\'ve used your included scans this period. Top up, or upgrade to Ultimate Plan for a higher allowance.' },
+      annual:         { title: 'Ultimate Plan cap reached',
+                        subtitle: 'You\'ve hit your fair-use cap this period. Top up to keep scanning, or let us know if you hit this regularly.' }
+    };
+    var copy = COPY[tier] || COPY['free'];
+    // Override for free tier with active top-up balance
+    if (tier === 'free' && window.GS_SCAN_STATE && window.GS_SCAN_STATE.topup_remaining > 0) {
+      var _tr = window.GS_SCAN_STATE.topup_remaining;
+      copy = {
+        title: _tr + ' top-up scan' + (_tr === 1 ? '' : 's') + ' remaining',
+        subtitle: 'You\'ve used all 150 free scans this month. Top up further or upgrade to Pro for unlimited.'
+      };
+    }
+    var titleEl    = document.getElementById('gsTopupTitle');
+    var subtitleEl = document.getElementById('gsTopupSubtitle');
+    if (titleEl)    titleEl.textContent    = copy.title;
+    if (subtitleEl) subtitleEl.textContent = copy.subtitle;
+
+    // Show/hide helper — buttons use flex, anchor uses block
+    function _vis(id, show) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.style.display = show ? (el.tagName === 'A' ? 'block' : 'flex') : 'none';
+    }
+
+    // Visibility matrix
+    _vis('gsCtaTopup75',  true);
+    _vis('gsCtaMonthly',  tier === 'free');
+    _vis('gsCtaAnnual',   tier === 'monthly');
+    _vis('gsCtaFeedback', tier === 'annual');
+
+    var el = document.getElementById('gsTopupModal');
+    if (!el) return;
+    el.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    var inp = document.getElementById('gsTopupCodeInput');
+    if (inp) { inp.value = ''; }
+    var msg = document.getElementById('gsTopupRedeemMsg');
+    if (msg) { msg.textContent = ''; msg.style.color = ''; }
+  }
+  function gsTopupModalClose() {
+    var el = document.getElementById('gsTopupModal');
+    if (!el) return;
+    el.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  // Close on backdrop click
+  document.getElementById('gsTopupModal').addEventListener('click', function(e) {
+    if (e.target === this) gsTopupModalClose();
+  });
+  // Close on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') gsTopupModalClose();
+  });
+
+  function gsRedeemTopupCode() {
+    var inp = document.getElementById('gsTopupCodeInput');
+    var msg = document.getElementById('gsTopupRedeemMsg');
+    var btn = document.getElementById('gsRedeemBtn');
+    if (!inp || !msg) return;
+    var code = inp.value.trim().toUpperCase();
+    if (!code) { msg.textContent = 'Please enter a code.'; msg.style.color = '#ff6b6b'; return; }
+    btn.disabled = true; btn.textContent = 'Checking…';
+    msg.textContent = ''; msg.style.color = '';
+    fetch('/api/redeem-topup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code: code })
+    })
+    .then(function(r) { return r.json().then(function(d) { return { status: r.status, data: d }; }); })
+    .then(function(res) {
+      btn.disabled = false; btn.textContent = 'Redeem';
+      if (res.status === 200 && res.data.ok) {
+        msg.style.color = '#00ff88';
+        msg.textContent = '✅ ' + res.data.credits_added + ' scans added! Reload to continue.';
+        setTimeout(function() { location.reload(); }, 1800);
+      } else {
+        msg.style.color = '#ff6b6b';
+        msg.textContent = '✗ ' + (res.data.message || res.data.error || 'Redemption failed. Check the code and try again.');
+      }
+    })
+    .catch(function() {
+      btn.disabled = false; btn.textContent = 'Redeem';
+      msg.style.color = '#ff6b6b'; msg.textContent = 'Network error — please try again.';
+    });
+  }
+
+  function gsTopupBuy(tier) {
+    gsTopupModalClose();
+    fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier: tier })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.url) { gsNavigateToCheckout(d.url); }
+      else { alert('Could not start checkout. Please try again.'); }
+    })
+    .catch(function() { alert('Network error. Please try again.'); });
+  }
+
+  // Expose globally so results.html / match.html can call these
+  window.gsTopupModalOpen  = gsTopupModalOpen;
+  window.gsTopupModalClose = gsTopupModalClose;
+  window.gsRedeemTopupCode = gsRedeemTopupCode;
+  window.gsTopupBuy        = gsTopupBuy;
+})();
+</script>
+
+<script>
+// ── Usage info modal (Phase 2B) ──────────────────────────────────────────────
+function gsShowUsage() {
+  var el = document.getElementById('gsUsageModal');
+  if (!el) return;
+  var body  = document.getElementById('gsUsageBody');
+  var gs    = window.GS_SCAN_STATE || {};
+  var tier  = gs.tier || 'free';
+
+  var tierNames = {
+    'free':           'Free',
+    'monthly':        'Pro Monthly',
+    'annual':         'Ultimate Plan',
+    'legacy':         'Legacy',
+    'lifetime':       'Lifetime'
+  };
+  var planLabel = tierNames[tier] || tier;
+  var topupRem  = (gs.topup_remaining != null) ? gs.topup_remaining : 0;
+
+  var isUncapped = (tier === 'legacy' || tier === 'lifetime');
+  var hasLimit   = !isUncapped && gs.tier_limit;
+  var isFree     = (tier === 'free');
+  var html       = '';
+
+  if (hasLimit) {
+    var resetDate = gs.tier_period_end && typeof _fmtIsoDate === 'function'
+                    ? _fmtIsoDate(gs.tier_period_end) : '—';
+    html = ''
+      + '<div style="margin-bottom:18px;">'
+      +   '<div style="font-size:0.95rem;color:#fff;">Fair usage policy</div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:0.85rem;color:rgba(255,255,255,0.75);margin-bottom:20px;">'
+      +   '<div style="color:rgba(255,255,255,0.5);">Resets:</div><div>' + resetDate + '</div>'
+      +   '<div style="color:rgba(255,255,255,0.5);">Plan:</div><div>' + planLabel + '</div>'
+      +   '<div style="color:rgba(255,255,255,0.5);">Top-ups:</div><div>' + topupRem.toLocaleString() + ' scans</div>'
+      + '</div>';
+  } else if (isUncapped) {
+    html = ''
+      + '<div style="font-size:0.95rem;color:#fff;margin-bottom:18px;">'
+      +   '<strong>Unlimited scans</strong> on the ' + planLabel + ' plan.'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:0.85rem;color:rgba(255,255,255,0.75);margin-bottom:20px;">'
+      +   '<div style="color:rgba(255,255,255,0.5);">Plan:</div><div>' + planLabel + '</div>'
+      +   '<div style="color:rgba(255,255,255,0.5);">Top-ups:</div><div>' + topupRem.toLocaleString() + ' scans</div>'
+      + '</div>';
+  } else {
+    var fUsed     = gs.count || 0;
+    var fLimit    = gs.limit || 150;
+    var fPct      = Math.min(100, Math.round((fUsed / fLimit) * 100));
+    var fBarColor = fPct >= 95 ? '#ff4d4d' : (fPct >= 80 ? '#ffa500' : '#00e5ff');
+    html = ''
+      + '<div style="margin-bottom:18px;">'
+      +   '<div style="font-size:0.95rem;color:#fff;margin-bottom:8px;">'
+      +     '<strong>' + fUsed + '</strong> / ' + fLimit + ' free scans used this month'
+      +   '</div>'
+      +   '<div style="background:rgba(255,255,255,0.08);border-radius:6px;height:10px;overflow:hidden;">'
+      +     '<div style="background:' + fBarColor + ';height:100%;width:' + fPct + '%;"></div>'
+      +   '</div>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:0.85rem;color:rgba(255,255,255,0.75);margin-bottom:20px;">'
+      +   '<div style="color:rgba(255,255,255,0.5);">Plan:</div><div>Free</div>'
+      +   '<div style="color:rgba(255,255,255,0.5);">Top-ups:</div><div>' + topupRem.toLocaleString() + ' scans</div>'
+      + '</div>';
+  }
+
+  var ctaLabel = isFree ? 'Get more scans →' : 'Add more scans →';
+  html += ''
+    + '<button type="button" onclick="gsUsageClose();gsTopupModalOpen(\'manual_open\',\'' + tier + '\');" '
+    +   'style="width:100%;padding:11px 20px;border-radius:10px;background:linear-gradient(135deg,#b14dff,#00e5ff);color:#fff;font-weight:700;font-size:0.88rem;border:none;cursor:pointer;">'
+    +   ctaLabel
+    + '</button>';
+
+  body.innerHTML = html;
+  el.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function gsUsageClose() {
+  var el = document.getElementById('gsUsageModal');
+  if (!el) return;
+  el.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+document.getElementById('gsUsageModal').addEventListener('click', function(e) {
+  if (e.target === this) gsUsageClose();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    var el = document.getElementById('gsUsageModal');
+    if (el && el.style.display === 'flex') gsUsageClose();
+  }
+});
+
+window.gsShowUsage  = gsShowUsage;
+window.gsUsageClose = gsUsageClose;
+</script>
+{% block page_modals %}{% endblock %}
+</body>
+</html>

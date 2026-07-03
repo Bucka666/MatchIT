@@ -25,8 +25,6 @@
 .wl-item-price-label { font-size:0.58rem; color:var(--mi-muted,#aaa); text-align:right; }
 .wl-remove { background:rgba(255,45,111,0.08); border:1px solid rgba(255,45,111,0.2); color:#ff2d6f; padding:4px 10px; border-radius:6px; font-size:0.7rem; font-weight:600; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
 .wl-remove:hover { background:rgba(255,45,111,0.2); border-color:rgba(255,45,111,0.4); }
-.wl-add-col { background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.3); color:#ffd700; padding:4px 10px; border-radius:6px; font-size:0.7rem; font-weight:600; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
-.wl-add-col:hover { background:rgba(255,215,0,0.2); border-color:rgba(255,215,0,0.5); }
 
 @media (max-width: 480px) {
   .wl-item { padding:10px; gap:10px; }
@@ -78,8 +76,6 @@
 <div id="wlList" class="wl-list"></div>
 
 </div>
-
-{% include "_gs_card_actions.html" %}
 
 <script>
 (function() {
@@ -139,7 +135,7 @@
     // Newest first
     var sorted = items.slice().reverse();
 
-    list.innerHTML = sorted.map(function(item, idx) {
+    list.innerHTML = sorted.map(function(item) {
       var price    = item.gbp_at_add ? '£' + parseFloat(item.gbp_at_add).toFixed(2) : '—';
       var dateStr  = item.added ? new Date(item.added).toLocaleDateString('en-GB') : '';
       var safeSku  = (item.sku || '').replace(/'/g, '');
@@ -153,21 +149,10 @@
         '<div class="wl-item-actions">' +
           '<div class="wl-item-price">' + price + '</div>' +
           '<div class="wl-item-price-label">at time of add</div>' +
-          '<button class="wl-add-col" data-idx="' + idx + '">⭐ Collection</button>' +
           '<button class="wl-remove" onclick="wlRemoveItem(\'' + safeSku + '\')">✕ Remove</button>' +
         '</div>' +
       '</div>';
     }).join('');
-
-    // Attach via closure over `sorted` (not inline onclick) — item names can
-    // contain apostrophes that would break a JSON.stringify(item) dumped into
-    // a single-quoted onclick attribute.
-    Array.prototype.forEach.call(list.querySelectorAll('.wl-add-col'), function(btn) {
-      var idx = parseInt(btn.getAttribute('data-idx'), 10);
-      btn.addEventListener('click', function() {
-        if (typeof gsAddToCollection === 'function') gsAddToCollection(sorted[idx], btn);
-      });
-    });
   }
 
   window.wlRemoveItem = function(sku) { wlRemove(sku); };

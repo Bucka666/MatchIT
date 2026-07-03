@@ -1005,6 +1005,66 @@
 .grade-photo-note { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; color: rgba(255,255,255,0.35); margin-top: 6px; margin-bottom: 0; font-style: italic; }
 .grade-limit-note { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; color: rgba(255,255,255,0.35); text-align: center; margin-top: 4px; font-style: italic; }
 
+/* ── Duplicate detection modal ── */
+.dup-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.dup-modal-overlay.is-open {
+  display: flex;
+}
+.dup-modal {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 24px 20px;
+  max-width: 320px;
+  width: 100%;
+  border: 1px solid rgba(177,77,255,0.4);
+  text-align: center;
+}
+.dup-modal-icon { font-size: 2rem; margin-bottom: 8px; }
+.dup-modal-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.95rem;
+  color: #ffd700;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.dup-modal-msg {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+.dup-modal-btns { display: flex; gap: 10px; justify-content: center; }
+.dup-btn-cancel {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.dup-btn-add {
+  background: linear-gradient(90deg, #b14dff, #00e5ff);
+  border: none;
+  color: #000;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
 
 .res-grade-auth { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); }
 .res-auth-badge { font-size: 0.85rem; font-weight: 600; margin-bottom: 4px; }
@@ -1394,6 +1454,40 @@ function colAddCard() {
   }
 })();
 
+function gsCountCopies(cardName, setName) {
+  try {
+    var collection = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+    return collection.filter(function(item) {
+      return (item.name || item.set_name) &&
+        (item.name || '').trim().toLowerCase() === cardName.trim().toLowerCase() &&
+        (item.set_name || item.set || '').trim().toLowerCase() === setName.trim().toLowerCase();
+    }).length;
+  } catch(e) { return 0; }
+}
+
+var _gsDupPendingFn = null;
+
+function gsDupCheck(cardName, setName, proceedFn) {
+  var copies = gsCountCopies(cardName, setName);
+  if (copies === 0) { proceedFn(); return; }
+  var copyWord = copies === 1 ? 'copy' : 'copies';
+  document.getElementById('dupModalMsg').innerHTML =
+    'You already have <strong>' + copies + ' ' + copyWord + '</strong> of <strong>' +
+    cardName + '</strong> (' + setName + ') in your collection.<br><br>' +
+    'Do you want to add another copy?';
+  _gsDupPendingFn = proceedFn;
+  document.getElementById('dupModal').classList.add('is-open');
+}
+
+function gsDupConfirm() {
+  document.getElementById('dupModal').classList.remove('is-open');
+  if (_gsDupPendingFn) { _gsDupPendingFn(); _gsDupPendingFn = null; }
+}
+
+function gsDupCancel() {
+  document.getElementById('dupModal').classList.remove('is-open');
+  _gsDupPendingFn = null;
+}
 
 function _getAudioCtx() {
     if (!window._gsAudioCtx) {
@@ -1786,7 +1880,17 @@ async function submitPriceAlert() {
 }
 </script>
 
-{% include "_gs_card_actions.html" %}
+<div id="dupModal" class="dup-modal-overlay" onclick="if(event.target===this)gsDupCancel()">
+  <div class="dup-modal">
+    <div class="dup-modal-icon">📋</div>
+    <div class="dup-modal-title">Already in Collection</div>
+    <div class="dup-modal-msg" id="dupModalMsg"></div>
+    <div class="dup-modal-btns">
+      <button type="button" class="dup-btn-cancel" onclick="gsDupCancel()">Skip</button>
+      <button type="button" class="dup-btn-add" onclick="gsDupConfirm()">Add Another Copy</button>
+    </div>
+  </div>
+</div>
 
 {% if results %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>

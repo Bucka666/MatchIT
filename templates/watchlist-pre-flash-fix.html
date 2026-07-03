@@ -165,7 +165,7 @@
     Array.prototype.forEach.call(list.querySelectorAll('.wl-add-col'), function(btn) {
       var idx = parseInt(btn.getAttribute('data-idx'), 10);
       btn.addEventListener('click', function() {
-        if (typeof gsAddToCollection === 'function') gsAddToCollection(sorted[idx], btn);
+        if (typeof gsAddToCollection === 'function') gsAddToCollection(sorted[idx]);
       });
     });
   }

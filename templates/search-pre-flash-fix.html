@@ -174,13 +174,11 @@
         // Attach via closure over c (not inline onclick) — card names like
         // "Farfetch'd" contain apostrophes that would break a JSON.stringify(c)
         // dumped into a single-quoted onclick attribute.
-        var colBtn = card.querySelector('.gs-card-btn-col');
-        var wlBtn = card.querySelector('.gs-card-btn-wl');
-        colBtn.addEventListener('click', function() {
-          if (typeof gsAddToCollection === 'function') gsAddToCollection(c, colBtn);
+        card.querySelector('.gs-card-btn-col').addEventListener('click', function() {
+          if (typeof gsAddToCollection === 'function') gsAddToCollection(c);
         });
-        wlBtn.addEventListener('click', function() {
-          if (typeof gsAddToWatchlist === 'function') gsAddToWatchlist(c, wlBtn);
+        card.querySelector('.gs-card-btn-wl').addEventListener('click', function() {
+          if (typeof gsAddToWatchlist === 'function') gsAddToWatchlist(c);
         });
         grid.appendChild(card);
       });
