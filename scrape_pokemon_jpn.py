@@ -147,6 +147,303 @@ def scrape_set(sdk: TCGdex, set_id: str, db_root: Path,
 
 _TCGDEX_CARD_DETAIL_URL = "https://api.tcgdex.net/v2/ja/cards/{id}"
 
+# ── JustTCG pricing ──────────────────────────────────────────────────────────
+_JUSTTCG_BASE = "https://api.justtcg.com/v1"
+_JUSTTCG_SET_MAP_CACHE: dict | None = None  # lazy-loaded, set code → JustTCG set ID
+
+
+def _justtcg_get_with_backoff(url: str, headers: dict, timeout: int, max_retries: int = 5):
+    """GET with exponential backoff (1s, 2s, 4s, 8s, 16s) on 429, mirroring
+    _fetch_card_detail_with_backoff's TCGdex pattern. Live-verified dry run
+    against the real API showed the plain single-attempt version dropping
+    ~60% of sets to a 429 on the very first page — this is not optional
+    hardening, it's required for the backfill to get real coverage.
+    Returns the parsed JSON dict, or None if retries are exhausted (caller
+    treats that set/page as unavailable and moves on, same as before)."""
+    delay = 1
+    for attempt in range(max_retries):
+        try:
+            r = requests.get(url, headers=headers, timeout=timeout)
+            if r.status_code == 429:
+                if attempt < max_retries - 1:
+                    time.sleep(delay)
+                    delay *= 2
+                    continue
+                print(f"[JUSTTCG] Exhausted {max_retries} retries (429): {url}")
+                return None
+            r.raise_for_status()
+            return r.json()
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(delay)
+                delay *= 2
+                continue
+            print(f"[JUSTTCG] Request failed after {max_retries} attempts: {url} — {e}")
+            return None
+    return None
+
+
+def _get_justtcg_set_map(api_key: str) -> dict:
+    """
+    Fetch all JustTCG Pokémon Japan sets and return a mapping from
+    our set codes (e.g. 'sv2a', 'sv-p', 'm2a') to JustTCG set IDs
+    (e.g. 'sv2a-pokemon-card-151-pokemon-japan').
+    """
+    global _JUSTTCG_SET_MAP_CACHE
+    if _JUSTTCG_SET_MAP_CACHE is not None:
+        return _JUSTTCG_SET_MAP_CACHE
+
+    mapping = {}
+    offset = 0
+    limit = 100
+    headers = {"x-api-key": api_key}
+
+    seen_before_this_page = 0
+    known_total = None
+
+    while True:
+        url = f"{_JUSTTCG_BASE}/sets?game=pokemon-japan&limit={limit}&offset={offset}"
+        # Kept on _justtcg_get_with_backoff (not a bare requests.get) — /sets
+        # genuinely 429s under load (seen live at offset 2000 in testing);
+        # dropping the backoff here would reintroduce that failure.
+        data = _justtcg_get_with_backoff(url, headers, timeout=10)
+        if data is None:
+            print(f"[JUSTTCG-SETMAP] Giving up at offset {offset} after retries")
+            break
+
+        sets = data.get("data", [])
+        if not sets:
+            break
+
+        # If the API tells us the total count, trust it as a hard stop.
+        if known_total is None and isinstance(data.get("total"), int):
+            known_total = data["total"]
+
+        new_this_page = 0
+        for s in sets:
+            set_id = s.get("id", "")
+            if not set_id or not set_id.endswith("-pokemon-japan"):
+                continue
+            if set_id not in mapping:
+                new_this_page += 1
+            mapping[set_id] = set_id
+
+        # Stop condition 1: API gave us a known total and we've reached it.
+        if known_total is not None and len(mapping) >= known_total:
+            break
+
+        # Stop condition 2: this page contained zero new sets — we've
+        # looped back over data we already have. Safety net for APIs
+        # that don't shrink the final page or report a total. This is the
+        # fix for the real failure mode observed live: /sets kept returning
+        # full 100-row pages of already-seen sets well past offset 1700-2000,
+        # burning most of the account's request quota before a single
+        # /cards call ever ran (root cause of the earlier 401s on /cards).
+        if new_this_page == 0:
+            print(f"[JUSTTCG-SETMAP] No new sets at offset {offset} — stopping")
+            break
+
+        offset += limit
+        time.sleep(0.3)
+
+        # Absolute safety ceiling — never loop more than 10 pages
+        # (1000 sets) regardless of what the API says.
+        if offset >= 1000:
+            print(f"[JUSTTCG-SETMAP] Hit safety ceiling at offset {offset}")
+            break
+
+    _JUSTTCG_SET_MAP_CACHE = mapping
+    print(f"[JUSTTCG-SETMAP] Loaded {len(mapping)} JP sets")
+    return mapping
+
+
+def _resolve_justtcg_set_id(our_set_code: str, set_map: dict) -> str | None:
+    """
+    Given our internal set code (e.g. 'sv2a', 'sv-p', 'm2a'),
+    find the matching JustTCG set ID by prefix matching.
+    e.g. 'sv2a' matches 'sv2a-pokemon-card-151-pokemon-japan'
+         'sv-p' matches 'sv-p-promotional-cards-pokemon-japan'
+    """
+    prefix = our_set_code.lower() + "-"
+    for set_id in set_map:
+        if set_id.startswith(prefix):
+            return set_id
+    return None
+
+
+def _fetch_justtcg_set_prices(justtcg_set_id: str, api_key: str) -> dict:
+    """
+    Fetch all cards in a JustTCG set and return a dict of:
+        card_number_str → near_mint_price_usd (float)
+    e.g. {"040": 0.71, "201": 12.50, ...}
+    Card numbers are the prefix before "/" (e.g. "040" from "040/165").
+
+    Prices come back from JustTCG already denominated in USD dollars
+    (e.g. 144.44) — confirmed against the live API (2026-07-03), NOT
+    integer cents. Do not divide by 100.
+    """
+    prices = {}
+    offset = 0
+    limit = 20
+    headers = {"x-api-key": api_key}
+
+    while True:
+        url = (f"{_JUSTTCG_BASE}/cards?game=pokemon-japan"
+               f"&set={justtcg_set_id}&limit={limit}&offset={offset}")
+        data = _justtcg_get_with_backoff(url, headers, timeout=12)
+        if data is None:
+            print(f"[JUSTTCG-FETCH] Giving up on {justtcg_set_id} offset {offset} after retries")
+            break
+
+        cards = data.get("data", [])
+        if not cards:
+            break
+
+        for card in cards:
+            number = card.get("number") or ""
+            if "/" not in number:
+                continue  # Skip booster boxes and sealed products
+
+            num_prefix = number.split("/")[0].strip()
+            if not num_prefix:
+                continue
+
+            # Find the Near Mint price (first condition match)
+            for variant in card.get("variants", []):
+                if variant.get("condition") == "Near Mint":
+                    raw = variant.get("price")
+                    if raw:
+                        prices[num_prefix] = round(float(raw), 2)  # already USD
+                    break
+
+        offset += limit
+        time.sleep(0.6)  # 10 req/min on free tier; relax on paid
+
+        if offset >= 2000:  # Safety ceiling
+            break
+
+    return prices
+
+
+def backfill_justtcg_prices(
+    db_root: Path,
+    api_key: str,
+    dry_run: bool = False,
+    resume: bool = True,
+) -> dict:
+    """
+    Walk all imaged jpn- card folders and write TCGPlayer (USD) prices
+    from JustTCG into the 'tcgplayer' slot of each profile.
+
+    Only fills cards that currently have NO Cardmarket avg_sell price
+    (when resume=True), so existing Cardmarket prices are preserved.
+
+    Args:
+        db_root:  Path to CardsDB root (contains pokemon/ subfolder)
+        api_key:  JustTCG API key
+        dry_run:  If True, fetch but don't write profiles
+        resume:   If True, skip cards that already have a Cardmarket
+                  avg_sell or an existing tcgplayer.market price
+    """
+    pokemon_dir = db_root / "pokemon"
+    if not pokemon_dir.exists():
+        return {"error": str(pokemon_dir)}
+
+    set_map = _get_justtcg_set_map(api_key)
+
+    # Group imaged JP card folders by set code
+    by_set: dict[str, list[tuple[Path, str]]] = {}
+    for folder in sorted(pokemon_dir.iterdir()):
+        name = folder.name
+        if not name.startswith("jpn-"):
+            continue
+        if not (folder / "front.png").exists():
+            continue
+        if not (folder / "profile.json").exists():
+            continue
+
+        parts = name.split("-")
+        if len(parts) < 3:
+            continue
+
+        # Set code = everything between "jpn-" and the trailing card number
+        our_set_code = "-".join(parts[1:-1])  # e.g. "sv2a" or "sv-p"
+        card_number = parts[-1]               # e.g. "040"
+
+        by_set.setdefault(our_set_code, []).append((folder, card_number))
+
+    stats = {
+        "sets_found": 0, "sets_missing": 0,
+        "cards_checked": 0, "priced": 0,
+        "skipped_existing": 0, "no_match": 0, "errors": 0,
+    }
+
+    for our_set_code, folders in sorted(by_set.items()):
+        justtcg_set_id = _resolve_justtcg_set_id(our_set_code, set_map)
+        if not justtcg_set_id:
+            stats["sets_missing"] += 1
+            continue
+
+        stats["sets_found"] += 1
+
+        try:
+            set_prices = _fetch_justtcg_set_prices(justtcg_set_id, api_key)
+        except Exception as e:
+            print(f"[JUSTTCG-BACKFILL] Error fetching {our_set_code}: {e}")
+            stats["errors"] += 1
+            continue
+
+        print(f"[JUSTTCG-BACKFILL] {our_set_code} → {len(set_prices)} prices")
+
+        for folder, card_number in folders:
+            stats["cards_checked"] += 1
+            profile_path = folder / "profile.json"
+
+            try:
+                with open(profile_path, encoding="utf-8") as f:
+                    profile = json.load(f)
+            except Exception:
+                stats["errors"] += 1
+                continue
+
+            if resume:
+                existing_prices = profile.get("prices") or {}
+                cm = existing_prices.get("cardmarket") or {}
+                tcp = existing_prices.get("tcgplayer") or {}
+                if cm.get("avg_sell") or tcp.get("market"):
+                    stats["skipped_existing"] += 1
+                    continue
+
+            # Match by card number — try exact, then integer comparison
+            price = set_prices.get(card_number)
+            if price is None:
+                try:
+                    price = set_prices.get(str(int(card_number)))
+                except ValueError:
+                    pass
+
+            if price is None:
+                stats["no_match"] += 1
+                continue
+
+            if not dry_run:
+                prices = profile.setdefault("prices", {})
+                prices["tcgplayer"] = {"market": price}
+                if not profile.get("prices_updated"):
+                    from datetime import datetime
+                    profile["prices_updated"] = (
+                        datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                    )
+                with open(profile_path, "w", encoding="utf-8") as f:
+                    json.dump(profile, f, indent=2, ensure_ascii=False)
+
+            stats["priced"] += 1
+
+        time.sleep(1.0)  # Pause between sets
+
+    return stats
+
+
 # Resolver field order matters: dict insertion order is what
 # _extract_gbp_from_profile() (app.py) ends up picking from, since
 # Cardmarket prices are flat (no variant dict) and each field is read

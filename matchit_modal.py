@@ -433,6 +433,7 @@ def scheduled_fx_refresh():
 @app.function(
     image=image,
     volumes={"/modal_data": vol},
+    secrets=[modal.Secret.from_name("justtcg-credentials")],
     schedule=modal.Cron("0 3 * * *"),  # Every day at 3am UTC — offset from
     # the 2am FX cron and the Monday weekly scheduler, so the three jobs
     # never overlap.
@@ -464,7 +465,24 @@ def scheduled_jp_price_refresh():
     from pathlib import Path
     from scrape_pokemon_jpn import refresh_cardmarket_prices
     try:
+        # Cardmarket refresh (existing — only re-fetches already-priced cards)
         result = refresh_cardmarket_prices(Path("/modal_data/CardsDB"), dry_run=False)
+        print(f"[JP-REFRESH] Cardmarket: {result}")
+
+        # JustTCG refresh (fills cards with no Cardmarket price)
+        justtcg_key = os.environ.get("JUSTTCG_API_KEY", "").strip()
+        if justtcg_key:
+            from scrape_pokemon_jpn import backfill_justtcg_prices
+            jtcg_result = backfill_justtcg_prices(
+                Path("/modal_data/CardsDB"),
+                api_key=justtcg_key,
+                dry_run=False,
+                resume=True,  # Skip cards that already have any price
+            )
+            print(f"[JP-REFRESH] JustTCG: {jtcg_result}")
+        else:
+            print("[JP-REFRESH] JustTCG: no API key found, skipping")
+
         vol.commit()
         print(f"[JP-PRICE-CRON] {result}", flush=True)
     except Exception as e:
@@ -828,4 +846,268 @@ def rebuild_new_sets(set_ids: str = ""):
                 print(f"[REBUILD] CANARY: malformed jpn set_id {sid!r} discovered — check folder naming", flush=True)
         print(f"[REBUILD] Auto-discovered {len(id_list)} jpn- sets: {id_list}", flush=True)
     rebuild_lookup_files.remote(new_set_ids=id_list)
+
+
+@app.function(
+    image=image,
+    volumes={"/modal_data": vol},
+    timeout=600,
+)
+def _jp_coverage_remote():
+    import os
+    from collections import defaultdict
+    from concurrent.futures import ThreadPoolExecutor
+
+    sets_total = defaultdict(int)
+    sets_imaged = defaultdict(int)
+
+    base = "/modal_data/CardsDB/pokemon"
+    if not os.path.exists(base):
+        return {"error": f"Path not found: {base}"}
+
+    jp_folders = [f for f in os.listdir(base) if f.startswith("jpn-")]
+
+    def _set_id(folder):
+        parts = folder.split("-")
+        # Reconstruct set_id safely (handles jpn-sv-p-098 etc)
+        if len(parts) >= 3:
+            return "-".join(parts[:-1])
+        return "-".join(parts[:2])
+
+    # The per-folder front.png check is a network stat on the Modal volume;
+    # 12k+ of them serially blow the timeout, so fan them out over threads and
+    # aggregate on the main thread (defaultdict increments aren't thread-safe).
+    def _has_image(folder):
+        return os.path.exists(os.path.join(base, folder, "front.png"))
+
+    with ThreadPoolExecutor(max_workers=128) as ex:
+        imaged_flags = list(ex.map(_has_image, jp_folders))
+
+    for folder, has_image in zip(jp_folders, imaged_flags):
+        set_id = _set_id(folder)
+        sets_total[set_id] += 1
+        if has_image:
+            sets_imaged[set_id] += 1
+
+    return {
+        "total_cards": sum(sets_total.values()),
+        "total_imaged": sum(sets_imaged.values()),
+        "total_sets": len(sets_total),
+        "sets_imaged": dict(sorted(sets_imaged.items())),
+        "sets_total": dict(sorted(sets_total.items())),
+    }
+
+@app.local_entrypoint()
+def inspect_jp_coverage():
+    result = _jp_coverage_remote.remote()
+    if "error" in result:
+        print(f"ERROR: {result['error']}")
+        return
+
+    print(f"\n=== JP COVERAGE REPORT ===")
+    print(f"Total JP cards in CardsDB: {result['total_cards']}")
+    print(f"Total with front.png:      {result['total_imaged']}")
+    print(f"Total JP sets:             {result['total_sets']}")
+    print(f"\nImaged cards per set (sets with at least 1 image):")
+    for set_id, imaged in result["sets_imaged"].items():
+        total = result["sets_total"].get(set_id, 0)
+        pct = (imaged / total * 100) if total else 0
+        print(f"  {set_id}: {imaged}/{total} ({pct:.0f}%)")
+    print(f"\nSets with ZERO images:")
+    for set_id, total in result["sets_total"].items():
+        if result["sets_imaged"].get(set_id, 0) == 0:
+            print(f"  {set_id}: {total} cards, no images")
+    print("==========================\n")
+
+
+@app.function(
+    image=image,
+    volumes={"/modal_data": vol},
+    timeout=60,
+)
+def _jp_sample_profile_remote(prefix: str = "jpn-"):
+    import json, os
+
+    # Lazily scan for the FIRST folder matching `prefix` with a profile.json and
+    # stop. (glob.glob over this ~135k-folder volume dir eagerly stats every entry
+    # and blows the timeout — scandir + early break reads only until the first hit.)
+    pref = prefix.lower()
+    pokemon_dir = "/modal_data/CardsDB/pokemon"
+    sample_path = None
+    with os.scandir(pokemon_dir) as it:
+        for d in it:
+            if not d.name.lower().startswith(pref) or not d.is_dir():
+                continue
+            candidate = os.path.join(d.path, "profile.json")
+            if os.path.isfile(candidate):
+                sample_path = candidate
+                break
+
+    if sample_path is None:
+        return {"error": f"No {prefix}* profile.json files found"}
+
+    with open(sample_path) as f:
+        profile = json.load(f)
+
+    return {
+        "path": sample_path,
+        "keys": list(profile.keys()),
+        "sample": profile,
+    }
+
+@app.function(image=image, volumes={"/modal_data": vol}, timeout=60)
+def _jp_set_metadata_remote(focus: str = "jpn-sv2a"):
+    import json, os
+
+    meta_path = "/modal_data/set_metadata.json"
+    if not os.path.exists(meta_path):
+        return {"error": f"set_metadata.json not found at {meta_path}"}
+
+    with open(meta_path) as f:
+        meta = json.load(f)
+
+    jp_keys = sorted(k for k in meta if k.startswith("jpn-"))
+    has_total = 0
+    for k in jp_keys:
+        e = meta.get(k) or {}
+        if isinstance(e, dict) and (e.get("printed_total") is not None or e.get("total") is not None):
+            has_total += 1
+
+    # focus entry + a few samples
+    focus_entry = meta.get(focus, "__MISSING__")
+    samples = {k: meta[k] for k in jp_keys[:4]}
+
+    return {
+        "total_meta_keys": len(meta),
+        "total_jp_keys": len(jp_keys),
+        "jp_keys_with_total_or_printed_total": has_total,
+        "focus_key": focus,
+        "focus_entry": focus_entry,
+        "samples": samples,
+    }
+
+
+@app.function(image=image, volumes={"/modal_data": vol}, timeout=60)
+def _jp_printed_total_map_remote():
+    import json, os
+
+    meta_path = "/modal_data/set_metadata.json"
+    if not os.path.exists(meta_path):
+        return {"error": f"set_metadata.json not found at {meta_path}"}
+
+    with open(meta_path) as f:
+        meta = json.load(f)
+
+    # jpn- sets with a non-null printed_total → {set_key: printed_total}
+    out = {}
+    for k, e in meta.items():
+        if not k.startswith("jpn-") or not isinstance(e, dict):
+            continue
+        pt = e.get("printed_total")
+        if pt is not None:
+            out[k] = pt
+    return {"printed_totals": dict(sorted(out.items()))}
+
+
+@app.local_entrypoint()
+def analyze_jp_printed_totals():
+    from collections import defaultdict
+    r = _jp_printed_total_map_remote.remote()
+    if "error" in r:
+        print(f"ERROR: {r['error']}")
+        return
+    pt_map = r["printed_totals"]
+    by_total = defaultdict(list)
+    for set_key, pt in pt_map.items():
+        by_total[pt].append(set_key)
+
+    print("\n=== JP printed_total ANALYSIS ===")
+    print(f"jpn- sets with non-null printed_total: {len(pt_map)}")
+    print(f"distinct printed_total values:         {len(by_total)}")
+
+    print("\n1) Count of sets sharing each printed_total (desc by count):")
+    for pt in sorted(by_total, key=lambda x: (-len(by_total[x]), x)):
+        print(f"  printed_total={pt}: {len(by_total[pt])} set(s) -> {', '.join(sorted(by_total[pt]))}")
+
+    uniques = {pt: v[0] for pt, v in by_total.items() if len(v) == 1}
+    shared = {pt: v for pt, v in by_total.items() if len(v) > 1}
+
+    print(f"\n2) printed_totals UNIQUE to a single set ({len(uniques)}):")
+    for pt in sorted(uniques):
+        print(f"  {pt}: {uniques[pt]}")
+
+    print(f"\n3) printed_totals SHARED across multiple sets ({len(shared)}):")
+    for pt in sorted(shared, key=lambda x: (-len(shared[x]), x)):
+        print(f"  {pt}: {len(shared[pt])} sets -> {', '.join(sorted(shared[pt]))}")
+    print("=================================\n")
+
+
+@app.local_entrypoint()
+def inspect_jp_set_metadata(focus: str = "jpn-sv2a"):
+    r = _jp_set_metadata_remote.remote(focus=focus)
+    if "error" in r:
+        print(f"ERROR: {r['error']}")
+        return
+    print("\n=== JP SET METADATA ===")
+    print(f"Total set_metadata keys:        {r['total_meta_keys']}")
+    print(f"Total jpn- keys:                {r['total_jp_keys']}")
+    print(f"jpn- keys w/ printed_total|total: {r['jp_keys_with_total_or_printed_total']}")
+    print(f"\nFocus [{r['focus_key']}]: {r['focus_entry']}")
+    print(f"\nSample jpn- entries:")
+    for k, v in r["samples"].items():
+        print(f"  {k}: {v}")
+    print("=======================\n")
+
+
+@app.local_entrypoint()
+def sample_jp_profile(prefix: str = "jpn-"):
+    result = _jp_sample_profile_remote.remote(prefix=prefix)
+    if "error" in result:
+        print(f"ERROR: {result['error']}")
+        return
+    print(f"\n=== SAMPLE JP PROFILE ===")
+    print(f"File: {result['path']}")
+    print(f"\nAll keys: {result['keys']}")
+    print(f"\nAll fields:")
+    for k, v in result["sample"].items():
+        print(f"  {k}: {v}")
+    print("=========================\n")
+
+
+@app.function(
+    image=image,
+    volumes={"/modal_data": vol},
+    secrets=[modal.Secret.from_name("justtcg-credentials")],
+    timeout=7200,
+)
+def _run_justtcg_backfill_remote(dry_run: bool = False):
+    import os, sys
+    from pathlib import Path
+    os.chdir("/app")
+    sys.path.insert(0, "/app")
+    from scrape_pokemon_jpn import backfill_justtcg_prices
+    api_key = os.environ.get("JUSTTCG_API_KEY", "").strip()
+    if not api_key:
+        return {"error": "No JUSTTCG_API_KEY in environment"}
+    vol.reload()
+    result = backfill_justtcg_prices(
+        Path("/modal_data/CardsDB"),
+        api_key=api_key,
+        dry_run=dry_run,
+        resume=True,
+    )
+    if not dry_run:
+        vol.commit()
+    return result
+
+
+@app.local_entrypoint()
+def run_justtcg_backfill(dry_run: bool = False):
+    """One-time backfill: fill in TCGPlayer prices for unpriced JP cards via JustTCG."""
+    print(f"Starting JustTCG price backfill (resume=True, dry_run={dry_run})...")
+    result = _run_justtcg_backfill_remote.remote(dry_run=dry_run)
+    print("\n=== JUSTTCG BACKFILL RESULT ===")
+    for k, v in result.items():
+        print(f"  {k}: {v}")
+    print("================================\n")
 

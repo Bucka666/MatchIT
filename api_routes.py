@@ -335,6 +335,8 @@ def register_api_routes(app):
 
         jp_mode = request.form.get('jp_mode', 'en')
         exclude_jpn = (jp_mode != 'jp')
+        _allowed_sets_raw = request.form.get('allowed_jpn_sets', '').strip()
+        _allowed_jpn_sets = set(_allowed_sets_raw.split(',')) if _allowed_sets_raw else None
 
         try:
             results, low_cert, diag = _run_match_paired_two_stage(
@@ -354,6 +356,7 @@ def register_api_routes(app):
                 auto_front_grooves=auto_fg,
                 auto_back_grooves=auto_bg,
                 exclude_jpn=exclude_jpn,
+                allowed_jpn_sets=_allowed_jpn_sets,
             )
         except Exception as e:
             return jsonify({"error": f"Matching failed: {e}"}), 500
@@ -394,6 +397,7 @@ def register_api_routes(app):
                 _effective_tcg,
                 search_depth=10,
                 set_metadata=_load_set_metadata(),
+                jpn_mode=(jp_mode == 'jp'),
             )
             print(
                 f"[OCR] status={_ocr_info.get('ocr_status')} "
@@ -415,10 +419,27 @@ def register_api_routes(app):
                 "show_transition_toast": False
             }), 200
 
-        # JP mode filter — strip jpn- SKUs from results unless JP mode active
+        # Language separation post-filter — bidirectional.
+        # EN mode: strip any jpn- that passed through the pre-filter.
+        # JP mode: strip any non-jpn- (EN) cards from results.
         jp_mode = request.form.get('jp_mode', 'en')
-        if jp_mode != 'jp':
-            results = [r for r in results if not r['sku'].startswith('jpn-')]
+        _before_lang_filter = len(results)
+        if jp_mode == 'jp':
+            results = [r for r in results if r.get('sku', '').startswith('jpn-')]
+            if not results:
+                return jsonify({
+                    "matches": [],
+                    "low_confidence": True,
+                    "reason": "no_results_after_en_strip",
+                    "show_transition_toast": False
+                }), 200
+            logger.info(f"[LANG-FILTER] JP mode: {_before_lang_filter} → {len(results)} results (EN stripped)")
+            _JP_SCORE_FLOOR = 0.72
+            if results[0].get('score', 0) < _JP_SCORE_FLOOR:
+                logger.info(f"[JP-FLOOR] Top score {results[0].get('score', 0):.3f} < {_JP_SCORE_FLOOR} — returning no match")
+                return jsonify({"matches": [], "low_confidence": True, "reason": "jp_below_score_floor", "show_transition_toast": False}), 200
+        else:
+            results = [r for r in results if not r.get('sku', '').startswith('jpn-')]
             if not results:
                 return jsonify({
                     "matches": [],
@@ -426,7 +447,7 @@ def register_api_routes(app):
                     "reason": "no_results_after_jp_filter",
                     "show_transition_toast": False
                 }), 200
-            print(f"[JP-FILTER] jp_mode=en, {len(results)} result(s) remain after jpn- strip", flush=True)
+            logger.info(f"[LANG-FILTER] EN mode: {_before_lang_filter} → {len(results)} results (JP stripped)")
 
         # Option B (restored): charge quota only on OCR-confirmed match
         _ocr_status_api = _ocr_info.get("ocr_status", "not_run")

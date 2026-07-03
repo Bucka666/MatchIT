@@ -838,6 +838,12 @@
     var toast = document.createElement('div');
     toast.className = 'gs-toast' + (variant === 'warn' ? ' gs-toast-warn' : '');
     toast.setAttribute('role', 'status');
+    if (options.title) {
+      var ttl = document.createElement('div');
+      ttl.className = 'gs-toast-title';
+      ttl.textContent = options.title;
+      toast.appendChild(ttl);
+    }
     var msg = document.createElement('div');
     msg.textContent = message;
     toast.appendChild(msg);

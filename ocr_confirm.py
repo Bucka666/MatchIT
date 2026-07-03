@@ -65,6 +65,11 @@ def _fuzzy_set_code_match(candidate, set_code_map, max_dist=2):
 
 _last_ocr_confidence = 0.0
 _last_pkm_denominator: Optional[int] = None
+# When True, the SWSH printed-total fingerprint path in _extract_pokemon_number
+# is skipped. Set per-scan by ocr_confirm_ranking when the scan is Japanese
+# (explicit jpn_mode from caller, OR the top CLIP candidate is a jpn- SKU) so an
+# EN SWSH set-total (e.g. 80 -> swsh35) can't override a correct JPN CLIP match.
+_suppress_swsh_for_jpn = False
 
 # Pokémon SWSH era: printed total → DB set ID (for disambiguation)
 # When OCR reads "106/217" the total 217 = swsh11 (Chilling Reign)
@@ -481,7 +486,10 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
     # Reject impossible totals (no Pokémon set has more than ~300 cards)
     if total and total > 300:
         total = None
-    if num and total and not set_code:
+    # Skip the EN SWSH set-total fingerprint entirely for Japanese scans — an EN
+    # printed total (e.g. 80 -> swsh35) must never override a correct JPN CLIP
+    # match. Falls through to the bare-number path below, preserving visual rank.
+    if num and total and not set_code and not _suppress_swsh_for_jpn:
         candidates = _SWSH_TOTAL_MAP.get(total, [])
         if len(candidates) == 1:
             combined = f"{candidates[0]}-{num}"
@@ -720,13 +728,16 @@ def _denominator_blocks_promotion(candidate_sku, ocr_denominator, set_metadata, 
         if printed is None and full is None:
             return False
         denom = int(ocr_denominator)
-        if printed is not None and denom == int(printed):
-            return False
-        if full is not None and denom == int(full):
+        # JPN cards print their base-set total (e.g. 63 for sv1v) while metadata
+        # stores the full total incl. secret rares (e.g. 238); base <= full
+        # always. Only a denominator that EXCEEDS the set total is genuinely
+        # impossible, so block on denom > ceiling rather than strict inequality.
+        ceiling = max(int(t) for t in (printed, full) if t is not None)
+        if denom <= ceiling:
             return False
     except (TypeError, ValueError):
         return False
-    return True  # denominator known on both sides and matches neither -> block
+    return True  # denominator exceeds the set total -> wrong set -> block
 
 
 def _denominator_confirms(candidate_sku, ocr_denominator, set_metadata, expected_game):
@@ -765,6 +776,7 @@ def ocr_confirm_ranking(
     search_depth: int = 5,
     allow_pokemon_promote: bool = True,
     set_metadata: Optional[dict] = None,
+    jpn_mode: bool = False,
 ) -> Tuple[List[dict], Dict]:
     """
     Attempt to confirm or correct the visual ranking using OCR.
@@ -780,6 +792,13 @@ def ocr_confirm_ranking(
     Returns:
         (results, ocr_info) — results may be reordered; ocr_info is diagnostic.
     """
+    # JP mode: skip OCR entirely — trust the CLIP visual match.
+    # Japanese set codes are not readable by the EN OCR pipeline and
+    # running OCR on JP cards causes false promotions and wrong results.
+    if jpn_mode:
+        logger.debug("[OCR] jpn_mode=True — skipping OCR, returning visual rankings unchanged")
+        return results, {"method": "jp_visual_only", "ocr_skipped": True}
+
     ocr_info: Dict = {
         "tcg": tcg,
         "extracted": None,
@@ -798,6 +817,14 @@ def ocr_confirm_ranking(
         return results, ocr_info
 
     tcg_upper = (tcg or "").upper().strip()
+
+    # Japanese scan? Suppress the EN SWSH printed-total fingerprint for this scan
+    # so a JPN CLIP match can't be overridden by an EN set-total lookup. Trigger
+    # on either signal (OR): explicit jpn_mode from the caller, or a top CLIP
+    # candidate with a jpn- prefix. Set every call to avoid stale global carryover.
+    global _suppress_swsh_for_jpn
+    _top_sku = results[0].get("sku", "") if isinstance(results[0], dict) else getattr(results[0], "sku", "")
+    _suppress_swsh_for_jpn = bool(jpn_mode) or bool(_top_sku and _top_sku.startswith("jpn-"))
 
     # Select extractor and matcher
     if tcg_upper == "YUGIOH":

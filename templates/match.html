@@ -131,11 +131,7 @@
         </div>
 
         <button type="button" id="langToggle"
-          onclick="
-            _ocrLang = _ocrLang === 'en' ? 'jp' : 'en';
-            localStorage.setItem('gs_scan_lang', _ocrLang);
-            this.textContent = _ocrLang === 'jp' ? '🇯🇵 JPN' : '🇬🇧 ENG';
-          "
+          onclick="_gsToggleLang()"
           style="
             background: transparent;
             border: 1px solid #333;
@@ -255,6 +251,7 @@
           <span class="cx-scan-btn-icon" id="scIcon"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.15em" role="img" aria-label="Scan" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5V6.5A2.5 2.5 0 0 1 6.5 4H8.5"/><path d="M15.5 4H17.5A2.5 2.5 0 0 1 20 6.5V8.5"/><path d="M20 15.5V17.5A2.5 2.5 0 0 1 17.5 20H15.5"/><path d="M8.5 20H6.5A2.5 2.5 0 0 1 4 17.5V15.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg></span>
         </button>
         <button class="cx-stop-btn" id="scStopBtn" onclick="scStop()" style="display:none;" title="Stop camera">⏹</button>
+        <button class="cx-lang-btn" id="scLangToggle" onclick="_gsToggleLang()" title="Switch between English and Japanese card scanning">🇬🇧 ENG</button>
       </div>
       <button class="cx-ctrl-btn" onclick="scToggleSession()">📋 List</button>
     </div>
@@ -1121,6 +1118,32 @@ html.gs-weak-device .cx-upload {
 .res-auth-note { font-size: 0.75rem; color: rgba(255,255,255,0.55); margin: 4px 0; }
 .auth-flag { font-size: 0.75rem; color: rgba(255,255,255,0.65); margin-top: 3px; }
 .res-auth-disclaimer { font-size: 0.68rem; color: rgba(255,255,255,0.30); margin-top: 8px; font-style: italic; }
+/* Language toggle button — scanner bottom bar */
+.cx-lang-btn {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1.5px solid rgba(177,77,255,0.5);
+  background: rgba(177,77,255,0.1);
+  color: var(--cx-violet);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.3s;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  white-space: nowrap;
+}
+.cx-lang-btn.jp-active {
+  border-color: var(--cx-cyan);
+  background: rgba(0,229,255,0.12);
+  color: var(--cx-cyan);
+  box-shadow: 0 0 12px rgba(0,229,255,0.2);
+}
 </style>
 
 <script>
@@ -1229,7 +1252,9 @@ var soundEnabled = true;
       // Downscale once — used for both client OCR and the GPU fallback
       var _uploadFile = await _downscaleImage(_uploadFileRaw, 1400);
       // OCR-first path — photo upload
-      var _uploadOcrResult = await _tryOcrLookup(_uploadFile);
+      // JP mode: skip the EN-only OCR-first fast path — _tryOcrLookup can only
+      // resolve English SKUs, so in JP mode it must not confirm an EN card.
+      var _uploadOcrResult = (_ocrLang === 'jp') ? null : await _tryOcrLookup(_uploadFile);
       if (_uploadOcrResult && _uploadOcrResult.sku) {
         // Confirmed SKU — server renders the rich results page, skipping CLIP
         var confFd = new FormData();
@@ -1256,7 +1281,7 @@ var soundEnabled = true;
         return;
       }
       // --- on-device gate (upload) ---
-      if (window.GSOnDevice && window.GSOnDevice.isReady() && window.GSOnDevice.isWarm()) {
+      if (window.GSOnDevice && window.GSOnDevice.isReady() && window.GSOnDevice.isWarm() && _ocrLang !== 'jp') {
         try {
           const odr = await window.GSOnDevice.match(_uploadFile);
           if (odr && odr.accept) {
@@ -1290,6 +1315,24 @@ var soundEnabled = true;
       var _keyTypeEl = document.getElementById('cxKeyType');
       gpuFd.append('key_type', _keyTypeEl ? _keyTypeEl.value : '');
       gpuFd.append('jp_mode', _ocrLang);
+      // JP mode: check denominator before burning GPU quota (see camera path).
+      if (_ocrLang === 'jp') {
+        var _jpTextUp = await _tryMlKitLocal(_uploadFile).catch(function(){ return null; });
+        var _jpCheckUp = await _jpDenomCheck(_jpTextUp || '');
+        if (_jpCheckUp && !_jpCheckUp.has_images) {
+          if (prog) prog.style.display = 'none';
+          if (typeof gsShowToast === 'function') {
+            gsShowToast(
+              "This Japanese card isn't in our database yet — we're regularly adding new sets, so check back soon! Try scanning an English card or switch to ENG mode.",
+              { title: "Card not in database", variant: 'info', duration: 10000 }
+            );
+          }
+          return;
+        }
+        if (_jpCheckUp && _jpCheckUp.allowed_sets && _jpCheckUp.allowed_sets.length > 0) {
+          gpuFd.append('allowed_jpn_sets', _jpCheckUp.allowed_sets.join(','));
+        }
+      }
       fetch('/match', { method: 'POST', body: gpuFd })
       .then(function(r) {
         if (r.status === 402) {
@@ -1885,7 +1928,8 @@ function scCapture() {
   scCanvas.toBlob(async function(blob){
     if(!blob){scBusy=false;return;}
     // OCR-first path
-    var _ocrResult = await _tryOcrLookup(blob);
+    // JP mode: skip the EN-only OCR-first fast path (see photo-upload path).
+    var _ocrResult = (_ocrLang === 'jp') ? null : await _tryOcrLookup(blob);
     if (_ocrResult && !_ocrResult.miss) {
       scBusy = false;
       var p = _ocrResult.profile || {};
@@ -1938,7 +1982,7 @@ function scCapture() {
       return;
     }
     // --- on-device gate (camera) ---
-    if (window.GSOnDevice && window.GSOnDevice.isReady() && window.GSOnDevice.isWarm()) {
+    if (window.GSOnDevice && window.GSOnDevice.isReady() && window.GSOnDevice.isWarm() && _ocrLang !== 'jp') {
       try {
         const odr = await window.GSOnDevice.match(blob);
         // On-device denominator backstop: extracted so the existing accept/render/
@@ -2034,6 +2078,28 @@ function scCapture() {
     var tcg=document.getElementById('scTcgLock').value;
     if(tcg) fd.append('category',tcg);
     fd.append('jp_mode', _ocrLang);
+    // JP mode: check denominator before burning GPU quota. OCR text comes from
+    // the local ML Kit bridge (fails fast / returns null when unavailable → we
+    // fall through to a normal GPU scan rather than blocking).
+    if (_ocrLang === 'jp') {
+      var _jpTextCam = await _tryMlKitLocal(blob).catch(function(){ return null; });
+      var _jpCheckCam = await _jpDenomCheck(_jpTextCam || '');
+      if (_jpCheckCam && !_jpCheckCam.has_images) {
+        if (typeof gsShowToast === 'function') {
+          gsShowToast(
+            "This Japanese card isn't in our database yet — we're regularly adding new sets, so check back soon! Try scanning an English card or switch to ENG mode.",
+            { title: "Card not in database", variant: 'info', duration: 10000 }
+          );
+        }
+        // Stop the scan loop so the user can read the message and try another card
+        scBusy = false; scScanning = false;
+        guide.className = 'cx-card-guide';
+        return;
+      }
+      if (_jpCheckCam && _jpCheckCam.allowed_sets && _jpCheckCam.allowed_sets.length > 0) {
+        fd.append('allowed_jpn_sets', _jpCheckCam.allowed_sets.join(','));
+      }
+    }
     fetch(API_BASE+'/match',{method:'POST',headers:{'X-API-Key':apiKey,'ngrok-skip-browser-warning':'1'},body:fd})
     .then(function(r){
       if(r.status===402){
@@ -2757,6 +2823,7 @@ document.getElementById('matchYear') &&
     The scanner couldn't confidently identify this card after several attempts.<br><br>
     Try: <strong>better lighting</strong>, holding the card <strong>flat and still</strong>, or filling the guide box fully.<br><br>
     <span class="sfg-highlight">For difficult or rare cards, Photo Match gives much higher accuracy.</span>
+    <span class="sfg-highlight" style="color:var(--cx-cyan);margin-top:8px;display:block;">Scanning a Japanese card? Tap 🇯🇵 above to switch to JP mode.</span>
   </div>
   <button type="button" class="sfg-btn-primary" onclick="document.getElementById('scFailGate').style.display='none';scFailCount=0;scToggleReal();">↩ Try Again</button>
   <button type="button" class="sfg-btn-secondary" onclick="document.getElementById('scFailGate').style.display='none';scStop();document.querySelector('.cx-upload').scrollIntoView({behavior:'smooth'});">📸 Use Photo Match Instead</button>
@@ -3678,6 +3745,32 @@ document.getElementById('matchYear') &&
 var _ocrWorker = null;
 var _ocrReady  = false;
 var _ocrLang   = localStorage.getItem('gs_scan_lang') || 'en';
+function _gsToggleLang() {
+    _ocrLang = _ocrLang === 'en' ? 'jp' : 'en';
+    localStorage.setItem('gs_scan_lang', _ocrLang);
+    _gsUpdateLangButtons();
+}
+
+function _gsUpdateLangButtons() {
+    var isJp = _ocrLang === 'jp';
+    // Update scanner bottom bar toggle
+    var scBtn = document.getElementById('scLangToggle');
+    if (scBtn) {
+        scBtn.textContent = isJp ? '🇯🇵 JPN' : '🇬🇧 ENG';
+        scBtn.classList.toggle('jp-active', isJp);
+    }
+    // Update upload panel toggle (keep in sync)
+    var upBtn = document.getElementById('langToggle');
+    if (upBtn) {
+        upBtn.textContent = isJp ? '🇯🇵 JPN' : '🇬🇧 ENG';
+    }
+}
+
+// Initialise button states on page load
+document.addEventListener('DOMContentLoaded', function() {
+    _gsUpdateLangButtons();
+});
+var _jpDenomCache = {}; // Cache denom check results to avoid repeat network calls
 
 async function _initOcrWorker() {
   try {
@@ -3791,6 +3884,29 @@ async function _tryMlKitLocal(imageBlob) {
     console.log('[MLKIT-CLIENT] failed after ' + (Date.now()-_t0) + 'ms: ' + (e && e.message ? e.message : e));
     return null;
   }
+}
+
+async function _jpDenomCheck(ocrText) {
+    if (!ocrText) return null;
+    // Extract the denominator from text like "040/165" or "W2a 187/193"
+    var m = ocrText.match(/\d+\s*\/\s*(\d+)/);
+    if (!m) return null;
+    var denom = parseInt(m[1], 10);
+    if (!denom || denom <= 0 || denom > 300) return null;
+    // Use cached result if we've already checked this denominator
+    if (_jpDenomCache[denom] !== undefined) return _jpDenomCache[denom];
+    try {
+        var resp = await fetch('/api/jp-denom-check', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({denom: denom})
+        });
+        var data = await resp.json();
+        _jpDenomCache[denom] = data;
+        return data;
+    } catch (e) {
+        return null; // On error, fall through to GPU scan normally
+    }
 }
 
 async function _tryOcrLookup(imageFile) {

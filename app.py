@@ -1127,6 +1127,22 @@ def _build_sku_length_cache():
 # ============================================================
 
 
+# Set of JP set IDs that actually have images in the CLIP index (built from
+# FRONT_INFO after each cache load). Used by /api/jp-denom-check to tell the
+# client which JP sets are matchable. Module-global so the endpoint can read it.
+_IMAGED_JP_SETS = frozenset()
+
+
+def _rebuild_imaged_jp_sets():
+    global _IMAGED_JP_SETS
+    _IMAGED_JP_SETS = frozenset(
+        "jpn-" + "-".join(sku.split('-')[1:-1])
+        for _, sku, _, _ in FRONT_INFO
+        if sku and sku.startswith('jpn-') and len(sku.split('-')) >= 3
+    )
+    print(f"[JP-SETS] Built imaged JP set index: {len(_IMAGED_JP_SETS)} sets", flush=True)
+
+
 def load_embedding_cache(force: bool = False):
     global _ROWS_CACHED, _CACHE_LOADED_AT
     global DESC_BY_IMAGE_ID, ORIG_BY_IMAGE_ID, VIEW_BY_IMAGE_ID, PATH_BY_IMAGE_ID, SKU_TYPE, SKU_LEN
@@ -1217,6 +1233,7 @@ def load_embedding_cache(force: bool = False):
 
                 _t1 = _cache_time.time()
                 print(f"[CACHE] Fast loaded {len(FRONT_INFO)} FRONT + {len(BACK_INFO)} BACK in {_t1-_t0:.2f}s", flush=True)
+                _rebuild_imaged_jp_sets()
 
 
                 try:
@@ -1301,6 +1318,7 @@ def load_embedding_cache(force: bool = False):
     else:
         FRONT_MATRIX = None
     FRONT_INFO = _front_mat_info
+    _rebuild_imaged_jp_sets()
 
     if _back_mat_vecs:
         BACK_MATRIX = np.stack(_back_mat_vecs).astype(np.float32)
@@ -2047,6 +2065,7 @@ def _run_match_paired_two_stage(
     auto_front_grooves: int = -1,
     auto_back_grooves: int = -1,
     exclude_jpn: bool = False,
+    allowed_jpn_sets: Optional[set] = None,
 ) -> Tuple[List[dict], bool, dict]:
     import time
 
@@ -2209,6 +2228,11 @@ def _run_match_paired_two_stage(
         if exclude_jpn and sku.startswith('jpn-'):
             _jp_pre_excluded += 1
             continue
+        if allowed_jpn_sets is not None and sku.startswith('jpn-'):
+            parts = sku.split('-')
+            set_key = "jpn-" + "-".join(parts[1:-1])
+            if set_key not in allowed_jpn_sets:
+                continue
         if cap_per_sku > 0:
             per_sku_count.setdefault(sku, 0)
             if per_sku_count[sku] >= cap_per_sku:
@@ -2232,6 +2256,11 @@ def _run_match_paired_two_stage(
         if exclude_jpn and sku.startswith('jpn-'):
             _jp_pre_excluded += 1
             continue
+        if allowed_jpn_sets is not None and sku.startswith('jpn-'):
+            parts = sku.split('-')
+            set_key = "jpn-" + "-".join(parts[1:-1])
+            if set_key not in allowed_jpn_sets:
+                continue
         if cap_per_sku > 0:
             per_sku_count.setdefault(sku, 0)
             if per_sku_count[sku] >= cap_per_sku:
@@ -3454,9 +3483,20 @@ def public_stats():
     today = datetime.utcnow().strftime("%Y-%m-%d")
     if stats.get("today_date") != today:
         stats["today_scans"] = 0
+    try:
+        import modal
+        _sd = modal.Dict.from_name(
+            "scan-source-counters", create_if_missing=True)
+        _modal_scans = _sd.get("modal", 0)
+        _ondevice_scans = _sd.get("ondevice", 0)
+    except Exception:
+        _modal_scans = 0
+        _ondevice_scans = 0
     resp = jsonify({
         "total_scans": stats.get("total_scans", 0),
-        "today_scans": stats.get("today_scans", 0)
+        "today_scans": stats.get("today_scans", 0),
+        "modal_scans": _modal_scans,
+        "ondevice_scans": _ondevice_scans
     })
     resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     resp.headers["Pragma"] = "no-cache"
@@ -3537,7 +3577,7 @@ def ondevice_telemetry():
         except Exception as _q_exc:
             print(f"[ONDEVICE-TELEMETRY] quota error (fail-open): {_q_exc}", flush=True)
         try:
-            _increment_scan_counter()
+            _increment_scan_counter(source="ondevice")
         except Exception as _s_exc:
             print(f"[ONDEVICE-TELEMETRY] stats error (fail-open): {_s_exc}", flush=True)
         try:
@@ -3692,6 +3732,49 @@ def ocr_lookup():
     except Exception as e:
         print(f'[OCR-LOOKUP] Error: {e}', flush=True)
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@app.route('/api/jp-denom-check', methods=['POST'])
+def jp_denom_check():
+    """
+    Given a printed denominator (e.g. 165 from "040/165"),
+    returns which JP sets match and whether any of them have images.
+    Client uses this to skip the GPU scan entirely when a card
+    cannot possibly be in the database.
+    """
+    try:
+        data = request.get_json(force=True, silent=True) or {}
+        denom = data.get('denom')
+        if not denom or not isinstance(denom, int) or denom <= 0 or denom > 300:
+            return jsonify({'allowed_sets': [], 'has_images': False, 'reason': 'invalid_denom'}), 200
+
+        meta = _load_set_metadata()
+        matched_sets = []
+        for set_id, info in meta.items():
+            if not set_id.startswith('jpn-'):
+                continue
+            if info.get('exclude'):
+                continue
+            pt = info.get('printed_total')
+            t = info.get('total')
+            if pt == denom or t == denom:
+                matched_sets.append(set_id)
+
+        imaged = [s for s in matched_sets if s in _IMAGED_JP_SETS]
+        has_images = len(imaged) > 0
+
+        app.logger.info(
+            f"[JP-DENOM] denom={denom} matched={matched_sets} imaged={imaged}"
+        )
+        return jsonify({
+            'allowed_sets': imaged,
+            'has_images': has_images,
+            'denom': denom
+        }), 200
+
+    except Exception as e:
+        app.logger.error(f"[JP-DENOM] error: {e}")
+        return jsonify({'allowed_sets': [], 'has_images': False, 'reason': 'error'}), 200
 
 
 @app.route('/api/card-profile/<string:sku>')
@@ -4431,6 +4514,9 @@ def capture_submit():
 
         jp_mode = request.form.get('jp_mode', 'en')
         exclude_jpn = (jp_mode != 'jp')
+        # Read allowed JP sets from the request (sent by client after denom check)
+        _allowed_sets_raw = request.form.get('allowed_jpn_sets', '').strip()
+        _allowed_jpn_sets = set(_allowed_sets_raw.split(',')) if _allowed_sets_raw else None
 
         results, low_cert, _diag = _run_match_paired_two_stage(
             qf,
@@ -4450,6 +4536,7 @@ def capture_submit():
             auto_front_grooves=auto_fg,
             auto_back_grooves=auto_bg,
             exclude_jpn=exclude_jpn,
+            allowed_jpn_sets=_allowed_jpn_sets,
         )
 
         # DINOv2 tie-breaker on top 2 if scores are close
@@ -6538,7 +6625,9 @@ def _save_stats(data):
     except Exception:
         pass
 
-def _increment_scan_counter():
+def _increment_scan_counter(source="server"):
+    # source: "server" for Modal GPU path, "ondevice" for
+    # on-device MobileCLIP gate-accept path
     try:
         from datetime import datetime
         today = datetime.utcnow().strftime("%Y-%m-%d")
@@ -6551,6 +6640,26 @@ def _increment_scan_counter():
         _save_stats(stats)
     except Exception as e:
         print(f"[STATS] Failed to increment: {e}")
+    # Per-source split counters live in a modal.Dict (NOT stats.json) so the
+    # serve_light and GPU containers can't overwrite each other's writes — same
+    # from_name(create_if_missing=True) + read-modify-write pattern as the
+    # sku-scan-freq Dict in _increment_sku_scan_freq.
+    if source == "ondevice":
+        try:
+            import modal
+            _d = modal.Dict.from_name(
+                "scan-source-counters", create_if_missing=True)
+            _d["ondevice"] = _d.get("ondevice", 0) + 1
+        except Exception as _e:
+            print(f"[STATS] ondevice counter failed: {_e}")
+    else:
+        try:
+            import modal
+            _d = modal.Dict.from_name(
+                "scan-source-counters", create_if_missing=True)
+            _d["modal"] = _d.get("modal", 0) + 1
+        except Exception as _e:
+            print(f"[STATS] modal counter failed: {_e}")
 
 
 PRICE_HISTORY_PATH = "/modal_data/price_history.json" if _os.path.exists("/modal_data") else "price_history.json"
@@ -7907,6 +8016,9 @@ def match():
 
         jp_mode = request.form.get('jp_mode', 'en')
         exclude_jpn = (jp_mode != 'jp')
+        # Read allowed JP sets from the request (sent by client after denom check)
+        _allowed_sets_raw = request.form.get('allowed_jpn_sets', '').strip()
+        _allowed_jpn_sets = set(_allowed_sets_raw.split(',')) if _allowed_sets_raw else None
 
         results, low_cert, _diag = _run_match_paired_two_stage(
             qf,
@@ -7926,6 +8038,7 @@ def match():
             auto_front_grooves=auto_fg,
             auto_back_grooves=auto_bg,
             exclude_jpn=exclude_jpn,
+            allowed_jpn_sets=_allowed_jpn_sets,
         )
         _t_match = _time.time()
 
@@ -7989,7 +8102,23 @@ def match():
                 _effective_tcg,
                 search_depth=10,
                 set_metadata=_load_set_metadata(),
+                jpn_mode=(jp_mode == 'jp'),
             )
+            # Language separation post-filter — enforce strict JP/EN split.
+            # The pre-filter removes jpn- cards from the CLIP pool in EN mode,
+            # but this safety net catches any that slip through, and also enforces
+            # that JP mode never returns EN results.
+            _JP_SCORE_FLOOR = 0.72  # Visual-only floor — no OCR fallback for JP
+            _before_lang_filter = len(results)
+            if jp_mode == 'jp':
+                results = [r for r in results if r.get('sku', '').startswith('jpn-')]
+                app.logger.info(f"[LANG-FILTER] JP mode: {_before_lang_filter} → {len(results)} results (EN stripped)")
+                if results and results[0].get('score', 0) < _JP_SCORE_FLOOR:
+                    app.logger.info(f"[JP-FLOOR] Top score {results[0].get('score', 0):.3f} < {_JP_SCORE_FLOOR} — clearing JP results")
+                    results = []
+            else:
+                results = [r for r in results if not r.get('sku', '').startswith('jpn-')]
+                app.logger.info(f"[LANG-FILTER] EN mode: {_before_lang_filter} → {len(results)} results (JP stripped)")
             print(
                 f"[OCR] status={_ocr_info.get('ocr_status')} "
                 f"extracted={_ocr_info.get('extracted')} "
