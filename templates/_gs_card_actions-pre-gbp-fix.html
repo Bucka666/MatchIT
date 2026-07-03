@@ -175,7 +175,7 @@ function gsAddToCollection(card, btn) {
   var item = {
     sku: card.sku || '', name: card.name || '', set_name: card.set_name || '',
     card_number: card.card_number || card.number || '',
-    gbp: card.gbp || card.gbp_at_add || card.best_price || 0,
+    gbp: card.gbp || card.best_price || 0,
     img: card.img || card.image_url || '',
     added: new Date().toLocaleDateString('en-GB'),
     grade: card.grade || null
