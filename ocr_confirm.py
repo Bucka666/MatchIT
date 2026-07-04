@@ -671,26 +671,64 @@ def _lookup_sku_by_setcode(extracted: str, tcg: str) -> Optional[str]:
         return None
 
 
-def ocr_direct_lookup(image_path: str, tcg: str) -> Optional[str]:
+def _extracted_set_id(extracted: Optional[str]) -> Optional[str]:
     """
-    OCR-first lookup for YGO and MTG — runs before CLIP.
+    Derive a set-id from an OCR-extracted card identity, in the same
+    id-space _get_set_id_from_sku() (app.py) uses for real SKUs —
+    e.g. 'sv6-18' -> 'sv6', 'snc-149' -> 'snc', 'SDBT-EN006' -> 'SDBT'.
+
+    Returns None for a bare number or passcode-only read: neither
+    identifies a set, so there is nothing for a missing-set check to
+    act on in that case.
+    """
+    if not extracted or extracted.startswith("PASSCODE:") or "-" not in extracted:
+        return None
+    return extracted.rsplit("-", 1)[0]
+
+
+def ocr_direct_lookup(
+    image_path: str, tcg: str, jp_mode: bool = False
+) -> Tuple[Optional[str], Optional[str]]:
+    """
+    OCR-first lookup for YGO, MTG, and Pokémon — runs before CLIP.
     Extracts set code / collector number directly from the card image
-    and looks it up in the DB. Returns matched SKU or None.
+    and looks it up in the DB.
+
+    Returns (matched_sku, extracted_set_id):
+      - matched_sku: the DB SKU if the extracted identity resolved to a
+        real row, else None (existing behaviour, unchanged).
+      - extracted_set_id: the set the card claims to be from, populated
+        whenever OCR successfully read a set code + number — even when
+        matched_sku is None because that set has no rows in the DB at
+        all. A missing-set check must anchor to THIS, never to
+        matched_sku alone: a miss there is indistinguishable from a
+        misread, and never to CLIP's own guess, which can only ever
+        land on a set we already have images for.
     """
     tcg_upper = tcg.upper()
     if tcg_upper == "YUGIOH":
         extracted = _extract_ygo_setcode(image_path)
     elif tcg_upper == "MTG":
         extracted = _extract_mtg_collector(image_path)
+    elif tcg_upper == "POKEMON":
+        # _suppress_swsh_for_jpn is normally set from a CLIP result
+        # (ocr_confirm_ranking, post-CLIP) — no CLIP result exists yet
+        # at this point, so set it directly from the request's own
+        # jp_mode instead, same purpose: never let an EN SWSH printed-
+        # total fingerprint override a genuine JP card.
+        global _suppress_swsh_for_jpn
+        _suppress_swsh_for_jpn = bool(jp_mode)
+        extracted = _extract_pokemon_number(image_path)
     else:
-        return None
+        return None, None
     if not extracted:
-        return None
+        return None, None
     logger.info(f"[OCR-FIRST] extracted: {extracted} for {tcg_upper}")
+    extracted_set_id = _extracted_set_id(extracted)
     db_match = _lookup_sku_by_setcode(extracted, tcg_upper)
     if db_match:
         logger.info(f"[OCR-FIRST] direct DB match: {db_match}")
-    return db_match
+    return db_match, extracted_set_id
 
 
 def _trusted_set_meta(set_id, set_metadata, expected_game):

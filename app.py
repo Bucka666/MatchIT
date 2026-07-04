@@ -1143,6 +1143,58 @@ def _rebuild_imaged_jp_sets():
     print(f"[JP-SETS] Built imaged JP set index: {len(_IMAGED_JP_SETS)} sets", flush=True)
 
 
+# Per-game set of EN/MTG/YGO set IDs that actually have images in the CLIP
+# index (built from FRONT_INFO after each cache load, same pattern as
+# _IMAGED_JP_SETS above). Keyed by game — NOT a single merged set — because
+# bare set-ids collide across games (e.g. me1/me2/me3 exist as both Pokémon
+# sets and MTG "Masters Edition" sets with unrelated content; see
+# ocr_confirm._trusted_set_meta for the same collision already guarded
+# elsewhere). Used by the pre-CLIP missing-set check (_is_set_imaged) to
+# tell a confidently-OCR'd set with zero images apart from one CLIP just
+# hasn't been asked about yet.
+_IMAGED_SETS_BY_GAME = {"POKEMON": frozenset(), "MTG": frozenset(), "YUGIOH": frozenset()}
+
+
+def _rebuild_imaged_sets_by_game():
+    global _IMAGED_SETS_BY_GAME
+    _by_game = {"POKEMON": set(), "MTG": set(), "YUGIOH": set()}
+    for _, sku, _, _ in FRONT_INFO:
+        if not sku or sku.startswith('jpn-'):
+            continue
+        if sku.startswith('ygo-'):
+            game = 'YUGIOH'
+        elif sku.startswith('mtg-'):
+            game = 'MTG'
+        else:
+            game = 'POKEMON'
+        set_id = _get_set_id_from_sku(sku)
+        if set_id:
+            _by_game[game].add(set_id)
+    _IMAGED_SETS_BY_GAME = {g: frozenset(s) for g, s in _by_game.items()}
+    print(
+        "[IMAGED-SETS] Built per-game imaged set index: "
+        f"POKEMON={len(_IMAGED_SETS_BY_GAME['POKEMON'])} "
+        f"MTG={len(_IMAGED_SETS_BY_GAME['MTG'])} "
+        f"YUGIOH={len(_IMAGED_SETS_BY_GAME['YUGIOH'])}",
+        flush=True,
+    )
+
+
+def _is_set_imaged(query_category: str, set_id: Optional[str]) -> bool:
+    """
+    True if set_id — from an independently OCR-read card identity, never
+    a CLIP guess — has at least one imaged card in the current embedding
+    cache. Checks _IMAGED_JP_SETS for jpn- ids, else the matching game's
+    entry in _IMAGED_SETS_BY_GAME. Callers should only invoke this when
+    set_id is truthy (nothing to check otherwise).
+    """
+    if not set_id:
+        return True
+    if set_id.startswith("jpn-"):
+        return set_id in _IMAGED_JP_SETS
+    return set_id in _IMAGED_SETS_BY_GAME.get(query_category, frozenset())
+
+
 def load_embedding_cache(force: bool = False):
     global _ROWS_CACHED, _CACHE_LOADED_AT
     global DESC_BY_IMAGE_ID, ORIG_BY_IMAGE_ID, VIEW_BY_IMAGE_ID, PATH_BY_IMAGE_ID, SKU_TYPE, SKU_LEN
@@ -1234,6 +1286,7 @@ def load_embedding_cache(force: bool = False):
                 _t1 = _cache_time.time()
                 print(f"[CACHE] Fast loaded {len(FRONT_INFO)} FRONT + {len(BACK_INFO)} BACK in {_t1-_t0:.2f}s", flush=True)
                 _rebuild_imaged_jp_sets()
+                _rebuild_imaged_sets_by_game()
 
 
                 try:
@@ -1319,6 +1372,7 @@ def load_embedding_cache(force: bool = False):
         FRONT_MATRIX = None
     FRONT_INFO = _front_mat_info
     _rebuild_imaged_jp_sets()
+    _rebuild_imaged_sets_by_game()
 
     if _back_mat_vecs:
         BACK_MATRIX = np.stack(_back_mat_vecs).astype(np.float32)
@@ -8217,6 +8271,10 @@ def match():
     # Read groove counts from UI (default -1 = unknown / not provided)
     query_category = request.form.get("key_type", "").strip().upper()
     query_profile = parse_all_fields(dict(request.form))
+    # Needed early for the pre-CLIP OCR-first block below (jp_mode is read
+    # again later, closer to the match call, for the CLIP-side JP filter —
+    # that later read is unaffected by this one).
+    _early_jp_mode = request.form.get('jp_mode', 'en')
 
     import time as _time
     _t_total_start = _time.time()
@@ -8353,10 +8411,12 @@ def match():
         except Exception as _e:
             print(f"[CONFIRMED-SKU] error, falling through to CLIP: {_e}", flush=True)
 
-    # ── OCR-first for YGO and MTG ──
-    if query_category in ("YUGIOH", "MTG"):
+    # ── OCR-first for YGO, MTG, and Pokémon ──
+    if query_category in ("YUGIOH", "MTG", "POKEMON"):
         try:
-            _ocr_direct_sku = ocr_direct_lookup(str(query_path1), query_category)
+            _ocr_direct_sku, _ocr_extracted_set_id = ocr_direct_lookup(
+                str(query_path1), query_category, jp_mode=(_early_jp_mode == 'jp')
+            )
             if _ocr_direct_sku:
                 import uuid as _uuid
                 feedback_token = str(_uuid.uuid4())
@@ -8426,6 +8486,19 @@ def match():
                     grade=grade,
                     paywall_triggered=scan_decision.get("limit_just_crossed", False),
                     scans_remaining=scan_decision.get("remaining"),
+                )
+            # No DB row for what OCR read — but if the card was confidently
+            # identified (a real set code + number, not a misread) AND that
+            # set has zero images in our index at all, say so honestly
+            # instead of letting CLIP guess at an unrelated card. Anchored
+            # to _ocr_extracted_set_id (independently read from the card),
+            # never to a CLIP result — CLIP hasn't run yet at this point.
+            if _ocr_extracted_set_id and not _is_set_imaged(query_category, _ocr_extracted_set_id):
+                print(f"[OCR-FIRST] set={_ocr_extracted_set_id} confidently read, "
+                      f"no images in index — honest no-match", flush=True)
+                return render_template(
+                    "match.html",
+                    error="This set isn't in our database yet — we're regularly adding new sets, so check back soon!",
                 )
         except Exception as _e:
             print(f"[OCR-FIRST] error, falling through to CLIP: {_e}", flush=True)
@@ -8673,6 +8746,23 @@ def match():
     # Score gate: only charge on confident match (Option B)
     if results[0].get('score', 0) < 0.65:
         return render_template("match.html", error="No confident match found.")
+
+    # Honest no-match: OCR read nothing at all AND DINOv2 (which only ever
+    # runs when CLIP itself was already stuck in a near-tie) is also a
+    # genuine coin-flip between its own top two. Neither independent
+    # signal can vouch for the CLIP guess here, so say so instead of
+    # showing a guessed result. Narrow on purpose — any other ocr_status
+    # (OCR read SOMETHING, even if unmatched) or a DINOv2 tiebreak that
+    # didn't fire at all (including CLIP already having a clear winner)
+    # falls through to existing behaviour unchanged.
+    _ocr_status_lowconf = _ocr_info.get("ocr_status") if "_ocr_info" in dir() else None
+    if (_ocr_status_lowconf == "no_text_found"
+            and _dino_diag.get("fired") is True
+            and _dino_diag.get("dino_gap", 1.0) < CFG.get("dinov2_swap_margin", 0.05)):
+        return render_template(
+            "match.html",
+            error="We couldn't confidently match this card. Try a clearer photo, or check the lighting.",
+        )
 
     # Option B (restored): only charge quota when OCR confirmed the match
     _ocr_status_fb = _ocr_info.get("ocr_status", "not_run") if "_ocr_info" in dir() else "not_run"

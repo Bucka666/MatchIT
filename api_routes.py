@@ -251,12 +251,19 @@ def register_api_routes(app):
             _dinov2_tiebreak, load_embedding_cache,
             _clean_and_auto_grooves,
             _evaluate_scan_decision,
+            _image_id_for_sku, _is_set_imaged,
+            get_data_dir, _increment_scan_counter,
         )
+        from ocr_confirm import ocr_direct_lookup
         from vertical_loader import parse_all_fields, get_vertical
 
         # ── Parse parameters ──
         top_k = min(int(request.form.get("top_k", 5)), 20)
         query_category = request.form.get("category", "").strip().upper()
+        # Needed early for the pre-CLIP OCR-first block below (jp_mode is
+        # read again later, closer to the match call, for the CLIP-side
+        # JP filter — that later read is unaffected by this one).
+        _early_jp_mode = request.form.get('jp_mode', 'en')
 
         # Parse profile fields from form data
         query_profile = parse_all_fields(dict(request.form))
@@ -289,6 +296,109 @@ def register_api_routes(app):
                 normalize_uploaded_image(str(query_path2))
             except Exception:
                 query_path2 = None
+
+        # ── OCR-first for YGO, MTG, and Pokémon — mirrors app.py's /match ──
+        # Runs before CLIP. On a confident read with a DB row, returns a
+        # match immediately (skips CLIP entirely). On a confident read of
+        # a set with zero images in our index, returns an honest no-match
+        # instead of letting CLIP guess at an unrelated card. Anchored to
+        # the OCR-extracted identity, never to a CLIP result — CLIP
+        # hasn't run yet at this point in the request.
+        if query_category in ("YUGIOH", "MTG", "POKEMON"):
+            try:
+                _ocr_direct_sku, _ocr_extracted_set_id = ocr_direct_lookup(
+                    str(query_path1), query_category, jp_mode=(_early_jp_mode == 'jp')
+                )
+                if _ocr_direct_sku:
+                    scan_decision = _evaluate_scan_decision(request, sku=_ocr_direct_sku)
+                    if not scan_decision.get("allowed", True):
+                        _reason = scan_decision.get("reason", "free_limit_exceeded")
+                        _tier   = scan_decision.get("tier", "free") or "free"
+                        _messages = {
+                            "free_limit_exceeded": "You've used all 150 free scans this month.",
+                            "tier_limit_exceeded": "You've reached your fair-use cap for this period.",
+                        }
+                        return jsonify({
+                            "error":           "scan_limit_reached",
+                            "reason":          _reason,
+                            "tier":            _tier,
+                            "limit":           scan_decision.get("limit"),
+                            "count":           scan_decision.get("count"),
+                            "remaining":       0,
+                            "topup_remaining": scan_decision.get("topup_remaining", 0),
+                            "message":         _messages.get(_reason, "Scan limit reached."),
+                        }), 402
+
+                    # Profile enrichment — same centralized-then-per-folder
+                    # pattern app.py's own OCR-first block already uses.
+                    _vertical_id_ocr = get_vertical().get("id", "")
+                    _profile_ocr = {}
+                    _cpp_ocr = os.path.join(app.root_path, f"sku_profiles_{_vertical_id_ocr}.json")
+                    if not os.path.exists(_cpp_ocr):
+                        _cpp_ocr = os.path.join(app.root_path, "sku_profiles.json")
+                    if os.path.exists(_cpp_ocr):
+                        try:
+                            with open(_cpp_ocr, "r", encoding="utf-8") as _f:
+                                _cp_ocr = json.load(_f)
+                            if _ocr_direct_sku in _cp_ocr:
+                                _profile_ocr.update(_cp_ocr[_ocr_direct_sku])
+                        except Exception:
+                            pass
+                    _cxp_ocr = os.path.join(app.root_path, f"sku_crossrefs_{_vertical_id_ocr}.json")
+                    if not os.path.exists(_cxp_ocr):
+                        _cxp_ocr = os.path.join(app.root_path, "sku_crossrefs.json")
+                    if os.path.exists(_cxp_ocr):
+                        try:
+                            with open(_cxp_ocr, "r", encoding="utf-8") as _f:
+                                _cx_ocr = json.load(_f)
+                            if _ocr_direct_sku in _cx_ocr:
+                                _xr_ocr = _cx_ocr[_ocr_direct_sku]
+                                if _xr_ocr.get("manufacturer"):
+                                    _profile_ocr["manufacturer"] = _xr_ocr["manufacturer"]
+                                if _xr_ocr.get("crossrefs"):
+                                    _profile_ocr["crossrefs"] = _xr_ocr["crossrefs"]
+                        except Exception:
+                            pass
+                    if not _profile_ocr:
+                        from profile_utils import _load_card_profile_for_sku as _lcp_ocr
+                        from vertical_loader import get_db_root as _gdr_ocr
+                        _dbr_ocr = _gdr_ocr()
+                        if _dbr_ocr:
+                            _profile_ocr = _lcp_ocr(_ocr_direct_sku, _dbr_ocr, get_data_dir()) or {}
+
+                    _match_entry_ocr = {"rank": 1, "sku": _ocr_direct_sku, "score": 1.0, "probability": 1.0}
+                    if _profile_ocr:
+                        _match_entry_ocr["profile"] = _profile_ocr
+                    _image_id_ocr = _image_id_for_sku(_ocr_direct_sku)
+                    if _image_id_ocr:
+                        _match_entry_ocr["images"] = [{"image_id": _image_id_ocr, "original_filename": ""}]
+
+                    _increment_scan_counter()
+                    print(f"[OCR-FIRST] Skipped CLIP — direct match: {_ocr_direct_sku}", flush=True)
+                    return jsonify({
+                        "matches": [_match_entry_ocr],
+                        "low_confidence": False,
+                        "ocr_confirmed": True,
+                        "show_transition_toast": bool(scan_decision.get("show_transition_toast", False)),
+                        "query_id": query_id,
+                        "timing_ms": round((time.time() - t_start) * 1000),
+                    })
+
+                # No DB row for what OCR read — honest no-match if the
+                # card was confidently identified but that set has zero
+                # images in our index at all.
+                if _ocr_extracted_set_id and not _is_set_imaged(query_category, _ocr_extracted_set_id):
+                    print(f"[OCR-FIRST] set={_ocr_extracted_set_id} confidently read, "
+                          f"no images in index — honest no-match", flush=True)
+                    return jsonify({
+                        "matches": [],
+                        "low_confidence": True,
+                        "reason": "set_not_in_database",
+                        "message": "This set isn't in our database yet — we're regularly adding new sets, so check back soon!",
+                        "show_transition_toast": True
+                    }), 200
+            except Exception as _e:
+                print(f"[OCR-FIRST] error, falling through to CLIP: {_e}", flush=True)
 
         # ── Clean + auto detect (groove detection etc) ──
         clean1, clean2, auto_fg, auto_bg, _clean_diag = _clean_and_auto_grooves(
@@ -417,6 +527,25 @@ def register_api_routes(app):
                 "low_confidence": True,
                 "reason": "score_too_low_post_rerank",
                 "show_transition_toast": False
+            }), 200
+
+        # Honest no-match: OCR read nothing at all AND DINOv2 (which only
+        # ever runs when CLIP itself was already stuck in a near-tie) is
+        # also a genuine coin-flip between its own top two. Neither
+        # independent signal can vouch for the CLIP guess here, so say so
+        # instead of returning a top-5 list. Narrow on purpose — any other
+        # ocr_status (OCR read SOMETHING, even if unmatched) or a DINOv2
+        # tiebreak that didn't fire at all (including CLIP already having
+        # a clear winner) falls through to existing behaviour unchanged.
+        if (_ocr_info.get("ocr_status") == "no_text_found"
+                and _dino_diag.get("fired") is True
+                and _dino_diag.get("dino_gap", 1.0) < CFG.get("dinov2_swap_margin", 0.05)):
+            return jsonify({
+                "matches": [],
+                "low_confidence": True,
+                "reason": "low_confidence_no_ocr",
+                "message": "We couldn't confidently match this card. Try scanning again with better lighting, or hold the card steadier.",
+                "show_transition_toast": True
             }), 200
 
         # Language separation post-filter — bidirectional.

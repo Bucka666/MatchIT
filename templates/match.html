@@ -213,6 +213,10 @@
     </div>
 
     <div class="cx-camera-wrap" id="scCameraWrap">
+      <div class="cx-banner-stack" id="scBannerStack">
+        <div class="cx-jp-banner" id="scJpBanner">🇯🇵 JAPANESE MODE</div>
+        <div class="cx-game-lock-banner" id="scGameLockBanner"></div>
+      </div>
       <div class="cx-cam-idle" id="scIdle">
         <div class="cx-idle-icon">📷</div>
         <div class="cx-idle-title">Camera ready</div>
@@ -1144,6 +1148,52 @@ html.gs-weak-device .cx-upload {
   color: var(--cx-cyan);
   box-shadow: 0 0 12px rgba(0,229,255,0.2);
 }
+/* Persistent JP-mode indicator — viewfinder border + top banner. Visible
+   the whole time JP mode is active, not just when the toggle is tapped,
+   so a mode left on from a previous session is obvious immediately. */
+.cx-camera-wrap.jp-mode-active {
+  border: 2px solid var(--cx-cyan);
+  box-shadow: 0 0 24px rgba(0,229,255,0.35), inset 0 0 24px rgba(0,229,255,0.12);
+}
+/* Shared stack for the JP-mode and game-lock banners — absolutely
+   positioned once here so each banner is a normal-flow flex child that
+   only takes up space while visible. Keeps them from overlapping when
+   both are active without needing fixed pixel offsets. */
+.cx-banner-stack {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+.cx-jp-banner,
+.cx-game-lock-banner {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: center;
+}
+.cx-jp-banner {
+  background: rgba(0,229,255,0.90);
+  color: #04222b;
+  box-shadow: 0 2px 14px rgba(0,229,255,0.5);
+}
+/* Distinct from the JP banner's cyan on purpose — the two must never be
+   confused. Uses the brand violet accent, kept uniform across all three
+   games (not per-game button colours) since MTG's own button colour is
+   cyan and would otherwise collide with the JP banner. */
+.cx-game-lock-banner {
+  background: rgba(177,77,255,0.90);
+  color: #fff;
+  box-shadow: 0 2px 14px rgba(177,77,255,0.5);
+}
 </style>
 
 <script>
@@ -1526,11 +1576,30 @@ function scSaveSettings() {
   } catch(e){}
 }
 
+// Persistent viewfinder indicator for the locked game — mirrors the
+// #scTcgLock value whether it was set by a manual tap or silently by
+// scAutoDetectTcg(). Every write to #scTcgLock goes through scSetTcg(),
+// so calling this here covers both trigger points from one place —
+// scAutoDetectTcg() always delegates to scSetTcg() when it locks a game,
+// so there's no separate call needed there for the banner to appear.
+function _scUpdateGameLockBanner(val) {
+  var banner = document.getElementById('scGameLockBanner');
+  if (!banner) return;
+  var LABELS = { POKEMON: '🃏 POKÉMON ONLY', MTG: '🃏 MTG ONLY', YUGIOH: '🃏 YU-GI-OH ONLY' };
+  if (val && LABELS[val]) {
+    banner.textContent = LABELS[val];
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
 function scSetTcg(val, btn) {
   try { var _ac = scGetAudio(); if (_ac.state === 'suspended') _ac.resume(); } catch(e) {}
   document.getElementById('scTcgLock').value = val;
   document.querySelectorAll('.cx-tcg-btn').forEach(function(b){ b.classList.remove('active'); });
   if(btn) btn.classList.add('active');
+  _scUpdateGameLockBanner(val);
 }
 
 function scAutoDetectTcg(sku) {
@@ -2115,9 +2184,17 @@ function scCapture() {
       if(data===null) return;
       if(data && data.show_transition_toast) {
         if (typeof gsShowToast === 'function') {
+          // data.message carries the specific reason (e.g. the honest
+          // "set not in database" case) when the server sends one;
+          // falls back to the original topup-transition wording when it
+          // doesn't (that response shape has no message field).
+          // onDismiss only marks the tier-transition warning dismissed
+          // for an actual transition toast — the missing-set case isn't
+          // a tier warning and must never write that flag.
+          var _isTransitionToast = data.reason !== 'set_not_in_database';
           gsShowToast(
-            "You've used your included scans this period — now using top-ups.",
-            { variant: 'info', duration: 8000, onDismiss: function() { _gsDismissWarning('transition'); } }
+            data.message || "You've used your included scans this period — now using top-ups.",
+            { variant: 'info', duration: 8000, onDismiss: _isTransitionToast ? function() { _gsDismissWarning('transition'); } : null }
           );
         }
       }
@@ -3764,6 +3841,13 @@ function _gsUpdateLangButtons() {
     if (upBtn) {
         upBtn.textContent = isJp ? '🇯🇵 JPN' : '🇬🇧 ENG';
     }
+    // Persistent viewfinder indicator — visible for the whole JP session,
+    // not just at toggle time, so a mode left on from a previous visit is
+    // obvious the moment the scanner page loads.
+    var camWrap = document.getElementById('scCameraWrap');
+    if (camWrap) camWrap.classList.toggle('jp-mode-active', isJp);
+    var jpBanner = document.getElementById('scJpBanner');
+    if (jpBanner) jpBanner.style.display = isJp ? 'flex' : 'none';
 }
 
 // Initialise button states on page load
