@@ -1362,6 +1362,85 @@ function gsIsWatchlisted(sku) {
   }
   // === end TWA helpers ===
 
+  // === Google Play Billing (TWA only) — Stripe unchanged for browser/PWA/Microsoft Store ===
+  var GS_PLAY_SKU_MAP = {
+    monthly:   'grailsweep_monthly',
+    annual:    'grailsweep_ultimate',
+    topup_75:  'grailsweep_topup_125'
+  };
+
+  function gsHasPlayBilling() {
+    return 'getDigitalGoodsService' in window;
+  }
+
+  async function gsActivateSubscriptionCode(code, tier) {
+    try {
+      const actResp = await fetch('/api/validate_premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code })
+      });
+      const actData = await actResp.json();
+      if (actData.valid) {
+        localStorage.setItem('matchit_premium_v1', 'unlocked');
+        localStorage.setItem('matchit_access_code_v1', code);
+        localStorage.setItem('matchit_tier_v1', actData.tier || tier);
+        document.cookie = 'gs_access_code=' + encodeURIComponent(code) + ';path=/;max-age=31536000;samesite=lax';
+      }
+    } catch (_e) {}
+  }
+
+  async function gsPlayBillingPurchase(tier) {
+    var skuId = GS_PLAY_SKU_MAP[tier];
+    if (!skuId) { alert('That plan is not available via Google Play.'); return; }
+    var productType = (tier === 'topup_75') ? 'onetime' : 'subscription';
+
+    var response;
+    try {
+      const service = await window.getDigitalGoodsService('https://play.google.com/billing');
+      const paymentMethods = [{
+        supportedMethods: 'https://play.google.com/billing',
+        data: { sku: skuId }
+      }];
+      const details = { total: { label: 'Total', amount: { currency: 'GBP', value: '0' } } };
+      const request = new PaymentRequest(paymentMethods, details);
+      response = await request.show();
+    } catch (e) {
+      alert('Google Play purchase could not be started: ' + (e && e.message ? e.message : 'unknown error'));
+      return;
+    }
+
+    const purchaseToken = response.details.purchaseToken;
+
+    try {
+      const result = await fetch('/api/google-play/verify-purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ purchaseToken: purchaseToken, skuId: skuId, productType: productType })
+      });
+      const data = await result.json().catch(function() { return {}; });
+
+      if (result.ok && data.ok) {
+        await response.complete('success');
+        if (data.type === 'subscription' && data.code) {
+          await gsActivateSubscriptionCode(data.code, data.tier);
+        }
+        alert(data.message || 'Purchase complete!');
+        setTimeout(function() { location.reload(); }, 800);
+      } else {
+        await response.complete('fail');
+        alert('Purchase verification failed: ' + (data.message || data.error || 'please try again or contact support.'));
+      }
+    } catch (e) {
+      try { await response.complete('fail'); } catch (_e) {}
+      alert('Network error verifying purchase. Please try again.');
+    }
+  }
+
+  window.gsHasPlayBilling     = gsHasPlayBilling;
+  window.gsPlayBillingPurchase = gsPlayBillingPurchase;
+  // === end Google Play Billing ===
+
 (function() {
   // ── Top-up modal helpers (Task 9c Phase C2) ──
   function gsTopupModalOpen(reason, tier) {
@@ -1462,6 +1541,7 @@ function gsIsWatchlisted(sku) {
 
   function gsTopupBuy(tier) {
     gsTopupModalClose();
+    if (gsHasPlayBilling()) { gsPlayBillingPurchase(tier); return; }
     fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

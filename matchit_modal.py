@@ -124,6 +124,7 @@ def _make_image_wsgi():
         modal.Secret.from_name("app-credentials"),
         modal.Secret.from_name("stripe-credentials"),
         modal.Secret.from_name("google-vision-credentials"),
+        modal.Secret.from_name("google-play-credentials"),
         modal.Secret.from_name("vapid-credentials"),
         modal.Secret.from_name("external-api-credentials"),
         modal.Secret.from_name("cf-proxy-secret"),

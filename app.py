@@ -5461,8 +5461,33 @@ def redeem_topup():
     elif entry.get("status") == "cancelled":
         return jsonify({"error": "code_cancelled", "message": "This code has been cancelled and cannot be redeemed."}), 409
 
-    # Mark as redeemed — atomic via _save_subs()
+    # Mark as redeemed and add credits — shared with the Google Play
+    # verify-purchase flow (same-device auto-redeem, see _redeem_topup_entry).
+    result = _redeem_topup_entry(code, entry, subs, device_id, server_fp)
+    if not result.get("ok"):
+        return jsonify({
+            "error": "balance_write_failed",
+            "message": "Your code was accepted but we couldn't add credits. Please contact support@grailsweep.com with code " + code
+        }), 500
+
+    return jsonify({
+        "ok": True,
+        "credits_added": result["credits_added"],
+        "new_balance": result.get("new_balance"),
+        "message": f"Top-up redeemed! {result['credits_added']} extra scans added to your account."
+    })
+
+
+def _redeem_topup_entry(code, entry, subs, device_id, server_fp):
+    """
+    Mark a TOPUP- entry as redeemed and add its credits to the device's
+    modal.Dict balance. Shared by /api/redeem-topup (manual code entry)
+    and the Google Play verify-purchase flow (auto-redeemed on the same
+    device immediately after purchase).
+    """
+    import db as _db
     from datetime import datetime
+
     credits = entry.get("credits_remaining", entry.get("credits_total", 125))
     entry["status"] = "redeemed"
     entry["redeemed_at"] = datetime.utcnow().isoformat()
@@ -5472,25 +5497,431 @@ def redeem_topup():
     subs[code] = entry
     _save_subs(subs)
 
-    # Add credits to modal.Dict
     result = _db.add_topup_credits(server_fp, device_id, credits)
     if not result.get("ok"):
         # Credits failed to write — code is now marked redeemed but user
         # has no balance. This is a recoverable but bad state. Log loudly.
         print(f"[TOPUP REDEEM ERROR] code={code} balance write failed: {result.get('error')}", flush=True)
-        return jsonify({
-            "error": "balance_write_failed",
-            "message": "Your code was accepted but we couldn't add credits. Please contact support@grailsweep.com with code " + code
-        }), 500
+        return {"ok": False, "error": result.get("error")}
 
     print(f"[TOPUP REDEEMED] code={code} credits={credits} new_balance={result.get('new_balance')} device={device_id} fp={server_fp}", flush=True)
+    return {"ok": True, "credits_added": credits, "new_balance": result.get("new_balance")}
 
-    return jsonify({
-        "ok": True,
-        "credits_added": credits,
-        "new_balance": result.get("new_balance"),
-        "message": f"Top-up redeemed! {credits} extra scans added to your account."
-    })
+
+# ── Google Play Billing (TWA only) ──────────────────────────────────────────
+# Stripe remains the purchase path for regular browser/PWA and Microsoft
+# Store traffic — this block is only reached via the Play Billing button
+# shown when 'getDigitalGoodsService' is available (i.e. inside the TWA).
+
+_GOOGLE_PLAY_PACKAGE = "com.grailsweep.app"
+_GOOGLE_PLAY_API = "https://androidpublisher.googleapis.com/androidpublisher/v3"
+
+_GOOGLE_PLAY_SKU_TIER_MAP = {
+    "grailsweep_monthly":    "monthly",
+    "grailsweep_ultimate":   "annual",
+    "grailsweep_topup_125":  "topup_75",
+}
+
+
+def _google_play_access_token():
+    """Mint an OAuth2 bearer token for the Play Developer API from the
+    service account JSON in the google-play-credentials Modal secret."""
+    import json as _json
+    from google.oauth2 import service_account
+    from google.auth.transport.requests import Request as _GRequest
+
+    sa_json = os.environ.get("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON", "")
+    if not sa_json:
+        raise RuntimeError("GOOGLE_PLAY_SERVICE_ACCOUNT_JSON not set")
+    info = _json.loads(sa_json)
+    creds = service_account.Credentials.from_service_account_info(
+        info, scopes=["https://www.googleapis.com/auth/androidpublisher"]
+    )
+    creds.refresh(_GRequest())
+    return creds.token
+
+
+def _google_play_get_subscription(token, purchase_token):
+    import requests as _requests
+    url = (f"{_GOOGLE_PLAY_API}/applications/{_GOOGLE_PLAY_PACKAGE}"
+           f"/purchases/subscriptionsv2/tokens/{purchase_token}")
+    resp = _requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def _google_play_acknowledge_subscription(token, sku_id, purchase_token):
+    import requests as _requests
+    url = (f"{_GOOGLE_PLAY_API}/applications/{_GOOGLE_PLAY_PACKAGE}"
+           f"/purchases/subscriptions/{sku_id}/tokens/{purchase_token}:acknowledge")
+    resp = _requests.post(url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
+    resp.raise_for_status()
+
+
+def _google_play_get_product(token, sku_id, purchase_token):
+    import requests as _requests
+    url = (f"{_GOOGLE_PLAY_API}/applications/{_GOOGLE_PLAY_PACKAGE}"
+           f"/purchases/products/{sku_id}/tokens/{purchase_token}")
+    resp = _requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
+    resp.raise_for_status()
+    return resp.json()
+
+
+def _google_play_acknowledge_product(token, sku_id, purchase_token):
+    import requests as _requests
+    url = (f"{_GOOGLE_PLAY_API}/applications/{_GOOGLE_PLAY_PACKAGE}"
+           f"/purchases/products/{sku_id}/tokens/{purchase_token}:acknowledge")
+    resp = _requests.post(url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
+    resp.raise_for_status()
+
+
+def _google_play_consume_product(token, sku_id, purchase_token):
+    import requests as _requests
+    url = (f"{_GOOGLE_PLAY_API}/applications/{_GOOGLE_PLAY_PACKAGE}"
+           f"/purchases/products/{sku_id}/tokens/{purchase_token}:consume")
+    resp = _requests.post(url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
+    resp.raise_for_status()
+
+
+@app.route("/api/google-play/verify-purchase", methods=["POST"])
+def google_play_verify_purchase():
+    """
+    Verify a Google Play Billing purchase (subscription or one-time
+    top-up) made inside the TWA, then grant entitlement using the exact
+    same functions the Stripe webhook uses (_issue_new_code /
+    _issue_new_topup_code + _redeem_topup_entry) — no parallel
+    entitlement path. Purchases are same-device, so subscriptions are
+    auto-activated (via /api/validate_premium client-side) and top-ups
+    are auto-redeemed inline instead of requiring an emailed code.
+    """
+    from flask import jsonify
+    import db as _db
+
+    data = request.get_json(silent=True) or {}
+    purchase_token = (data.get("purchaseToken") or "").strip()
+    sku_id = (data.get("skuId") or "").strip()
+    product_type = (data.get("productType") or "").strip()
+
+    if not purchase_token or not sku_id or product_type not in ("subscription", "onetime"):
+        return jsonify({"error": "invalid_request",
+                         "message": "Missing purchaseToken, skuId, or productType."}), 400
+
+    tier = _GOOGLE_PLAY_SKU_TIER_MAP.get(sku_id)
+    if not tier:
+        return jsonify({"error": "unknown_sku", "message": f"Unrecognised SKU: {sku_id}"}), 400
+
+    # Idempotency — a retried/duplicate purchaseToken must never grant twice.
+    _pd = None
+    try:
+        import modal as _modal
+        _pd = _modal.Dict.from_name("google-play-purchase-tokens", create_if_missing=True)
+        _cached = _pd.get(purchase_token)
+        if _cached is not None:
+            print(f"[GPLAY] Duplicate purchaseToken={purchase_token} — returning cached result", flush=True)
+            return jsonify(_cached)
+    except Exception as _idem_e:
+        print(f"[GPLAY] Idempotency check failed: {_idem_e} — proceeding anyway", flush=True)
+
+    try:
+        access_token = _google_play_access_token()
+    except Exception as e:
+        print(f"[GPLAY] Failed to mint access token: {e}", flush=True)
+        return jsonify({"error": "server_config_error",
+                         "message": "Purchase verification is temporarily unavailable."}), 500
+
+    # Same device identifiers used by /api/redeem-topup and free-scan gating.
+    ua   = request.user_agent.string
+    lang = request.headers.get("Accept-Language", "")
+    addr = request.headers.get("CF-Connecting-IP",
+           request.headers.get("X-Forwarded-For", request.remote_addr or ""))
+    server_fp = _db.compute_server_fingerprint(ua, lang, addr)
+    device_id = request.cookies.get("matchit_device_id_v1") or None
+    # Same formula as validate_premium()'s per-code device fingerprint — NOT
+    # server_fp above, which uses a different hash and isn't what's stored
+    # in a subscription entry's "devices" list.
+    import hashlib as _hashlib
+    _ip_partial = ".".join(addr.split(".")[:2]) if addr else ""
+    device_fingerprint = _hashlib.md5((ua + lang + _ip_partial).encode()).hexdigest()[:16]
+
+    try:
+        if product_type == "subscription":
+            info = _google_play_get_subscription(access_token, purchase_token)
+            state = info.get("subscriptionState", "")
+            if state not in ("SUBSCRIPTION_STATE_ACTIVE", "SUBSCRIPTION_STATE_IN_GRACE_PERIOD"):
+                return jsonify({"error": "not_active",
+                                 "message": f"Subscription is not active (state: {state})."}), 402
+
+            code = _issue_new_code(email="", tier=tier, subscription_id=purchase_token,
+                                    ref_code="", source="google_play",
+                                    device_fingerprint=device_fingerprint)
+
+            try:
+                _google_play_acknowledge_subscription(access_token, sku_id, purchase_token)
+            except Exception as _ack_e:
+                print(f"[GPLAY] Subscription acknowledge failed (non-fatal): {_ack_e}", flush=True)
+
+            response_payload = {"ok": True, "type": "subscription", "code": code, "tier": tier,
+                                 "message": "Subscription activated!"}
+
+        else:  # one-time top-up
+            info = _google_play_get_product(access_token, sku_id, purchase_token)
+            state = info.get("purchaseState", 1)  # 0=purchased, 1=canceled, 2=pending
+            if state != 0:
+                return jsonify({"error": "not_purchased",
+                                 "message": f"Purchase is not complete (state: {state})."}), 402
+
+            if not server_fp and not device_id:
+                return jsonify({"error": "no_identifier",
+                                 "message": "Could not identify your device. Please ensure cookies are enabled."}), 400
+
+            code = _issue_new_topup_code(email="", credits=125,
+                                          payment_intent_id=purchase_token, source="google_play")
+            subs = _load_subs()
+            entry = subs[code]
+            result = _redeem_topup_entry(code, entry, subs, device_id, server_fp)
+            if not result.get("ok"):
+                return jsonify({"error": "balance_write_failed",
+                                 "message": "Purchase verified but we couldn't add credits. "
+                                            "Contact support@grailsweep.com with code " + code}), 500
+
+            try:
+                _google_play_acknowledge_product(access_token, sku_id, purchase_token)
+                _google_play_consume_product(access_token, sku_id, purchase_token)
+            except Exception as _ack_e:
+                print(f"[GPLAY] Product acknowledge/consume failed (non-fatal): {_ack_e}", flush=True)
+
+            response_payload = {"ok": True, "type": "topup",
+                                 "credits_added": result["credits_added"],
+                                 "new_balance": result.get("new_balance"),
+                                 "message": f"{result['credits_added']} scans added!"}
+
+    except Exception as e:
+        print(f"[GPLAY] Verification failed: {e}", flush=True)
+        return jsonify({"error": "verification_failed",
+                         "message": "Could not verify purchase with Google Play."}), 502
+
+    # Record for idempotency only after entitlement has actually been granted.
+    if _pd is not None:
+        try:
+            _pd.put(purchase_token, response_payload)
+        except Exception as _put_e:
+            print(f"[GPLAY] Idempotency write failed: {_put_e}", flush=True)
+
+    return jsonify(response_payload)
+
+
+# ── Google Play RTDN (Real-time Developer Notifications) ────────────────────
+# Ongoing subscription lifecycle events (renewal, cancellation, billing
+# grace/hold), delivered by Cloud Pub/Sub push. Fully separate from
+# google_play_verify_purchase() above, which only handles the initial
+# purchase — do not merge these paths.
+#
+# IMPORTANT — this endpoint must be reached via https://grailsweep.com/...,
+# NOT the raw *.modal.run URL. _enforce_cf_proxy() (top of this file) 403s
+# any request without X-CF-Proxy-Secret, which only the Cloudflare Worker
+# injects (see cloudflare_worker.js::proxyToModal). Google's Pub/Sub push
+# will never carry that header, so the raw Modal URL will always reject it.
+
+def _verify_rtdn_request(req):
+    """
+    Verify an inbound Pub/Sub push request is genuinely from Google's
+    Pub/Sub push service for this project, not arbitrary internet
+    traffic. Two independent, env-gated checks (skipped individually if
+    their env var isn't set — same safe-rollout idiom as
+    _CF_PROXY_SECRET above, so the endpoint can be stood up before
+    Craig finishes Pub/Sub + secret configuration):
+
+      1. Shared-secret query token (?token=...) — set on the push
+         endpoint URL itself in the Pub/Sub subscription config.
+      2. Google-signed OIDC identity token in the Authorization header,
+         verified against Google's public certs, checked for audience +
+         issuer + the specific service-account email used to configure
+         the push subscription.
+
+    Returns (ok: bool, reason: str).
+    """
+    expected_token = os.environ.get("GOOGLE_PLAY_RTDN_TOKEN", "").strip()
+    if expected_token:
+        incoming_token = (req.args.get("token") or "").strip()
+        if not incoming_token or not _secrets_mod.compare_digest(incoming_token, expected_token):
+            return False, "bad_shared_secret"
+
+    expected_sa_email = os.environ.get("GOOGLE_PLAY_RTDN_SA_EMAIL", "").strip()
+    if expected_sa_email:
+        expected_audience = os.environ.get("GOOGLE_PLAY_RTDN_AUDIENCE", "").strip()
+        if not expected_audience:
+            # OIDC check is "on" (SA email configured) but audience isn't —
+            # this is a config error, not a missing-check. Fail closed
+            # rather than guess an audience from request headers (the CF
+            # Worker rewrites Host to the Modal hostname, so request.url_root
+            # would be wrong here — see proxyToModal in cloudflare_worker.js).
+            return False, "rtdn_audience_not_configured"
+
+        auth_header = req.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return False, "missing_bearer_token"
+        raw_token = auth_header[len("Bearer "):].strip()
+        try:
+            from google.oauth2 import id_token as _id_token
+            from google.auth.transport import requests as _g_auth_requests
+            claims = _id_token.verify_oauth2_token(
+                raw_token, _g_auth_requests.Request(), audience=expected_audience
+            )
+            if claims.get("iss") not in ("accounts.google.com", "https://accounts.google.com"):
+                return False, "bad_issuer"
+            if not claims.get("email_verified") or claims.get("email") != expected_sa_email:
+                return False, "sa_email_mismatch"
+        except Exception as e:
+            return False, f"oidc_verify_failed:{e}"
+
+    if not expected_token and not expected_sa_email:
+        return True, "unconfigured"
+    return True, "ok"
+
+
+def _handle_rtdn_subscription_notification(sub_notif):
+    """
+    Given a decoded RTDN subscriptionNotification block, fetch the
+    CURRENT real state from Google directly — never trust the
+    notification's own claims about what happened, same principle
+    google_play_verify_purchase() already uses for the initial purchase
+    — and update the matching subscriptions.json entry accordingly.
+    """
+    from datetime import datetime, timedelta
+
+    purchase_token = sub_notif.get("purchaseToken", "")
+    notification_type = sub_notif.get("notificationType")
+    if not purchase_token:
+        print("[RTDN] subscriptionNotification missing purchaseToken", flush=True)
+        return
+
+    print(f"[RTDN] subscriptionNotification type={notification_type} token={purchase_token}", flush=True)
+
+    access_token = _google_play_access_token()
+    info = _google_play_get_subscription(access_token, purchase_token)
+    state = info.get("subscriptionState", "")
+
+    subs = _load_subs()
+    match_code = None
+    for code, entry in subs.items():
+        if entry.get("source") == "google_play" and entry.get("stripe_subscription_id") == purchase_token:
+            match_code = code
+            break
+
+    if not match_code:
+        print(f"[RTDN] No subscriptions.json entry for purchaseToken={purchase_token} "
+              f"(state={state}) — nothing to update", flush=True)
+        return
+
+    entry = subs[match_code]
+    tier = entry.get("tier", "monthly")
+    now_iso = datetime.utcnow().isoformat()
+
+    if state == "SUBSCRIPTION_STATE_ACTIVE":
+        # Renewed (or recovered from grace/hold) — extend expiry using the
+        # exact same per-tier duration logic as _issue_new_code().
+        if tier == "lifetime":
+            expires = None
+        elif tier == "annual":
+            expires = (datetime.utcnow() + timedelta(days=366)).isoformat()
+        else:
+            expires = (datetime.utcnow() + timedelta(days=32)).isoformat()
+        entry["status"] = "active"
+        entry["expires_at"] = expires
+        entry["rtdn_last_state"] = state
+        entry["rtdn_updated_at"] = now_iso
+        print(f"[RTDN] {match_code} renewed (tier={tier}), new expires_at={expires}", flush=True)
+
+    elif state == "SUBSCRIPTION_STATE_IN_GRACE_PERIOD":
+        # Google is still retrying the card — keep access, just log.
+        entry["rtdn_last_state"] = state
+        entry["rtdn_updated_at"] = now_iso
+        print(f"[RTDN] {match_code} in grace period — access retained, no status change", flush=True)
+
+    else:
+        # ON_HOLD (grace period already lapsed with no successful
+        # payment), CANCELED, EXPIRED, REVOKED, PAUSED, PENDING, or any
+        # other/unrecognised state — treat as not-entitled. If the
+        # customer's card recovers, a later ACTIVE notification (handled
+        # above) reinstates the same code automatically.
+        entry["status"] = "expired"
+        entry["expired_at"] = now_iso
+        entry["rtdn_last_state"] = state
+        entry["rtdn_updated_at"] = now_iso
+        print(f"[RTDN] {match_code} set to expired (state={state})", flush=True)
+
+    _save_subs(subs)
+
+
+@app.route("/api/google-play/rtdn", methods=["POST"])
+def google_play_rtdn():
+    """
+    Google Play RTDN push endpoint. Per Google's Pub/Sub push contract,
+    always return 200 quickly — even on internal error — to avoid
+    retry-triggered duplicate processing; genuine duplicate deliveries
+    are instead caught by the messageId idempotency check below.
+    """
+    from flask import jsonify
+    import base64, json as _json
+
+    ok, reason = _verify_rtdn_request(request)
+    if not ok:
+        print(f"[RTDN] Rejected: {reason}", flush=True)
+        return jsonify({"error": "unauthorized"}), 401
+
+    envelope = request.get_json(silent=True) or {}
+    message = envelope.get("message") or {}
+    message_id = message.get("messageId") or message.get("message_id") or ""
+
+    # Idempotency — keyed by Pub/Sub messageId, NOT purchaseToken. A
+    # subscription receives many notifications over its lifetime for the
+    # same purchaseToken (each renewal, cancellation, etc.), so reusing
+    # the google-play-purchase-tokens dict (keyed by purchaseToken, used
+    # for the one-time initial-purchase dedup above) would wrongly
+    # swallow every notification after the first for a given token.
+    _pd = None
+    if message_id:
+        try:
+            import modal as _modal
+            _pd = _modal.Dict.from_name("google-play-rtdn-messages", create_if_missing=True)
+            if _pd.get(message_id) is not None:
+                print(f"[RTDN] Duplicate messageId={message_id} — skipping", flush=True)
+                return jsonify({"status": "ok"}), 200
+        except Exception as _idem_e:
+            print(f"[RTDN] Idempotency check failed: {_idem_e} — proceeding anyway", flush=True)
+
+    try:
+        data_b64 = message.get("data", "")
+        if not data_b64:
+            print("[RTDN] Empty message.data — nothing to process", flush=True)
+            return jsonify({"status": "ok"}), 200
+
+        notification = _json.loads(base64.b64decode(data_b64).decode("utf-8"))
+
+        if "testNotification" in notification:
+            print(f"[RTDN] testNotification received: {notification['testNotification']}", flush=True)
+
+        elif "subscriptionNotification" in notification:
+            _handle_rtdn_subscription_notification(notification["subscriptionNotification"])
+
+        else:
+            print(f"[RTDN] Unhandled notification shape: {list(notification.keys())}", flush=True)
+
+    except Exception as e:
+        # Never fail this response — log loudly and move on. A dropped
+        # event here is recoverable: the next renewal/cancellation
+        # notification re-verifies live state from Google anyway.
+        print(f"[RTDN] Processing error (swallowed, returning 200): {e}", flush=True)
+        return jsonify({"status": "ok"}), 200
+
+    if _pd is not None and message_id:
+        try:
+            _pd.put(message_id, {"ts": time.time()})
+        except Exception as _put_e:
+            print(f"[RTDN] Idempotency write failed: {_put_e}", flush=True)
+
+    return jsonify({"status": "ok"}), 200
+# ─────────────────────────────────────────────────────────────────────────────
 
 
 @app.route("/api/topup-status", methods=["GET"])
@@ -6856,7 +7287,7 @@ def _extract_gbp_from_profile(profile):
                 return round(float(price) * mult, 2)
     return None
 
-def _issue_new_code(email, tier, subscription_id, ref_code=""):
+def _issue_new_code(email, tier, subscription_id, ref_code="", source="stripe", device_fingerprint=None):
     import random
     from datetime import datetime, timedelta
 
@@ -6873,13 +7304,33 @@ def _issue_new_code(email, tier, subscription_id, ref_code=""):
         expires = (datetime.utcnow() + timedelta(days=32)).isoformat()
 
     subs = _load_subs()
+
+    # Supersede any other active subscription code already tied to this
+    # device, so a device never carries two simultaneously-active
+    # subscriptions (e.g. a beta-tester code left active after a Google
+    # Play purchase). Top-up codes are untouched — they are independent
+    # of subscription status. device_fingerprint uses the same formula as
+    # validate_premium()'s per-code device list, since that's the only
+    # place this identifier is actually stored.
+    if device_fingerprint:
+        for _old_code, _entry in subs.items():
+            if (_entry.get("type") != "topup"
+                    and _entry.get("tier") in ("monthly", "annual", "lifetime")
+                    and _entry.get("status") == "active"
+                    and device_fingerprint in (_entry.get("devices") or [])):
+                _entry["status"] = "superseded"
+                _entry["superseded_at"] = datetime.utcnow().isoformat()
+                _entry["superseded_by"] = code
+                print(f"[SUPERSEDE] {_old_code} -> {code} (device={device_fingerprint})", flush=True)
+
     subs[code] = {
         "email": email,
         "tier": tier,
         "stripe_subscription_id": subscription_id,
         "created_at": datetime.utcnow().isoformat(),
         "expires_at": expires,
-        "status": "active"
+        "status": "active",
+        "source": source,
     }
     _save_subs(subs)
 
@@ -6946,16 +7397,19 @@ The GrailSweep team
     </div>
     """
 
-    try:
-        gs_send_email(
-            to=email,
-            subject=f"Your GrailSweep {tier_label} access code",
-            html=body_html,
-            text=body_text,
-        )
-        print(f"[ISSUE] Sent code {code} to {email} tier={tier}", flush=True)
-    except Exception as e:
-        print(f"[EMAIL ERROR] Failed to send code {code} to {email}: {e}", flush=True)
+    if email:
+        try:
+            gs_send_email(
+                to=email,
+                subject=f"Your GrailSweep {tier_label} access code",
+                html=body_html,
+                text=body_text,
+            )
+            print(f"[ISSUE] Sent code {code} to {email} tier={tier}", flush=True)
+        except Exception as e:
+            print(f"[EMAIL ERROR] Failed to send code {code} to {email}: {e}", flush=True)
+    else:
+        print(f"[ISSUE] Issued code {code} tier={tier} source={source} (no email — in-app activation)", flush=True)
 
     # Apply referral reward if this purchase used a referral code
     if ref_code:
@@ -6963,7 +7417,7 @@ The GrailSweep team
     return code
 
 
-def _issue_new_topup_code(email, credits=125, payment_intent_id=None):
+def _issue_new_topup_code(email, credits=125, payment_intent_id=None, source="stripe"):
     """
     Issue a one-time top-up redemption code (TOPUP-XXXX-XXXX).
 
@@ -6975,9 +7429,12 @@ def _issue_new_topup_code(email, credits=125, payment_intent_id=None):
     scan counter and the code is marked spent.
 
     Args:
-        email: purchaser's email from Stripe checkout
+        email: purchaser's email from Stripe checkout (blank for Google
+            Play purchases, which are auto-redeemed on the same device)
         credits: number of scan credits to grant on redemption (default 125)
-        payment_intent_id: Stripe payment_intent ID for traceability
+        payment_intent_id: Stripe payment_intent ID (or Play purchaseToken)
+            for traceability
+        source: "stripe" or "google_play"
     """
     import random
     from datetime import datetime
@@ -6999,6 +7456,7 @@ def _issue_new_topup_code(email, credits=125, payment_intent_id=None):
         "redeemed_at":        None,
         "redeemed_by_device": None,
         "redeemed_by_fp":     None,
+        "source":             source,
     }
     _save_subs(subs)
 
@@ -7044,19 +7502,24 @@ The GrailSweep team
     </div>
     """
 
-    try:
-        gs_send_email(
-            to=email,
-            subject=f"Your GrailSweep top-up: {credits} scans",
-            html=body_html,
-            text=body_text,
-        )
-        print(f"[TOPUP] Issued code {code} to {email} ({credits} credits)", flush=True)
-    except Exception as e:
-        print(f"[TOPUP EMAIL ERROR] Failed to send code {code} to {email}: {e}", flush=True)
-        # Code is already written to subscriptions.json — email failure
-        # doesn't lose the code. Manual recovery possible via direct
-        # subscriptions.json lookup.
+    if email:
+        try:
+            gs_send_email(
+                to=email,
+                subject=f"Your GrailSweep top-up: {credits} scans",
+                html=body_html,
+                text=body_text,
+            )
+            print(f"[TOPUP] Issued code {code} to {email} ({credits} credits)", flush=True)
+        except Exception as e:
+            print(f"[TOPUP EMAIL ERROR] Failed to send code {code} to {email}: {e}", flush=True)
+            # Code is already written to subscriptions.json — email failure
+            # doesn't lose the code. Manual recovery possible via direct
+            # subscriptions.json lookup.
+    else:
+        print(f"[TOPUP] Issued code {code} ({credits} credits) source={source} (no email — in-app activation)", flush=True)
+
+    return code
 
 
 def _extend_subscription(subscription_id):

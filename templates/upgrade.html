@@ -348,6 +348,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function handleUpgrade(tier) {
+    if (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) {
+        await gsPlayBillingPurchase(tier);
+        return;
+    }
     try {
         const refCode = (document.getElementById('referralCodeInput') || {}).value || '';
         const resp = await fetch('/api/create-checkout-session', {

@@ -34,6 +34,7 @@ image = (
         "pywebpush>=2.3.0",
         "boto3",
         "tcgdex-sdk==2.3.0",
+        "google-auth>=2.23.0",
     )
     .run_commands(
         "python -c \"import open_clip; open_clip.create_model_and_transforms('ViT-L-14', pretrained='laion2b_s32b_b82k')\"",
