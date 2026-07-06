@@ -2107,34 +2107,39 @@ function scCapture() {
         };
 
         if (odr && odr.accept) {
-          // Conflict check: only suppress on a POSITIVE conflict — denominator read
-          // AND set total known AND they disagree. Any missing/uncertain data falls
-          // through to the normal accept (fail-open — can only add a server round-trip,
-          // never block a legit card).
-          const _denom = (_ocrResult && _ocrResult.ocr_denom) ? _ocrResult.ocr_denom : null;
-          let _suppressed = false;
-          if (_denom) {
-            try {
-              const stResp = await fetch('/api/set-total/' + encodeURIComponent(odr.sku),
-                                         { credentials: 'same-origin' });
-              if (stResp.ok) {
-                const st = await stResp.json();
-                const pt = st.printed_total, tt = st.total;
-                const known = (pt != null) || (tt != null);
-                const matches = (pt != null && _denom === pt) || (tt != null && _denom === tt);
-                if (known && !matches) {
-                  console.log('[ONDEVICE] denom conflict: ocr=' + _denom + ' vs set ' +
-                              st.set_id + ' (' + pt + '/' + tt + ') -> fall through to /match');
-                  _suppressed = true;
+          // Staleness gate — if index is stale for this game, route to server
+          if (_gsStaleGames && _gsStaleGames.has(gsGameForStaleness(odr.sku))) {
+            // fall through to server — do not call _acceptOnDevice()
+          } else {
+            // Conflict check: only suppress on a POSITIVE conflict — denominator read
+            // AND set total known AND they disagree. Any missing/uncertain data falls
+            // through to the normal accept (fail-open — can only add a server round-trip,
+            // never block a legit card).
+            const _denom = (_ocrResult && _ocrResult.ocr_denom) ? _ocrResult.ocr_denom : null;
+            let _suppressed = false;
+            if (_denom) {
+              try {
+                const stResp = await fetch('/api/set-total/' + encodeURIComponent(odr.sku),
+                                           { credentials: 'same-origin' });
+                if (stResp.ok) {
+                  const st = await stResp.json();
+                  const pt = st.printed_total, tt = st.total;
+                  const known = (pt != null) || (tt != null);
+                  const matches = (pt != null && _denom === pt) || (tt != null && _denom === tt);
+                  if (known && !matches) {
+                    console.log('[ONDEVICE] denom conflict: ocr=' + _denom + ' vs set ' +
+                                st.set_id + ' (' + pt + '/' + tt + ') -> fall through to /match');
+                    _suppressed = true;
+                  }
                 }
+                // set-total fetch not ok -> can't prove conflict -> fail-open (not suppressed)
+              } catch (e) {
+                // any error -> fail-open -> not suppressed
               }
-              // set-total fetch not ok -> can't prove conflict -> fail-open (not suppressed)
-            } catch (e) {
-              // any error -> fail-open -> not suppressed
             }
-          }
-          if (!_suppressed) {
-            if (await _acceptOnDevice()) return;
+            if (!_suppressed) {
+              if (await _acceptOnDevice()) return;
+            }
           }
         }
         // gate declined or suppressed -> fall through to Modal
@@ -2199,7 +2204,7 @@ function scCapture() {
         }
       }
       scBusy=false;
-      if(!data.matches||data.matches.length===0||data.match===null||data.low_confidence){guide.className='cx-card-guide';if(scScanning){txt.textContent='No confident match — keep scanning…';txt.className='cx-guide-text scanning';}scFailCount++;if(scFailCount>=5){var fg=document.getElementById('scFailGate');if(fg){fg.style.display='flex';scScanning=false;}}return;}
+      if(!data.matches||data.matches.length===0||data.match===null||data.low_confidence){guide.className='cx-card-guide';if(scScanning){txt.textContent='No confident match — keep scanning…';txt.className='cx-guide-text scanning';}scFailCount++;if(scFailCount===3){if(typeof gsShowToast==='function'){gsShowToast("Try holding the camera steady and make sure the card fills the frame. Avoid glare and shadows.",{title:"Having trouble?",variant:'info',duration:6000});}}if(scFailCount>=5){var fg=document.getElementById('scFailGate');if(fg){fg.style.display='flex';scScanning=false;}}return;}
       // Extract grade explicitly with diagnostic
       var _capturedGrade = null;
       if (data && data.grade && typeof data.grade === 'object') {
@@ -3144,6 +3149,9 @@ document.getElementById('matchYear') &&
   let _gsSkus     = null;
   let _gsWarmupP  = null;
   let _gsWarm     = false;
+  let _gsServerSets   = null;  // imaged set list from server
+  let _gsIndexSetIds  = null;  // set IDs derived from _gsSkus
+  let _gsStaleGames   = null;  // Set of game keys whose index coverage is stale
 
   // ---- PORT FROM HARNESS (verbatim) ----------------------------------------
   const SIZE = 256;
@@ -3251,6 +3259,16 @@ document.getElementById('matchYear') &&
     _gsIndex = parsed.data; _gsIndexN = parsed.shape[0]; _gsDim = parsed.shape[1];
     const sjson = await gsBufFromIdb(GS_SKU_FILE);
     _gsSkus = JSON.parse(typeof sjson === 'string' ? sjson : new TextDecoder().decode(new Uint8Array(sjson)));
+    _gsIndexSetIds = gsBuildIndexSetIds(_gsSkus);
+    try {
+      const r = await fetch(API_BASE.replace('/api/v1','') + '/api/imaged-sets');
+      if (r.ok) {
+        _gsServerSets = await r.json();
+        _gsStaleGames = gsComputeStaleGames(_gsServerSets, _gsIndexSetIds);
+      }
+    } catch(e) {
+      // fetch failed — _gsStaleGames stays null, staleness check skipped safely
+    }
   }
   async function gsLoadSession() {
     if (_gsSession) return;
@@ -3276,6 +3294,41 @@ document.getElementById('matchYear') &&
     if (sku.startsWith('mtg-')) return 'MTG';
     if (sku.startsWith('ygo-')) return 'YGO';
     return 'POKEMON';
+  }
+
+  // ---- staleness check helpers ---------------------------------------------
+  function gsExtractSetId(sku) {
+    // Mirrors server-side _get_set_id_from_sku logic exactly
+    const base = sku.split('-').slice(0, -1).join('-');
+    if (base.startsWith('mtg-')) return base.slice(4);
+    return base; // jpn-sv7a or sv8pt5 — correct format for each
+  }
+
+  function gsGameForStaleness(sku) {
+    if (sku.startsWith('jpn-')) return 'POKEMON_JP';
+    if (sku.startsWith('mtg-')) return 'MTG';
+    return 'POKEMON_EN';
+  }
+
+  function gsBuildIndexSetIds(skus) {
+    const ids = new Set();
+    for (const sku of skus) ids.add(gsExtractSetId(sku));
+    return ids;
+  }
+
+  function gsComputeStaleGames(serverSets, indexSetIds) {
+    const stale = new Set();
+    const checks = [
+      ['pokemon_en', 'POKEMON_EN'],
+      ['pokemon_jp', 'POKEMON_JP'],
+      ['mtg', 'MTG']
+    ];
+    for (const [key, label] of checks) {
+      for (const s of (serverSets[key] || [])) {
+        if (!indexSetIds.has(s)) { stale.add(label); break; }
+      }
+    }
+    return stale;
   }
 
   // ---- gate predicate (VERBATIM — do not change) --------------------------

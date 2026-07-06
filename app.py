@@ -6907,6 +6907,38 @@ def _build_set_card_list(set_id, game=None, meta=None):
                 "img_url": "https://images.grailsweep.com/" + image_id + ".jpg",
             })
 
+    # JP sets: images.db only contains cards that have gone through the
+    # embedding pipeline (~4,294 of 12,654 JP profiles) — CardsDB itself has
+    # every scraped profile regardless of whether front.png exists yet. Add
+    # a second pass here so profile-only JP cards aren't silently invisible;
+    # they get the branded placeholder image instead of a real card photo.
+    if set_id.startswith("jpn-"):
+        existing_skus = {c["sku"] for c in cards}
+        jp_pokemon_dir = os.path.join(db_root, "pokemon")
+        prefix = set_id + "-"
+        if os.path.isdir(jp_pokemon_dir):
+            for folder_name in os.listdir(jp_pokemon_dir):
+                if not folder_name.startswith(prefix):
+                    continue
+                if folder_name in existing_skus:
+                    continue
+                profile_path = os.path.join(jp_pokemon_dir, folder_name, "profile.json")
+                if not os.path.isfile(profile_path):
+                    continue
+                try:
+                    with open(profile_path, encoding="utf-8") as f:
+                        prof = json.load(f)
+                except Exception:
+                    continue
+                name = prof.get("name") or folder_name
+                card_number = prof.get("card_number") or prof.get("number") or ""
+                cards.append({
+                    "sku": folder_name,
+                    "name": name,
+                    "card_number": card_number,
+                    "img_url": "/static/assets/gs_card_placeholder.png",
+                })
+
     cards.sort(key=_card_sort_key)
     return game, cards, truncated, total_in_db
 
@@ -7750,7 +7782,30 @@ def collection_value_history():
         return jsonify({"error": "invalid code"}), 401
     history = _load_price_history()
     today   = _dt.utcnow().date()
-    days    = [today - _td(days=29 - i) for i in range(30)]
+
+    # Clip the window to the earliest card's add date, so the graph never
+    # shows dates before any card existed in the collection. "added" is
+    # en-GB locale format ("DD/MM/YYYY"), written client-side at add time.
+    earliest_added = None
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        added_str = item.get("added")
+        if not added_str:
+            continue
+        try:
+            _d_part, _m_part, _y_part = added_str.split("/")
+            _added_date = _dt(int(_y_part), int(_m_part), int(_d_part)).date()
+        except Exception:
+            continue
+        if earliest_added is None or _added_date < earliest_added:
+            earliest_added = _added_date
+
+    default_start = today - _td(days=29)
+    start = max(default_start, earliest_added) if earliest_added else default_start
+    num_days = (today - start).days + 1
+    days = [start + _td(days=i) for i in range(num_days)]
+
     result  = []
     for day in days:
         day_str   = day.strftime("%Y-%m-%d")
@@ -7952,6 +8007,14 @@ def sets_cards(set_id):
     }
     return jsonify(resp)
 
+@app.route("/api/imaged-sets")
+def get_imaged_sets():
+    return jsonify({
+        "pokemon_en": sorted(_IMAGED_SETS_BY_GAME.get("POKEMON", set())),
+        "pokemon_jp": sorted(_IMAGED_JP_SETS),
+        "mtg": sorted(_IMAGED_SETS_BY_GAME.get("MTG", set()))
+    })
+
 @app.route("/api/fx_rates")
 def fx_rates():
     """Cache-backed only — see fx_rates.py. No live frankfurter call per
@@ -7991,20 +8054,25 @@ def validate_premium():
     if code in legacy_codes:
         legacy_entry = subs.get(code)
         if legacy_entry and legacy_entry.get("status") == "cancelled":
+            print(f"[VALIDATE] code={code} result=invalid reason=Legacy code revoked")
             return jsonify({"valid": False, "reason": "Legacy code revoked"})
+        print(f"[VALIDATE] code={code} tier=legacy result=valid")
         return jsonify({"valid": True, "tier": "legacy"})
 
     entry = subs.get(code)
     if not entry:
+        print(f"[VALIDATE] code={code} result=invalid reason=Code not found")
         return jsonify({"valid": False, "reason": "Code not found"})
 
     if entry.get("status") != "active":
+        print(f"[VALIDATE] code={code} result=invalid reason=Subscription not active (status: {entry.get('status', 'unknown')})")
         return jsonify({"valid": False, "reason": f"Subscription not active (status: {entry.get('status', 'unknown')})"})
 
     expires = entry.get("expires_at")
     if expires:
         try:
             if datetime.fromisoformat(expires) < datetime.utcnow():
+                print(f"[VALIDATE] code={code} result=invalid reason=Subscription expired")
                 return jsonify({"valid": False, "reason": "Subscription expired"})
         except Exception:
             pass
@@ -8013,6 +8081,7 @@ def validate_premium():
     devices = entry.get("devices", [])
     if fingerprint not in devices:
         if len(devices) >= entry.get("device_fingerprint_limit", 3):
+            print(f"[VALIDATE] code={code} result=invalid reason=This code is already active on the maximum number of devices. Contact support if you need help.")
             return jsonify({
                 "valid": False,
                 "reason": "This code is already active on the maximum number of devices. Contact support if you need help."
@@ -8025,6 +8094,7 @@ def validate_premium():
         except Exception as e:
             print(f"[SUBS] Failed to save device fingerprint: {e}")
 
+    print(f"[VALIDATE] code={code} tier={entry.get('tier')} result=valid")
     return jsonify({"valid": True, "tier": entry.get("tier", "monthly")})
 
 

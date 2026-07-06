@@ -373,7 +373,7 @@ def backfill_justtcg_prices(
         by_set.setdefault(our_set_code, []).append((folder, card_number))
 
     stats = {
-        "sets_found": 0, "sets_missing": 0,
+        "sets_found": 0, "sets_missing": 0, "sets_skipped": 0,
         "cards_checked": 0, "priced": 0,
         "skipped_existing": 0, "no_match": 0, "errors": 0,
     }
@@ -385,6 +385,24 @@ def backfill_justtcg_prices(
             continue
 
         stats["sets_found"] += 1
+
+        all_priced = True
+        for folder, _card_number in folders:
+            try:
+                with open(folder / "profile.json", encoding="utf-8") as f:
+                    profile = json.load(f)
+            except Exception:
+                all_priced = False
+                break
+            if not (profile.get("prices", {}).get("tcgplayer", {}).get("market")
+                    or profile.get("prices", {}).get("cardmarket", {}).get("avg_sell")):
+                all_priced = False
+                break
+
+        if all_priced:
+            print(f"[JP-REFRESH] Skipping {our_set_code} — all {len(folders)} cards already priced")
+            stats["sets_skipped"] += 1
+            continue
 
         try:
             set_prices = _fetch_justtcg_set_prices(justtcg_set_id, api_key)

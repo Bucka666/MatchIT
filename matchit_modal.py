@@ -2,6 +2,7 @@ import modal
 import os
 import sys
 import time
+from datetime import datetime
 
 sys.path.insert(0, "/app")
 from modal_config import VOLUME_NAME, vol, image
@@ -458,6 +459,7 @@ def scheduled_jp_price_refresh():
     avoids that becoming part of matchit-api's own deploy/build graph. This
     mirrors how scheduled_set_check() above already lazy-imports
     set_scheduler, which has the identical second-modal.App pattern."""
+    print(f"[JP-PRICE-CRON] Starting run at {datetime.utcnow().isoformat()}Z", flush=True)
     import os, sys
     os.chdir("/app")
     sys.path.insert(0, "/app")
@@ -488,6 +490,7 @@ def scheduled_jp_price_refresh():
         print(f"[JP-PRICE-CRON] {result}", flush=True)
     except Exception as e:
         print(f"[JP-PRICE-CRON] FAILED: {e}", flush=True)
+        raise
 
 
 @app.function(

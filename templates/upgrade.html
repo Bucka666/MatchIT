@@ -21,7 +21,7 @@
   </div>
 
   <!-- Payment disclaimer (TWA / Android compliance) -->
-  <div class="upgrade-fair-usage-notice">
+  <div class="upgrade-fair-usage-notice" id="upgradeStripeDisclaimer">
     <p>Payments are processed securely by Stripe on our website. After purchase, return to the app and enter the code emailed to you.</p>
   </div>
 
@@ -344,6 +344,19 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (typeof scanIsBlocked === 'function' && scanIsBlocked()) {
         _sw.textContent = '🚫 You\'ve used all 150 free scans this month. Upgrade to Pro for unlimited fair usage scanning, or wait until next month.';
         _sw.style.display = 'block';
+    }
+
+    if (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) {
+        var _refBlock = document.getElementById('referralCodeInput');
+        _refBlock = _refBlock && _refBlock.closest('.upgrade-referral-section');
+        if (_refBlock) _refBlock.style.display = 'none';
+    }
+
+    if (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) {
+        var disclaimer = document.getElementById('upgradeStripeDisclaimer');
+        if (disclaimer) {
+            disclaimer.innerHTML = '<p>Payments are processed securely through Google Play. Your subscription is managed via your Google Play account.</p>';
+        }
     }
 });
 

@@ -116,6 +116,59 @@ _PKM_SETCODE_MAP = {
 }
 
 
+_JP_SETCODE_MAP = {
+    # sv1a (Triplet Beat)
+    "SV1A": "sv1a",
+    # sv1s (Scarlet ex)
+    "SV1S": "sv1s",
+    # sv1v (Violet ex) — confirmed 1→I misread in logs
+    "SV1V": "sv1v",
+    "SVIV": "sv1v",
+    # sv2a (Snow Hazard/Clay Burst)
+    "SV2A": "sv2a",
+    # sv2d (Snow Hazard)
+    "SV2D": "sv2d",
+    # sv2p (Clay Burst)
+    "SV2P": "sv2p",
+    # sv3 (Ruler of the Black Flame) — confirmed V→Y and V→5 misreads
+    "SV3":  "sv3",
+    "SY3":  "sv3",
+    "G53":  "sv3",
+    # sv3a (Raging Surf)
+    "SV3A": "sv3a",
+    "SY3A": "sv3a",
+    # sv4a (Ancient Roar/Future Flash) — confirmed A→0 misread
+    "SV4A": "sv4a",
+    "SV40": "sv4a",
+    # sv4k (Future Flash)
+    "SV4K": "sv4k",
+    # sv4m (Ancient Roar)
+    "SV4M": "sv4m",
+    # sv5a (Crimson Haze)
+    "SV5A": "sv5a",
+    # sv5k (Wild Force)
+    "SV5K": "sv5k",
+    # sv6 (Transformation Mask)
+    "SV6":  "sv6",
+    # sv6a (Night Wanderer)
+    "SV6A": "sv6a",
+    # sv7 (Stellar Miracle)
+    "SV7":  "sv7",
+    # sv7a (Paradise Dragona)
+    "SV7A": "sv7a",
+    # sv8 (Super Electric Breaker)
+    "SV8":  "sv8",
+    # sv8a (Terastal Festival)
+    "SV8A": "sv8a",
+    # sv9 (Journey Together JP)
+    "SV9":  "sv9",
+    # sv9a
+    "SV9A": "sv9a",
+    # sv10 (Destined Rivals JP)
+    "SV10": "sv10",
+}
+
+
 # ─────────────────────────────────────────────────────────────
 # Image crop helper
 # ─────────────────────────────────────────────────────────────
@@ -452,6 +505,23 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
         if code in all_text:
             set_code = db_id
             break
+    # JP set code fallback — check individual OCR tokens against JP map
+    if set_code is None:
+        for raw in texts:  # individual OCR text lines, not all_text
+            for token in raw.upper().split():
+                # Check token as-is
+                if token in _JP_SETCODE_MAP:
+                    set_code = f"jpn-{_JP_SETCODE_MAP[token]}"
+                    break
+                # Also check with leading G stripped
+                # (handles GSV3, GSV4A etc. — OCR attaches the grade letter)
+                if token.startswith('G') and len(token) > 3:
+                    stripped = token[1:]
+                    if stripped in _JP_SETCODE_MAP:
+                        set_code = f"jpn-{_JP_SETCODE_MAP[stripped]}"
+                        break
+            if set_code:
+                break
     # Plain number pattern for energy cards e.g. "015" without total
     _PLAIN_NUM_RE = re.compile(r'(?<![×xX*+\-])\b(\d{1,4})\b')
     for text in texts:
@@ -639,6 +709,14 @@ def _lookup_sku_by_setcode(extracted: str, tcg: str) -> Optional[str]:
         elif tcg == "POKEMON":
             # extracted = sv6-14, SKU = sv6-14
             if '-' in extracted:
+                # JP SKUs are always 3-digit zero-padded (e.g. jpn-sv3-073),
+                # unlike EN SKUs which are never padded (e.g. sv1-5, not
+                # sv1-005) — only pad the jpn- prefixed form, or this would
+                # break every EN exact-match lookup.
+                if extracted.startswith("jpn-"):
+                    prefix, num_part = extracted.rsplit('-', 1)
+                    if num_part.isdigit():
+                        extracted = f"{prefix}-{num_part.zfill(3)}"
                 row = conn.execute(
                     "SELECT sku FROM images WHERE sku = ?",
                     (extracted,)
@@ -830,10 +908,11 @@ def ocr_confirm_ranking(
     Returns:
         (results, ocr_info) — results may be reordered; ocr_info is diagnostic.
     """
-    # JP mode: skip OCR entirely — trust the CLIP visual match.
-    # Japanese set codes are not readable by the EN OCR pipeline and
-    # running OCR on JP cards causes false promotions and wrong results.
-    if jpn_mode:
+    # JP mode: skip OCR for MTG/YGO — trust the CLIP visual match (there are
+    # no JP MTG/YGO cards in the database at all, so there's nothing to gain).
+    # POKEMON now falls through to the full OCR confirmation logic below,
+    # since _JP_SETCODE_MAP lets it extract a real jpn-<set>-<num> key.
+    if jpn_mode and (tcg or "").upper().strip() != "POKEMON":
         logger.debug("[OCR] jpn_mode=True — skipping OCR, returning visual rankings unchanged")
         return results, {"method": "jp_visual_only", "ocr_skipped": True}
 

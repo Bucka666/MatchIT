@@ -795,7 +795,7 @@ function colRender() {
             ? '<button class="col-alert-btn col-alert-btn--set" onclick="colCancelAlert(\'' + item.sku + '\',\'' + safeName + '\')" title="Click to cancel alert">🔔 Alert set ✕</button>'
             : '<button class="col-alert-btn" onclick="colSetAlert(\'' + item.sku + '\',\'' + safeName + '\',' + (parseFloat(item.gbp)||0) + ')">🔔 Alert</button>';
         return '<div class="col-item col-item--' + tcg + '" onclick="gsOpenCardDetailByIdx(' + realIdx + ')">' +
-            '<img class="col-item-img" src="' + (item.img||'') + '" loading="lazy" onerror="this.style.opacity=\'0.15\'" onclick="event.stopPropagation();colZoomImage(\'' + (item.img||'') + '\')" style="cursor:zoom-in;" title="Click to enlarge">' +
+            '<img class="col-item-img" src="' + (item.img||'') + '" loading="lazy" onerror="this.src=\'/static/assets/gs_card_placeholder.png\'" onclick="event.stopPropagation();colZoomImage(\'' + (item.img||'') + '\')" style="cursor:zoom-in;" title="Click to enlarge">' +
             '<div class="col-item-info">' +
                 '<div class="col-item-name">' + (item.name||item.sku||'—') + '</div>' +
                 '<div class="col-item-set">' + (item.set_name||item.set||'') + '</div>' +
@@ -1261,6 +1261,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function gsColLoadReferral() {
+  if (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) {
+    var refBox = document.getElementById('colReferralBox');
+    if (refBox) refBox.style.display = 'none';
+    return;
+  }
+
   var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
   if (!isPro) return;
 
@@ -1795,7 +1801,7 @@ function gsOpenCardDetail(card) {
 
   var img = document.getElementById('cdCardImg');
   if (card.img) { img.src = card.img; img.style.display = 'block'; }
-  else { img.style.display = 'none'; }
+  else { img.src = '/static/assets/gs_card_placeholder.png'; img.style.display = ''; }
 
   // Reset graph state
   document.getElementById('cdPriceChartWrap').classList.remove('gs-hidden');
@@ -2064,7 +2070,7 @@ function colRenderTopCards() {
     top.map(function(c, i) {
       return '<div class="col-top-card">' +
         '<div class="col-top-medal">' + medals[i] + '</div>' +
-        (c.img ? '<img src="' + c.img + '" class="col-top-img" onerror="this.style.display=\'none\'" alt="">' : '') +
+        (c.img ? '<img src="' + c.img + '" class="col-top-img" onerror="this.src=\'/static/assets/gs_card_placeholder.png\'" alt="">' : '') +
         '<div class="col-top-name">' + (c.name || '—') + '</div>' +
         '<div class="col-top-set">'  + (c.set_name || c.set || '') + '</div>' +
         '<div class="col-top-price">£' + parseFloat(c.gbp || 0).toFixed(2) + '</div>' +
@@ -2082,7 +2088,8 @@ function colFetchDeltas() {
   badges.forEach(function(b) { skus[b.dataset.sku] = true; });
   Object.keys(skus).forEach(function(sku) {
     if (window._colPriceCache[sku] !== undefined) {
-      _colApplyDelta(sku, window._colPriceCache[sku]);
+      var cached = window._colPriceCache[sku];
+      _colApplyDelta(sku, cached ? cached.latest : null, cached ? cached.prev : null);
       return;
     }
     fetch('/api/price_history?sku=' + encodeURIComponent(sku))
@@ -2090,18 +2097,38 @@ function colFetchDeltas() {
       .then(function(data) {
         var history = data.history || [];
         var latest = history.length ? history[history.length - 1].gbp : null;
-        window._colPriceCache[sku] = latest;
-        _colApplyDelta(sku, latest);
+        var prev   = history.length > 1 ? history[history.length - 2].gbp : null;
+        window._colPriceCache[sku] = { latest: latest, prev: prev };
+        _colApplyDelta(sku, latest, prev);
       })
       .catch(function() { window._colPriceCache[sku] = null; });
   });
 }
 
-function _colApplyDelta(sku, latestGbp) {
+function _colApplyDelta(sku, latestGbp, prevGbp) {
   if (latestGbp === null || latestGbp === undefined) return;
+
+  // Refresh the stored collection price so the headline number tracks the
+  // current market price instead of staying frozen at the add-time value.
+  try {
+    var collection = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
+    var changed = false;
+    collection.forEach(function(item) {
+      if (item.sku === sku) { item.gbp = latestGbp; changed = true; }
+    });
+    if (changed) localStorage.setItem('matchit_collection_v1', JSON.stringify(collection));
+  } catch (e) {}
+
   document.querySelectorAll('.col-delta-badge[data-sku="' + sku + '"]').forEach(function(badge) {
-    var base  = parseFloat(badge.dataset.base) || 0;
+    // Prefer yesterday-vs-today from history; fall back to add-time base
+    // if there's no earlier history entry yet.
+    var base  = (prevGbp !== null && prevGbp !== undefined) ? prevGbp : (parseFloat(badge.dataset.base) || 0);
     var delta = latestGbp - base;
+
+    var actionsWrap = badge.closest('.col-item-actions');
+    var priceEl = actionsWrap && actionsWrap.querySelector('.col-item-price');
+    if (priceEl) priceEl.textContent = '£' + parseFloat(latestGbp).toFixed(2);
+
     if (Math.abs(delta) < 0.005) return;
     badge.textContent = (delta > 0 ? '+' : '') + '£' + delta.toFixed(2);
     badge.style.color = delta > 0 ? '#4caf50' : '#f44336';
@@ -2116,7 +2143,7 @@ function colLoadValueChart() {
   if (!isPro || !code) return;
 
   var items = colLoad().map(function(c) {
-    return {sku: c.sku || null, gbp: parseFloat(c.gbp) || 0};
+    return {sku: c.sku || null, gbp: parseFloat(c.gbp) || 0, added: c.added || null};
   });
   if (!items.length) return;
 
@@ -2190,7 +2217,7 @@ function colLoadValueChart() {
     </div>
     <div class="cd-modal-body">
       <div class="cd-card-info">
-        <img id="cdCardImg" src="" alt="Card image" class="cd-card-img" onerror="this.style.display='none'">
+        <img id="cdCardImg" src="" alt="Card image" class="cd-card-img" onerror="this.src='/static/assets/gs_card_placeholder.png'">
         <div class="cd-card-meta">
           <div class="cd-card-name" id="cdCardName"></div>
           <div class="cd-card-set" id="cdCardSet"></div>

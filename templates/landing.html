@@ -219,7 +219,7 @@
         <p class="gs-feature-desc">Every photo match and scan gets an instant auto-grade. Pro users can request a Claude Vision deep grade — assessing centering, corners, edges and surface with a detailed breakdown. Monthly: 10/month · Ultimate Plan: 20/month. <span class="gs-feature-pro-tag">Pro</span></p>
       </div>
 
-      <div class="gs-feature">
+      <div class="gs-feature" id="featureReferral">
         <div class="gs-feature-icon">🎁</div>
         <h3 class="gs-feature-title">Refer a Friend</h3>
         <p class="gs-feature-desc">Love GrailSweep? Share your referral code with friends. They get their first month for £3.39 — you get a free month added for every friend who subscribes. Up to 10 free months per year. <span class="gs-feature-pro-tag">Pro</span></p>
@@ -270,7 +270,7 @@
           <li>✓ Price alerts</li>
           <li>✓ 30-day price history</li>
           <li>✓ AI deep grade (10/month)</li>
-          <li>✓ Referral programme</li>
+          <li id="pricingReferral">✓ Referral programme</li>
           <li>✓ Cancel anytime</li>
         </ul>
         <button class="gs-price-cta gs-price-cta--featured"
@@ -1107,6 +1107,18 @@ async function lpUpgrade(tier) {
   if (document.readyState === 'complete') { startPing(); }
   else { window.addEventListener('load', startPing); }
 })();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) {
+        var els = ['featureReferral', 'pricingReferral'];
+        els.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        });
+    }
+});
 </script>
 
 {% endblock %}
