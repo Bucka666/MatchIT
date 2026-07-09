@@ -16,7 +16,8 @@
   "countryOfOrigin": "GB",
   "sameAs": [
     "https://www.instagram.com/grailsweep",
-    "https://www.tiktok.com/@grailsweep"
+    "https://www.tiktok.com/@grailsweep",
+    "https://discord.gg/5t54wx9wH"
   ]
 }
 </script>
@@ -304,7 +305,7 @@
   <div class="gs-container">
     <div class="gs-section-badge">Join the Community</div>
     <h2 class="gs-section-h2">Follow Us for Grail Pulls</h2>
-    <p class="gs-section-sub">Real card pulls, scanner reveals, and the grails the community is finding — daily on Instagram and TikTok</p>
+    <p class="gs-section-sub">Real card pulls, scanner reveals, and the grails the community is finding — daily on Instagram, TikTok and Discord</p>
 
     <div class="gs-social-grid">
 
@@ -340,6 +341,17 @@
         <div class="gs-social-platform">TikTok</div>
         <div class="gs-social-handle">@grailsweep</div>
         <div class="gs-social-btn gs-social-btn--tt">Follow on TikTok</div>
+      </a>
+
+      <a href="https://discord.gg/5t54wx9wH" target="_blank" rel="noopener noreferrer" class="gs-social-card gs-social-card--dc">
+        <div class="gs-social-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M20.32 5.37a17.9 17.9 0 0 0-4.43-1.38.07.07 0 0 0-.07.03c-.19.34-.4.78-.55 1.13a16.5 16.5 0 0 0-4.94 0 8.4 8.4 0 0 0-.56-1.13.07.07 0 0 0-.07-.03 17.85 17.85 0 0 0-4.43 1.38.06.06 0 0 0-.03.03C2.06 9.1 1.4 12.72 1.72 16.3a.07.07 0 0 0 .03.05 18 18 0 0 0 5.41 2.74.07.07 0 0 0 .08-.03c.42-.57.79-1.17 1.11-1.8a.07.07 0 0 0-.04-.1 11.9 11.9 0 0 1-1.7-.81.07.07 0 0 1 0-.12c.11-.09.23-.17.34-.27a.07.07 0 0 1 .07 0c3.58 1.63 7.45 1.63 10.99 0a.07.07 0 0 1 .07 0c.11.09.22.18.34.27a.07.07 0 0 1 0 .12c-.54.32-1.11.58-1.7.81a.07.07 0 0 0-.04.1c.33.63.7 1.23 1.11 1.8a.07.07 0 0 0 .08.03 17.9 17.9 0 0 0 5.42-2.74.07.07 0 0 0 .03-.05c.38-4.13-.63-7.72-2.66-10.9a.06.06 0 0 0-.03-.03zM8.68 14.1c-1.08 0-1.96-.98-1.96-2.19 0-1.2.87-2.19 1.96-2.19 1.1 0 1.98 1 1.96 2.19 0 1.21-.87 2.19-1.96 2.19zm6.65 0c-1.08 0-1.96-.98-1.96-2.19 0-1.2.87-2.19 1.96-2.19 1.1 0 1.98 1 1.96 2.19 0 1.21-.86 2.19-1.96 2.19z" fill="#5865F2"/>
+          </svg>
+        </div>
+        <div class="gs-social-platform">Discord</div>
+        <div class="gs-social-handle">Join the server</div>
+        <div class="gs-social-btn gs-social-btn--dc">Join on Discord</div>
       </a>
 
     </div>
@@ -830,7 +842,7 @@
 /* ── Social Section ── */
 .gs-social-section { text-align: center; }
 .gs-social-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
   max-width: 640px; margin: 0 auto;
 }
 .gs-social-card {
@@ -847,6 +859,10 @@
 .gs-social-card--tt:hover {
   border-color: rgba(105,201,208,0.4);
   box-shadow: 0 0 40px rgba(105,201,208,0.12);
+}
+.gs-social-card--dc:hover {
+  border-color: rgba(88,101,242,0.4);
+  box-shadow: 0 0 40px rgba(88,101,242,0.12);
 }
 @media (prefers-reduced-motion: no-preference) {
   .gs-social-card:hover { transform: translateY(-4px); }
@@ -869,6 +885,10 @@
 }
 .gs-social-btn--tt {
   background: linear-gradient(135deg, #69C9D0, #010101, #EE1D52);
+  color: #fff;
+}
+.gs-social-btn--dc {
+  background: #5865F2;
   color: #fff;
 }
 .gs-social-card:hover .gs-social-btn { opacity: 0.85; }

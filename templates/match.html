@@ -123,13 +123,6 @@
           </label>
         </div>
 
-        <div class="cx-btn-row" style="margin-top:8px;">
-          <a href="/search" class="cx-file-btn cx-file-btn--ghost" style="text-decoration:none;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            Search cards
-          </a>
-        </div>
-
         <button type="button" id="langToggle"
           onclick="_gsToggleLang()"
           style="
@@ -1647,6 +1640,7 @@ window.scStart = function() {
     if (wrap) wrap.classList.add('scanner-active');
   }
   document.body.classList.add('scanner-active');
+  var searchPill = document.getElementById('gsSearchPill'); if (searchPill) searchPill.style.display = 'none';
   scStartCamera();
   setTimeout(function(){ if(!scScanning) scToggleReal(); }, 1200);
 };
@@ -1804,6 +1798,7 @@ window.scStop = function() {
     if (wrap) wrap.classList.remove('scanner-active');
   }
   document.body.classList.remove('scanner-active');
+  var searchPill = document.getElementById('gsSearchPill'); if (searchPill) searchPill.style.display = 'flex';
 };
 
 window.scToggle = function() {
@@ -2909,6 +2904,14 @@ document.getElementById('matchYear') &&
   </div>
   <button type="button" class="sfg-btn-primary" onclick="document.getElementById('scFailGate').style.display='none';scFailCount=0;scToggleReal();">↩ Try Again</button>
   <button type="button" class="sfg-btn-secondary" onclick="document.getElementById('scFailGate').style.display='none';scStop();document.querySelector('.cx-upload').scrollIntoView({behavior:'smooth'});">📸 Use Photo Match Instead</button>
+  <p style="margin:16px 0 8px;font-size:13px;color:#aaa;">
+    Looking for a specific card?
+  </p>
+  <a href="/search"
+     style="font-size:14px;color:#b14dff;text-decoration:none;
+            font-weight:600;">
+    Pokémon Card Catalogue →
+  </a>
 </div>
 
 <script>
@@ -4084,5 +4087,35 @@ async function _tryOcrLookup(imageFile) {
 }
 // ── End OCR-first scanning ─────────────────────────
 </script>
+
+<a href="/search" id="gsSearchPill"
+   style="
+     position:fixed;
+     bottom:24px;
+     right:20px;
+     z-index:900;
+     display:flex;
+     align-items:center;
+     gap:8px;
+     padding:10px 18px;
+     border-radius:999px;
+     background:#1a1a2e;
+     border:1px solid #b14dff;
+     color:#b14dff;
+     font-size:13px;
+     font-family:'DM Sans',sans-serif;
+     font-weight:600;
+     text-decoration:none;
+     box-shadow:0 0 12px rgba(177,77,255,0.25);
+   "
+   aria-label="Browse Pokémon Card Catalogue">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="2.5"
+       stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="8"/>
+    <path d="m21 21-4.35-4.35"/>
+  </svg>
+  Pokémon Card Catalogue
+</a>
 
 {% endblock %}

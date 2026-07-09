@@ -3914,6 +3914,8 @@ def pokemon_search():
         num_part, _, total_part = raw.partition("/")
         num_part = num_part.strip()
         total_part = total_part.strip()
+        num_part = re.sub(r'^[A-Za-z]+', '', num_part).strip()
+        total_part = re.sub(r'^[A-Za-z]+', '', total_part).strip()
         if num_part.isdigit():
             num_part = str(int(num_part))
         if total_part.isdigit():

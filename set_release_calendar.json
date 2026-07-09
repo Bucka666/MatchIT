@@ -1,4 +1,4 @@
-﻿{
+{
   "sets": [
     {
       "game": "pokemon_en",
@@ -7,6 +7,71 @@
       "release_date": "2026-07-17",
       "ondevice_eligible": true,
       "state": "pending",
+      "source_latency": {
+        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
+        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
+      }
+    },
+    {
+      "game": "pokemon_en",
+      "name": "Shining Fates Shiny Vault",
+      "source_ids": { "pokemontcg_io": "swsh45sv", "tcgdex_en": "swsh4.5sv" },
+      "release_date": "2021-02-19",
+      "bypass_window": true,
+      "ondevice_eligible": true,
+      "state": "detected",
+      "source_latency": {
+        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
+        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
+      }
+    },
+    {
+      "game": "pokemon_en",
+      "name": "Brilliant Stars Trainer Gallery",
+      "source_ids": { "pokemontcg_io": "swsh9tg", "tcgdex_en": "swsh9.5tg" },
+      "release_date": "2022-02-25",
+      "bypass_window": true,
+      "ondevice_eligible": true,
+      "state": "detected",
+      "source_latency": {
+        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
+        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
+      }
+    },
+    {
+      "game": "pokemon_en",
+      "name": "Lost Origin Trainer Gallery",
+      "source_ids": { "pokemontcg_io": "swsh11tg", "tcgdex_en": "swsh11.5tg" },
+      "release_date": "2022-09-09",
+      "bypass_window": true,
+      "ondevice_eligible": true,
+      "state": "detected",
+      "source_latency": {
+        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
+        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
+      }
+    },
+    {
+      "game": "pokemon_en",
+      "name": "Silver Tempest Trainer Gallery",
+      "source_ids": { "pokemontcg_io": "swsh12tg", "tcgdex_en": "swsh12.5tg" },
+      "release_date": "2022-11-11",
+      "bypass_window": true,
+      "ondevice_eligible": true,
+      "state": "detected",
+      "source_latency": {
+        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
+        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
+      }
+    },
+    {
+      "game": "pokemon_en",
+      "name": "Crown Zenith Galarian Gallery",
+      "source_ids": { "pokemontcg_io": "swsh12pt5gg", "tcgdex_en": "swsh12.5gg" },
+      "release_date": "2023-01-20",
+      "bypass_window": true,
+      "ondevice_eligible": true,
+      "state": "detected",
       "source_latency": {
         "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
         "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }

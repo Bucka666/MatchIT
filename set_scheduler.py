@@ -158,7 +158,7 @@ def _load_release_calendar() -> Dict:
     if not path.exists():
         return _default_release_calendar()
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8-sig") as f:
             calendar = json.load(f)
     except Exception as e:
         logger.error(f"[CALENDAR] Failed to load {path}: {e} — using empty calendar")
@@ -1543,7 +1543,7 @@ def _advance_entry(entry: Dict, today: str, db_root: str, dry_run: bool) -> Dict
         try:
             rd = datetime.strptime(release_date, "%Y-%m-%d")
             td = datetime.strptime(today, "%Y-%m-%d")
-            if abs((td - rd).days) > CALENDAR_WINDOW_DAYS:
+            if abs((td - rd).days) > CALENDAR_WINDOW_DAYS and not entry.get("bypass_window"):
                 return {"ok": True, "skipped": "outside_window", "release_date": release_date, "today": today}
         except ValueError:
             pass  # unparseable date — fail open, let it through
