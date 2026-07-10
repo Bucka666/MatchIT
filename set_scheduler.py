@@ -161,8 +161,8 @@ def _load_release_calendar() -> Dict:
         with open(path, "r", encoding="utf-8-sig") as f:
             calendar = json.load(f)
     except Exception as e:
-        logger.error(f"[CALENDAR] Failed to load {path}: {e} — using empty calendar")
-        return _default_release_calendar()
+        logger.error(f"[SCHED] FATAL: set_release_calendar.json exists but failed to load — aborting to prevent state loss: {e}")
+        raise
     calendar.setdefault("sets", [])
     calendar.setdefault("discovered_unlisted", [])
     return calendar
@@ -1350,8 +1350,24 @@ def _collect_skus_for_set(set_id: str, cardsdb_root: str) -> List[str]:
 
 
 def _try_detect(entry: Dict) -> Optional[Dict]:
-    """pending -> detected: set appears in pokemontcg.io with a non-zero
-    card count."""
+    """pending -> detected: set appears in TCGdex-EN (preferred) or
+    pokemontcg.io (fallback) with a non-zero card count."""
+    tcgdex_id = entry.get("source_ids", {}).get("tcgdex_en")
+    if tcgdex_id:
+        try:
+            from tcgdexsdk import TCGdex, Language
+            sdk = TCGdex(Language.EN)
+            card_set = sdk.set.getSync(tcgdex_id)
+            if card_set and (card_set.cardCount.total if card_set.cardCount else 0) > 0:
+                return {
+                    "id": card_set.id,
+                    "name": card_set.name or entry.get("name"),
+                    "total": card_set.cardCount.total,
+                    "date": card_set.releaseDate or "",
+                }
+        except Exception as e:
+            logger.error(f"[SCHED-STATE] TCGdex set lookup failed for {tcgdex_id}: {e}")
+
     set_id = entry.get("source_ids", {}).get("pokemontcg_io")
     if not set_id:
         return None
@@ -1372,14 +1388,16 @@ def _try_catalog_ingest(entry: Dict, detected: Dict, db_root: str, dry_run: bool
     old steps 1/2b/2c/2d used for "all new sets today", now per-entry. Closes
     the identifier_lookup.json gap (it's now rebuilt here alongside the
     other three sidecars, where previously it was manual-only)."""
-    set_id = detected["id"]
+    pokemontcg_id = entry.get("source_ids", {}).get("pokemontcg_io")
+    set_id = pokemontcg_id or detected["id"]
     result: Dict = {"set_id": set_id, "new_skus": []}
 
     if dry_run:
         result["dry_run"] = True
         return result
 
-    dl = _scrape_pokemon([detected], db_root)
+    scrape_entry = dict(detected, id=set_id)
+    dl = _scrape_pokemon([scrape_entry], db_root)
     result.update(dl)
 
     try:
@@ -1401,16 +1419,15 @@ def _try_catalog_ingest(entry: Dict, detected: Dict, db_root: str, dry_run: bool
         return result  # leave at 'detected' — retry next tick
 
     try:
-        from app import rebuild_mtg_set_totals, rebuild_set_card_lists, rebuild_identifier_lookup
-        from build_pokemon_search_index import build_pokemon_search_index
-        result["mtg_totals"] = rebuild_mtg_set_totals()
-        result["set_cards"] = rebuild_set_card_lists()
-        result["identifier_lookup"] = rebuild_identifier_lookup()
-        result["pokemon_search_index"] = build_pokemon_search_index()
+        from matchit_modal import rebuild_lookup_files
+        result["lookup_rebuild"] = rebuild_lookup_files.remote(
+            new_set_ids=[set_id]
+        )
     except Exception as e:
-        logger.error(f"[SCHED-STATE] Sidecar rebuild error for {set_id}: {e}")
-        result["sidecar_error"] = str(e)
-        # Sidecars are belt-and-braces here — don't block advancing on them.
+        logger.error(
+            f"[SCHED-STATE] lookup rebuild failed for {set_id}: {e}"
+        )
+        result["lookup_rebuild_error"] = str(e)
 
     result["ok"] = True
     return result
@@ -1791,10 +1808,15 @@ def run_scheduler(
 
     logger.info(f"[SCHED] Starting daily scheduler run at {run_at} — TCGs: {tcgs}")
 
-    calendar = _load_release_calendar()
+    try:
+        calendar = _load_release_calendar()
+    except Exception as e:
+        logger.error(f"[CALENDAR] Load failed: {e} — skipping calendar state machine for this run")
+        calendar = None
+    _calendar_had_sets = bool(calendar.get("sets") if calendar else False)
     calendar_pokemon_ids = {
         (e.get("source_ids", {}).get("pokemontcg_io") or "").lower()
-        for e in calendar.get("sets", [])
+        for e in (calendar.get("sets", []) if calendar else [])
     } - {""}
 
     any_new = False
@@ -1885,26 +1907,29 @@ def run_scheduler(
     # ── 3. Calendar state machine: advance every non-live entry exactly one
     # transition (pokemon_en only this block). Idempotent — failures leave
     # `state` unchanged for tomorrow's retry. ──
-    if not dry_run:
-        for entry in calendar.get("sets", []):
-            if entry.get("state") == "live":
-                continue
-            try:
-                advance_result = _advance_entry(entry, today, db_root, dry_run)
-            except Exception as e:
-                logger.error(f"[SCHED-STATE] Unhandled error advancing {entry.get('name')}: {e}")
-                advance_result = {"ok": False, "error": str(e)}
-            new_skus = advance_result.pop("new_skus", None)
-            if new_skus:
-                run_summary["new_skus"].extend(new_skus)
-            run_summary["calendar"]["advanced"].append({
-                "name": entry.get("name"), "state": entry.get("state"), "result": advance_result,
-            })
+    if calendar is None:
+        logger.warning("[CALENDAR] Skipping state machine — calendar failed to load")
     else:
-        run_summary["calendar"]["advanced"] = [
-            {"name": e.get("name"), "state": e.get("state"), "result": {"dry_run": True}}
-            for e in calendar.get("sets", []) if e.get("state") != "live"
-        ]
+        if not dry_run:
+            for entry in calendar.get("sets", []):
+                if entry.get("state") == "live":
+                    continue
+                try:
+                    advance_result = _advance_entry(entry, today, db_root, dry_run)
+                except Exception as e:
+                    logger.error(f"[SCHED-STATE] Unhandled error advancing {entry.get('name')}: {e}")
+                    advance_result = {"ok": False, "error": str(e)}
+                new_skus = advance_result.pop("new_skus", None)
+                if new_skus:
+                    run_summary["new_skus"].extend(new_skus)
+                run_summary["calendar"]["advanced"].append({
+                    "name": entry.get("name"), "state": entry.get("state"), "result": advance_result,
+                })
+        else:
+            run_summary["calendar"]["advanced"] = [
+                {"name": e.get("name"), "state": e.get("state"), "result": {"dry_run": True}}
+                for e in calendar.get("sets", []) if e.get("state") != "live"
+            ]
 
     # ── 4. Source-latency probe (observation-only, every tick) ──
     try:
@@ -1925,7 +1950,12 @@ def run_scheduler(
     run_summary["calendar"]["notify_worthy_discoveries"] = notify_worthy_discoveries
 
     if not dry_run:
-        _save_release_calendar(calendar)
+        if calendar is None:
+            pass  # already logged above
+        elif not calendar.get("sets") and _calendar_had_sets:
+            logger.error("[CALENDAR] Refusing to save — sets array is empty but was non-empty at load. Possible load failure.")
+        else:
+            _save_release_calendar(calendar)
 
     # Combined "did anything actually change today" signal for 2c/2d below.
     # any_new alone is legacy-path only (Pokémon's _scrape_pokemon branch);
@@ -1953,6 +1983,25 @@ def run_scheduler(
         except Exception as e:
             logger.error(f"[SCHED] Set card-list rebuild error: {e}")
             run_summary["set_cards"] = {"error": str(e)}
+
+        try:
+            from app import rebuild_identifier_lookup
+            run_summary["identifier_lookup"] = \
+                rebuild_identifier_lookup()
+        except Exception as e:
+            logger.error(
+                f"[SCHED] rebuild_identifier_lookup failed: {e}"
+            )
+
+        try:
+            from build_pokemon_search_index import \
+                build_pokemon_search_index
+            run_summary["pokemon_search_index"] = \
+                build_pokemon_search_index()
+        except Exception as e:
+            logger.error(
+                f"[SCHED] build_pokemon_search_index failed: {e}"
+            )
 
     # ── 2e. Refresh the FX rate cache (single source for all 5 GBP consumers) ──
     # Same "runs every day regardless of any_new" rationale as 2c/2d. Runs

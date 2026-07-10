@@ -267,17 +267,25 @@
 /* ── Card detail modal ── */
 #cardDetailModal {
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.92);
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: #0d0d1a;
   z-index: 10000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
   box-sizing: border-box;
+  height: 100vh;
+  width: 100vw;
 }
 .cd-modal {
-  background: #1a1a2e;
+  opacity: 1 !important;
+  background: #1a1a2e !important;
+  position: relative;
+  z-index: 10001;
   border-radius: 16px;
   width: 100%;
   max-width: 500px;
@@ -801,7 +809,9 @@ function colRender() {
             '<div class="col-item-info">' +
                 '<div class="col-item-name">' + (item.name||item.sku||'—') + '</div>' +
                 '<div class="col-item-set">' + (item.set_name||item.set||'') + '</div>' +
-                '<div class="col-item-sku">' + (item.sku||'') + '</div>' +
+                '<div class="col-item-sku">' + (item.card_number
+                    ? (item.card_number + (item.set_total ? '/'+item.set_total : ''))
+                    : (item.sku||'').split('-').pop() || '') + '</div>' +
                 '<span class="col-item-tcg-badge ' + badges[tcg] + '">' + labels[tcg] + '</span>' +
             '</div>' +
             '<div class="col-item-actions" onclick="event.stopPropagation()">' +
@@ -1790,6 +1800,10 @@ function gsOpenCardDetailByIdx(idx) {
 }
 
 function gsOpenCardDetail(card) {
+  const _scrollY = window.scrollY;
+  document.body.style.position = 'fixed';
+  document.body.style.top = '-' + _scrollY + 'px';
+  document.body.style.width = '100%';
   _cdCurrentCard = card;
 
   var cardSet = card.set_name || card.set || '';
@@ -2013,6 +2027,11 @@ function gsCollectionDeepGrade() {
 }
 
 function gsCloseCardDetail() {
+  const _sy = Math.abs(parseInt(document.body.style.top || '0'));
+  document.body.style.position = '';
+  document.body.style.top = '';
+  document.body.style.width = '';
+  window.scrollTo(0, _sy);
   document.getElementById('cardDetailModal').classList.add('gs-hidden');
   if (_cdChart) { _cdChart.destroy(); _cdChart = null; }
   _cdCurrentCard = null;

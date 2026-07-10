@@ -94,6 +94,84 @@
     </div>
     <p class="gs-hint">English Pokémon cards. Type a name or collector number.</p>
 
+    <div id="gsOfflineKit" style="display:none;
+      margin:12px 0 16px;
+      background:rgba(177,77,255,0.08);
+      border:1px solid rgba(177,77,255,0.25);
+      border-radius:12px;
+      padding:14px 16px;">
+
+      <div style="display:flex;align-items:center;
+        justify-content:space-between;
+        margin-bottom:10px;">
+        <span style="font-size:0.85rem;font-weight:700;
+          color:#b14dff;">
+          ⚡ Card Show Mode
+        </span>
+        <span style="font-size:0.72rem;color:#888;">PRO</span>
+      </div>
+
+      <p style="font-size:0.8rem;color:#aaa;
+        margin:0 0 12px;">
+        Download card images for offline use before
+        you leave for a show.
+      </p>
+
+      <select id="gsOfflineEraSelect" style="
+        width:100%;padding:8px 10px;
+        background:#1a1a2e;border:1px solid #333;
+        border-radius:8px;color:#eee;
+        font-size:0.82rem;margin-bottom:10px;">
+        <option value="">Select era to download...</option>
+        <option value="sv">Scarlet & Violet</option>
+        <option value="swsh">Sword & Shield</option>
+        <option value="sm">Sun & Moon</option>
+        <option value="xy">XY</option>
+        <option value="bw">Black & White</option>
+        <option value="hgss">HeartGold SoulSilver</option>
+        <option value="dp">Diamond & Pearl</option>
+        <option value="ex">EX Series</option>
+        <option value="base">Base-Neo Era</option>
+        <option value="__all__">All sets (large download)</option>
+      </select>
+
+      <div id="gsOfflineProgress" style="display:none;
+        margin-bottom:10px;">
+        <div style="background:#1a1a2e;border-radius:6px;
+          overflow:hidden;height:6px;margin-bottom:6px;">
+          <div id="gsOfflineBar" style="height:100%;
+            width:0%;background:#b14dff;
+            transition:width 0.2s;"></div>
+        </div>
+        <div id="gsOfflineStatus" style="font-size:0.78rem;
+          color:#aaa;text-align:center;"></div>
+      </div>
+
+      <button id="gsOfflineBtn" onclick="gsStartOfflineDownload()"
+        style="width:100%;padding:10px;
+        background:#b14dff;border:none;
+        border-radius:8px;color:#fff;
+        font-size:0.85rem;font-weight:700;
+        cursor:pointer;">
+        Download for Offline
+      </button>
+
+      <div id="gsOfflineDone" style="display:none;
+        text-align:center;font-size:0.82rem;
+        color:#4caf50;margin-top:8px;">
+        ✓ Downloaded — images available offline
+      </div>
+    </div>
+
+    <div id="gsOfflineBanner" style="display:none;
+      background:rgba(255,215,0,0.12);
+      border:1px solid rgba(255,215,0,0.3);
+      color:#ffd700; border-radius:8px;
+      padding:8px 14px; font-size:0.82rem;
+      margin-bottom:12px; text-align:center;">
+      ⚡ Offline mode — showing cached prices
+    </div>
+
     <div class="gs-state" id="gsEmptyState">Start typing to search…</div>
     <div class="gs-state hidden" id="gsNoResults">No cards found. Try a different name or number.</div>
     <div class="gs-grid" id="gsResults"></div>
@@ -114,6 +192,8 @@
     var emptyState = document.getElementById('gsEmptyState');
     var noResults = document.getElementById('gsNoResults');
     var debTimer = null, lastQuery = '';
+    var _gsLocalIndex = null;
+    var _gsOfflineMode = false;
 
     // Normalize the query. For "number/total" keep BOTH parts (server filters on
     // card_number prefix AND exact set_total), stripping leading zeros on each
@@ -141,15 +221,180 @@
       return '£' + gbp.toFixed(2);
     }
 
+    // For offline results, which arrive pre-converted to GBP via
+    // _gsOfflineGbp() — fmtGbp() would double-convert since it always
+    // multiplies by a currency rate.
+    function fmtGbpValue(gbp) {
+      if (gbp == null || !(gbp > 0)) return null;
+      if (gbp < 0.01) return '<£0.01';
+      return '£' + gbp.toFixed(2);
+    }
+
+    function _gsLoadLocalIndex(cb) {
+      if (_gsLocalIndex) { cb(_gsLocalIndex); return; }
+      fetch('/api/search-index/pokemon')
+        .then(function(r){ return r.json(); })
+        .then(function(data){
+          _gsLocalIndex = data;
+          cb(data);
+        })
+        .catch(function(){ cb(null); });
+    }
+
+    function _gsSearchOffline(raw, cb) {
+      _gsLoadLocalIndex(function(index) {
+        if (!index) { cb([]); return; }
+        var q = raw.trim().toLowerCase();
+        var results = [];
+        var slash = q.indexOf('/');
+
+        if (slash >= 0) {
+          var numPart = q.slice(0, slash).trim();
+          var totalPart = q.slice(slash+1).trim()
+            .replace(/^[a-z]+/i, '');
+          results = index.filter(function(e) {
+            return e.number.toLowerCase().startsWith(numPart)
+              && (e.set_total || '') === totalPart;
+          });
+        } else if (/^\d/.test(q)) {
+          results = index.filter(function(e) {
+            return e.number.toLowerCase().startsWith(q);
+          });
+        } else {
+          results = index.filter(function(e) {
+            return e.name.toLowerCase().startsWith(q);
+          });
+        }
+        cb(results.slice(0, 30));
+      });
+    }
+
+    function _gsOfflineGbp(price, currency) {
+      if (!price) return null;
+      var rates = window._gsCachedFxRates || {};
+      if (currency === 'EUR') {
+        return price * (rates.eur_gbp || 0.86);
+      }
+      if (currency === 'USD') {
+        return price * (rates.usd_gbp || 0.79);
+      }
+      return price;
+    }
+
+    // ERA prefix map for filtering the search index
+    var _gsEraMap = {
+      'sv':   function(s){ return s.startsWith('sv'); },
+      'swsh': function(s){ return s.startsWith('swsh'); },
+      'sm':   function(s){ return s.startsWith('sm'); },
+      'xy':   function(s){ return s.startsWith('xy'); },
+      'bw':   function(s){ return s.startsWith('bw'); },
+      'hgss': function(s){ return s.startsWith('hgss') || s.startsWith('pl') || s.startsWith('col'); },
+      'dp':   function(s){ return s.startsWith('dp') || s.startsWith('legends'); },
+      'ex':   function(s){ return s.startsWith('ex') || s.startsWith('pop') || s.startsWith('tk'); },
+      'base': function(s){ return s.startsWith('base') || s.startsWith('neo') || s.startsWith('gym') || s.startsWith('si') || s.startsWith('ecard'); },
+      '__all__': function(s){ return true; }
+    };
+
+    function gsStartOfflineDownload() {
+      var era = document.getElementById('gsOfflineEraSelect').value;
+      if (!era) {
+        alert('Please select an era to download.');
+        return;
+      }
+
+      _gsLoadLocalIndex(function(index) {
+        if (!index) {
+          alert('Search index not available. Please check your connection and try again.');
+          return;
+        }
+
+        var filter = _gsEraMap[era] || function(){ return false; };
+        var cards = index.filter(function(e) {
+          return e.img && filter(e.set_id || '');
+        });
+
+        if (cards.length === 0) {
+          alert('No images found for this era.');
+          return;
+        }
+
+        var btn = document.getElementById('gsOfflineBtn');
+        var progress = document.getElementById('gsOfflineProgress');
+        var bar = document.getElementById('gsOfflineBar');
+        var status = document.getElementById('gsOfflineStatus');
+        var done = document.getElementById('gsOfflineDone');
+
+        btn.disabled = true;
+        btn.textContent = 'Downloading...';
+        progress.style.display = 'block';
+        done.style.display = 'none';
+
+        var total = cards.length;
+        var completed = 0;
+        var failed = 0;
+        var BATCH = 15;
+
+        function updateProgress() {
+          var pct = Math.round((completed / total) * 100);
+          bar.style.width = pct + '%';
+          status.textContent = 'Downloading ' + completed + ' of ' + total + ' cards...';
+        }
+
+        function downloadBatch(startIdx) {
+          if (startIdx >= total) {
+            bar.style.width = '100%';
+            status.textContent = total + ' cards downloaded' +
+              (failed > 0 ? ' (' + failed + ' failed)' : '');
+            btn.disabled = false;
+            btn.textContent = 'Download for Offline';
+            done.style.display = 'block';
+            return;
+          }
+
+          var batch = cards.slice(startIdx, startIdx + BATCH);
+          var promises = batch.map(function(card) {
+            return caches.open('gs-images-v1').then(function(cache) {
+              return cache.match(card.img).then(function(cached) {
+                if (cached) { completed++; updateProgress(); return; }
+                return fetch(card.img).then(function(resp) {
+                  if (resp && resp.status === 200) {
+                    cache.put(card.img, resp.clone());
+                  }
+                  completed++;
+                  updateProgress();
+                }).catch(function() {
+                  failed++;
+                  completed++;
+                  updateProgress();
+                });
+              });
+            });
+          });
+
+          Promise.all(promises).then(function() {
+            setTimeout(function() { downloadBatch(startIdx + BATCH); }, 50);
+          });
+        }
+
+        updateProgress();
+        downloadBatch(0);
+      });
+    }
+
+    fetch('/api/fx_rates')
+      .then(function(r){ return r.json(); })
+      .then(function(d){ window._gsCachedFxRates = d; })
+      .catch(function(){});
+
     function render(results) {
       grid.innerHTML = '';
       results.forEach(function(c) {
-        var priceStr = fmtGbp(c.best_price, c.best_currency);
+        var priceStr = (c.gbp != null) ? fmtGbpValue(c.gbp) : fmtGbp(c.best_price, c.best_currency);
         var card = document.createElement('div');
         card.className = 'gs-card';
         var img = c.image_url
-          ? '<img class="gs-card-img" loading="lazy" alt="" src="' + c.image_url + '">'
-          : '<div class="gs-card-img"></div>';
+          ? '<img class="gs-card-img" loading="lazy" alt="" src="' + c.image_url + '" onerror="this.onerror=null;this.src=\'/static/assets/gs_card_placeholder.png\'">'
+          : '<img class="gs-card-img" alt="" src="/static/assets/gs_card_placeholder.png">';
         var price = priceStr
           ? '<div class="gs-card-price">' + priceStr + '</div>'
           : '<div class="gs-card-price none">No price</div>';
@@ -215,6 +460,29 @@
         .catch(function(){
           if (thisQuery !== lastQuery) return;
           box.classList.remove('loading');
+          _gsOfflineMode = true;
+          document.getElementById('gsOfflineBanner').style.display = 'block';
+          _gsSearchOffline(raw, function(results) {
+            if (thisQuery !== lastQuery) return;
+            var mapped = results.map(function(e) {
+              return {
+                sku:       e.sku,
+                name:      e.name,
+                set_name:  e.set_name,
+                number:    e.number,
+                set_total: e.set_total,
+                gbp:       _gsOfflineGbp(e.price, e.currency),
+                image_url: e.img || null
+              };
+            });
+            if (!mapped.length) {
+              grid.innerHTML = '';
+              noResults.classList.remove('hidden');
+            } else {
+              noResults.classList.add('hidden');
+              render(mapped);
+            }
+          });
         });
     }
 
@@ -227,6 +495,23 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(function(){});
     }
+
+    setTimeout(function(){
+      _gsLoadLocalIndex(function(){});
+    }, 2000);
+
+    // Show Card Show Mode block for Pro users only.
+    // NOTE: uses the same client-side check as every other Pro gate in the
+    // app (colAddCard, gsAddToCollection, etc.) — search.html's /search
+    // route passes no server-side premium context, and adding one is out
+    // of scope here (app.py not touched this pass).
+    (function() {
+      var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
+      if (isPro) {
+        var kit = document.getElementById('gsOfflineKit');
+        if (kit) kit.style.display = 'block';
+      }
+    })();
   </script>
 </body>
 </html>

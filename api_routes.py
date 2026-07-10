@@ -368,7 +368,8 @@ def register_api_routes(app):
 
                     _match_entry_ocr = {"rank": 1, "sku": _ocr_direct_sku, "score": 1.0, "probability": 1.0}
                     if _profile_ocr:
-                        _match_entry_ocr["profile"] = _profile_ocr
+                        from app import _attach_set_total as _attach_set_total_ocr
+                        _match_entry_ocr["profile"] = _attach_set_total_ocr(_profile_ocr)
                     _image_id_ocr = _image_id_for_sku(_ocr_direct_sku)
                     if _image_id_ocr:
                         _match_entry_ocr["images"] = [{"image_id": _image_id_ocr, "original_filename": ""}]
@@ -670,7 +671,7 @@ def register_api_routes(app):
                 pass
 
         from profile_utils import _load_card_profile_for_sku
-        from app import get_data_dir as _get_data_dir
+        from app import get_data_dir as _get_data_dir, _attach_set_total
         for sku in matched_skus:
             # Check centralized files
             if sku in central_profiles or sku in central_xrefs:
@@ -683,20 +684,20 @@ def register_api_routes(app):
                         combined["manufacturer"] = xref["manufacturer"]
                     if xref.get("crossrefs"):
                         combined["crossrefs"] = xref["crossrefs"]
-                sku_profile_map[sku] = combined
+                sku_profile_map[sku] = _attach_set_total(combined)
                 continue
 
             # Fallback: per-folder profile.json (cards pattern)
             if db_root:
                 _card_profile = _load_card_profile_for_sku(sku, db_root, _get_data_dir())
                 if _card_profile:
-                    sku_profile_map[sku] = _card_profile
+                    sku_profile_map[sku] = _attach_set_total(_card_profile)
                 else:
                     direct_path = Path(db_root) / sku / "profile.json"
                     if direct_path.exists():
                         try:
                             with open(direct_path, "r", encoding="utf-8") as pf:
-                                sku_profile_map[sku] = json.load(pf)
+                                sku_profile_map[sku] = _attach_set_total(json.load(pf))
                         except Exception:
                             pass
 

@@ -87,6 +87,31 @@ def build_pokemon_search_index(data_root="."):
         if not name or not number:
             return None
 
+        prices = p.get("prices") or {}
+        price_val = None
+        price_currency = None
+
+        # Try cardmarket avg_sell (EUR) first
+        cm = prices.get("cardmarket") or {}
+        if cm.get("avg_sell"):
+            try:
+                price_val = float(cm["avg_sell"])
+                price_currency = "EUR"
+            except (TypeError, ValueError):
+                pass
+
+        # Fallback: tcgplayer holofoil market (USD)
+        if price_val is None:
+            tcp = prices.get("tcgplayer") or {}
+            for variant in tcp.values():
+                if isinstance(variant, dict) and variant.get("market"):
+                    try:
+                        price_val = float(variant["market"])
+                        price_currency = "USD"
+                    except (TypeError, ValueError):
+                        pass
+                    break
+
         return {
             "sku":       sku_dir,
             "name":      name,
@@ -94,6 +119,9 @@ def build_pokemon_search_index(data_root="."):
             "set_id":    set_id,
             "set_name":  set_name,
             "set_total": set_totals.get(set_id),   # str (printed_total) or None
+            "price":     price_val,
+            "currency":  price_currency,
+            "img":       str(p.get("image_url_small") or "").strip() or None,
         }
 
     with os.scandir(pokemon_dir) as _it:

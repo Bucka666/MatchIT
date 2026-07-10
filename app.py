@@ -3839,6 +3839,7 @@ def card_profile(sku):
         profile = _load_card_profile_for_sku(sku, db_root, get_data_dir())
         if not profile:
             return jsonify({'status': 'not_found', 'sku': sku}), 404
+        profile = _attach_set_total(profile)
         image_id = _image_id_for_sku(sku)
         return jsonify({
             'status': 'ok',
@@ -3914,7 +3915,6 @@ def pokemon_search():
         num_part, _, total_part = raw.partition("/")
         num_part = num_part.strip()
         total_part = total_part.strip()
-        num_part = re.sub(r'^[A-Za-z]+', '', num_part).strip()
         total_part = re.sub(r'^[A-Za-z]+', '', total_part).strip()
         if num_part.isdigit():
             num_part = str(int(num_part))
@@ -3976,6 +3976,26 @@ def pokemon_search():
         })
 
     return jsonify({"results": enriched, "count": len(enriched)})
+
+
+@app.route('/api/search-index/pokemon')
+def serve_pokemon_search_index():
+    try:
+        idx_path = os.path.join(
+            '/modal_data',
+            'pokemon_search_index.json'
+        )
+        with open(idx_path, 'r', encoding='utf-8') as f:
+            data = f.read()
+        resp = make_response(data)
+        resp.headers['Content-Type'] = \
+            'application/json; charset=utf-8'
+        resp.headers['Cache-Control'] = \
+            'public, max-age=86400'
+        return resp
+    except Exception as e:
+        app.logger.error(f"[SEARCH-INDEX] Failed to serve: {e}")
+        return jsonify({"error": "index unavailable"}), 500
 
 
 @app.route("/search")
@@ -6365,6 +6385,16 @@ def _load_set_metadata():
     except Exception:
         return {}
 
+def _attach_set_total(profile):
+    """Adds set_total (sourced from set_metadata.json's printed_total, keyed
+    by the profile's set_id) to a match-result profile dict. profile.json
+    itself carries no total field, so this is the only correct source —
+    see project memory for why prof.get("set_total") doesn't work."""
+    if isinstance(profile, dict) and profile.get("set_id"):
+        meta = _load_set_metadata().get(profile["set_id"], {})
+        profile["set_total"] = meta.get("printed_total")
+    return profile
+
 def _get_set_id_from_sku(sku):
     if not sku:
         return None
@@ -8448,7 +8478,7 @@ def match():
                         _prof2["crossrefs"] = _xr2["crossrefs"]
                 if not _prof2 and _dbr2:
                     _prof2 = _load_card_profile_for_sku(confirmed_sku, _dbr2, get_data_dir())
-                _confirmed_results[0]["profile"] = _prof2
+                _confirmed_results[0]["profile"] = _attach_set_total(_prof2)
             except Exception as _pe:
                 print(f"[CONFIRMED-SKU] profile enrich error: {_pe}", flush=True)
             grade = _safe_grade(str(query_path1))
@@ -8528,7 +8558,7 @@ def match():
                             _prof1["crossrefs"] = _xr1["crossrefs"]
                     if not _prof1 and _dbr1:
                         _prof1 = _load_card_profile_for_sku(_ocr_direct_sku, _dbr1, get_data_dir())
-                    _ocr_direct_results[0]["profile"] = _prof1
+                    _ocr_direct_results[0]["profile"] = _attach_set_total(_prof1)
                 except Exception as _pe:
                     print(f"[OCR-FIRST] profile enrich error: {_pe}", flush=True)
                 grade = _safe_grade(str(query_path1))
@@ -8772,6 +8802,7 @@ def match():
                                 _prof2["crossrefs"] = _xr2["crossrefs"]
                         if not _prof2 and _dbr2:
                             _prof2 = _load_card_profile_for_sku(_sku2, _dbr2, get_data_dir())
+                        _prof2 = _attach_set_total(_prof2)
                         if isinstance(_r2, dict):
                             _r2["profile"] = _prof2
                         else:
@@ -8925,6 +8956,7 @@ def match():
         if not profile:
             profile = _load_card_profile_for_sku(sku, db_root, get_data_dir())
 
+        profile = _attach_set_total(profile)
         if isinstance(r, dict):
             r["profile"] = profile
         else:

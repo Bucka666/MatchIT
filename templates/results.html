@@ -1187,7 +1187,7 @@ window._rawPrices = {{ (r1.profile.prices if r1 and r1.profile and r1.profile.pr
     });
 })();
 </script>
-<script type="application/json" id="resCardData">{"sku":{{ (r1.sku if results else "") | tojson }},"name":{{ ((r1.profile.name if r1.profile else r1.sku) if results else "") | tojson }},"set_name":{{ ((r1.profile.set_name if r1.profile and r1.profile.set_name else "") if results else "") | tojson }},"card_number":{{ ((r1.profile.card_number if r1.profile and r1.profile.card_number else "") if results else "") | tojson }},"img":{{ ('https://images.grailsweep.com/' + ((r1.image_id_front or r1.image_id) | string) + '.jpg' if results else "") | tojson }},"query_filename":{{ (query_filename if query_filename else "") | tojson }}}</script>
+<script type="application/json" id="resCardData">{"sku":{{ (r1.sku if results else "") | tojson }},"name":{{ ((r1.profile.name if r1.profile else r1.sku) if results else "") | tojson }},"set_name":{{ ((r1.profile.set_name if r1.profile and r1.profile.set_name else "") if results else "") | tojson }},"card_number":{{ ((r1.profile.card_number if r1.profile and r1.profile.card_number else "") if results else "") | tojson }},"set_total":{{ ((r1.profile.set_total if r1.profile and r1.profile.set_total else "") if results else "") | tojson }},"img":{{ ('https://images.grailsweep.com/' + ((r1.image_id_front or r1.image_id) | string) + '.jpg' if results else "") | tojson }},"query_filename":{{ (query_filename if query_filename else "") | tojson }}}</script>
 {% endif %}
 <canvas id="res-sparkle-canvas"></canvas>
 <script>
@@ -1324,6 +1324,7 @@ function colAddCard() {
     name:         _rc.name || '',
     set_name:     _rc.set_name || '',
     card_number:  _rc.card_number || '',
+    set_total:    _rc.set_total || '',
     gbp:          window._cardGbpValue || 0,
     img:          _rc.img || '',
     added:        new Date().toLocaleDateString('en-GB'),

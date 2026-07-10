@@ -2029,7 +2029,7 @@ function scCapture() {
       setTimeout(function() { guide.className = 'cx-card-guide'; if (scScanning) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; } }, 2500);
       scShowLastMatch(name, set, num, 100, gbpStr, '');
       scFailCount = 0;
-      scAddCard({name:name, set:set, num:num, pct:100, price:gbp, priceStr:gbpStr, img:imgUrl, sku:_ocrResult.sku||'', rarity:rar, profile:p, allPrices:allPrices, tcgplayerUrl:p.tcgplayer_url||'', cardmarketUrl:p.cardmarket_url||'', grade:null, gradeSkipped:true});
+      scAddCard({name:name, set:set, num:num, total:p.set_total||p.printed_total||'', pct:100, price:gbp, priceStr:gbpStr, img:imgUrl, sku:_ocrResult.sku||'', rarity:rar, profile:p, allPrices:allPrices, tcgplayerUrl:p.tcgplayer_url||'', cardmarketUrl:p.cardmarket_url||'', grade:null, gradeSkipped:true});
       if (typeof scanIncrement === 'function') { var _ss = scanIncrement(); _updateScanBadge(_ss); }
       if (_ocrResult.sku) {
         if (window.GSOnDevice && typeof window.GSOnDevice.beacon === 'function') {
@@ -2091,7 +2091,7 @@ function scCapture() {
               setTimeout(function() { guide.className = 'cx-card-guide'; if (scScanning) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; } }, 2500);
               scShowLastMatch(name, set, num, 100, odGbpStr, '');
               scFailCount = 0;
-              scAddCard({name:name, set:set, num:num, pct:100, price:odGbp, priceStr:odGbpStr, img:odImgUrl, sku:odr.sku||'', rarity:rar, profile:p, allPrices:allPrices, tcgplayerUrl:p.tcgplayer_url||'', cardmarketUrl:p.cardmarket_url||'', grade:null, gradeSkipped:true});
+              scAddCard({name:name, set:set, num:num, total:p.set_total||p.printed_total||'', pct:100, price:odGbp, priceStr:odGbpStr, img:odImgUrl, sku:odr.sku||'', rarity:rar, profile:p, allPrices:allPrices, tcgplayerUrl:p.tcgplayer_url||'', cardmarketUrl:p.cardmarket_url||'', grade:null, gradeSkipped:true});
               if (typeof scanIncrement === 'function') { var _ss = scanIncrement(); _updateScanBadge(_ss); }
               window.GSOnDevice.beacon(odr);
               return true;
@@ -2232,7 +2232,7 @@ function scCapture() {
       if(m.images&&m.images.length>0) imgUrl=API_BASE+'/image/'+m.images[0].image_id;
       scShowLastMatch(name,set,num,pct,gbpStr,imgUrl);
       scFailCount = 0;
-      scAddCard({name:name,set:set,num:num,pct:pct,price:gbp,priceStr:gbpStr,img:imgUrl,sku:m.sku,rarity:rar,profile:p,allPrices:allPrices,tcgplayerUrl:p.tcgplayer_url||'',cardmarketUrl:p.cardmarket_url||'',grade:_capturedGrade});
+      scAddCard({name:name,set:set,num:num,total:p.set_total||p.printed_total||'',pct:pct,price:gbp,priceStr:gbpStr,img:imgUrl,sku:m.sku,rarity:rar,profile:p,allPrices:allPrices,tcgplayerUrl:p.tcgplayer_url||'',cardmarketUrl:p.cardmarket_url||'',grade:_capturedGrade});
       if (typeof scanIncrement === 'function') { var _ss = scanIncrement(); _updateScanBadge(_ss); }
     })
     .catch(function(){scBusy=false;guide.className='cx-card-guide';if(scScanning){txt.textContent='Error — retrying…';txt.className='cx-guide-text scanning';}});
@@ -2363,6 +2363,7 @@ window.scQuickAdd=function(idx){
       name:        c.name || '',
       set_name:    c.set || '',
       card_number: c.num || '',
+      set_total:   c.total || '',
       gbp:         c.price || 0,
       img:         c.img || '',
       added:       new Date().toLocaleDateString('en-GB'),
@@ -2651,6 +2652,7 @@ function gsDetailAddToCollection() {
       name:        c.name || '',
       set_name:    c.set || c.set_name || '',
       card_number: c.num || '',
+      set_total:   c.total || '',
       gbp:         c.price || c.gbp || 0,
       img:         c.img || '',
       added:       new Date().toLocaleDateString('en-GB'),
