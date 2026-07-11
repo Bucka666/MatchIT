@@ -738,7 +738,7 @@ def register_api_routes(app):
             from app import _record_price, _extract_gbp_from_profile, _increment_scan_counter, _increment_sku_scan_freq
             if matches:
                 _m0 = matches[0]
-                _record_price(_m0.get("sku"), _extract_gbp_from_profile(_m0.get("profile", {})))
+                _record_price(_m0.get("sku"), _extract_gbp_from_profile(_m0.get("profile", {}), sku=_m0.get("sku")))
             if matches and _ocr_confirmed_api:
                 _increment_scan_counter()
                 # Per-sku popularity counter (guarded; never affects the result).

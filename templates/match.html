@@ -1192,6 +1192,13 @@ html.gs-weak-device .cx-upload {
 <script>
 var GBP_RATE = {{ fx.usd_gbp }};
 var EUR_RATE = {{ fx.eur_gbp }};
+// SVP promos whose Cardmarket listing is contaminated by a Pokémon Center
+// stamp variant selling at a large premium over the unstamped print — same
+// blocklist as app.py's _CARDMARKET_CONTAMINATED_SKUS.
+const CARDMARKET_CONTAMINATED_SKUS = new Set([
+    "svp-13", "svp-65", "svp-91", "svp-97", "svp-98",
+    "svp-123", "svp-129", "svp-141", "svp-159", "svp-173"
+]);
 // Re-confirm from the cache-backed endpoint (already-derived rates — see
 // fx_rates.py). FIX: this used to assign d.rates.EUR (raw USD->EUR) straight
 // into EUR_RATE, which is not a EUR->GBP multiplier — wrong cross-rate.
@@ -2003,6 +2010,7 @@ function scCapture() {
       var rar = p.rarity || '';
       var best = 0, bestSrc = '', allPrices = {};
       if (p.prices && typeof p.prices === 'object') {
+        var _srcBestMap = {};
         Object.keys(p.prices).forEach(function(src) {
           if (src.toLowerCase().indexOf('ebay') >= 0 || src.toLowerCase().indexOf('amazon') >= 0) return;
           var sd = p.prices[src]; if (!sd || typeof sd !== 'object') return;
@@ -2015,8 +2023,21 @@ function scCapture() {
             if (pr > srcBest) srcBest = pr;
           });
           if (srcBest > 0) allPrices[src] = srcVars;
-          if (srcBest > best) { best = srcBest; bestSrc = src; }
+          _srcBestMap[src] = srcBest;
         });
+        // Cardmarket preferred (UK/EU market) — other sources only used
+        // as a fallback when Cardmarket has no value at all, or when this
+        // SKU's Cardmarket listing is a known stamp-variant contamination.
+        var _cmKey = Object.keys(_srcBestMap).find(function(s){ return s.toLowerCase().indexOf('cardmarket') >= 0; });
+        var _cmBlocked = !!(_ocrResult.sku && CARDMARKET_CONTAMINATED_SKUS.has(_ocrResult.sku));
+        if (_cmKey && _srcBestMap[_cmKey] > 0 && !_cmBlocked) {
+          best = _srcBestMap[_cmKey]; bestSrc = _cmKey;
+        } else {
+          Object.keys(_srcBestMap).forEach(function(s) {
+            if (_cmBlocked && s.toLowerCase().indexOf('cardmarket') >= 0) return;
+            if (_srcBestMap[s] > best) { best = _srcBestMap[s]; bestSrc = s; }
+          });
+        }
       }
       var _rate = (bestSrc.toLowerCase().indexOf('cardmarket') >= 0) ? EUR_RATE : GBP_RATE;
       var gbp = best * _rate, gbpStr = '£' + gbp.toFixed(2);
@@ -2048,6 +2069,7 @@ function scCapture() {
     // --- on-device gate (camera) ---
     if (window.GSOnDevice && window.GSOnDevice.isReady() && window.GSOnDevice.isWarm() && _ocrLang !== 'jp') {
       try {
+        console.warn('[ONDEVICE-ATTEMPT] firing on-device match');
         const odr = await window.GSOnDevice.match(blob);
         // On-device denominator backstop: extracted so the existing accept/render/
         // beacon body (byte-identical to before) can be reused from every fail-open
@@ -2066,6 +2088,7 @@ function scCapture() {
               var rar = p.rarity || '';
               var best = 0, bestSrc = '', allPrices = {};
               if (p.prices && typeof p.prices === 'object') {
+                var _srcBestMap = {};
                 Object.keys(p.prices).forEach(function(src) {
                   if (src.toLowerCase().indexOf('ebay') >= 0 || src.toLowerCase().indexOf('amazon') >= 0) return;
                   var sd = p.prices[src]; if (!sd || typeof sd !== 'object') return;
@@ -2078,8 +2101,22 @@ function scCapture() {
                     if (pr > srcBest) srcBest = pr;
                   });
                   if (srcBest > 0) allPrices[src] = srcVars;
-                  if (srcBest > best) { best = srcBest; bestSrc = src; }
+                  _srcBestMap[src] = srcBest;
                 });
+                // Cardmarket preferred (UK/EU market) — other sources only
+                // used as a fallback when Cardmarket has no value at all, or
+                // when this SKU's Cardmarket listing is a known stamp-variant
+                // contamination.
+                var _cmKey = Object.keys(_srcBestMap).find(function(s){ return s.toLowerCase().indexOf('cardmarket') >= 0; });
+                var _cmBlocked = !!(odr.sku && CARDMARKET_CONTAMINATED_SKUS.has(odr.sku));
+                if (_cmKey && _srcBestMap[_cmKey] > 0 && !_cmBlocked) {
+                  best = _srcBestMap[_cmKey]; bestSrc = _cmKey;
+                } else {
+                  Object.keys(_srcBestMap).forEach(function(s) {
+                    if (_cmBlocked && s.toLowerCase().indexOf('cardmarket') >= 0) return;
+                    if (_srcBestMap[s] > best) { best = _srcBestMap[s]; bestSrc = s; }
+                  });
+                }
               }
               var _odRate = (bestSrc.toLowerCase().indexOf('cardmarket') >= 0) ? EUR_RATE : GBP_RATE;
               var odGbp = best * _odRate, odGbpStr = '£' + odGbp.toFixed(2);
@@ -2103,7 +2140,7 @@ function scCapture() {
 
         if (odr && odr.accept) {
           // Staleness gate — if index is stale for this game, route to server
-          if (_gsStaleGames && _gsStaleGames.has(gsGameForStaleness(odr.sku))) {
+          if (typeof _gsStaleGames !== 'undefined' && _gsStaleGames && _gsStaleGames.has(gsGameForStaleness(odr.sku))) {
             // fall through to server — do not call _acceptOnDevice()
           } else {
             // Conflict check: only suppress on a POSITIVE conflict — denominator read
@@ -2138,7 +2175,9 @@ function scCapture() {
           }
         }
         // gate declined or suppressed -> fall through to Modal
-      } catch (e) { /* fall through to Modal */ }
+      } catch (e) {
+        console.warn('[ONDEVICE-CATCH] silent error caught, falling to server:', e);
+      }
     }
     // OCR miss — fall through to existing server scan below
     var fd=new FormData();
@@ -2220,7 +2259,9 @@ function scCapture() {
       var p=m.profile||{};
       var name=p.name||p.title||m.sku, set=p.set_name||'', num=p.card_number||'', rar=p.rarity||'';
       var best=0,bestSrc='',allPrices={};
-      if(p.prices&&typeof p.prices==='object'){Object.keys(p.prices).forEach(function(src){if(src.toLowerCase().indexOf('ebay')>=0)return;if(src.toLowerCase().indexOf('amazon')>=0)return;var sd=p.prices[src];if(!sd||typeof sd!=='object')return;var srcBest=0,srcVars={};Object.keys(sd).forEach(function(vk){var vd=sd[vk],pr=0;if(vd&&typeof vd==='object')pr=vd.market||vd.trend||vd.avg_sell||vd.mid||0;else if(typeof vd==='number')pr=vd;if(pr>0)srcVars[vk]=pr;if(pr>srcBest)srcBest=pr;});if(srcBest>0)allPrices[src]=srcVars;if(srcBest>best){best=srcBest;bestSrc=src;}});}
+      if(p.prices&&typeof p.prices==='object'){var _srcBestMap={};Object.keys(p.prices).forEach(function(src){if(src.toLowerCase().indexOf('ebay')>=0)return;if(src.toLowerCase().indexOf('amazon')>=0)return;var sd=p.prices[src];if(!sd||typeof sd!=='object')return;var srcBest=0,srcVars={};Object.keys(sd).forEach(function(vk){var vd=sd[vk],pr=0;if(vd&&typeof vd==='object')pr=vd.market||vd.trend||vd.avg_sell||vd.mid||0;else if(typeof vd==='number')pr=vd;if(pr>0)srcVars[vk]=pr;if(pr>srcBest)srcBest=pr;});if(srcBest>0)allPrices[src]=srcVars;_srcBestMap[src]=srcBest;});
+      /* Cardmarket preferred (UK/EU market) — other sources only used as a fallback when Cardmarket has no value at all, or when this SKU's Cardmarket listing is a known stamp-variant contamination. */
+      var _cmKey=Object.keys(_srcBestMap).find(function(s){return s.toLowerCase().indexOf('cardmarket')>=0;});var _cmBlocked=!!(m.sku&&CARDMARKET_CONTAMINATED_SKUS.has(m.sku));if(_cmKey&&_srcBestMap[_cmKey]>0&&!_cmBlocked){best=_srcBestMap[_cmKey];bestSrc=_cmKey;}else{Object.keys(_srcBestMap).forEach(function(s){if(_cmBlocked&&s.toLowerCase().indexOf('cardmarket')>=0)return;if(_srcBestMap[s]>best){best=_srcBestMap[s];bestSrc=s;}});}}
       var _rate=(bestSrc.toLowerCase().indexOf('cardmarket')>=0)?EUR_RATE:GBP_RATE;
       var gbp=best*_rate, gbpStr='£'+gbp.toFixed(2);
       scPlayCardSound(gbp);

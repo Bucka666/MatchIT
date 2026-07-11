@@ -40,6 +40,24 @@ from flask import (
     jsonify,
 )
 
+# SVP promos whose Cardmarket listing is contaminated by a Pokémon Center
+# stamp variant selling at a large premium over the unstamped print — the
+# scraped avg_sell/trend value is for the stamped card, not the plain one,
+# so it must never be used as this SKU's price. TCGPlayer is unaffected
+# (no stamp-variant listings there) and is used instead for these SKUs.
+_CARDMARKET_CONTAMINATED_SKUS = frozenset({
+    "svp-13",   # Miraidon — box topper, stamp variant known
+    "svp-65",   # Scream Tail
+    "svp-91",   # Koraidon — Miraidon pair
+    "svp-97",   # Flutter Mane
+    "svp-98",   # Iron Thorns
+    "svp-123",  # Teal Mask Ogerpon
+    "svp-129",  # Pecharunt — confirmed
+    "svp-141",  # Noctowl
+    "svp-159",  # Magneton
+    "svp-173",  # Eevee
+})
+
 # ============================================================
 # App
 # ============================================================
@@ -3852,7 +3870,7 @@ def card_profile(sku):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
-def _best_price_hint(prices, cm_updated=None, tcp_updated=None):
+def _best_price_hint(prices, cm_updated=None, tcp_updated=None, sku=None):
     """Pick a best-estimate price + its source currency from a profile.prices dict.
 
     Freshness-aware: if both sources have a value AND both have an 'updated'
@@ -3869,6 +3887,8 @@ def _best_price_hint(prices, cm_updated=None, tcp_updated=None):
 
     cm = prices.get("cardmarket") or {}
     cm_val = None
+    if sku in _CARDMARKET_CONTAMINATED_SKUS:
+        cm = {}
     if isinstance(cm, dict):
         v = cm.get("avg_sell") or cm.get("trend") or cm.get("low")
         if isinstance(v, (int, float)) and v > 0:
@@ -3934,7 +3954,7 @@ def pokemon_search():
         if len(q) < 2:
             return jsonify({"results": [], "count": 0})
         for entry in _pokemon_search_index:
-            if entry["name"].lower().startswith(q) or entry["number"].startswith(q):
+            if entry["name"].lower().startswith(q) or entry["number"].lower().startswith(q):
                 matches.append(entry)
                 if len(matches) >= 12:
                     break
@@ -3950,6 +3970,7 @@ def pokemon_search():
             prices,
             profile.get("cardmarket_updated") if profile else None,
             profile.get("tcgplayer_updated") if profile else None,
+            sku=sku,
         )
         image_id = None
         try:
@@ -5160,7 +5181,7 @@ def deep_grade():
 
         message = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=400,
+            max_tokens=1024,
             messages=[{
                 "role": "user",
                 "content": [
@@ -5179,7 +5200,11 @@ def deep_grade():
 
         text = message.content[0].text.strip()
         text = text.replace("```json", "").replace("```", "").strip()
-        result = _json.loads(text)
+        try:
+            result = _json.loads(text)
+        except _json.JSONDecodeError as je:
+            app.logger.error(f"[DEEP_GRADE] JSON parse failed: {je} — raw response: {text}")
+            return jsonify({"error": "Grading response could not be parsed. Please try again."})
         result["method"] = "deep"
         authenticity = result.get("authenticity", {
             "verdict": "uncertain",
@@ -5277,7 +5302,7 @@ Respond with ONLY valid JSON in this exact format, no other text:
 
         message = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=400,
+            max_tokens=1024,
             messages=[{
                 "role": "user",
                 "content": [
@@ -5296,7 +5321,11 @@ Respond with ONLY valid JSON in this exact format, no other text:
 
         text = message.content[0].text.strip()
         text = text.replace("```json", "").replace("```", "").strip()
-        result = _json.loads(text)
+        try:
+            result = _json.loads(text)
+        except _json.JSONDecodeError as je:
+            app.logger.error(f"[DEEP_GRADE_URL] JSON parse failed: {je} — raw response: {text}")
+            return jsonify({"error": "Grading response could not be parsed. Please try again."})
         result["method"] = "deep"
         authenticity = result.get("authenticity", {
             "verdict": "uncertain",
@@ -7379,30 +7408,38 @@ def _safe_grade(image_path):
         return {"score": None, "label": "Grade unavailable", "method": "auto"}
 
 
-def _extract_gbp_from_profile(profile):
-    """Extract first available GBP price from a profile dict, same logic as results.html.
-    Rate comes from the cached fx_rates.json (see fx_rates.py) — cache-read
-    only, no network call here. Pick-order unified with the other 4
-    consumers: market > trend > avg_sell > mid."""
+def _extract_gbp_from_profile(profile, sku=None):
+    """Extract GBP price from a profile dict. Cardmarket preferred (UK/EU
+    market) — TCGPlayer used only when Cardmarket has no value. Matches
+    _best_price_hint()'s no-timestamp fallback behaviour. Rate comes from
+    the cached fx_rates.json (see fx_rates.py) — cache-read only, no
+    network call here."""
     if not profile:
         return None
     prices = profile.get("prices") if isinstance(profile, dict) else None
     if not prices:
         return None
     fx = get_fx()
-    for src, sdata in prices.items():
-        if "ebay" in src.lower() or "amazon" in src.lower():
-            continue
-        if not isinstance(sdata, dict):
-            continue
-        for _var, vdata in sdata.items():
-            if isinstance(vdata, dict):
-                price = vdata.get("market") or vdata.get("trend") or vdata.get("avg_sell") or vdata.get("mid")
-            else:
-                price = vdata
-            if price:
-                mult = fx["eur_gbp"] if "cardmarket" in src else fx["usd_gbp"]
-                return round(float(price) * mult, 2)
+
+    cm = prices.get("cardmarket") if sku not in _CARDMARKET_CONTAMINATED_SKUS else None
+    if isinstance(cm, dict):
+        cm_price = cm.get("avg_sell") or cm.get("trend") or cm.get("mid")
+        if cm_price:
+            return round(float(cm_price) * fx["eur_gbp"], 2)
+
+    tcg = prices.get("tcgplayer")
+    if isinstance(tcg, dict):
+        holo = tcg.get("holofoil") or {}
+        tcg_price = holo.get("market") or holo.get("mid") if isinstance(holo, dict) else None
+        if not tcg_price:
+            for _variant, vdata in tcg.items():
+                if isinstance(vdata, dict):
+                    tcg_price = vdata.get("market") or vdata.get("mid")
+                    if tcg_price:
+                        break
+        if tcg_price:
+            return round(float(tcg_price) * fx["usd_gbp"], 2)
+
     return None
 
 def _issue_new_code(email, tier, subscription_id, ref_code="", source="stripe", device_fingerprint=None):
@@ -8967,7 +9004,7 @@ def match():
         _r0 = results[0]
         _r0_sku = _r0.get("sku") if isinstance(_r0, dict) else getattr(_r0, "sku", None)
         _r0_profile = _r0.get("profile", {}) if isinstance(_r0, dict) else getattr(_r0, "profile", {})
-        _record_price(_r0_sku, _extract_gbp_from_profile(_r0_profile))
+        _record_price(_r0_sku, _extract_gbp_from_profile(_r0_profile, sku=_r0_sku))
     except Exception:
         pass
     _increment_scan_counter()

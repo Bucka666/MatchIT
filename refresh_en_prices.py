@@ -218,6 +218,13 @@ def _refresh_one(folder: Path, tcgdex_set_id: str, set_prefix: str, force: bool 
     local_id = folder.name[len(set_prefix):]
     tcgdex_id = f"{tcgdex_set_id}-{local_id}"
     detail = _fetch_card_detail(tcgdex_id)
+    if not detail and local_id.isdigit() and int(local_id) < 100:
+        # TCGdex zero-pads card numbers to 3 digits for numbers below 100
+        # (e.g. sv01-001, not sv01-1) — retry with padding before giving up.
+        tcgdex_id_padded = f"{tcgdex_set_id}-{local_id.zfill(3)}"
+        detail = _fetch_card_detail(tcgdex_id_padded)
+        if detail:
+            logging.info(f"[EN-REFRESH-PAD] {tcgdex_set_id}, {local_id} -> {tcgdex_id_padded} succeeded")
     if not detail:
         return {"folder": folder.name, "status": "no_data"}
 

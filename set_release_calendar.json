@@ -21,7 +21,7 @@
       "ondevice_eligible": false,
       "equivalence_confirmed": true,
       "ondevice_published": true,
-      "state": "detected",
+      "state": "live",
       "source_latency": {
         "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
         "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
@@ -36,7 +36,7 @@
       "ondevice_eligible": false,
       "equivalence_confirmed": true,
       "ondevice_published": true,
-      "state": "detected",
+      "state": "live",
       "source_latency": {
         "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
         "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
@@ -51,7 +51,7 @@
       "ondevice_eligible": false,
       "equivalence_confirmed": true,
       "ondevice_published": true,
-      "state": "detected",
+      "state": "live",
       "source_latency": {
         "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
         "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
@@ -66,7 +66,7 @@
       "ondevice_eligible": false,
       "equivalence_confirmed": true,
       "ondevice_published": true,
-      "state": "detected",
+      "state": "live",
       "source_latency": {
         "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
         "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
@@ -81,7 +81,7 @@
       "ondevice_eligible": false,
       "equivalence_confirmed": true,
       "ondevice_published": true,
-      "state": "detected",
+      "state": "live",
       "source_latency": {
         "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
         "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }

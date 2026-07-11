@@ -71,6 +71,21 @@ _last_pkm_denominator: Optional[int] = None
 # EN SWSH set-total (e.g. 80 -> swsh35) can't override a correct JPN CLIP match.
 _suppress_swsh_for_jpn = False
 
+# Set per-call by _extract_pokemon_number when it sees an OCR token shaped
+# like a JP set code (letter(s)+digit(s), e.g. M5, S12A) that isn't in
+# _JP_SETCODE_MAP — lets ocr_direct_lookup flag a likely-unlisted set
+# instead of silently falling through to CLIP. Reset at the top of every
+# _extract_pokemon_number call to avoid stale carryover between scans.
+_last_unmapped_jp_setcode: Optional[str] = None
+
+# Shape of a JP set code as printed on card faces: letter(s) + digit(s),
+# optionally with trailing letter(s) (M5, S12A, SV3S). Requires a digit so
+# plain-letter card text (EX, GX, TAG) never false-positives. Excludes the
+# 2-char "X<digit>" shape specifically — OCR commonly misreads the "×"
+# weakness/resistance multiplier symbol (e.g. "Fire ×2") as the letter X,
+# which would otherwise look identical to a genuine short code like M2/M3.
+_JP_CODE_SHAPE_RE = re.compile(r'^(?!X\d$)(?=[A-Z0-9]{2,4}$)(?=.*[A-Z])(?=.*\d)[A-Z][A-Z0-9]*$')
+
 # Pokémon SWSH era: printed total → DB set ID (for disambiguation)
 # When OCR reads "106/217" the total 217 = swsh11 (Chilling Reign)
 _SWSH_TOTAL_MAP = {
@@ -166,6 +181,65 @@ _JP_SETCODE_MAP = {
     "SV9A": "sv9a",
     # sv10 (Destined Rivals JP)
     "SV10": "sv10",
+
+    # Mega Evolution JP series
+    "M2":   "m2",     # Inferno X (80 cards)
+    "M3":   "m3",     # Munix Zero (80 cards)
+    "M1L":  "m1l",    # Mega Brave
+    "M1S":  "m1s",    # Mega Symphonia
+
+    # Sword/Shield era s-series
+    "S4":   "s4",
+    "S4A":  "s4a",
+    "S5A":  "s5a",
+    "S5I":  "s5i",
+    "S5R":  "s5r",
+    "S6A":  "s6a",
+    "S6H":  "s6h",
+    "S6K":  "s6k",
+    "S7D":  "s7d",
+    "S7R":  "s7r",
+    "S8":   "s8",
+    "S8A":  "s8a",
+    "S8B":  "s8b",
+    "S9":   "s9",
+    "S9A":  "s9a",
+    "S10A": "s10a",
+    "S10B": "s10b",
+    "S10D": "s10d",
+    "S10P": "s10p",
+    "S11":  "s11",
+    "S11A": "s11a",
+    "S12":  "s12",
+    "S12A": "s12a",
+
+    # SV sibling s-suffix series
+    "SV3S": "sv3s",
+    "SV4S": "sv4s",
+    "SV5S": "sv5s",
+    "SV5M": "sv5m",
+    "SV6S": "sv6s",
+    "SV7S": "sv7s",
+    "SV8S": "sv8s",
+    "SV9S": "sv9s",
+
+    # SV11 (Black Bolt / White Flare)
+    "SV11B": "sv11b",
+    "SV11W": "sv11w",
+
+    # Classic era (e-series, neo, pcg, pmcg, vs, web)
+    "E1": "e1", "E2": "e2", "E3": "e3", "E4": "e4", "E5": "e5",
+    "NEO1": "neo1", "NEO2": "neo2", "NEO3": "neo3", "NEO4": "neo4",
+    "PCG1": "pcg1", "PCG2": "pcg2", "PCG3": "pcg3", "PCG4": "pcg4",
+    "PCG5": "pcg5", "PCG6": "pcg6", "PCG7": "pcg7", "PCG8": "pcg8",
+    "PCG9": "pcg9",
+    "PMCG1": "pmcg1", "PMCG2": "pmcg2", "PMCG3": "pmcg3",
+    "PMCG4": "pmcg4", "PMCG5": "pmcg5", "PMCG6": "pmcg6",
+    "VS1": "vs1", "WEB1": "web1",
+
+    # SV promos and special sets
+    "SV-P": "sv-p",
+    "SVK":  "svk",
 }
 
 
@@ -458,8 +532,9 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
     For SV era cards returns e.g. 'sv6-18' for direct DB lookup.
     For older cards returns plain number e.g. '18'.
     """
-    global _last_pkm_denominator
+    global _last_pkm_denominator, _last_unmapped_jp_setcode
     _last_pkm_denominator = None
+    _last_unmapped_jp_setcode = None
     # Try multiple regions — the card number position varies between card types.
     # Short-circuit: if a crop yields BOTH a set code and a valid card number
     # (the strongest signal — a direct DB-lookup key), stop early. Saves up to
@@ -521,6 +596,22 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
                         set_code = f"jpn-{_JP_SETCODE_MAP[stripped]}"
                         break
             if set_code:
+                break
+    # Unrecognized JP-set-code-shaped token — only meaningful in JP mode
+    # (_suppress_swsh_for_jpn doubles as the jp_mode signal here, same as
+    # its existing use below). Lets ocr_direct_lookup tell the caller this
+    # looks like a genuinely unlisted set, instead of silently falling
+    # through to CLIP with no signal at all.
+    if set_code is None and _suppress_swsh_for_jpn:
+        for raw in texts:
+            for token in raw.upper().split():
+                if (_JP_CODE_SHAPE_RE.match(token)
+                        and token not in _JP_SETCODE_MAP
+                        and token not in _PKM_SETCODE_MAP):
+                    _last_unmapped_jp_setcode = token
+                    logger.info(f"[OCR-PKM] unmapped JP-shaped set code seen: {token}")
+                    break
+            if _last_unmapped_jp_setcode:
                 break
     # Plain number pattern for energy cards e.g. "015" without total
     _PLAIN_NUM_RE = re.compile(r'(?<![×xX*+\-])\b(\d{1,4})\b')
@@ -794,16 +885,37 @@ def ocr_direct_lookup(
         # at this point, so set it directly from the request's own
         # jp_mode instead, same purpose: never let an EN SWSH printed-
         # total fingerprint override a genuine JP card.
-        global _suppress_swsh_for_jpn
+        global _suppress_swsh_for_jpn, _last_unmapped_jp_setcode
         _suppress_swsh_for_jpn = bool(jp_mode)
         extracted = _extract_pokemon_number(image_path)
     else:
         return None, None
     if not extracted:
+        # Extraction failed entirely, but an unmapped JP-shaped set code
+        # was still seen — surface it so the caller can tell the user
+        # this looks like a genuinely unlisted set, rather than a plain
+        # miss indistinguishable from a misread.
+        if jp_mode and _last_unmapped_jp_setcode:
+            synthetic_id = f"jpn-{_last_unmapped_jp_setcode.lower()}"
+            logger.info(f"[OCR-FIRST] unmapped JP set code {_last_unmapped_jp_setcode} (no number read) -> {synthetic_id}")
+            return None, synthetic_id
         return None, None
     logger.info(f"[OCR-FIRST] extracted: {extracted} for {tcg_upper}")
     extracted_set_id = _extracted_set_id(extracted)
     db_match = _lookup_sku_by_setcode(extracted, tcg_upper)
+    if jp_mode and db_match and not db_match.startswith("jpn-"):
+        logger.warning(f"[OCR-FIRST] rejecting EN match {db_match} in jp_mode")
+        db_match = None
+    # extracted resolved to a bare number with no recognized set code (e.g.
+    # _extracted_set_id found no '-' to split on) — if we separately saw an
+    # unmapped JP-shaped code, use it as a synthetic set id so _is_set_imaged
+    # correctly reports this as not-in-database instead of silently falling
+    # through to CLIP. NOT derived via _extracted_set_id(extracted) — that
+    # helper assumes the last '-' segment is a card number, which would
+    # mangle a bare "jpn-<code>" string (no number suffix) into just "jpn".
+    if jp_mode and not extracted_set_id and _last_unmapped_jp_setcode:
+        extracted_set_id = f"jpn-{_last_unmapped_jp_setcode.lower()}"
+        logger.info(f"[OCR-FIRST] unmapped JP set code {_last_unmapped_jp_setcode} -> {extracted_set_id}")
     if db_match:
         logger.info(f"[OCR-FIRST] direct DB match: {db_match}")
     return db_match, extracted_set_id
@@ -1028,6 +1140,9 @@ def ocr_confirm_ranking(
         )
         # Try direct DB lookup by set code
         db_match = _lookup_sku_by_setcode(extracted, tcg_upper)
+        if jpn_mode and db_match and not db_match.startswith("jpn-"):
+            logger.warning(f"[OCR] rejecting EN direct match {db_match} in jp_mode")
+            db_match = None
         if db_match:
             logger.info(f"[OCR] Direct DB match: {db_match}")
             if not allow_pokemon_promote and _is_pokemon_sku(db_match):
