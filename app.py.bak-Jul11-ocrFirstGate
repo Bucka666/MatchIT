@@ -15,8 +15,7 @@ from typing import Dict, List, Optional, Tuple
 from marketplace import marketplace_search, auto_classify_product, detect_barcode, barcode_to_search_query, build_search_query
 from api_routes import register_api_routes
 from vertical_loader import get_vertical
-import ocr_confirm as _oc
-from ocr_confirm import ocr_confirm_ranking, ocr_direct_lookup, _PKM_SETCODE_MAP, _denominator_blocks_promotion
+from ocr_confirm import ocr_confirm_ranking, ocr_direct_lookup, _PKM_SETCODE_MAP
 from profile_utils import _load_card_profile_for_sku
 from flask_cors import CORS
 from email_sender import gs_send_email
@@ -8557,21 +8556,6 @@ def match():
             _ocr_direct_sku, _ocr_extracted_set_id = ocr_direct_lookup(
                 str(query_path1), query_category, jp_mode=(_early_jp_mode == 'jp')
             )
-
-            # Denominator gate — prevent OCR-FIRST from returning a wrong card when
-            # the denominator from the card doesn't match the candidate set's total.
-            if _ocr_direct_sku and query_category == "POKEMON":
-                _ocr_denom = _oc._last_pkm_denominator
-                if _denominator_blocks_promotion(
-                    _ocr_direct_sku, _ocr_denom, _load_set_metadata(), query_category
-                ):
-                    print(
-                        f"[OCR-FIRST] denominator mismatch, falling through to CLIP: "
-                        f"{_ocr_direct_sku} denom={_ocr_denom}",
-                        flush=True,
-                    )
-                    _ocr_direct_sku = None
-
             if _ocr_direct_sku:
                 import uuid as _uuid
                 feedback_token = str(_uuid.uuid4())

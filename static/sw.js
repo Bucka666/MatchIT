@@ -1,5 +1,5 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
-const CACHE_NAME = 'grailsweep-v94';
+const CACHE_NAME = 'grailsweep-v95';
 const PRECACHE = [
   '/',
   '/static/style.css',

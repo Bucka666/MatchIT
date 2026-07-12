@@ -254,7 +254,7 @@ def register_api_routes(app):
             _image_id_for_sku, _is_set_imaged,
             get_data_dir, _increment_scan_counter,
         )
-        from ocr_confirm import ocr_direct_lookup, _denominator_blocks_promotion
+        from ocr_confirm import ocr_direct_lookup
         from vertical_loader import parse_all_fields, get_vertical
 
         # ── Parse parameters ──
@@ -309,23 +309,6 @@ def register_api_routes(app):
                 _ocr_direct_sku, _ocr_extracted_set_id = ocr_direct_lookup(
                     str(query_path1), query_category, jp_mode=(_early_jp_mode == 'jp')
                 )
-
-                # Denominator gate — prevent OCR-FIRST from returning a wrong card when
-                # the denominator from the card doesn't match the candidate set's total.
-                if _ocr_direct_sku and query_category == "POKEMON":
-                    import ocr_confirm as _oc_ref
-                    from app import _load_set_metadata
-                    _ocr_denom = _oc_ref._last_pkm_denominator
-                    if _denominator_blocks_promotion(
-                        _ocr_direct_sku, _ocr_denom, _load_set_metadata(), query_category
-                    ):
-                        print(
-                            f"[OCR-FIRST] denominator mismatch, falling through to CLIP: "
-                            f"{_ocr_direct_sku} denom={_ocr_denom}",
-                            flush=True,
-                        )
-                        _ocr_direct_sku = None
-
                 if _ocr_direct_sku:
                     scan_decision = _evaluate_scan_decision(request, sku=_ocr_direct_sku)
                     if not scan_decision.get("allowed", True):

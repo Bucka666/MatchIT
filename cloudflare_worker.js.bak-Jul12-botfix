@@ -55,7 +55,7 @@ const VALIDATOR_UA_PATTERNS = [
 
 // Probe paths — synth 404, never hit Modal
 const PROBE_PATTERNS = [
-  /\.(php|phtml|asp|aspx|jsp|cgi|pl|sh)($|\?|\/)/i,    // any server-side script — grailsweep.com is pure Python
+  /\.php($|\?|\/)/i,    // any .php file — grailsweep.com is pure Python, no .php exists
   /^\/\.env/i,
   /^\/\.git/i,
   /^\/\.aws/i,
@@ -91,8 +91,6 @@ const PROBE_PATTERNS = [
   /^\/apple-app-site-association/i,
   /^\/feed\//i,
   /^\/sites\//i,
-  /^\/update\//i,
-  /^\/admin\//i,
 ];
 
 export default {
@@ -101,13 +99,11 @@ export default {
     const host = url.hostname;
     const path = url.pathname;
 
-    // Route 5 lightweight, no-GPU routes to the CPU twin (serve_light).
-    // Placed first so it covers POST telemetry, search, and GET card-profile/image
-    // before the method-based early-exit splits them apart.
+    // Route 3 lightweight, no-GPU routes to the CPU twin (serve_light).
+    // Placed first so it covers POST telemetry + GET card-profile/image in one
+    // spot, before the method-based early-exit splits them apart.
     if (
       path === '/api/ondevice/telemetry' ||
-      path === '/api/pokemon-search' ||
-      path === '/search' ||
       path.startsWith('/api/card-profile/') ||
       path.startsWith('/api/v1/image/')
     ) {
