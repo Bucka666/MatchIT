@@ -3874,14 +3874,12 @@ def card_profile(sku):
         if not profile:
             return jsonify({'status': 'not_found', 'sku': sku}), 404
         profile = _attach_set_total(profile)
-        profile = _sanitise_prices_for_response(profile)
         image_id = _image_id_for_sku(sku)
         return jsonify({
             'status': 'ok',
             'sku': sku,
             'profile': profile,
             'image_id': image_id,
-            'best_gbp': _extract_gbp_from_profile(profile, sku=sku),
         })
     except Exception as e:
         print(f'[CARD-PROFILE] Error for {sku!r}: {e}', flush=True)
@@ -3908,7 +3906,7 @@ def _best_price_hint(prices, cm_updated=None, tcp_updated=None, sku=None):
     if sku in _CARDMARKET_CONTAMINATED_SKUS:
         cm = {}
     if isinstance(cm, dict):
-        v = cm.get("avg_sell") or cm.get("low")
+        v = cm.get("avg_sell") or cm.get("trend") or cm.get("low")
         if isinstance(v, (int, float)) and v > 0:
             cm_val = float(v)
 
@@ -7445,23 +7443,6 @@ def _safe_grade(image_path):
         return {"score": None, "label": "Grade unavailable", "method": "auto"}
 
 
-def _sanitise_prices_for_response(profile: dict) -> dict:
-    """Strip the volatile Cardmarket 'trend' field before sending profile
-    in API response. Prevents cached clients from picking trend over
-    stable fields. Raw data is preserved on disk — this only affects
-    responses. avg_1d/avg_7d/avg_30d are kept — the card-detail price
-    breakdown displays them."""
-    if not isinstance(profile, dict):
-        return profile
-    prices = profile.get("prices")
-    if not isinstance(prices, dict):
-        return profile
-    cm = prices.get("cardmarket")
-    if isinstance(cm, dict):
-        cm.pop("trend", None)
-    return profile
-
-
 def _extract_gbp_from_profile(profile, sku=None):
     """Extract GBP price from a profile dict. Cardmarket preferred (UK/EU
     market) — TCGPlayer used only when Cardmarket has no value. Matches
@@ -8664,11 +8645,7 @@ def match():
                             _prof1["crossrefs"] = _xr1["crossrefs"]
                     if not _prof1 and _dbr1:
                         _prof1 = _load_card_profile_for_sku(_ocr_direct_sku, _dbr1, get_data_dir())
-                    _prof1 = _sanitise_prices_for_response(_prof1)
                     _ocr_direct_results[0]["profile"] = _attach_set_total(_prof1)
-                    _ocr_direct_results[0]["best_gbp"] = _extract_gbp_from_profile(
-                        _ocr_direct_results[0].get("profile", {}), sku=_ocr_direct_sku
-                    )
                 except Exception as _pe:
                     print(f"[OCR-FIRST] profile enrich error: {_pe}", flush=True)
                 grade = _safe_grade(str(query_path1))

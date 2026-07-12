@@ -101,13 +101,14 @@ export default {
     const host = url.hostname;
     const path = url.pathname;
 
-    // Route 5 lightweight, no-GPU routes to the CPU twin (serve_light).
-    // Placed first so it covers POST telemetry, search, and GET card-profile/image
-    // before the method-based early-exit splits them apart.
+    // Route 6 lightweight, no-GPU routes to the CPU twin (serve_light).
+    // Placed first so it covers POST telemetry, search, price history bulk,
+    // and GET card-profile/image before the method-based early-exit splits them apart.
     if (
       path === '/api/ondevice/telemetry' ||
       path === '/api/pokemon-search' ||
       path === '/search' ||
+      path === '/api/price_history/bulk' ||
       path.startsWith('/api/card-profile/') ||
       path.startsWith('/api/v1/image/')
     ) {

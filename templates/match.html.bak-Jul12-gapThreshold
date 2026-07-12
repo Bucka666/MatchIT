@@ -3389,9 +3389,9 @@ document.getElementById('matchYear') &&
     return stale;
   }
 
-  // ---- gate predicate (calibrated Jul 2026 via gate_diag telemetry) -------
+  // ---- gate predicate (VERBATIM — do not change) --------------------------
   function gsGateAccept(r) {
-    const _accept = r.game !== 'YGO' && r.gap >= 0.01 && r.top1_sim >= 0.80;
+    const _accept = r.game !== 'YGO' && r.gap >= 0.02 && r.top1_sim >= 0.80;
     // Diagnostic beacon — sends real MobileCLIP scores to Modal logs
     // Remove once threshold is calibrated
     try {

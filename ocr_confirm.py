@@ -129,6 +129,7 @@ _PKM_SETCODE_MAP = {
     "ASC": "me2pt5",    # Ascended Heroes
     "MEG": "me1",       # Mega Evolution 1 (printed on card face)
     "POR": "me3",       # Perfect Order (EN printed set code)
+    "GG": "swsh12pt5gg",  # Crown Zenith Galarian Gallery
 }
 
 

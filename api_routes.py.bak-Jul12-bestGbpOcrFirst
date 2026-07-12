@@ -386,16 +386,10 @@ def register_api_routes(app):
                     _match_entry_ocr = {"rank": 1, "sku": _ocr_direct_sku, "score": 1.0, "probability": 1.0}
                     if _profile_ocr:
                         from app import _attach_set_total as _attach_set_total_ocr
-                        from app import _sanitise_prices_for_response as _sanitise_ocr
-                        _profile_ocr = _sanitise_ocr(_profile_ocr)
                         _match_entry_ocr["profile"] = _attach_set_total_ocr(_profile_ocr)
                     _image_id_ocr = _image_id_for_sku(_ocr_direct_sku)
                     if _image_id_ocr:
                         _match_entry_ocr["images"] = [{"image_id": _image_id_ocr, "original_filename": ""}]
-                    from app import _extract_gbp_from_profile as _extract_gbp_ocr
-                    _match_entry_ocr["best_gbp"] = _extract_gbp_ocr(
-                        _match_entry_ocr.get("profile", {}), sku=_ocr_direct_sku
-                    )
 
                     _increment_scan_counter()
                     print(f"[OCR-FIRST] Skipped CLIP — direct match: {_ocr_direct_sku}", flush=True)
@@ -725,7 +719,6 @@ def register_api_routes(app):
                             pass
 
         from app import _extract_gbp_from_profile
-        from app import _sanitise_prices_for_response
 
         matches = []
         for i, r in enumerate(results[:top_k]):
@@ -748,7 +741,7 @@ def register_api_routes(app):
 
             # Attach profile data
             if sku in sku_profile_map:
-                match_entry["profile"] = _sanitise_prices_for_response(sku_profile_map[sku])
+                match_entry["profile"] = sku_profile_map[sku]
 
             match_entry['best_gbp'] = _extract_gbp_from_profile(
                 match_entry.get('profile', {}), sku=sku

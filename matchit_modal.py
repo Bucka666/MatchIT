@@ -220,6 +220,7 @@ _LIGHT_ALLOWED_PREFIXES = (
     "/api/v1/image/",
     "/api/pokemon-search",
     "/search",
+    "/api/price_history/bulk",
 )
 
 

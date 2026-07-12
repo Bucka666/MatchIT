@@ -2107,41 +2107,23 @@ function colFetchDeltas() {
   var badges = document.querySelectorAll('.col-delta-badge[data-sku]');
   var skus = {};
   badges.forEach(function(b) { skus[b.dataset.sku] = true; });
-
-  // Apply already-cached SKUs immediately
-  var uncached = [];
   Object.keys(skus).forEach(function(sku) {
     if (window._colPriceCache[sku] !== undefined) {
       var cached = window._colPriceCache[sku];
       _colApplyDelta(sku, cached ? cached.latest : null, cached ? cached.prev : null);
-    } else {
-      uncached.push(sku);
+      return;
     }
-  });
-
-  if (!uncached.length) return;
-
-  // Single bulk fetch for all uncached SKUs
-  fetch('/api/price_history/bulk', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ skus: uncached })
-  })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      uncached.forEach(function(sku) {
-        var history = (data[sku] || []);
+    fetch('/api/price_history?sku=' + encodeURIComponent(sku))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var history = data.history || [];
         var latest = history.length ? history[history.length - 1].gbp : null;
         var prev   = history.length > 1 ? history[history.length - 2].gbp : null;
         window._colPriceCache[sku] = { latest: latest, prev: prev };
         _colApplyDelta(sku, latest, prev);
-      });
-    })
-    .catch(function() {
-      uncached.forEach(function(sku) {
-        window._colPriceCache[sku] = null;
-      });
-    });
+      })
+      .catch(function() { window._colPriceCache[sku] = null; });
+  });
 }
 
 function _colApplyDelta(sku, latestGbp, prevGbp) {

@@ -153,40 +153,46 @@ _JUSTTCG_SET_MAP_CACHE: dict | None = None  # lazy-loaded, set code → JustTCG 
 
 
 def _justtcg_get_with_backoff(url: str, headers: dict, timeout: int, max_retries: int = 5):
-    """GET with Retry-After-aware backoff on 429.
-    Honors the Retry-After response header if present; falls back to a 60s
-    fixed delay if not — ensuring at least one full rate-limit window clears
-    before retrying. Previous 1s/2s/4s/8s/16s schedule exhausted all retries
-    within ~15s, never clearing a per-minute limit.
+    """GET with backoff on 429, mirroring _fetch_card_detail_with_backoff's
+    TCGdex pattern. Live-verified dry run against the real API showed the
+    plain single-attempt version dropping ~60% of sets to a 429 on the very
+    first page — this is not optional hardening, it's required for the
+    backfill to get real coverage.
+
+    On 429, honors the Retry-After header if JustTCG sends one; otherwise
+    falls back to exponential backoff starting at 10s (10s, 20s, 40s, 80s).
+    The fallback schedule is deliberately long — JustTCG's limit is
+    per-minute, and the original 1/2/4/8s schedule only spanned 15s total,
+    never long enough for the window to reset, so sets like sv4a/sv1a were
+    exhausting all 5 retries on offset 0 and giving up with 0 prices.
+
     Returns the parsed JSON dict, or None if retries are exhausted (caller
     treats that set/page as unavailable and moves on, same as before)."""
-    _FALLBACK_DELAY = 60  # seconds — covers a full per-minute rate-limit window
+    delay = 10
     for attempt in range(max_retries):
         try:
             r = requests.get(url, headers=headers, timeout=timeout)
             if r.status_code == 429:
                 if attempt < max_retries - 1:
                     retry_after = r.headers.get("Retry-After")
-                    if retry_after is not None:
-                        try:
-                            delay = float(retry_after)
-                            print(f"[JUSTTCG] 429 — honoring Retry-After: {delay}s (attempt {attempt + 1}/{max_retries})")
-                        except ValueError:
-                            delay = _FALLBACK_DELAY
-                            print(f"[JUSTTCG] 429 — unparseable Retry-After '{retry_after}', using fallback {delay}s (attempt {attempt + 1}/{max_retries})")
-                    else:
-                        delay = _FALLBACK_DELAY
-                        print(f"[JUSTTCG] 429 — no Retry-After header, using fallback {delay}s (attempt {attempt + 1}/{max_retries})")
-                    time.sleep(delay)
+                    try:
+                        wait = float(retry_after) if retry_after else delay
+                    except ValueError:
+                        wait = delay
+                    print(f"[JUSTTCG] 429 (attempt {attempt + 1}/{max_retries}), "
+                          f"waiting {wait}s"
+                          f"{' (Retry-After)' if retry_after else ''}: {url}")
+                    time.sleep(wait)
+                    delay *= 2
                     continue
                 print(f"[JUSTTCG] Exhausted {max_retries} retries (429): {url}")
                 return None
             r.raise_for_status()
             return r.json()
-        except requests.exceptions.RequestException as e:
+        except Exception as e:
             if attempt < max_retries - 1:
-                print(f"[JUSTTCG] Request error, retrying in {_FALLBACK_DELAY}s (attempt {attempt + 1}/{max_retries}): {e}")
-                time.sleep(_FALLBACK_DELAY)
+                time.sleep(delay)
+                delay *= 2
                 continue
             print(f"[JUSTTCG] Request failed after {max_retries} attempts: {url} — {e}")
             return None

@@ -2083,17 +2083,7 @@ function scCapture() {
               var num = p.card_number || '';
               var rar = p.rarity || '';
               var best = 0, bestSrc = '', allPrices = {};
-              // Use server-computed best_gbp if available — avoids
-              // client-side price-picking across raw fields. best_gbp is
-              // already GBP-converted server-side, so the rate multiply
-              // below must be skipped for this path (see _usedServerGbp).
-              var _usedServerGbp = false;
-              if (cpData.best_gbp && cpData.best_gbp > 0) {
-                best = cpData.best_gbp;
-                bestSrc = 'cardmarket';
-                _usedServerGbp = true;
-              }
-              if (!_usedServerGbp && p.prices && typeof p.prices === 'object') {
+              if (p.prices && typeof p.prices === 'object') {
                 var _srcBestMap = {};
                 Object.keys(p.prices).forEach(function(src) {
                   if (src.toLowerCase().indexOf('ebay') >= 0 || src.toLowerCase().indexOf('amazon') >= 0) return;
@@ -2124,7 +2114,7 @@ function scCapture() {
                   });
                 }
               }
-              var _odRate = _usedServerGbp ? 1 : ((bestSrc.toLowerCase().indexOf('cardmarket') >= 0) ? EUR_RATE : GBP_RATE);
+              var _odRate = (bestSrc.toLowerCase().indexOf('cardmarket') >= 0) ? EUR_RATE : GBP_RATE;
               var odGbp = best * _odRate, odGbpStr = '£' + odGbp.toFixed(2);
               scPlayCardSound(odGbp);
               showPriceReveal(odGbp);
@@ -2265,16 +2255,10 @@ function scCapture() {
       var p=m.profile||{};
       var name=p.name||p.title||m.sku, set=p.set_name||'', num=p.card_number||'', rar=p.rarity||'';
       var best=0,bestSrc='',allPrices={};
-      var _usedServerGbpMatch = false;
-      if (m.best_gbp && m.best_gbp > 0) {
-        best = m.best_gbp;
-        bestSrc = 'cardmarket';
-        _usedServerGbpMatch = true;
-      }
-      if(p.prices&&typeof p.prices==='object'){var _srcBestMap={};Object.keys(p.prices).forEach(function(src){if(src.toLowerCase().indexOf('ebay')>=0)return;if(src.toLowerCase().indexOf('amazon')>=0)return;var sd=p.prices[src];if(!sd||typeof sd!=='object')return;var srcBest=0,srcVars={};Object.keys(sd).forEach(function(vk){var vd=sd[vk],pr=0;if(vd&&typeof vd==='object')pr=vd.market||vd.avg_sell||vd.mid||0;else if(typeof vd==='number')pr=vd;if(pr>0)srcVars[vk]=pr;if(pr>srcBest)srcBest=pr;});if(srcBest>0)allPrices[src]=srcVars;_srcBestMap[src]=srcBest;});
+      if(p.prices&&typeof p.prices==='object'){var _srcBestMap={};Object.keys(p.prices).forEach(function(src){if(src.toLowerCase().indexOf('ebay')>=0)return;if(src.toLowerCase().indexOf('amazon')>=0)return;var sd=p.prices[src];if(!sd||typeof sd!=='object')return;var srcBest=0,srcVars={};Object.keys(sd).forEach(function(vk){var vd=sd[vk],pr=0;if(vd&&typeof vd==='object')pr=vd.market||vd.trend||vd.avg_sell||vd.mid||0;else if(typeof vd==='number')pr=vd;if(pr>0)srcVars[vk]=pr;if(pr>srcBest)srcBest=pr;});if(srcBest>0)allPrices[src]=srcVars;_srcBestMap[src]=srcBest;});
       /* Cardmarket preferred (UK/EU market) — other sources only used as a fallback when Cardmarket has no value at all, or when this SKU's Cardmarket listing is a known stamp-variant contamination. */
-      var _cmKey=Object.keys(_srcBestMap).find(function(s){return s.toLowerCase().indexOf('cardmarket')>=0;});var _cmBlocked=!!(m.sku&&CARDMARKET_CONTAMINATED_SKUS.has(m.sku));if(!_usedServerGbpMatch){if(_cmKey&&_srcBestMap[_cmKey]>0&&!_cmBlocked){best=_srcBestMap[_cmKey];bestSrc=_cmKey;}else{Object.keys(_srcBestMap).forEach(function(s){if(_cmBlocked&&s.toLowerCase().indexOf('cardmarket')>=0)return;if(_srcBestMap[s]>best){best=_srcBestMap[s];bestSrc=s;}});}}}
-      var _rate=_usedServerGbpMatch ? 1 : ((bestSrc.toLowerCase().indexOf('cardmarket')>=0)?EUR_RATE:GBP_RATE);
+      var _cmKey=Object.keys(_srcBestMap).find(function(s){return s.toLowerCase().indexOf('cardmarket')>=0;});var _cmBlocked=!!(m.sku&&CARDMARKET_CONTAMINATED_SKUS.has(m.sku));if(_cmKey&&_srcBestMap[_cmKey]>0&&!_cmBlocked){best=_srcBestMap[_cmKey];bestSrc=_cmKey;}else{Object.keys(_srcBestMap).forEach(function(s){if(_cmBlocked&&s.toLowerCase().indexOf('cardmarket')>=0)return;if(_srcBestMap[s]>best){best=_srcBestMap[s];bestSrc=s;}});}}
+      var _rate=(bestSrc.toLowerCase().indexOf('cardmarket')>=0)?EUR_RATE:GBP_RATE;
       var gbp=best*_rate, gbpStr='£'+gbp.toFixed(2);
       scPlayCardSound(gbp);
       showPriceReveal(gbp);
@@ -2496,7 +2480,7 @@ function openDetail(c){
     // _best_price_hint). Values come from allPrices; per-source timestamps from
     // the profile (cardmarket_updated/tcgplayer_updated). Falls back to
     // Cardmarket when timestamps are absent (old profiles pre-refresh).
-    var _cmVal = (_cm.avg_sell>0)?_cm.avg_sell:((_cm.low>0)?_cm.low:0);
+    var _cmVal = (_cm.avg_sell>0)?_cm.avg_sell:((_cm.trend>0)?_cm.trend:((_cm.low>0)?_cm.low:0));
     var _tcgVal = (_tcg.holofoil>0)?_tcg.holofoil:0;
     if(!(_tcgVal>0)){for(var _tk in _tcg){if(_tcg[_tk]>0){_tcgVal=_tcg[_tk];break;}}}
     var _cmTs=p.cardmarket_updated, _tcgTs=p.tcgplayer_updated;
@@ -3389,9 +3373,9 @@ document.getElementById('matchYear') &&
     return stale;
   }
 
-  // ---- gate predicate (calibrated Jul 2026 via gate_diag telemetry) -------
+  // ---- gate predicate (VERBATIM — do not change) --------------------------
   function gsGateAccept(r) {
-    const _accept = r.game !== 'YGO' && r.gap >= 0.01 && r.top1_sim >= 0.80;
+    const _accept = r.game !== 'YGO' && r.gap >= 0.02 && r.top1_sim >= 0.80;
     // Diagnostic beacon — sends real MobileCLIP scores to Modal logs
     // Remove once threshold is calibrated
     try {
