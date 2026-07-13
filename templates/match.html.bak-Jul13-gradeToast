@@ -1836,10 +1836,10 @@ function _gradeToast(msg) {
     var t = document.createElement('div');
     t.id = '_gradeToast';
     t.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);' +
-      'background:#3f3f46;color:#fff;padding:10px 18px;border-radius:8px;' +
+      'background:#b91c1c;color:#fff;padding:10px 18px;border-radius:8px;' +
       'font-family:sans-serif;font-size:14px;font-weight:600;z-index:99999;' +
       'box-shadow:0 4px 12px rgba(0,0,0,0.3);max-width:90vw;text-align:center;';
-    t.textContent = msg;
+    t.textContent = '⚠ ' + msg;
     document.body.appendChild(t);
     setTimeout(function(){ if(t.parentNode) t.remove(); }, 6000);
   } catch(_e) {}
@@ -2252,7 +2252,7 @@ function scCapture() {
         console.log('[GRADE-DIAG] captured from API:', JSON.stringify(_capturedGrade));
       } else {
         console.warn('[GRADE-DIAG] data.grade missing or invalid:', data && data.grade);
-        _gradeToast('Grade not available for this card.');
+        _gradeToast('Scan saved without grade — API returned no grade. Report this.');
       }
       var m=data.matches[0];
       var raw=m.score||m.similarity||0;
@@ -2306,7 +2306,7 @@ function scAddCard(card){
   // Defensive: ensure grade is preserved on the card object
   if (!card.grade && !card.gradeSkipped) {
     console.warn('[GRADE-DIAG] scAddCard received card with no grade:', card.sku);
-    _gradeToast('Grade not available for this card.');
+    _gradeToast('Internal: card built without grade. Report this.');
   } else {
     console.log('[GRADE-DIAG] scAddCard preserved grade for ' + card.sku + ':', JSON.stringify(card.grade));
   }
@@ -2406,7 +2406,7 @@ window.scQuickAdd=function(idx){
     console.log('[GRADE-DIAG] scQuickAdd reading c.grade for ' + c.sku + ':', JSON.stringify(_gradeForSave));
   } else {
     console.warn('[GRADE-DIAG] scQuickAdd: c.grade missing for ' + c.sku + ':', c.grade);
-    _gradeToast('Grade not available for this card.');
+    _gradeToast('Saved without grade — scanner card had no grade. Report this.');
   }
 
   gsDupCheck(c.name, c.set_name || c.set, function(){
@@ -2683,7 +2683,7 @@ window.scRunDeepGrade = async function() {
 function gsDetailAddToCollection() {
   if (typeof _gsDetailCard === 'undefined' || !_gsDetailCard) {
     console.warn('[GRADE-DIAG] gsDetailAddToCollection: no _gsDetailCard available');
-    _gradeToast('Couldn\u2019t save \u2014 no card loaded. Please try again.');
+    _gradeToast('Cannot save \u2014 no card data loaded. Report this.');
     return;
   }
   var c = _gsDetailCard;
@@ -2695,7 +2695,7 @@ function gsDetailAddToCollection() {
     console.log('[GRADE-DIAG] gsDetailAddToCollection reading c.grade for ' + (c.sku || 'unknown') + ':', JSON.stringify(_gradeForSave));
   } else {
     console.warn('[GRADE-DIAG] gsDetailAddToCollection: c.grade missing for ' + (c.sku || 'unknown') + ':', c.grade);
-    _gradeToast('Grade not available for this card.');
+    _gradeToast('Saved without grade \u2014 detail card had no grade. Report this.');
   }
 
   gsDupCheck(c.name, c.set_name || c.set, function(){
