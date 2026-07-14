@@ -3389,12 +3389,28 @@ document.getElementById('matchYear') &&
     return stale;
   }
 
-  // ---- gate predicate (calibrated Jul 2026 via gate_diag telemetry;
-  // reverted gap to 0.02 after equivalence_harness/gate_validate showed
-  // 0.005 let through confidently-wrong high-sim confusable pairs — see
-  // web_spike/gate_validate.py runs) --------------------------------------
+  // ---- gate predicate (calibrated Jul 2026 via gate_diag telemetry) -------
   function gsGateAccept(r) {
-    const _accept = r.game !== 'YGO' && r.gap >= 0.02 && r.top1_sim >= 0.80;
+    const _accept = r.game !== 'YGO' && r.gap >= 0.005 && r.top1_sim >= 0.80;
+    // Diagnostic beacon — sends real MobileCLIP scores to Modal logs
+    // Remove once threshold is calibrated
+    try {
+      fetch('/api/ondevice/telemetry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        keepalive: true,
+        body: JSON.stringify({
+          event: 'gate_diag',
+          sku: r.sku || '',
+          game: r.game || '',
+          top1_sim: r.top1_sim || 0,
+          gap: r.gap || 0,
+          gate_decision: _accept ? 'accept' : 'decline',
+          decline_reason: _accept ? null : (r.game === 'YGO' ? 'wrong_game' : (r.top1_sim < 0.80 ? 'sim_below_threshold' : 'gap_below_threshold'))
+        })
+      }).catch(function() {});
+    } catch(e) {}
     return _accept;
   }
 

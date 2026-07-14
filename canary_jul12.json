@@ -1,0 +1,490 @@
+{
+  "meta": {
+    "label": "post_jul12_changes",
+    "target_url": "https://grailsweep.com",
+    "timestamp": "2026-07-14T17:56:54.910718+00:00",
+    "count": 10
+  },
+  "rows": {
+    "PXL_20260614_142116011.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-ENE04-8581705",
+      "camera": {
+        "final_sku": "ygo-SGX3-ENE04-8581705",
+        "score": 0.8517,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-ENE04",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-ENE04-8581705",
+            "score": 0.8517
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DCR-071-8581705",
+            "score": 0.8517
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-DR1-EN233-8581705",
+            "score": 0.8517
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-DCR-069-35798491",
+            "score": 0.8294
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-DR1-EN231-35798491",
+            "score": 0.8294
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-ENE04-8581705",
+        "name": "Infernalqueen Archfiend",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-ENE04",
+        "score": 65.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142125789.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-ENE07-35798491",
+      "camera": {
+        "final_sku": "ygo-SGX3-ENE07-35798491",
+        "score": 0.7745,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-ENE07",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-ENE07-35798491",
+            "score": 0.7745
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DCR-069-35798491",
+            "score": 0.7745
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-DR1-EN231-35798491",
+            "score": 0.7745
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-DCR-097-94463200",
+            "score": 0.7603
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-DR1-EN259-94463200",
+            "score": 0.7603
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-ENE07-35798491",
+        "name": "Darkbishop Archfiend",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-ENE07",
+        "score": 39.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142132953.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-MGED-EN082-79747096",
+      "camera": {
+        "final_sku": "ygo-MGED-EN082-79747096",
+        "score": 0.7716,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "MGED-EN082",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-MGED-EN082-79747096",
+            "score": 0.7716
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-BLAR-EN021-79747096",
+            "score": 0.7716
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MGED-EN050-41850466",
+            "score": 0.7499
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-ALIN-EN087-1665819",
+            "score": 0.7371
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-ALIN-EN044-5088741",
+            "score": 0.7294
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-MGED-EN082-79747096",
+        "name": "Number C1: Numeron Chaos Gate Sunya",
+        "set": "Maximum Gold: El Dorado #MGED-EN082",
+        "score": 42.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142142661.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-RA04-EN032-32600024",
+      "camera": {
+        "final_sku": "ygo-RA04-EN032-32600024",
+        "score": 0.7088,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "RA04-EN032",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-RA04-EN032-32600024",
+            "score": 0.7088
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-ETCO-EN026-32600024",
+            "score": 0.7088
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MGED-EN022-32600024",
+            "score": 0.7088
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-BLMM-EN062-32600024",
+            "score": 0.7088
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-OP28-EN002-32600024",
+            "score": 0.7088
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-RA04-EN032-32600024",
+        "name": "Chamber Dragonmaid",
+        "set": "Quarter Century Stampede #RA04-EN032",
+        "score": 20.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142152584.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-RA04-EN045-29280200",
+      "camera": {
+        "final_sku": "ygo-RA04-EN045-29280200",
+        "score": 0.8813,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "RA04-EN045",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-RA04-EN045-29280200",
+            "score": 0.8813
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-WISU-EN019-29280200",
+            "score": 0.8813
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MP15-EN209-14799437",
+            "score": 0.8515
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-SECE-EN019-14799437",
+            "score": 0.8515
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-BLTR-EN065-14799437",
+            "score": 0.8515
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-RA04-EN045-29280200",
+        "name": "Vanquish Soul Dr. Mad Love",
+        "set": "Quarter Century Stampede #RA04-EN045",
+        "score": 74.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142202218.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-END20-6799227",
+      "camera": {
+        "final_sku": "ygo-SGX3-END20-6799227",
+        "score": 0.95,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-END20",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-END20-6799227",
+            "score": 0.95
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-PHNI-EN080-12682213",
+            "score": 0.8532
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-MP25-EN058-12682213",
+            "score": 0.8532
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-DOCS-EN071-799183",
+            "score": 0.8531
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-MP16-EN157-799183",
+            "score": 0.8531
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-END20-6799227",
+        "name": "Half Counter",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-END20",
+        "score": 100.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142211660.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SDBT-EN007-88078306",
+      "camera": {
+        "final_sku": "ygo-SDBT-EN007-88078306",
+        "score": 0.8576,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SDBT-EN007",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SDBT-EN007-88078306",
+            "score": 0.8576
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DUOV-EN054-88078306",
+            "score": 0.8576
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-LART-EN056-88078306",
+            "score": 0.8576
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-SDBT-EN042-1688285",
+            "score": 0.8041
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-BLHR-EN049-73639099",
+            "score": 0.798
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SDBT-EN007-88078306",
+        "name": "Traptrix Genlisea",
+        "set": "Structure Deck: Beware of Traptrix #SDBT-EN007",
+        "score": 71.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142218935.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-END18-80193355",
+      "camera": {
+        "final_sku": "ygo-SGX3-END18-80193355",
+        "score": 0.95,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-END18",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-END18-80193355",
+            "score": 0.95
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DCR-050-28121403",
+            "score": 0.8188
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-DR1-EN212-28121403",
+            "score": 0.8188
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-TU08-EN018-28121403",
+            "score": 0.8188
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-BP03-EN228-44509898",
+            "score": 0.8151
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-END18-80193355",
+        "name": "Dramatic Rescue",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-END18",
+        "score": 100.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142231592.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-END16-67987611",
+      "camera": {
+        "final_sku": "ygo-SGX3-END16-67987611",
+        "score": 0.6735,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-END16",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-END16-67987611",
+            "score": 0.6735
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-MFC-096-67987611",
+            "score": 0.6735
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-DR1-EN151-67987611",
+            "score": 0.6735
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-GLD3-EN046-67987611",
+            "score": 0.6735
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-SS02-ENC15-67987611",
+            "score": 0.6735
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-END16-67987611",
+        "name": "Amazoness Archers",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-END16",
+        "score": 3.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    },
+    "PXL_20260614_142240207.jpg": {
+      "bucket": "variant",
+      "expected": "ygo-SGX3-END14-36100154",
+      "camera": {
+        "final_sku": "ygo-SGX3-END14-36100154",
+        "score": 0.8051,
+        "status": "ok",
+        "ocr_confirmed": true,
+        "ocr_text": "SGX3-END14",
+        "dinov2_fired": null,
+        "accept": true,
+        "top5": [
+          {
+            "rank": 1,
+            "sku": "ygo-SGX3-END14-36100154",
+            "score": 0.8051
+          },
+          {
+            "rank": 2,
+            "sku": "ygo-DREV-EN054-36100154",
+            "score": 0.8051
+          },
+          {
+            "rank": 3,
+            "sku": "ygo-CBLZ-EN048-96381979",
+            "score": 0.7423
+          },
+          {
+            "rank": 4,
+            "sku": "ygo-CT11-EN001-96381979",
+            "score": 0.7423
+          },
+          {
+            "rank": 5,
+            "sku": "ygo-PGLD-EN045-96381979",
+            "score": 0.7423
+          }
+        ]
+      },
+      "upload": {
+        "final_sku": "ygo-SGX3-END14-36100154",
+        "name": "Amazoness Fighting Spirit",
+        "set": "Speed Duel GX: Duelists of Shadows #SGX3-END14",
+        "score": 51.0,
+        "source": "scraped",
+        "status": "ok"
+      }
+    }
+  }
+}
