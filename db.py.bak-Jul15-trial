@@ -746,48 +746,11 @@ def check_and_record_scan(
         }
 
 
-def _trial_already_used(server_fp: str, device_id: str | None,
-                        subs: dict) -> bool:
-    """Check if this device has already used a trial. One-time only,
-    regardless of whether the prior trial is still active or expired."""
-    for entry in subs.values():
-        if entry.get("type") != "trial":
-            continue
-        if entry.get("redeemed_by_fp") == server_fp:
-            return True
-        if device_id and entry.get("redeemed_by_device") == device_id:
-            return True
-    return False
-
-
-def _write_trial_entry(code: str, server_fp: str, device_id: str | None,
-                       subs: dict) -> dict:
-    """Create a new trial entry and insert it into subs (in place).
-    Caller is responsible for persisting subs (_save_subs) and
-    committing the volume — mirrors how the RTDN handler mutates a
-    subs dict it already loaded, rather than doing its own file I/O.
-    Returns the new entry dict."""
-    from datetime import datetime, timezone, timedelta
-    now = datetime.now(timezone.utc)
-    expires = now + timedelta(hours=24)
-    entry = {
-        "type":               "trial",
-        "tier":               "trial",
-        "status":             "active",
-        "created_at":         now.isoformat(),
-        "expires_at":         expires.isoformat(),
-        "redeemed_by_fp":     server_fp,
-        "redeemed_by_device": device_id or "",
-    }
-    subs[code] = entry
-    return entry
-
-
 def resolve_tier_from_code(access_code: str | None, cfg_premium_codes: list, subs: dict) -> str | None:
     """
     Resolve the tier string for an access code. Never raises.
 
-    Returns: "legacy" | "monthly" | "annual" | "lifetime" | "trial" | None
+    Returns: "legacy" | "monthly" | "annual" | "lifetime" | None
     """
     try:
         if not access_code:
@@ -796,21 +759,6 @@ def resolve_tier_from_code(access_code: str | None, cfg_premium_codes: list, sub
             return "legacy"
         entry = subs.get(access_code)
         if entry and entry.get("status") == "active":
-            # Check expires_at — critical for trial entries which have
-            # no webhook to flip status on expiry
-            _expires = entry.get("expires_at")
-            if _expires:
-                try:
-                    from datetime import datetime, timezone
-                    _exp_dt = datetime.fromisoformat(
-                        str(_expires).replace("Z", "+00:00")
-                    )
-                    if _exp_dt.tzinfo is None:
-                        _exp_dt = _exp_dt.replace(tzinfo=timezone.utc)
-                    if datetime.now(timezone.utc) > _exp_dt:
-                        return None  # expired — treat as no active subscription
-                except Exception:
-                    pass  # fail-open: unparseable expiry date, allow through
             return entry.get("tier")
         return None
     except Exception:

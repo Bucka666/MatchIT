@@ -536,29 +536,13 @@ def inject_scan_state():
                 allowed = topup_rem > 0
             state = {
                 "allowed":        allowed,
-                "reason":         "premium_exempt" if (tier and tier != "trial") else ("free_within_limit" if allowed else "free_limit_exceeded"),
+                "reason":         "premium_exempt" if tier else ("free_within_limit" if allowed else "free_limit_exceeded"),
                 "tier":           tier or "free",
                 "count":          count,
                 "remaining":      remaining,
                 "limit":          _db.FREE_TIER_MONTHLY_LIMIT,
                 "topup_remaining": topup_rem,
             }
-
-        # Trial state — expose to templates. Trial always lands in the
-        # free-tier branch above (scan cap unchanged, only Pro features
-        # unlock), so trial_expires_at comes from the subs entry directly
-        # rather than from resolve_tier_from_code (which returns a bare
-        # tier string, not the entry).
-        _trial_active = (tier == "trial")
-        _trial_expires = subs_for_state.get(code, {}).get("expires_at") if (_trial_active and code) else None
-        try:
-            _trial_used = _db._trial_already_used(server_fp, device_id, subs_for_state)
-        except Exception:
-            _trial_used = False
-        state["trial_active"]     = _trial_active
-        state["trial_expires_at"] = _trial_expires
-        state["trial_used"]       = _trial_used
-
         _g._cached_scan_state = state
         return {"gs_scan_state": state}
     except Exception as _exc:
@@ -4852,7 +4836,7 @@ def match_history():
 # Collection
 # ============================================================
 
-_PREMIUM_TIERS = {"monthly", "annual", "lifetime", "legacy", "trial"}
+_PREMIUM_TIERS = {"monthly", "annual", "lifetime", "legacy"}
 
 
 def _ssr_subscription():
@@ -8161,60 +8145,6 @@ def fx_rates():
     Shape: {"usd_gbp": <rate>, "eur_gbp": <rate>} — both already direct
     multipliers, no client-side division needed."""
     return jsonify(get_fx())
-
-
-@app.route("/api/trial/activate", methods=["POST"])
-def trial_activate():
-    """Activate a 24h Pro feature trial for this device.
-    One-time only per device. Scan limit unchanged (free tier).
-    Pro features (export, deep grade, Card Show Mode) unlocked."""
-    try:
-        import db as _db
-        import uuid
-
-        # Same UA/lang/addr extraction as inject_scan_state() and the
-        # ondevice-telemetry endpoint — must match exactly, or this call
-        # computes a different server_fp than later requests and the
-        # one-time-trial check silently stops working for real devices.
-        ua        = request.user_agent.string
-        lang      = request.headers.get("Accept-Language", "")
-        addr      = request.headers.get("CF-Connecting-IP",
-                    request.headers.get("X-Forwarded-For", request.remote_addr or ""))
-        server_fp = _db.compute_server_fingerprint(ua, lang, addr)
-        device_id = request.cookies.get("matchit_device_id_v1") or None
-
-        subs = _load_subs()
-
-        # One-time check
-        if _db._trial_already_used(server_fp, device_id, subs):
-            return jsonify({
-                "status": "already_used",
-                "message": "Trial already used on this device."
-            }), 409
-
-        # Generate trial code and write entry
-        code = f"TRIAL-{uuid.uuid4().hex[:12].upper()}"
-        entry = _db._write_trial_entry(code, server_fp, device_id, subs)
-        _save_subs(subs)
-
-        # Commit to Modal volume
-        try:
-            if _vol_commit_fn:
-                _vol_commit_fn()
-        except Exception:
-            pass
-
-        print(f"[TRIAL] activated code={code} fp={server_fp[:8]}",
-              flush=True)
-
-        return jsonify({
-            "status":     "activated",
-            "code":       code,
-            "expires_at": entry["expires_at"],
-        })
-    except Exception as e:
-        print(f"[TRIAL] error: {e}", flush=True)
-        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @app.route("/api/validate_premium", methods=["POST"])

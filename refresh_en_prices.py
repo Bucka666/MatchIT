@@ -412,6 +412,28 @@ def refresh_en_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8
     stats = {"refreshed": 0, "no_data": 0, "no_price": 0, "fresh_skip": 0,
              "no_profile": 0, "errors": 0, "sets_done": 0, "sets_skipped": len(unmapped)}
 
+    # Pre-fetch PokéWallet prices for all known sub-sets so the
+    # cache is warm before threads start — avoids N API calls per set.
+    import os as _os
+    _pw_key = _os.environ.get("POKEWALLET_API_KEY", "")
+    if _pw_key:
+        for _prefix, _pw_id in POKEWALLET_SET_IDS.items():
+            if _pw_id not in _POKEWALLET_CACHE:
+                try:
+                    import requests as _rq
+                    _r = _rq.get(
+                        f"https://api.pokewallet.io/prices/{_pw_id}",
+                        headers={"X-API-Key": _pw_key},
+                        timeout=15,
+                    )
+                    if _r.ok:
+                        _POKEWALLET_CACHE[_pw_id] = _r.json().get("data", [])
+                        print(f"[POKEWALLET-PREFETCH] {_prefix} -> {len(_POKEWALLET_CACHE[_pw_id])} cards cached", flush=True)
+                    else:
+                        print(f"[POKEWALLET-PREFETCH] {_prefix} failed: {_r.status_code}", flush=True)
+                except Exception as _e:
+                    print(f"[POKEWALLET-PREFETCH] {_prefix} error: {_e}", flush=True)
+
     sorted_sets = sorted(folders_by_set)
     total_sets = len(sorted_sets)
     cards_seen = 0
