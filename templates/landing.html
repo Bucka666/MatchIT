@@ -87,6 +87,14 @@
     <div class="gs-hero-ctas">
       <a href="/match" class="gs-btn gs-btn-primary"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.15em" role="img" aria-label="Scan" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5V6.5A2.5 2.5 0 0 1 6.5 4H8.5"/><path d="M15.5 4H17.5A2.5 2.5 0 0 1 20 6.5V8.5"/><path d="M20 15.5V17.5A2.5 2.5 0 0 1 17.5 20H15.5"/><path d="M8.5 20H6.5A2.5 2.5 0 0 1 4 17.5V15.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg> Start Scanning Free →</a>
       <a href="/upgrade" class="gs-btn gs-btn-ghost">View Pro Plans</a>
+      {% if not gs_scan_state.trial_used and not gs_scan_state.trial_active
+            and gs_scan_state.tier == 'free' %}
+      <a href="#" class="gs-btn gs-btn-ghost"
+         style="border-color:#ffd700;color:#ffd700;"
+         onclick="gsActivateTrialInline();return false;">
+        ⚡ Try Pro Free for 24h
+      </a>
+      {% endif %}
     </div>
     <div class="gs-stats-bar" id="gsStatsBar">
       <div class="gs-stat">
@@ -255,6 +263,29 @@
         </ul>
         <a class="gs-price-cta" href="/match">Start Free</a>
       </div>
+
+      {% if not gs_scan_state.trial_used and not gs_scan_state.trial_active
+            and gs_scan_state.tier == 'free' %}
+      <div class="gs-price-card"
+           style="border-color:#ffd700;background:rgba(255,215,0,0.06);">
+        <span class="gs-price-badge"
+              style="background:#ffd700;color:#1a1830;">TRY FREE</span>
+        <h3 class="gs-price-name" style="color:#ffd700;">Pro Trial</h3>
+        <div class="gs-price-amount" style="color:#ffd700;">£0</div>
+        <div class="gs-price-period">for 24 hours</div>
+        <ul class="gs-price-features">
+          <li>✓ Everything in Pro</li>
+          <li>✓ No card required</li>
+          <li>✓ One per device</li>
+          <li>✓ Activates instantly</li>
+        </ul>
+        <button class="gs-price-cta"
+                style="background:#ffd700;color:#1a1830;border-color:#ffd700;"
+                onclick="gsActivateTrialInline()">
+          Activate Free Trial
+        </button>
+      </div>
+      {% endif %}
 
       <!-- Card 2: Pro Monthly -->
       <div class="gs-price-card gs-price-card--featured">
@@ -936,6 +967,31 @@
   .gs-pricing-grid { grid-template-columns: 1fr; }
 }
 </style>
+
+<script>
+function gsActivateTrialInline() {
+  fetch('/api/trial/activate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    credentials: 'include'
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.status === 'activated' && data.code) {
+      document.cookie = 'gs_access_code=' + encodeURIComponent(data.code)
+        + ';path=/;max-age=86400;SameSite=Lax';
+      window.location.href = '/match';
+    } else if (data.status === 'already_used') {
+      alert('Your free trial has already been used.');
+    } else {
+      alert('Could not activate trial — please try again.');
+    }
+  })
+  .catch(function() {
+    alert('Could not activate trial — please try again.');
+  });
+}
+</script>
 
 <script>
 function gsFormatNum(n) {

@@ -1433,7 +1433,7 @@ def _try_catalog_ingest(entry: Dict, detected: Dict, db_root: str, dry_run: bool
     return result
 
 
-def _try_index_server(entry: Dict, today: str, dry_run: bool) -> Dict:
+def _try_index_server(entry: Dict, today: str, dry_run: bool, embed_fn=None) -> Dict:
     """catalog_ingested -> indexed_server: the final-print gate (Phase 4).
     Indexes only once BOTH are true: catalog images are populated, AND
     today >= release_date. Catalog/display freshness (already live as of
@@ -1454,8 +1454,11 @@ def _try_index_server(entry: Dict, today: str, dry_run: bool) -> Dict:
     # with a full whole-index re-embed on any automatic/cron path — full GPU
     # re-embed is manual-only (cost).
     try:
-        from incremental_embed import run_incremental_embed
-        embed_result = run_incremental_embed(hot_reload=True)
+        if embed_fn is not None:
+            embed_result = embed_fn(hot_reload=True)
+        else:
+            from incremental_embed import run_incremental_embed
+            embed_result = run_incremental_embed(hot_reload=True)
     except Exception as e:
         logger.error(f"[SCHED-STATE] Embed error for {entry.get('name')}: {e}")
         return {"ok": False, "error": str(e)}
@@ -1541,7 +1544,7 @@ def _try_go_live(entry: Dict, dry_run: bool) -> Dict:
     return {"ok": True}
 
 
-def _advance_entry(entry: Dict, today: str, db_root: str, dry_run: bool) -> Dict:
+def _advance_entry(entry: Dict, today: str, db_root: str, dry_run: bool, embed_fn=None) -> Dict:
     """Attempt exactly one state transition for this calendar entry.
     Idempotent: any failure leaves `state` unchanged so the next daily tick
     retries — never half-advances. Scoped to game == 'pokemon_en' this
@@ -1591,7 +1594,7 @@ def _advance_entry(entry: Dict, today: str, db_root: str, dry_run: bool) -> Dict
                  "new_skus": new_skus, **result}
 
     if state == "catalog_ingested":
-        result = _try_index_server(entry, today, dry_run)
+        result = _try_index_server(entry, today, dry_run, embed_fn=embed_fn)
         if result.get("ok") and not dry_run:
             entry["state"] = "indexed_server"
             return {"ok": True, "from": "catalog_ingested", "to": "indexed_server", **result}
@@ -1752,9 +1755,10 @@ def _run_source_latency_probe(calendar: Dict, dry_run: bool) -> Dict:
 
 
 def run_scheduler(
-    tcgs:     Optional[List[str]] = None,
-    dry_run:  bool = False,
-    db_root:  Optional[str] = None,
+    tcgs:      Optional[List[str]] = None,
+    dry_run:   bool = False,
+    db_root:   Optional[str] = None,
+    embed_fn=None,
 ) -> Dict:
     """
     Daily date-aware run (cron changed from weekly to daily — see
@@ -1915,7 +1919,7 @@ def run_scheduler(
                 if entry.get("state") == "live":
                     continue
                 try:
-                    advance_result = _advance_entry(entry, today, db_root, dry_run)
+                    advance_result = _advance_entry(entry, today, db_root, dry_run, embed_fn=embed_fn)
                 except Exception as e:
                     logger.error(f"[SCHED-STATE] Unhandled error advancing {entry.get('name')}: {e}")
                     advance_result = {"ok": False, "error": str(e)}

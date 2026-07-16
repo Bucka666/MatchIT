@@ -187,6 +187,7 @@ _JP_SETCODE_MAP = {
     # Mega Evolution JP series
     "M2":   "m2",     # Inferno X (80 cards)
     "M3":   "m3",     # Munix Zero (80 cards)
+    "M5":   "m5",
     "M1L":  "m1l",    # Mega Brave
     "M1S":  "m1s",    # Mega Symphonia
 

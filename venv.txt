@@ -5,11 +5,23 @@
 
 
 
-modal app stop matchit-api
-$env:PYTHONIOENCODING="utf-8"; modal deploy matchit_modal.py
+python -m modal app stop matchit-api
+$env:PYTHONIOENCODING="utf-8"; python -m modal deploy matchit_modal.py
 
 
 
 
+
+
+grailsweep-play-billing@matchit-upload-cab01.iam.gserviceaccount.com
+
+
+projects/matchit-upload-cab01/topics/grailsweep-play-notifications
+
+O0pKDI2TNPalnARXcuoESt9b87hfkeU6
+
+
+
+https://grailsweep.com/api/google-play/rtdn?token=O0pKDI2TNPalnARXcuoESt9b87hfkeU6
 
 

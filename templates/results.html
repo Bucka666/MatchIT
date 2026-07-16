@@ -31,6 +31,9 @@
     </span>
     <button class="mi-btn mi-btn-primary" style="white-space:nowrap;" onclick="gsTopupModalOpen()">Get more scans</button>
     <a class="mi-btn" style="white-space:nowrap;background:rgba(177,77,255,0.15);border-color:#b14dff;color:#b14dff;" href="/upgrade">Upgrade to Pro</a>
+    {% if not gs_scan_state.trial_used and not gs_scan_state.trial_active and gs_scan_state.tier == 'free' %}
+    <a href="#" class="mi-btn" style="white-space:nowrap;background:rgba(255,215,0,0.15);border-color:#ffd700;color:#ffd700;" onclick="gsActivateTrialInline();return false;">⚡ Try Pro Free for 24h</a>
+    {% endif %}
   </div>
   {% elif scans_remaining is defined and scans_remaining is not none and scans_remaining == 0 and gs_scan_state.topup_remaining and gs_scan_state.topup_remaining > 0 %}
   <div class="mi-flash" style="margin:0 0 14px;background:rgba(177,77,255,0.12);border-color:rgba(177,77,255,0.3);color:#b14dff;">
@@ -42,6 +45,9 @@
     ⚡ <strong>{{ scans_remaining }} free scan{{ '' if scans_remaining == 1 else 's' }} left</strong> this month.
     <a href="#" onclick="gsTopupModalOpen();return false;" style="color:#ffd700;text-decoration:underline;">Get a top-up</a> or
     <a href="/upgrade" style="color:#ffd700;text-decoration:underline;">upgrade to Pro</a>.
+    {% if not gs_scan_state.trial_used and not gs_scan_state.trial_active and gs_scan_state.tier == 'free' %}
+    or <a href="#" onclick="gsActivateTrialInline();return false;" style="color:#ffd700;text-decoration:underline;font-weight:700;">try Pro free for 24h</a>.
+    {% endif %}
   </div>
   {% endif %}
 
@@ -1191,6 +1197,28 @@ window._rawPrices = {{ (r1.profile.prices if r1 and r1.profile and r1.profile.pr
 {% endif %}
 <canvas id="res-sparkle-canvas"></canvas>
 <script>
+function gsActivateTrialInline() {
+  fetch('/api/trial/activate', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    credentials: 'include'
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.status === 'activated' && data.code) {
+      document.cookie = 'gs_access_code=' + encodeURIComponent(data.code)
+        + ';path=/;max-age=86400;SameSite=Lax';
+      window.location.reload();
+    } else if (data.status === 'already_used') {
+      alert('Your free trial has already been used.');
+    } else {
+      alert('Could not activate trial — please try again.');
+    }
+  })
+  .catch(function() {
+    alert('Could not activate trial — please try again.');
+  });
+}
 function _gsGradeMonthKey() {
   var d = new Date();
   return 'gs_deep_grades_' + d.getFullYear() + '-' + (d.getMonth() + 1);

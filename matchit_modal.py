@@ -301,6 +301,25 @@ def serve_light():
         modal.Secret.from_name("resend-api-key"),
         modal.Secret.from_name("r2-credentials"),
     ],
+    timeout=3600,
+)
+def run_embed_gpu(hot_reload=True):
+    from incremental_embed import run_incremental_embed
+    return run_incremental_embed(hot_reload=hot_reload)
+
+
+@app.function(
+    image=image,
+    volumes={"/modal_data": vol},
+    secrets=[
+        modal.Secret.from_name("app-credentials"),
+        modal.Secret.from_name("stripe-credentials"),
+        modal.Secret.from_name("google-vision-credentials"),
+        modal.Secret.from_name("vapid-credentials"),
+        modal.Secret.from_name("external-api-credentials"),
+        modal.Secret.from_name("resend-api-key"),
+        modal.Secret.from_name("r2-credentials"),
+    ],
     schedule=modal.Cron("0 1 * * *"),  # Every day at 1am UTC (was Monday-only —
     # the release calendar's state machine needs daily ticks to advance sets
     # through their states promptly around release_date; see set_scheduler.py
@@ -327,7 +346,7 @@ def scheduled_set_check():
     os.environ["ANTHROPIC_API_KEY"] = _ccfg.get("anthropic_api_key", "")
 
     from set_scheduler import run_scheduler
-    result = run_scheduler()
+    result = run_scheduler(embed_fn=run_embed_gpu.remote)
 
     # Auto-refresh SV-era set code map from pokemontcg.io API
     try:
