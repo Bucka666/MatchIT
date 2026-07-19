@@ -1304,7 +1304,7 @@ function gsIsWatchlisted(sku) {
           <span style="font-weight:700;">125 scans — purchase on grailsweep.com</span>
           <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">125 scans · use whenever · no monthly reset</span>
         </span>
-        <span style="font-weight:700;color:#00e5ff;white-space:nowrap;">£1.89</span>
+        <span id="gsPriceTopup" style="font-weight:700;color:#00e5ff;white-space:nowrap;">£1.89</span>
       </button>
       <button id="gsCtaMonthly" onclick="gsTopupBuy('monthly')"
               style="padding:12px 16px;background:linear-gradient(135deg,rgba(177,77,255,0.15),rgba(0,229,255,0.1));border:1px solid rgba(177,77,255,0.4);border-radius:10px;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">
@@ -1312,7 +1312,7 @@ function gsIsWatchlisted(sku) {
           <span style="font-weight:700;">Pro — subscribe on grailsweep.com</span>
           <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Unlimited fair usage scanning + collection + alerts</span>
         </span>
-        <span style="font-weight:700;color:#b14dff;white-space:nowrap;">£4.39/mo</span>
+        <span id="gsPriceMonthlyBtn" style="font-weight:700;color:#b14dff;white-space:nowrap;">£4.39/mo</span>
       </button>
       <!-- Annual upgrade — shown for monthly-tier cap (Phase 2C) -->
       <button id="gsCtaAnnual" class="gs-cta-annual" onclick="gsTopupBuy('annual')"
@@ -1321,7 +1321,7 @@ function gsIsWatchlisted(sku) {
           <span style="font-weight:700;">Ultimate Plan — subscribe on grailsweep.com</span>
           <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Save ~34% · Unlimited fair usage scanning · billed yearly</span>
         </span>
-        <span style="font-weight:700;color:#00e5ff;white-space:nowrap;">£34.99/yr</span>
+        <span id="gsPriceAnnualBtn" style="font-weight:700;color:#00e5ff;white-space:nowrap;">£34.99/yr</span>
       </button>
       <!-- Feedback link — shown for annual-tier cap (Phase 2C) -->
       <a id="gsCtaFeedback" class="gs-cta-feedback"
@@ -1377,6 +1377,59 @@ function gsIsWatchlisted(sku) {
 
   function gsHasPlayBilling() {
     return 'getDigitalGoodsService' in window;
+  }
+
+  function gsIsRunningInIOSApp() {
+    return !!(window.Capacitor && window.Capacitor.isNativePlatform() && window.Capacitor.getPlatform() === 'ios');
+  }
+  window.gsIsRunningInIOSApp = gsIsRunningInIOSApp;
+
+  async function gsRcInit() {
+    if (!gsIsRunningInIOSApp()) return;
+    try {
+      const Purchases = window.Capacitor.Plugins.Purchases;
+      if (!Purchases) { console.warn('[RC] Purchases plugin not available'); return; }
+      await Purchases.configure({ apiKey: 'appl_QQbQjbUoqbYWdRHrIVurmkyquRE' });
+      await gsUpdateIOSPrices(Purchases);
+    } catch(e) {
+      console.warn('[RC] init failed', e);
+    }
+  }
+
+  async function gsUpdateIOSPrices(Purchases) {
+    try {
+      const result = await Purchases.getOfferings();
+      const current = result && result.current;
+      if (!current) return;
+      const monthly = current.monthly?.product;
+      const annual = current.annual?.product;
+      const topup = current.availablePackages?.find(p => p.packageType === 'CUSTOM')?.product;
+
+      if (monthly) {
+        const mp = monthly.priceString;
+        const mpPerMo = mp + '/mo';
+        document.querySelectorAll('#gsPriceMonthly, .upgrade-tier--monthly .upgrade-tier-price').forEach(el => el.textContent = mp);
+        const btnSpan = document.getElementById('gsPriceMonthlyBtn');
+        if (btnSpan) btnSpan.textContent = mpPerMo;
+        // upgrade.html inline referral text
+        document.querySelectorAll('.upgrade-referral-desc').forEach(el => {
+          el.innerHTML = el.innerHTML.replace(/£[\d.]+(?=\.)/g, mp);
+        });
+      }
+      if (annual) {
+        const ap = annual.priceString;
+        document.querySelectorAll('#gsPriceAnnual, .upgrade-tier--annual .upgrade-tier-price').forEach(el => el.textContent = ap);
+        const btnSpan = document.getElementById('gsPriceAnnualBtn');
+        if (btnSpan) btnSpan.textContent = ap + '/yr';
+      }
+      if (topup) {
+        const tp = topup.priceString;
+        const btnSpan = document.getElementById('gsPriceTopup');
+        if (btnSpan) btnSpan.textContent = tp;
+      }
+    } catch(e) {
+      console.warn('[RC] price update failed', e);
+    }
   }
 
   async function gsActivateSubscriptionCode(code, tier) {
@@ -1446,6 +1499,10 @@ function gsIsWatchlisted(sku) {
   window.gsHasPlayBilling     = gsHasPlayBilling;
   window.gsPlayBillingPurchase = gsPlayBillingPurchase;
   // === end Google Play Billing ===
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (gsIsRunningInIOSApp()) gsRcInit();
+  });
 
 (function() {
   // ── Top-up modal helpers (Task 9c Phase C2) ──

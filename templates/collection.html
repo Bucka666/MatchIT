@@ -1273,7 +1273,8 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function gsColLoadReferral() {
-  if (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) {
+  if ((typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) ||
+      (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp())) {
     var refBox = document.getElementById('colReferralBox');
     if (refBox) refBox.style.display = 'none';
     return;

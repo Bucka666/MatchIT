@@ -423,7 +423,8 @@ document.addEventListener('DOMContentLoaded', () => {
         _sw.style.display = 'block';
     }
 
-    if (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) {
+    if ((typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) ||
+        (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp())) {
         var _refBlock = document.getElementById('referralCodeInput');
         _refBlock = _refBlock && _refBlock.closest('.upgrade-referral-section');
         if (_refBlock) _refBlock.style.display = 'none';

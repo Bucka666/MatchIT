@@ -291,7 +291,7 @@
       <div class="gs-price-card gs-price-card--featured">
         <span class="gs-price-badge">POPULAR</span>
         <h3 class="gs-price-name">Pro Monthly</h3>
-        <div class="gs-price-amount">£4.39</div>
+        <div class="gs-price-amount" id="gsPriceMonthly">£4.39</div>
         <div class="gs-price-period">per month</div>
         <ul class="gs-price-features">
           <li>✓ Unlimited fair usage scanning</li>
@@ -313,7 +313,7 @@
       <div class="gs-price-card gs-price-card--annual">
         <span class="gs-price-badge">SAVE 34%</span>
         <h3 class="gs-price-name">Ultimate Plan</h3>
-        <div class="gs-price-amount">£34.99</div>
+        <div class="gs-price-amount" id="gsPriceAnnual">£34.99</div>
         <div class="gs-price-period">per year (~£2.92/mo)</div>
         <ul class="gs-price-features">
           <li>✓ Unlimited fair usage scanning</li>
@@ -1187,7 +1187,8 @@ async function lpUpgrade(tier) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    if (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) {
+    if ((typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) ||
+        (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp())) {
         var els = ['featureReferral', 'pricingReferral'];
         els.forEach(function(id) {
             var el = document.getElementById(id);
