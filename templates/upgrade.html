@@ -443,6 +443,9 @@ async function handleUpgrade(tier) {
         await gsPlayBillingPurchase(tier);
         return;
     }
+    if (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp()) {
+        await gsIosPurchase(tier); return;
+    }
     try {
         const refCode = (document.getElementById('referralCodeInput') || {}).value || '';
         const resp = await fetch('/api/create-checkout-session', {

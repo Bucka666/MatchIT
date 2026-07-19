@@ -1071,6 +1071,9 @@ function gsAnimateCount(el, from, to, duration) {
 
 // Direct-to-Stripe checkout from landing page (Task 10)
 async function lpUpgrade(tier) {
+  if (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp()) {
+    await gsIosPurchase(tier); return;
+  }
   try {
     const resp = await fetch('/api/create-checkout-session', {
       method: 'POST',

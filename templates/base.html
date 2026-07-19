@@ -1432,6 +1432,32 @@ function gsIsWatchlisted(sku) {
     }
   }
 
+  async function gsIosPurchase(tier) {
+    try {
+      const Purchases = window.Capacitor?.Plugins?.Purchases;
+      if (!Purchases) { alert('Store not available. Please try again.'); return; }
+      const offerings = await Purchases.getOfferings();
+      const current = offerings?.current;
+      if (!current) { alert('No products available.'); return; }
+      let pkg = null;
+      if (tier === 'monthly') pkg = current.monthly;
+      else if (tier === 'annual') pkg = current.annual;
+      else if (tier === 'topup_75' || tier === 'topup_125') {
+        pkg = current.availablePackages?.find(p => p.packageType === 'CUSTOM');
+      }
+      if (!pkg) { alert('Product not found.'); return; }
+      const result = await Purchases.purchasePackage({ aPackage: pkg });
+      if (result) {
+        alert('Purchase complete!');
+        setTimeout(() => { window.location.reload(); }, 800);
+      }
+    } catch(e) {
+      if (!e.message?.includes('userCancelled')) {
+        alert('Purchase failed: ' + e.message);
+      }
+    }
+  }
+
   async function gsActivateSubscriptionCode(code, tier) {
     try {
       const actResp = await fetch('/api/validate_premium', {
@@ -1605,6 +1631,7 @@ function gsIsWatchlisted(sku) {
   function gsTopupBuy(tier) {
     gsTopupModalClose();
     if (gsHasPlayBilling()) { gsPlayBillingPurchase(tier); return; }
+    if (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp()) { gsIosPurchase(tier); return; }
     fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
