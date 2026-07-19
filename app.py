@@ -6082,6 +6082,142 @@ def google_play_rtdn():
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+_REVENUECAT_PRODUCT_TIER = {
+    "grailsweep_monthly":  "monthly",
+    "grailsweep_ultimate": "annual",
+}
+
+
+def _revenuecat_tier_for_product(product_id):
+    return _REVENUECAT_PRODUCT_TIER.get(product_id)
+
+
+def _handle_revenuecat_event(event):
+    """
+    Given a decoded RevenueCat webhook event, update (or create) the
+    matching subscriptions.json entry. app_user_id is expected to be the
+    GrailSweep access code itself (the iOS app configures the RevenueCat
+    SDK with appUserID=<existing code>), so lookup is a direct dict key —
+    unlike the RTDN handler, which has to linear-scan for a purchaseToken
+    since Google doesn't let us choose that identifier.
+    """
+    from datetime import datetime, timedelta
+
+    event_type  = event.get("type", "")
+    app_user_id = (event.get("app_user_id") or "").strip().upper()
+    product_id  = event.get("product_id", "")
+
+    if not app_user_id:
+        print("[REVENUECAT] event missing app_user_id", flush=True)
+        return
+
+    print(f"[REVENUECAT] event type={event_type} app_user_id={app_user_id} product_id={product_id}", flush=True)
+
+    subs = _load_subs()
+    entry = subs.get(app_user_id)
+    now_iso = datetime.utcnow().isoformat()
+
+    if event_type in ("INITIAL_PURCHASE", "RENEWAL"):
+        if entry is None:
+            if event_type != "INITIAL_PURCHASE":
+                print(f"[REVENUECAT] No subscriptions.json entry for app_user_id={app_user_id} "
+                      f"(event={event_type}) — nothing to update", flush=True)
+                return
+            tier = _revenuecat_tier_for_product(product_id)
+            if not tier:
+                print(f"[REVENUECAT] Unknown product_id={product_id} for app_user_id={app_user_id} "
+                      f"— cannot issue code", flush=True)
+                return
+            new_code = _issue_new_code(email="", tier=tier, subscription_id=app_user_id,
+                                        ref_code="", source="revenuecat_ios")
+            print(f"[REVENUECAT] Issued new code={new_code} for app_user_id={app_user_id} tier={tier} "
+                  f"— NOTE: this code is not returned to the purchasing device by this webhook", flush=True)
+            return
+
+        # Existing entry — renew/extend. Prefer the tier implied by this
+        # event's product_id (matches a plan/product change); fall back to
+        # the tier already on file if product_id is missing/unrecognised.
+        tier = _revenuecat_tier_for_product(product_id) or entry.get("tier")
+        if tier == "lifetime":
+            expires = None
+        elif tier == "annual":
+            expires = (datetime.utcnow() + timedelta(days=366)).isoformat()
+        else:
+            expires = (datetime.utcnow() + timedelta(days=32)).isoformat()
+        entry["status"] = "active"
+        entry["expires_at"] = expires
+        entry["revenuecat_last_event"] = event_type
+        entry["revenuecat_updated_at"] = now_iso
+        _save_subs(subs)
+        print(f"[REVENUECAT] {app_user_id} {event_type.lower()} (tier={tier}), new expires_at={expires}", flush=True)
+
+    elif event_type in ("EXPIRATION", "CANCELLATION", "BILLING_ISSUE"):
+        if entry is None:
+            print(f"[REVENUECAT] No subscriptions.json entry for app_user_id={app_user_id} "
+                  f"(event={event_type}) — nothing to update", flush=True)
+            return
+        entry["status"] = "expired"
+        entry["expired_at"] = now_iso
+        entry["revenuecat_last_event"] = event_type
+        entry["revenuecat_updated_at"] = now_iso
+        _save_subs(subs)
+        print(f"[REVENUECAT] {app_user_id} set to expired (event={event_type})", flush=True)
+
+    else:
+        print(f"[REVENUECAT] Unhandled event type: {event_type}", flush=True)
+
+
+@app.route("/api/revenuecat/webhook", methods=["POST"])
+def revenuecat_webhook():
+    """
+    RevenueCat webhook push endpoint (iOS subscription events). Same
+    shape as /api/google-play/rtdn: verify → dedupe by event id → process
+    → always 200 on a processing error so RevenueCat doesn't hammer
+    retries into duplicate-but-deduped work.
+
+    Unlike RTDN's env-gated "unconfigured = open" auth, this fails closed:
+    if REVENUECAT_WEBHOOK_SECRET isn't set, every request is unauthorized.
+    """
+    expected_secret = os.environ.get("REVENUECAT_WEBHOOK_SECRET", "").strip()
+    incoming_auth = (request.headers.get("Authorization") or "").strip()
+    if not expected_secret or not incoming_auth or not _secrets_mod.compare_digest(incoming_auth, expected_secret):
+        print("[REVENUECAT] Rejected: bad or missing Authorization header", flush=True)
+        return jsonify({"error": "unauthorized"}), 401
+
+    body = request.get_json(silent=True) or {}
+    event = body.get("event") or {}
+    event_id = event.get("id", "")
+
+    # Idempotency — RevenueCat retries webhooks on non-2xx responses and
+    # can redeliver the same event; event.id is unique per event (same
+    # dedup idiom as RTDN's messageId).
+    _pd = None
+    if event_id:
+        try:
+            import modal as _modal
+            _pd = _modal.Dict.from_name("revenuecat-webhook-events", create_if_missing=True)
+            if _pd.get(event_id) is not None:
+                print(f"[REVENUECAT] Duplicate event id={event_id} — skipping", flush=True)
+                return jsonify({"status": "ok"}), 200
+        except Exception as _idem_e:
+            print(f"[REVENUECAT] Idempotency check failed: {_idem_e} — proceeding anyway", flush=True)
+
+    try:
+        _handle_revenuecat_event(event)
+    except Exception as e:
+        print(f"[REVENUECAT] Processing error (swallowed, returning 200): {e}", flush=True)
+        return jsonify({"status": "ok"}), 200
+
+    if _pd is not None and event_id:
+        try:
+            _pd.put(event_id, {"ts": time.time()})
+        except Exception as _put_e:
+            print(f"[REVENUECAT] Idempotency write failed: {_put_e}", flush=True)
+
+    return jsonify({"status": "ok"}), 200
+# ─────────────────────────────────────────────────────────────────────────────
+
+
 @app.route("/api/topup-status", methods=["GET"])
 def topup_status():
     """

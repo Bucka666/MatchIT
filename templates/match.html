@@ -4112,6 +4112,34 @@ function _detectGame() {
 
 async function _tryMlKitLocal(imageBlob) {
   var _t0 = Date.now();
+
+  // ── iOS Capacitor path ───────────────────────────────────────
+  // http://localhost:47291 is blocked by ATS from a WKWebView
+  // loading https://grailsweep.com, so on iOS we call the native
+  // Vision plugin via the Capacitor bridge instead.
+  if (window.Capacitor &&
+      typeof window.Capacitor.isNativePlatform === 'function' &&
+      window.Capacitor.isNativePlatform() &&
+      window.Capacitor.getPlatform() === 'ios') {
+    try {
+      var plugin = window.Capacitor.Plugins && window.Capacitor.Plugins.GSOcrPlugin;
+      if (!plugin) throw new Error('GSOcrPlugin not registered');
+      var base64 = await new Promise(function(resolve, reject) {
+        var r = new FileReader();
+        r.onload  = function() { resolve(r.result.split(',')[1]); };
+        r.onerror = reject;
+        r.readAsDataURL(imageBlob);
+      });
+      var result = await plugin.scan({ imageBase64: base64 });
+      console.log('[MLKIT-CLIENT] ios after ' + (Date.now()-_t0) + 'ms, text=' + (result.text || '(empty)'));
+      return result.text || null;
+    } catch(e) {
+      console.log('[MLKIT-CLIENT] ios failed after ' + (Date.now()-_t0) + 'ms: ' + (e && e.message ? e.message : e));
+      return null;
+    }
+  }
+
+  // ── Android / desktop path (unchanged) ──────────────────────
   try {
     const resp = await Promise.race([
       fetch('http://localhost:47291/scan', { method:'POST', body: imageBlob, headers:{} }),

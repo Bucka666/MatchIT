@@ -131,6 +131,10 @@ def _make_image_wsgi():
         modal.Secret.from_name("cf-proxy-secret"),
         modal.Secret.from_name("resend-api-key"),
         modal.Secret.from_name("r2-credentials"),
+        # REVENUECAT_WEBHOOK_SECRET — value from the RevenueCat dashboard
+        # (Project settings > Webhooks > Authorization header value). Create
+        # via: modal secret create revenuecat-webhook-secret REVENUECAT_WEBHOOK_SECRET=<value>
+        modal.Secret.from_name("revenuecat-webhook-secret"),
     ],
     timeout=300,
     min_containers=0,
