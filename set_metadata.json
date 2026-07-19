@@ -7007,6 +7007,13 @@
     "printed_total": 88,
     "total": 124
   },
+  "me05": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "Pitch Black",
+    "printed_total": 84,
+    "total": 120
+  },
   "me4": {
     "exclude": false,
     "game": "MTG",
