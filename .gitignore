@@ -80,3 +80,15 @@ q3_secrets_usage.txt
 
 # Unread — possible relic of the dead door-keys vertical, Craig to review
 MatchIT Key Ref File.xlsx
+
+# iOS Capacitor wrapper — own git repo, not part of main repo history
+ios-app/
+
+# iOS signing — never commit these
+apple_distribution.key
+distribution.p12
+distribution.cer
+distribution.pem
+p12_base64.txt
+profile_base64.txt
+*.mobileprovision
