@@ -27,7 +27,10 @@
       <div class="prem-benefit">🃏 Collection history & stats</div>
     </div>
 
-    <!-- Code entry -->
+    <!-- Code entry (web/Stripe users — they receive an emailed GRAIL-XXXX-XXXX
+         code). Hidden by default; premCheckGate() reveals exactly one of
+         #premGateCode / #premGateUpgrade based on platform (flash-free). -->
+    <div id="premGateCode" style="display:none;">
     <div style="margin-bottom:16px;">
       <div style="font-size:0.8rem;color:#9b95b8;margin-bottom:8px;">Enter your access code to unlock:</div>
       <div style="display:flex;gap:8px;">
@@ -46,8 +49,23 @@
       </div>
     </div>
 
+    <!-- "Don't have a code?" belongs with the code-entry flow (web/Stripe),
+         so it lives inside #premGateCode — hidden on iOS/Android where there is
+         no code to enter and it would contradict the Upgrade-to-Pro pill. -->
     <div style="font-size:0.75rem;color:#9b95b8;">
       Don't have a code? <a href="mailto:support@grailsweep.com" style="color:#b14dff;">Contact us</a> to get early access.
+    </div>
+    </div>
+
+    <!-- Upgrade CTA (iOS/Android — subscription billing via RevenueCat / Play,
+         no emailed code to type). Hidden by default; revealed by premCheckGate()
+         on mobile-billing platforms. cd-ph-locked/cd-ph-upgrade are collection's
+         own copy of the results.html price-history Pro pill (identical styling). -->
+    <div id="premGateUpgrade" style="display:none;">
+      <div class="cd-ph-locked">
+        <span>🔒 Collection is a Pro feature</span>
+        <a href="/upgrade" class="cd-ph-upgrade">Upgrade to Pro</a>
+      </div>
     </div>
   </div>
 </div>
@@ -1060,6 +1078,24 @@ function premCheckGate() {
     if (!premIsUnlocked()) {
         gate.style.display = 'flex';
         document.body.style.overflow = 'hidden';
+        // Platform-aware gate content: iOS/Android subscribers pay via
+        // RevenueCat / Play Billing and never receive an emailed GRAIL-XXXX-XXXX
+        // code, so show the Upgrade-to-Pro CTA instead of the code-entry box.
+        // Web/Stripe users keep the code-entry box (they do get a code).
+        // Both blocks default to display:none in markup so exactly one is
+        // revealed here — no first-paint flash. Mirrors the referral-hiding
+        // guard in gsColLoadReferral().
+        var isMobileBilling = (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) ||
+                              (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp());
+        var codeBlock = document.getElementById('premGateCode');
+        var upgradeBlock = document.getElementById('premGateUpgrade');
+        if (isMobileBilling) {
+            if (codeBlock) codeBlock.style.display = 'none';
+            if (upgradeBlock) upgradeBlock.style.display = 'block';
+        } else {
+            if (codeBlock) codeBlock.style.display = 'block';
+            if (upgradeBlock) upgradeBlock.style.display = 'none';
+        }
     } else {
         gate.style.display = 'none';
         document.body.style.overflow = '';
@@ -1156,6 +1192,14 @@ document.addEventListener('DOMContentLoaded', colRender);
 document.addEventListener('DOMContentLoaded', gsColLoadReferral);
 document.addEventListener('DOMContentLoaded', colLoadValueChart);
 document.addEventListener('DOMContentLoaded', function() {
+    // iOS/Android subscribers sync via their subscription entitlement (no
+    // emailed GRAIL-XXXX-XXXX code to enter), so the code-prompt sync banner is
+    // redundant on those platforms — suppress it. Mirrors the referral-hiding
+    // guard in gsColLoadReferral(). Web/Stripe users keep the banner unchanged.
+    if ((typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) ||
+        (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp())) {
+        return;
+    }
     var premium = localStorage.getItem('matchit_premium_v1');
     var code = localStorage.getItem('matchit_access_code_v1');
     if (premium === 'unlocked' && !code) {
