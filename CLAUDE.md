@@ -30,10 +30,22 @@ GrailSweep is an AI-powered visual TCG card matching and valuation platform.
 - templates/landing.html — grailsweep.com home page
 
 ## Modal Deployment Commands
+
+Canonical deploy sequence (any code changes) — run all three, in order:
+    1. modal run regression_tests.py::test_profile_pipeline   # pre-deploy gate (~30s, SystemExit(1) on failure)
+    2. modal deploy matchit_modal.py                          # deploy
+    3. modal run matchit_modal.py::warm                       # warm the new container BEFORE real users hit it
+
+Why step 3: every deploy changes the /app image layer, which invalidates the
+serve() memory/GPU snapshot, so the first request after a deploy pays the full
+cold start (CLIP + embedding cache load, ~11s+). `warm` hits the deployed
+serve() endpoint once so that cost lands on us, not the next real user. It also
+kicks off the DINOv2 tie-break background preload in that container. Targets the
+deployed serve via Function.from_name and hits its *.modal.run URL directly
+(bypasses Cloudflare), so it always warms the GPU serve function, not serve_light.
+
 Upload embeddings/images DB (when new cards scraped)
 modal run upload_to_modal.py
-Deploy app (any code changes)
-modal deploy matchit_modal.py
 Test email scheduler manually
 modal run matchit_modal.py::scheduled_set_check
 

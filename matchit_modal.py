@@ -138,7 +138,7 @@ def _make_image_wsgi():
     ],
     timeout=300,
     min_containers=0,
-    scaledown_window=120,
+    scaledown_window=600,
     max_containers=2,
     enable_memory_snapshot=True,
     experimental_options={"enable_gpu_snapshot": True},
@@ -187,6 +187,27 @@ def serve():
                 load_embedding_cache(force=False)
         except Exception as _e:
             print(f"[WARMUP] Cache load failed: {_e}", flush=True)
+
+        # Trigger DINOv2 tie-break preload in a background daemon thread. The
+        # local `python app.py` path did this at app.py's
+        # `if __name__ == "__main__":` block, which NEVER runs under Modal
+        # (serve() imports app as a module), so on the deployed app DINOv2 used
+        # to load lazily on the FIRST near-tie scan and stall it. Backgrounded
+        # (non-blocking) to match that original pattern and avoid delaying
+        # container startup / the snapshot — DINOv2 is only needed on near-ties,
+        # so it just has to be warm before the first real tiebreak scan, not
+        # before the container serves its first request. Best-effort snapshot
+        # capture: if the thread finishes before Modal snapshots it's baked in,
+        # otherwise it simply re-fires on the next start. Idempotent — guarded
+        # by _TIEBREAK_LOCK / `if _TIEBREAK_EMBEDDER is None` in app.py.
+        try:
+            import threading as _threading
+            from app import CFG as _CFG, _preload_tiebreak_embedder
+            if bool(_CFG.get("dinov2_tiebreak_enabled", True)) and bool(_CFG.get("dinov2_tiebreak_preload", True)):
+                print("[WARMUP] Starting DINOv2 tie-break background preload...", flush=True)
+                _threading.Thread(target=_preload_tiebreak_embedder, daemon=True).start()
+        except Exception as _e:
+            print(f"[WARMUP] DINOv2 preload trigger failed: {_e}", flush=True)
 
         print("[WARMUP] All models loaded — container ready for snapshot", flush=True)
     else:
@@ -248,7 +269,7 @@ def _light_404(environ, start_response):
     ],
     timeout=300,
     min_containers=0,
-    scaledown_window=120,
+    scaledown_window=600,
     max_containers=2,
     enable_memory_snapshot=True,
 )
@@ -290,6 +311,38 @@ def serve_light():
         return _light_404(environ, start_response)
 
     return router
+
+
+@app.local_entrypoint()
+def warm():
+    """Post-deploy warm-up. Run IMMEDIATELY after `modal deploy`:
+
+        modal run matchit_modal.py::warm
+
+    Every deploy changes the /app image layer (add_local_dir), which
+    invalidates the serve() memory/GPU snapshot, so the first request after
+    a deploy pays the full cold start (CLIP + embedding cache load, ~11s+).
+    This hits the DEPLOYED serve() web endpoint once so that cost lands on
+    us here, not on the next real user.
+
+    Targets the deployed app via Function.from_name (NOT the module-level
+    `serve`, which under `modal run` would point at a throwaway ephemeral
+    container). Hits serve's own *.modal.run URL directly, bypassing the
+    Cloudflare Worker, so it always warms the GPU serve function — never the
+    CPU serve_light twin. Runs locally (stdlib urllib only, no container).
+    """
+    import time, urllib.request
+    fn = modal.Function.from_name("matchit-api", "serve")
+    url = fn.get_web_url() if hasattr(fn, "get_web_url") else fn.web_url
+    print(f"[WARM] hitting deployed serve at {url} ...", flush=True)
+    t0 = time.time()
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "GrailSweep-warmup/1.0"})
+        with urllib.request.urlopen(req, timeout=240) as resp:
+            code = resp.status
+        print(f"[WARM] {url} -> {code} in {time.time() - t0:.1f}s (container now warm)", flush=True)
+    except Exception as e:
+        print(f"[WARM] request failed after {time.time() - t0:.1f}s: {e}", flush=True)
 
 
 @app.function(

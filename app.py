@@ -9327,6 +9327,10 @@ if __name__ == "__main__":
     threading.Thread(target=_preload_primary_embedder, daemon=True).start()
 
     # ── PERF: Background-preload DINOv2 if enabled ──
+    # NOTE: this whole `if __name__ == "__main__":` block only runs for a local
+    # `python app.py` server. On Modal, serve() imports app as a module so this
+    # never fires — the equivalent DINOv2 background preload for the deployed
+    # app lives in matchit_modal.py serve()'s warmup block (kept in sync).
     if bool(CFG.get("dinov2_tiebreak_enabled", True)) and bool(CFG.get("dinov2_tiebreak_preload", True)):
         print("[STARTUP] Starting DINOv2 background preload...", flush=True)
         threading.Thread(target=_preload_tiebreak_embedder, daemon=True).start()
