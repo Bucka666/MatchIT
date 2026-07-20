@@ -49,6 +49,27 @@ modal run upload_to_modal.py
 Test email scheduler manually
 modal run matchit_modal.py::scheduled_set_check
 
+### GOTCHA — sw.js version bump can be silently skipped by Modal
+
+A bare version-number change in static/sw.js (e.g. grailsweep-v112 -> v113) is the
+SAME byte length, and Modal's add_local_dir mount change-detection can miss it —
+it reuses the cached /app image layer and your new sw.js NEVER SHIPS. Installed
+apps keep serving the old cached /collection etc.
+
+- The tell: a suspiciously fast deploy (~15s) instead of the normal ~35s cold
+  rebuild. Fast deploy == mount cache hit == your change may not be in the image.
+- The fix: change the file's BYTE SIZE too — add or edit a comment line alongside
+  the version bump (e.g. a dated `// vNNN — <reason>` line). Then redeploy; you
+  should see the slower ~35s rebuild.
+- Verify it actually shipped (don't trust the deploy log). curl the origin
+  directly via the Modal-UA bypass (app.py _enforce_cf_proxy() exempts Modal/*
+  UAs) with a cache-buster to rule out any HTTP cache:
+    curl -s "https://c-a-buckley--matchit-api-serve.modal.run/sw.js?cb=$RANDOM" \
+      -H "User-Agent: Modal/verify" | grep CACHE_NAME
+  It must show the NEW version. Old-container note: with scaledown_window=600s a
+  stale container can answer for up to 10 min, so a genuine cold start (warm shows
+  ~38s, not ~7s) confirms you're hitting the freshly-built image.
+
 ## Pre-deploy regression test
 Before every `modal deploy`, run:
     modal run regression_tests.py::test_profile_pipeline
