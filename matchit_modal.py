@@ -330,6 +330,13 @@ def warm():
     container). Hits serve's own *.modal.run URL directly, bypassing the
     Cloudflare Worker, so it always warms the GPU serve function — never the
     CPU serve_light twin. Runs locally (stdlib urllib only, no container).
+
+    The request MUST carry a `Modal/`-prefixed User-Agent: app.py's
+    _enforce_cf_proxy() before_request hook 403s any direct *.modal.run access
+    that lacks the Cloudflare X-CF-Proxy-Secret header, but explicitly exempts
+    Modal-internal traffic by User-Agent (ua.startswith("Modal/")). A post-
+    deploy `modal run ::warm` IS Modal-internal traffic, so this is the
+    intended path and needs no secret plumbing.
     """
     import time, urllib.request
     fn = modal.Function.from_name("matchit-api", "serve")
@@ -337,7 +344,7 @@ def warm():
     print(f"[WARM] hitting deployed serve at {url} ...", flush=True)
     t0 = time.time()
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "GrailSweep-warmup/1.0"})
+        req = urllib.request.Request(url, headers={"User-Agent": "Modal/grailsweep-warmup"})
         with urllib.request.urlopen(req, timeout=240) as resp:
             code = resp.status
         print(f"[WARM] {url} -> {code} in {time.time() - t0:.1f}s (container now warm)", flush=True)
