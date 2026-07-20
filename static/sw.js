@@ -1,4 +1,7 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
+// v112 — force Collection Pro-gate refresh (platform-aware overlay). Comment
+// also guarantees a byte-size change so Modal's mount diff rebuilds the image
+// (a same-length version bump alone was skipped by add_local_dir caching).
 const CACHE_NAME = 'grailsweep-v112';
 const PRECACHE = [
   '/',
