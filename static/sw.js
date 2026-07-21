@@ -1,8 +1,10 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
-// v112 — force Collection Pro-gate refresh (platform-aware overlay). Comment
-// also guarantees a byte-size change so Modal's mount diff rebuilds the image
-// (a same-length version bump alone was skipped by add_local_dir caching).
-const CACHE_NAME = 'grailsweep-v112';
+// v113 — platform-aware access-code UI: hide emailed-code entry + fix copy and
+// button labels on iOS/Android across the upgrade page and the top-up modal.
+// This comment ALSO changes the file's byte size on purpose — a bare version
+// bump (v112 -> v113) is the same length and gets silently skipped by Modal's
+// add_local_dir mount diff, reusing the cached image (see CLAUDE.md gotcha).
+const CACHE_NAME = 'grailsweep-v113';
 const PRECACHE = [
   '/',
   '/static/style.css',

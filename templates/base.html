@@ -1300,8 +1300,10 @@ function gsIsWatchlisted(sku) {
       You've used all 150 free scans this month. Choose an option below to keep scanning.
     </p>
 
-    <!-- Redeem code -->
-    <div style="margin-bottom:16px;">
+    <!-- Redeem code — web/Stripe only. Defaults hidden (display:none) so iOS/
+         Android never flash it; gsTopupModalOpen() reveals it for web only.
+         Mobile buys top-ups via IAP and receives no emailed TOPUP-XXXX-XXXX code. -->
+    <div id="gsTopupRedeemSection" style="display:none;margin-bottom:16px;">
       <div style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Redeem a top-up code</div>
       <div style="display:flex;gap:8px;">
         <input id="gsTopupCodeInput" type="text" placeholder="TOPUP-XXXX-XXXX"
@@ -1319,12 +1321,12 @@ function gsIsWatchlisted(sku) {
 
     <!-- Buy options -->
     <div style="font-size:0.78rem;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Buy more scans</div>
-    <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin:0 0 10px;line-height:1.5;">Purchases complete on grailsweep.com. After payment you'll receive a redemption code by email — enter it in the box above.</p>
+    <p id="gsTopupBuyNote" style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin:0 0 10px;line-height:1.5;">Purchases complete on grailsweep.com. After payment you'll receive a redemption code by email — enter it in the box above.</p>
     <div style="display:flex;flex-direction:column;gap:10px;">
       <button id="gsCtaTopup75" onclick="gsTopupBuy('topup_75')"
               style="padding:12px 16px;background:rgba(0,229,255,0.1);border:1px solid rgba(0,229,255,0.35);border-radius:10px;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">
         <span>
-          <span style="font-weight:700;">125 scans — purchase on grailsweep.com</span>
+          <span id="gsCtaTopup75Label" style="font-weight:700;">125 scans — purchase on grailsweep.com</span>
           <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">125 scans · use whenever · no monthly reset</span>
         </span>
         <span id="gsPriceTopup" style="font-weight:700;color:#00e5ff;white-space:nowrap;">£1.89</span>
@@ -1332,7 +1334,7 @@ function gsIsWatchlisted(sku) {
       <button id="gsCtaMonthly" onclick="gsTopupBuy('monthly')"
               style="padding:12px 16px;background:linear-gradient(135deg,rgba(177,77,255,0.15),rgba(0,229,255,0.1));border:1px solid rgba(177,77,255,0.4);border-radius:10px;color:#fff;cursor:pointer;text-align:left;display:flex;justify-content:space-between;align-items:center;">
         <span>
-          <span style="font-weight:700;">Pro — subscribe on grailsweep.com</span>
+          <span id="gsCtaMonthlyLabel" style="font-weight:700;">Pro — subscribe on grailsweep.com</span>
           <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Unlimited fair usage scanning + collection + alerts</span>
         </span>
         <span id="gsPriceMonthlyBtn" style="font-weight:700;color:#b14dff;white-space:nowrap;">£4.39/mo</span>
@@ -1341,7 +1343,7 @@ function gsIsWatchlisted(sku) {
       <button id="gsCtaAnnual" class="gs-cta-annual" onclick="gsTopupBuy('annual')"
               style="display:none;padding:12px 16px;background:linear-gradient(135deg,rgba(0,229,255,0.15),rgba(177,77,255,0.1));border:1px solid rgba(0,229,255,0.4);border-radius:10px;color:#fff;cursor:pointer;text-align:left;justify-content:space-between;align-items:center;">
         <span>
-          <span style="font-weight:700;">Ultimate Plan — subscribe on grailsweep.com</span>
+          <span id="gsCtaAnnualLabel" style="font-weight:700;">Ultimate Plan — subscribe on grailsweep.com</span>
           <span style="display:block;font-size:0.75rem;color:rgba(255,255,255,0.55);margin-top:2px;">Save ~34% · Unlimited fair usage scanning · billed yearly</span>
         </span>
         <span id="gsPriceAnnualBtn" style="font-weight:700;color:#00e5ff;white-space:nowrap;">£34.99/yr</span>
@@ -1594,6 +1596,33 @@ function gsIsWatchlisted(sku) {
     _vis('gsCtaMonthly',  tier === 'free');
     _vis('gsCtaAnnual',   tier === 'monthly');
     _vis('gsCtaFeedback', tier === 'annual');
+
+    // Platform-aware content. iOS/Android buy top-ups/subscriptions via IAP
+    // (gsTopupBuy already routes there) and receive NO emailed code, so: keep the
+    // TOPUP-XXXX-XXXX redeem box hidden, and swap the web-only "purchase on
+    // grailsweep.com / emailed code" copy + button labels for app-appropriate
+    // text. Web/Stripe keeps the HTML defaults. Runs before the modal is shown
+    // below, so there's no flash. NOTE: the redeem section is a plain block div —
+    // set display explicitly rather than via _vis() (which forces 'flex' and
+    // would break its stacked layout).
+    var _isMobileBilling = (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) ||
+                           (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp());
+    var _redeem   = document.getElementById('gsTopupRedeemSection');
+    if (_isMobileBilling) {
+      if (_redeem) _redeem.style.display = 'none';
+      var _buyNote = document.getElementById('gsTopupBuyNote');
+      if (_buyNote) _buyNote.textContent = 'Purchase instantly through the app.';
+      var _lblTopup   = document.getElementById('gsCtaTopup75Label');
+      var _lblMonthly = document.getElementById('gsCtaMonthlyLabel');
+      var _lblAnnual  = document.getElementById('gsCtaAnnualLabel');
+      if (_lblTopup)   _lblTopup.textContent   = '125 scans — buy now';
+      if (_lblMonthly) _lblMonthly.textContent = 'Pro — subscribe';
+      if (_lblAnnual)  _lblAnnual.textContent  = 'Ultimate Plan — subscribe';
+    } else {
+      // Web/Stripe: reveal the redeem-code box (CSS-hidden by default so mobile
+      // never flashes it). Copy + labels are the HTML defaults — no change.
+      if (_redeem) _redeem.style.display = 'block';
+    }
 
     var el = document.getElementById('gsTopupModal');
     if (!el) return;

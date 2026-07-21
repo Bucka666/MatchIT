@@ -369,6 +369,10 @@
 }
 
 .upgrade-code-section {
+    /* Defaults hidden so iOS/Android never flash the emailed-access-code box
+       before JS runs. Revealed for web/Stripe users in the DOMContentLoaded
+       handler (they receive a GRAIL-XXXX-XXXX code). */
+    display: none;
     text-align: center;
     padding: 24px;
     background: rgba(255,255,255,0.03);
@@ -425,9 +429,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if ((typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) ||
         (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp())) {
+        // iOS/Android: hide the referral section (existing pattern, unchanged).
+        // The access-code box needs no action here — it defaults to display:none
+        // in CSS, so it never appears on mobile and never flashes.
         var _refBlock = document.getElementById('referralCodeInput');
         _refBlock = _refBlock && _refBlock.closest('.upgrade-referral-section');
         if (_refBlock) _refBlock.style.display = 'none';
+    } else {
+        // Web/Stripe only: reveal the emailed-access-code box (CSS-hidden by
+        // default → flash-free on mobile). These users receive a GRAIL-XXXX-XXXX
+        // code, so they can redeem it here. Same idiom as the referral hide:
+        // grab the input by ID, walk up to its .upgrade-code-section container.
+        var _codeBlock = document.getElementById('upgradeCodeInput');
+        _codeBlock = _codeBlock && _codeBlock.closest('.upgrade-code-section');
+        if (_codeBlock) _codeBlock.style.display = 'block';
     }
 
     if (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) {
