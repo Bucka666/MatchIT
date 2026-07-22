@@ -1078,6 +1078,9 @@ function gsAnimateCount(el, from, to, duration) {
 
 // Direct-to-Stripe checkout from landing page (Task 10)
 async function lpUpgrade(tier) {
+  if (typeof gsHasPlayBilling === 'function' && gsHasPlayBilling()) {
+    gsPlayBillingPurchase(tier); return;
+  }
   if (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp()) {
     await gsIosPurchase(tier); return;
   }
