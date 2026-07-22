@@ -137,7 +137,7 @@
         <div class="upgrade-tier-cta upgrade-tier-cta--free">✓ Current Plan{% if ssr_sub.tier == 'legacy' %} (Legacy){% endif %}</div>
       {% else %}
         <button class="upgrade-tier-cta upgrade-tier-cta--monthly" onclick="handleUpgrade('monthly')">
-          Subscribe on grailsweep.com
+          <span id="upgradeCtaMonthlyLabel">Subscribe on grailsweep.com</span>
         </button>
       {% endif %}
     </div>
@@ -158,7 +158,7 @@
         <div class="upgrade-tier-cta upgrade-tier-cta--free">✓ Current Plan</div>
       {% else %}
         <button class="upgrade-tier-cta upgrade-tier-cta--annual" onclick="handleUpgrade('annual')">
-          Subscribe on grailsweep.com
+          <span id="upgradeCtaAnnualLabel">Subscribe on grailsweep.com</span>
         </button>
       {% endif %}
       <div style="text-align:center;font-size:0.72rem;color:#9b95b8;margin-top:8px;">Save ~34% vs monthly</div>
@@ -435,6 +435,14 @@ document.addEventListener('DOMContentLoaded', () => {
         var _refBlock = document.getElementById('referralCodeInput');
         _refBlock = _refBlock && _refBlock.closest('.upgrade-referral-section');
         if (_refBlock) _refBlock.style.display = 'none';
+
+        // Platform-aware tier button labels — same idiom as the top-up modal
+        // labels in base.html (gsCtaMonthlyLabel/gsCtaAnnualLabel): mobile
+        // users buy via IAP, not grailsweep.com, so drop the web-only wording.
+        var _lblMonthly = document.getElementById('upgradeCtaMonthlyLabel');
+        var _lblAnnual  = document.getElementById('upgradeCtaAnnualLabel');
+        if (_lblMonthly) _lblMonthly.textContent = 'Get Pro';
+        if (_lblAnnual)  _lblAnnual.textContent  = 'Get Ultimate';
     } else {
         // Web/Stripe only: reveal the emailed-access-code box (CSS-hidden by
         // default → flash-free on mobile). These users receive a GRAIL-XXXX-XXXX

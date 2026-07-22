@@ -1,10 +1,11 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
-// v113 — platform-aware access-code UI: hide emailed-code entry + fix copy and
-// button labels on iOS/Android across the upgrade page and the top-up modal.
+// v114 (2026-07-19) — upgrade-page tier button labels now platform-aware on
+// iOS/Android (Get Pro / Get Ultimate instead of "...on grailsweep.com"),
+// and the duplicate store-badge block removed from the landing page CTA.
 // This comment ALSO changes the file's byte size on purpose — a bare version
-// bump (v112 -> v113) is the same length and gets silently skipped by Modal's
+// bump (v113 -> v114) is the same length and gets silently skipped by Modal's
 // add_local_dir mount diff, reusing the cached image (see CLAUDE.md gotcha).
-const CACHE_NAME = 'grailsweep-v113';
+const CACHE_NAME = 'grailsweep-v114';
 const PRECACHE = [
   '/',
   '/static/style.css',
