@@ -1,11 +1,12 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
-// v114 (2026-07-19) — upgrade-page tier button labels now platform-aware on
-// iOS/Android (Get Pro / Get Ultimate instead of "...on grailsweep.com"),
-// and the duplicate store-badge block removed from the landing page CTA.
+// v115 (2026-07-22) — URGENT FIX: gsHasPlayBilling() was returning true on
+// desktop Microsoft Edge (which exposes getDigitalGoodsService unconditionally,
+// no TWA needed), sweeping desktop users into the dead-end Play Billing flow
+// instead of Stripe. Now requires genuine TWA context (gsIsRunningInTWA()) too.
 // This comment ALSO changes the file's byte size on purpose — a bare version
-// bump (v113 -> v114) is the same length and gets silently skipped by Modal's
+// bump (v114 -> v115) is the same length and gets silently skipped by Modal's
 // add_local_dir mount diff, reusing the cached image (see CLAUDE.md gotcha).
-const CACHE_NAME = 'grailsweep-v114';
+const CACHE_NAME = 'grailsweep-v115';
 const PRECACHE = [
   '/',
   '/static/style.css',

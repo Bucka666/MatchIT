@@ -1401,7 +1401,11 @@ function gsIsWatchlisted(sku) {
   };
 
   function gsHasPlayBilling() {
-    return 'getDigitalGoodsService' in window;
+    // 'getDigitalGoodsService' in window is NOT TWA-exclusive — Microsoft
+    // Edge exposes it unconditionally on desktop (all channels, no PWA
+    // install required), which was sweeping desktop Edge users into the
+    // Play Billing flow instead of Stripe. Require genuine TWA context too.
+    return ('getDigitalGoodsService' in window) && gsIsRunningInTWA();
   }
 
   function gsIsRunningInIOSApp() {
