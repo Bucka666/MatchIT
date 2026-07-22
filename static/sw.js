@@ -1,13 +1,12 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
-// v116 (2026-07-22) — URGENT FIX #2: v115's gsIsRunningInTWA() gate broke real
-// Android TWA users — document.referrer is only android-app:// on the very
-// first page load, and nothing called the detector unconditionally on every
-// page, so the sessionStorage cache often never got populated. Switched to a
-// UA-based Android check instead (no caching/timing dependency at all).
+// v117 (2026-07-22) — landing page (lpUpgrade) fix: added the missing Play
+// Billing branch so Android TWA users route correctly instead of falling
+// through to Stripe. Also removes the temporary DBG diagnostic alert used
+// to confirm gsHasPlayBilling()/UA values on a real device.
 // This comment ALSO changes the file's byte size on purpose — a bare version
-// bump (v115 -> v116) is the same length and gets silently skipped by Modal's
+// bump (v116 -> v117) is the same length and gets silently skipped by Modal's
 // add_local_dir mount diff, reusing the cached image (see CLAUDE.md gotcha).
-const CACHE_NAME = 'grailsweep-v116';
+const CACHE_NAME = 'grailsweep-v117';
 const PRECACHE = [
   '/',
   '/static/style.css',
