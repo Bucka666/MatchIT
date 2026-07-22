@@ -1403,9 +1403,17 @@ function gsIsWatchlisted(sku) {
   function gsHasPlayBilling() {
     // 'getDigitalGoodsService' in window is NOT TWA-exclusive — Microsoft
     // Edge exposes it unconditionally on desktop (all channels, no PWA
-    // install required), which was sweeping desktop Edge users into the
-    // Play Billing flow instead of Stripe. Require genuine TWA context too.
-    return ('getDigitalGoodsService' in window) && gsIsRunningInTWA();
+    // install required). Previously gated on gsIsRunningInTWA() (referrer +
+    // sessionStorage cache), but document.referrer is only android-app://
+    // on the very first page load and empty on internal navigation, and
+    // nothing calls the detector unconditionally on every page (match.html
+    // never did) — so the cache often never got populated, permanently
+    // misrouting real Android TWA users to Stripe. UA sniffing sidesteps
+    // that entirely: navigator.userAgent is present on every single call,
+    // no caching/timing dependency. A TWA runs the real installed Chrome
+    // browser (not a WebView the host app can override the UA of), so its
+    // UA always contains "Android" — same as Chrome for Android generally.
+    return ('getDigitalGoodsService' in window) && /Android/i.test(navigator.userAgent);
   }
 
   function gsIsRunningInIOSApp() {
