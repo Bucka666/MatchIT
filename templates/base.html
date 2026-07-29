@@ -1021,10 +1021,10 @@
     <div class="mi-store-badges">
       <span class="mi-social-label">Download the App</span>
       <div class="mi-store-links">
-        <a href="https://play.google.com/store/apps/details?id=com.grailsweep.app" target="_blank" rel="noopener">
+        <a href="https://play.google.com/store/apps/details?id=com.grailsweep.app" target="_blank" rel="noopener" class="gs-play-badge-link">
           <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="40">
         </a>
-        <a href="https://apps.apple.com/gb/app/grailsweep/id6792369291" target="_blank" rel="noopener">
+        <a href="https://apps.apple.com/gb/app/grailsweep/id6792369291" target="_blank" rel="noopener" class="gs-appstore-badge-link">
           <img src="/static/assets/app-store-badge.svg" alt="Download on the App Store" height="40">
         </a>
         <a href="https://apps.microsoft.com/detail/9P9N5VWVP190" target="_blank" rel="noopener">
@@ -1566,6 +1566,29 @@ function gsIsWatchlisted(sku) {
   document.addEventListener('DOMContentLoaded', function() {
     if (gsIsRunningInIOSApp()) gsRcInit();
   });
+
+  // === store-badge visibility per platform ===
+  // Reuses the canonical detectors above rather than re-implementing them:
+  // gsIsRunningInIOSApp() uses Capacitor's own platform API (a UA regex would
+  // miss iPad, which reports a desktop "Macintosh" UA on iOS 13+ and would
+  // leave the Play badge visible in the iPad app), and gsHasPlayBilling()
+  // carries the TWA-detection fix history documented at its definition.
+  // The footer markup appears earlier in the document, so the anchors already
+  // exist by the time this runs — no DOMContentLoaded wrapper needed.
+  (function() {
+    // Hide Play badge in the iOS app — Apple flags cross-platform references
+    if (gsIsRunningInIOSApp()) {
+      document.querySelectorAll('.gs-play-badge-link').forEach(function(el) {
+        el.style.display = 'none';
+      });
+    }
+    // Hide App Store badge in the Android TWA
+    if (gsHasPlayBilling()) {
+      document.querySelectorAll('.gs-appstore-badge-link').forEach(function(el) {
+        el.style.display = 'none';
+      });
+    }
+  })();
 
 (function() {
   // ── Top-up modal helpers (Task 9c Phase C2) ──

@@ -1,4 +1,10 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
+// v119 (2026-07-29) — iOS resubmission: store badges are now platform-gated in
+// base.html (Play badge hidden in the iOS app, App Store badge hidden in the
+// Android TWA) and upgrade.html gained the auto-renewing-subscription
+// disclosure. Bump REQUIRED: '/' is in PRECACHE and renders base.html, so
+// installed users would keep serving the old footer with both badges visible —
+// exactly the cross-platform reference the iOS gating exists to remove.
 // v118 (2026-07-28) — JP cards added to the collector search catalogue.
 // The bump is REQUIRED, not cosmetic: '/api/search-index/pokemon' is in
 // PRECACHE, and activate() only evicts caches whose key !== CACHE_NAME, so
@@ -7,7 +13,7 @@
 // This comment ALSO changes the file's byte size on purpose — a bare version
 // bump (v117 -> v118) is the same length and gets silently skipped by Modal's
 // add_local_dir mount diff, reusing the cached image (see CLAUDE.md gotcha).
-const CACHE_NAME = 'grailsweep-v118';
+const CACHE_NAME = 'grailsweep-v119';
 const PRECACHE = [
   '/',
   '/static/style.css',
