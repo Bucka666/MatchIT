@@ -3,19 +3,32 @@
     {
       "game": "pokemon_en",
       "name": "Mega Evolution: Pitch Black",
-      "source_ids": { "pokemontcg_io": null, "tcgdex_en": null },
+      "source_ids": {
+        "pokemontcg_io": "me5",
+        "tcgdex_en": "me05"
+      },
       "release_date": "2026-07-17",
       "ondevice_eligible": true,
-      "state": "pending",
+      "state": "detected",
       "source_latency": {
-        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
-        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
-      }
+        "pokemontcg_io": {
+          "first_listed_at": "2026-07-20T01:00:59.769698Z",
+          "first_imaged_at": "2026-07-20T01:01:00.752178Z"
+        },
+        "tcgdex_en": {
+          "first_listed_at": null,
+          "first_imaged_at": null
+        }
+      },
+      "bypass_window": true
     },
     {
       "game": "pokemon_en",
       "name": "Shining Fates Shiny Vault",
-      "source_ids": { "pokemontcg_io": "swsh45sv", "tcgdex_en": "swsh4.5sv" },
+      "source_ids": {
+        "pokemontcg_io": "swsh45sv",
+        "tcgdex_en": "swsh4.5sv"
+      },
       "release_date": "2021-02-19",
       "bypass_window": true,
       "ondevice_eligible": false,
@@ -23,14 +36,23 @@
       "ondevice_published": true,
       "state": "live",
       "source_latency": {
-        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
-        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
+        "pokemontcg_io": {
+          "first_listed_at": "2026-07-10T16:51:08.187387Z",
+          "first_imaged_at": null
+        },
+        "tcgdex_en": {
+          "first_listed_at": "2026-07-10T06:47:16.799327Z",
+          "first_imaged_at": null
+        }
       }
     },
     {
       "game": "pokemon_en",
       "name": "Brilliant Stars Trainer Gallery",
-      "source_ids": { "pokemontcg_io": "swsh9tg", "tcgdex_en": "swsh9.5tg" },
+      "source_ids": {
+        "pokemontcg_io": "swsh9tg",
+        "tcgdex_en": "swsh9.5tg"
+      },
       "release_date": "2022-02-25",
       "bypass_window": true,
       "ondevice_eligible": false,
@@ -38,14 +60,23 @@
       "ondevice_published": true,
       "state": "live",
       "source_latency": {
-        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
-        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
+        "pokemontcg_io": {
+          "first_listed_at": "2026-07-10T16:51:08.187461Z",
+          "first_imaged_at": null
+        },
+        "tcgdex_en": {
+          "first_listed_at": "2026-07-10T06:47:16.799403Z",
+          "first_imaged_at": null
+        }
       }
     },
     {
       "game": "pokemon_en",
       "name": "Lost Origin Trainer Gallery",
-      "source_ids": { "pokemontcg_io": "swsh11tg", "tcgdex_en": "swsh11.5tg" },
+      "source_ids": {
+        "pokemontcg_io": "swsh11tg",
+        "tcgdex_en": "swsh11.5tg"
+      },
       "release_date": "2022-09-09",
       "bypass_window": true,
       "ondevice_eligible": false,
@@ -53,14 +84,23 @@
       "ondevice_published": true,
       "state": "live",
       "source_latency": {
-        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
-        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
+        "pokemontcg_io": {
+          "first_listed_at": "2026-07-10T16:51:08.187492Z",
+          "first_imaged_at": null
+        },
+        "tcgdex_en": {
+          "first_listed_at": "2026-07-10T06:47:16.799424Z",
+          "first_imaged_at": null
+        }
       }
     },
     {
       "game": "pokemon_en",
       "name": "Silver Tempest Trainer Gallery",
-      "source_ids": { "pokemontcg_io": "swsh12tg", "tcgdex_en": "swsh12.5tg" },
+      "source_ids": {
+        "pokemontcg_io": "swsh12tg",
+        "tcgdex_en": "swsh12.5tg"
+      },
       "release_date": "2022-11-11",
       "bypass_window": true,
       "ondevice_eligible": false,
@@ -68,14 +108,23 @@
       "ondevice_published": true,
       "state": "live",
       "source_latency": {
-        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
-        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
+        "pokemontcg_io": {
+          "first_listed_at": "2026-07-10T16:51:08.187521Z",
+          "first_imaged_at": null
+        },
+        "tcgdex_en": {
+          "first_listed_at": "2026-07-10T06:47:16.799440Z",
+          "first_imaged_at": null
+        }
       }
     },
     {
       "game": "pokemon_en",
       "name": "Crown Zenith Galarian Gallery",
-      "source_ids": { "pokemontcg_io": "swsh12pt5gg", "tcgdex_en": "swsh12.5gg" },
+      "source_ids": {
+        "pokemontcg_io": "swsh12pt5gg",
+        "tcgdex_en": "swsh12.5gg"
+      },
       "release_date": "2023-01-20",
       "bypass_window": true,
       "ondevice_eligible": false,
@@ -83,10 +132,3456 @@
       "ondevice_published": true,
       "state": "live",
       "source_latency": {
-        "pokemontcg_io": { "first_listed_at": null, "first_imaged_at": null },
-        "tcgdex_en":     { "first_listed_at": null, "first_imaged_at": null }
+        "pokemontcg_io": {
+          "first_listed_at": "2026-07-10T16:51:08.187563Z",
+          "first_imaged_at": null
+        },
+        "tcgdex_en": {
+          "first_listed_at": "2026-07-10T06:47:16.799457Z",
+          "first_imaged_at": null
+        }
       }
     }
   ],
-  "discovered_unlisted": []
+  "discovered_unlisted": [
+    {
+      "source": "tcgdex_en",
+      "observed_id": "base1",
+      "name": "Base Set",
+      "cardCount": 102,
+      "first_seen_at": "2026-07-10T06:47:16.799486Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "base2",
+      "name": "Jungle",
+      "cardCount": 64,
+      "first_seen_at": "2026-07-10T06:47:16.799490Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "basep",
+      "name": "Wizards Black Star Promos",
+      "cardCount": 53,
+      "first_seen_at": "2026-07-10T06:47:16.799493Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "wp",
+      "name": "W Promotional",
+      "cardCount": 7,
+      "first_seen_at": "2026-07-10T06:47:16.799495Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "base3",
+      "name": "Fossil",
+      "cardCount": 62,
+      "first_seen_at": "2026-07-10T06:47:16.799497Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "jumbo",
+      "name": "Jumbo cards",
+      "cardCount": 160,
+      "first_seen_at": "2026-07-10T06:47:16.799500Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "base4",
+      "name": "Base Set 2",
+      "cardCount": 130,
+      "first_seen_at": "2026-07-10T06:47:16.799502Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "base5",
+      "name": "Team Rocket",
+      "cardCount": 83,
+      "first_seen_at": "2026-07-10T06:47:16.799504Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "gym1",
+      "name": "Gym Heroes",
+      "cardCount": 132,
+      "first_seen_at": "2026-07-10T06:47:16.799506Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "gym2",
+      "name": "Gym Challenge",
+      "cardCount": 132,
+      "first_seen_at": "2026-07-10T06:47:16.799508Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "neo1",
+      "name": "Neo Genesis",
+      "cardCount": 111,
+      "first_seen_at": "2026-07-10T06:47:16.799510Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "neo2",
+      "name": "Neo Discovery",
+      "cardCount": 75,
+      "first_seen_at": "2026-07-10T06:47:16.799513Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "si1",
+      "name": "Southern Islands",
+      "cardCount": 18,
+      "first_seen_at": "2026-07-10T06:47:16.799515Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "neo3",
+      "name": "Neo Revelation",
+      "cardCount": 66,
+      "first_seen_at": "2026-07-10T06:47:16.799517Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "neo4",
+      "name": "Neo Destiny",
+      "cardCount": 113,
+      "first_seen_at": "2026-07-10T06:47:16.799519Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "lc",
+      "name": "Legendary Collection",
+      "cardCount": 110,
+      "first_seen_at": "2026-07-10T06:47:16.799521Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sp",
+      "name": "Sample",
+      "cardCount": 10,
+      "first_seen_at": "2026-07-10T06:47:16.799523Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ecard1",
+      "name": "Expedition Base Set",
+      "cardCount": 165,
+      "first_seen_at": "2026-07-10T06:47:16.799525Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bog",
+      "name": "Best of game",
+      "cardCount": 9,
+      "first_seen_at": "2026-07-10T06:47:16.799527Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ecard2",
+      "name": "Aquapolis",
+      "cardCount": 185,
+      "first_seen_at": "2026-07-10T06:47:16.799529Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ecard3",
+      "name": "Skyridge",
+      "cardCount": 182,
+      "first_seen_at": "2026-07-10T06:47:16.799531Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex1",
+      "name": "Ruby & Sapphire",
+      "cardCount": 109,
+      "first_seen_at": "2026-07-10T06:47:16.799534Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex2",
+      "name": "Sandstorm",
+      "cardCount": 100,
+      "first_seen_at": "2026-07-10T06:47:16.799536Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "np",
+      "name": "Nintendo Black Star Promos",
+      "cardCount": 40,
+      "first_seen_at": "2026-07-10T06:47:16.799538Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex3",
+      "name": "Dragon",
+      "cardCount": 100,
+      "first_seen_at": "2026-07-10T06:47:16.799540Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex4",
+      "name": "Team Magma vs Team Aqua",
+      "cardCount": 97,
+      "first_seen_at": "2026-07-10T06:47:16.799542Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex5",
+      "name": "Hidden Legends",
+      "cardCount": 102,
+      "first_seen_at": "2026-07-10T06:47:16.799545Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex5.5",
+      "name": "Pok\u00e9 Card Creator Pack",
+      "cardCount": 5,
+      "first_seen_at": "2026-07-10T06:47:16.799548Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-ex-latia",
+      "name": "EX trainer Kit (Latias)",
+      "cardCount": 10,
+      "first_seen_at": "2026-07-10T06:47:16.799550Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-ex-latio",
+      "name": "EX trainer Kit (Latios)",
+      "cardCount": 10,
+      "first_seen_at": "2026-07-10T06:47:16.799552Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pop1",
+      "name": "POP Series 1",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T06:47:16.799554Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex6",
+      "name": "FireRed & LeafGreen",
+      "cardCount": 116,
+      "first_seen_at": "2026-07-10T06:47:16.799556Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex7",
+      "name": "Team Rocket Returns",
+      "cardCount": 111,
+      "first_seen_at": "2026-07-10T06:47:16.799561Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex8",
+      "name": "Deoxys",
+      "cardCount": 108,
+      "first_seen_at": "2026-07-10T06:47:16.799563Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex9",
+      "name": "Emerald",
+      "cardCount": 107,
+      "first_seen_at": "2026-07-10T06:47:16.799565Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pop2",
+      "name": "POP Series 2",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T06:47:16.799567Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex10",
+      "name": "Unseen Forces",
+      "cardCount": 117,
+      "first_seen_at": "2026-07-10T06:47:16.799569Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "exu",
+      "name": "Unseen Forces Unown Collection",
+      "cardCount": 28,
+      "first_seen_at": "2026-07-10T06:47:16.799571Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex11",
+      "name": "Delta Species",
+      "cardCount": 114,
+      "first_seen_at": "2026-07-10T06:47:16.799573Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex12",
+      "name": "Legend Maker",
+      "cardCount": 93,
+      "first_seen_at": "2026-07-10T06:47:16.799575Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-ex-p",
+      "name": "EX trainer Kit 2 (Plusle)",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T06:47:16.799577Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-ex-m",
+      "name": "EX trainer Kit 2 (Minun)",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T06:47:16.799580Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pop3",
+      "name": "POP Series 3",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T06:47:16.799582Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex13",
+      "name": "Holon Phantoms",
+      "cardCount": 111,
+      "first_seen_at": "2026-07-10T06:47:16.799584Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pop4",
+      "name": "POP Series 4",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T06:47:16.799587Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex14",
+      "name": "Crystal Guardians",
+      "cardCount": 100,
+      "first_seen_at": "2026-07-10T06:47:16.799589Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex15",
+      "name": "Dragon Frontiers",
+      "cardCount": 101,
+      "first_seen_at": "2026-07-10T06:47:16.799591Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ex16",
+      "name": "Power Keepers",
+      "cardCount": 108,
+      "first_seen_at": "2026-07-10T06:47:16.799594Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pop5",
+      "name": "POP Series 5",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T06:47:16.799596Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "dp1",
+      "name": "Diamond & Pearl",
+      "cardCount": 130,
+      "first_seen_at": "2026-07-10T06:47:16.799598Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "dpp",
+      "name": "DP Black Star Promos",
+      "cardCount": 56,
+      "first_seen_at": "2026-07-10T06:47:16.799600Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "dp2",
+      "name": "Mysterious Treasures",
+      "cardCount": 124,
+      "first_seen_at": "2026-07-10T06:47:16.799601Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pop6",
+      "name": "POP Series 6",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T06:47:16.799603Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-dp-l",
+      "name": "DP trainer Kit (Lucario)",
+      "cardCount": 11,
+      "first_seen_at": "2026-07-10T06:47:16.799605Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-dp-m",
+      "name": "DP trainer Kit (Manaphy)",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T06:47:16.799607Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "dp3",
+      "name": "Secret Wonders",
+      "cardCount": 132,
+      "first_seen_at": "2026-07-10T06:47:16.799609Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "dp4",
+      "name": "Great Encounters",
+      "cardCount": 106,
+      "first_seen_at": "2026-07-10T06:47:16.799611Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pop7",
+      "name": "POP Series 7",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T06:47:16.799613Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "dp5",
+      "name": "Majestic Dawn",
+      "cardCount": 100,
+      "first_seen_at": "2026-07-10T06:47:16.799615Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "dp6",
+      "name": "Legends Awakened",
+      "cardCount": 146,
+      "first_seen_at": "2026-07-10T06:47:16.799617Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pop8",
+      "name": "POP Series 8",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T06:47:16.799619Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "dp7",
+      "name": "Stormfront",
+      "cardCount": 106,
+      "first_seen_at": "2026-07-10T06:47:16.799621Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pl1",
+      "name": "Platinum",
+      "cardCount": 133,
+      "first_seen_at": "2026-07-10T06:47:16.799623Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pop9",
+      "name": "POP Series 9",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T06:47:16.799625Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pl2",
+      "name": "Rising Rivals",
+      "cardCount": 120,
+      "first_seen_at": "2026-07-10T06:47:16.799627Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pl3",
+      "name": "Supreme Victors",
+      "cardCount": 153,
+      "first_seen_at": "2026-07-10T06:47:16.799630Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "pl4",
+      "name": "Arceus",
+      "cardCount": 111,
+      "first_seen_at": "2026-07-10T06:47:16.799632Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "ru1",
+      "name": "Pok\u00e9mon Rumble",
+      "cardCount": 16,
+      "first_seen_at": "2026-07-10T06:47:16.799635Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "hgss1",
+      "name": "HeartGold SoulSilver",
+      "cardCount": 124,
+      "first_seen_at": "2026-07-10T06:47:16.799637Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "hgssp",
+      "name": "HGSS Black Star Promos",
+      "cardCount": 25,
+      "first_seen_at": "2026-07-10T06:47:16.799639Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-hs-r",
+      "name": "HS trainer Kit (Raichu)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799640Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-hs-g",
+      "name": "HS trainer Kit (Gyarados)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799642Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "hgss2",
+      "name": "Unleashed",
+      "cardCount": 96,
+      "first_seen_at": "2026-07-10T06:47:16.799645Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "hgss3",
+      "name": "Undaunted",
+      "cardCount": 91,
+      "first_seen_at": "2026-07-10T06:47:16.799647Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "hgss4",
+      "name": "Triumphant",
+      "cardCount": 103,
+      "first_seen_at": "2026-07-10T06:47:16.799649Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "col1",
+      "name": "Call of Legends",
+      "cardCount": 106,
+      "first_seen_at": "2026-07-10T06:47:16.799651Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bw1",
+      "name": "Black & White",
+      "cardCount": 115,
+      "first_seen_at": "2026-07-10T06:47:16.799653Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bwp",
+      "name": "BW Black Star Promos",
+      "cardCount": 101,
+      "first_seen_at": "2026-07-10T06:47:16.799655Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2011bw",
+      "name": "McDonald's Collection 2011",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T06:47:16.799657Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bw2",
+      "name": "Emerging Powers",
+      "cardCount": 98,
+      "first_seen_at": "2026-07-10T06:47:16.799659Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-bw-e",
+      "name": "BW trainer Kit (Excadrill)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799661Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-bw-z",
+      "name": "BW trainer Kit (Zoroark)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799664Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bw3",
+      "name": "Noble Victories",
+      "cardCount": 102,
+      "first_seen_at": "2026-07-10T06:47:16.799666Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bw4",
+      "name": "Next Destinies",
+      "cardCount": 103,
+      "first_seen_at": "2026-07-10T06:47:16.799668Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bw5",
+      "name": "Dark Explorers",
+      "cardCount": 111,
+      "first_seen_at": "2026-07-10T06:47:16.799670Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2012bw",
+      "name": "McDonald's Collection 2012",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T06:47:16.799672Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bw6",
+      "name": "Dragons Exalted",
+      "cardCount": 128,
+      "first_seen_at": "2026-07-10T06:47:16.799674Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "dv1",
+      "name": "Dragon Vault",
+      "cardCount": 21,
+      "first_seen_at": "2026-07-10T06:47:16.799676Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bw7",
+      "name": "Boundaries Crossed",
+      "cardCount": 153,
+      "first_seen_at": "2026-07-10T06:47:16.799678Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bw8",
+      "name": "Plasma Storm",
+      "cardCount": 138,
+      "first_seen_at": "2026-07-10T06:47:16.799680Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bw9",
+      "name": "Plasma Freeze",
+      "cardCount": 122,
+      "first_seen_at": "2026-07-10T06:47:16.799682Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bw10",
+      "name": "Plasma Blast",
+      "cardCount": 105,
+      "first_seen_at": "2026-07-10T06:47:16.799684Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xyp",
+      "name": "XY Black Star Promos",
+      "cardCount": 216,
+      "first_seen_at": "2026-07-10T06:47:16.799687Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "bw11",
+      "name": "Legendary Treasures",
+      "cardCount": 140,
+      "first_seen_at": "2026-07-10T06:47:16.799689Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "rc",
+      "name": "Radiant Collection",
+      "cardCount": 25,
+      "first_seen_at": "2026-07-10T06:47:16.799692Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy0",
+      "name": "Kalos Starter Set",
+      "cardCount": 39,
+      "first_seen_at": "2026-07-10T06:47:16.799694Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy1",
+      "name": "XY",
+      "cardCount": 146,
+      "first_seen_at": "2026-07-10T06:47:16.799696Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xya",
+      "name": "Yellow A Alternate",
+      "cardCount": 6,
+      "first_seen_at": "2026-07-10T06:47:16.799698Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-xy-n",
+      "name": "XY trainer Kit (Noivern)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799700Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-xy-sy",
+      "name": "XY trainer Kit (Sylveon)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799702Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy2",
+      "name": "Flashfire",
+      "cardCount": 110,
+      "first_seen_at": "2026-07-10T06:47:16.799704Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2014xy",
+      "name": "McDonald's Collection 2014",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T06:47:16.799706Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy3",
+      "name": "Furious Fists",
+      "cardCount": 114,
+      "first_seen_at": "2026-07-10T06:47:16.799708Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-xy-b",
+      "name": "XY trainer Kit (Bisharp)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799710Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-xy-w",
+      "name": "XY trainer Kit (Wigglytuff)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799712Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy4",
+      "name": "Phantom Forces",
+      "cardCount": 124,
+      "first_seen_at": "2026-07-10T06:47:16.799714Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy5",
+      "name": "Primal Clash",
+      "cardCount": 164,
+      "first_seen_at": "2026-07-10T06:47:16.799716Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "dc1",
+      "name": "Double Crisis",
+      "cardCount": 34,
+      "first_seen_at": "2026-07-10T06:47:16.799718Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-xy-latio",
+      "name": "XY trainer Kit (Latios)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799719Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-xy-latia",
+      "name": "XY trainer Kit (Latias)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799722Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy6",
+      "name": "Roaring Skies",
+      "cardCount": 112,
+      "first_seen_at": "2026-07-10T06:47:16.799724Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy7",
+      "name": "Ancient Origins",
+      "cardCount": 101,
+      "first_seen_at": "2026-07-10T06:47:16.799726Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy8",
+      "name": "BREAKthrough",
+      "cardCount": 165,
+      "first_seen_at": "2026-07-10T06:47:16.799728Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2015xy",
+      "name": "McDonald's Collection 2015",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T06:47:16.799730Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy9",
+      "name": "BREAKpoint",
+      "cardCount": 126,
+      "first_seen_at": "2026-07-10T06:47:16.799732Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "g1",
+      "name": "Generations",
+      "cardCount": 117,
+      "first_seen_at": "2026-07-10T06:47:16.799734Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-xy-su",
+      "name": "XY trainer Kit (Suicune)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799736Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-xy-p",
+      "name": "XY trainer Kit (Pikachu Libre)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799738Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy10",
+      "name": "Fates Collide",
+      "cardCount": 129,
+      "first_seen_at": "2026-07-10T06:47:16.799740Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy11",
+      "name": "Steam Siege",
+      "cardCount": 116,
+      "first_seen_at": "2026-07-10T06:47:16.799742Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2016xy",
+      "name": "McDonald's Collection 2016",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T06:47:16.799745Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "xy12",
+      "name": "Evolutions",
+      "cardCount": 113,
+      "first_seen_at": "2026-07-10T06:47:16.799747Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm1",
+      "name": "Sun & Moon",
+      "cardCount": 172,
+      "first_seen_at": "2026-07-10T06:47:16.799749Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "smp",
+      "name": "SM Black Star Promos",
+      "cardCount": 248,
+      "first_seen_at": "2026-07-10T06:47:16.799752Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-sm-l",
+      "name": "SM trainer Kit (Lycanroc)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799754Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "tk-sm-r",
+      "name": "SM trainer Kit (Alolan Raichu)",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T06:47:16.799756Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm2",
+      "name": "Guardians Rising",
+      "cardCount": 169,
+      "first_seen_at": "2026-07-10T06:47:16.799758Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2017sm",
+      "name": "McDonald's Collection 2017",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T06:47:16.799760Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm3",
+      "name": "Burning Shadows",
+      "cardCount": 169,
+      "first_seen_at": "2026-07-10T06:47:16.799762Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm3.5",
+      "name": "Shining Legends",
+      "cardCount": 78,
+      "first_seen_at": "2026-07-10T06:47:16.799764Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm4",
+      "name": "Crimson Invasion",
+      "cardCount": 125,
+      "first_seen_at": "2026-07-10T06:47:16.799766Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm5",
+      "name": "Ultra Prism",
+      "cardCount": 173,
+      "first_seen_at": "2026-07-10T06:47:16.799768Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm6",
+      "name": "Forbidden Light",
+      "cardCount": 146,
+      "first_seen_at": "2026-07-10T06:47:16.799770Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm7",
+      "name": "Celestial Storm",
+      "cardCount": 183,
+      "first_seen_at": "2026-07-10T06:47:16.799772Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm7.5",
+      "name": "Dragon Majesty",
+      "cardCount": 78,
+      "first_seen_at": "2026-07-10T06:47:16.799774Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2018sm",
+      "name": "McDonald's Collection 2018",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T06:47:16.799776Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm8",
+      "name": "Lost Thunder",
+      "cardCount": 236,
+      "first_seen_at": "2026-07-10T06:47:16.799778Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm9",
+      "name": "Team Up",
+      "cardCount": 196,
+      "first_seen_at": "2026-07-10T06:47:16.799780Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "det1",
+      "name": "Detective Pikachu",
+      "cardCount": 18,
+      "first_seen_at": "2026-07-10T06:47:16.799782Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm10",
+      "name": "Unbroken Bonds",
+      "cardCount": 234,
+      "first_seen_at": "2026-07-10T06:47:16.799783Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm11",
+      "name": "Unified Minds",
+      "cardCount": 258,
+      "first_seen_at": "2026-07-10T06:47:16.799785Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sma",
+      "name": "Hidden Fates Shiny Vault",
+      "cardCount": 94,
+      "first_seen_at": "2026-07-10T06:47:16.799787Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm115",
+      "name": "Hidden Fates",
+      "cardCount": 69,
+      "first_seen_at": "2026-07-10T06:47:16.799789Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2019sm",
+      "name": "McDonald's Collection 2019",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T06:47:16.799792Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sm12",
+      "name": "Cosmic Eclipse",
+      "cardCount": 271,
+      "first_seen_at": "2026-07-10T06:47:16.799794Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swshp",
+      "name": "SWSH Black Star Promos",
+      "cardCount": 307,
+      "first_seen_at": "2026-07-10T06:47:16.799796Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh1",
+      "name": "Sword & Shield",
+      "cardCount": 216,
+      "first_seen_at": "2026-07-10T06:47:16.799798Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh2",
+      "name": "Rebel Clash",
+      "cardCount": 209,
+      "first_seen_at": "2026-07-10T06:47:16.799800Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh3",
+      "name": "Darkness Ablaze",
+      "cardCount": 201,
+      "first_seen_at": "2026-07-10T06:47:16.799802Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "fut2020",
+      "name": "Pok\u00e9mon Futsal 2020",
+      "cardCount": 5,
+      "first_seen_at": "2026-07-10T06:47:16.799804Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh3.5",
+      "name": "Champion's Path",
+      "cardCount": 80,
+      "first_seen_at": "2026-07-10T06:47:16.799806Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh4",
+      "name": "Vivid Voltage",
+      "cardCount": 203,
+      "first_seen_at": "2026-07-10T06:47:16.799808Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2021swsh",
+      "name": "McDonald's Collection 2021",
+      "cardCount": 25,
+      "first_seen_at": "2026-07-10T06:47:16.799810Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh4.5",
+      "name": "Shining Fates",
+      "cardCount": 73,
+      "first_seen_at": "2026-07-10T06:47:16.799812Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh5",
+      "name": "Battle Styles",
+      "cardCount": 183,
+      "first_seen_at": "2026-07-10T06:47:16.799814Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh6",
+      "name": "Chilling Reign",
+      "cardCount": 233,
+      "first_seen_at": "2026-07-10T06:47:16.799816Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh7",
+      "name": "Evolving Skies",
+      "cardCount": 237,
+      "first_seen_at": "2026-07-10T06:47:16.799818Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "cel25",
+      "name": "Celebrations",
+      "cardCount": 50,
+      "first_seen_at": "2026-07-10T06:47:16.799820Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh8",
+      "name": "Fusion Strike",
+      "cardCount": 284,
+      "first_seen_at": "2026-07-10T06:47:16.799822Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh9",
+      "name": "Brilliant Stars",
+      "cardCount": 186,
+      "first_seen_at": "2026-07-10T06:47:16.799824Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh10",
+      "name": "Astral Radiance",
+      "cardCount": 246,
+      "first_seen_at": "2026-07-10T06:47:16.799826Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh10.5",
+      "name": "Pok\u00e9mon GO",
+      "cardCount": 88,
+      "first_seen_at": "2026-07-10T06:47:16.799828Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2022swsh",
+      "name": "McDonald's Collection 2022",
+      "cardCount": 15,
+      "first_seen_at": "2026-07-10T06:47:16.799830Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh11",
+      "name": "Lost Origin",
+      "cardCount": 217,
+      "first_seen_at": "2026-07-10T06:47:16.799832Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh12",
+      "name": "Silver Tempest",
+      "cardCount": 215,
+      "first_seen_at": "2026-07-10T06:47:16.799835Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh12.5",
+      "name": "Crown Zenith",
+      "cardCount": 160,
+      "first_seen_at": "2026-07-10T06:47:16.799837Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv01",
+      "name": "Scarlet & Violet",
+      "cardCount": 258,
+      "first_seen_at": "2026-07-10T06:47:16.799839Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "svp",
+      "name": "SVP Black Star Promos",
+      "cardCount": 226,
+      "first_seen_at": "2026-07-10T06:47:16.799841Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sve",
+      "name": "Scarlet & Violet Energy",
+      "cardCount": 24,
+      "first_seen_at": "2026-07-10T06:47:16.799843Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv02",
+      "name": "Paldea Evolved",
+      "cardCount": 279,
+      "first_seen_at": "2026-07-10T06:47:16.799851Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2023sv",
+      "name": "McDonald's Collection 2023",
+      "cardCount": 15,
+      "first_seen_at": "2026-07-10T06:47:16.799853Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv03",
+      "name": "Obsidian Flames",
+      "cardCount": 230,
+      "first_seen_at": "2026-07-10T06:47:16.799855Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv03.5",
+      "name": "151",
+      "cardCount": 207,
+      "first_seen_at": "2026-07-10T06:47:16.799857Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "mfb",
+      "name": "My First Battle",
+      "cardCount": 48,
+      "first_seen_at": "2026-07-10T06:47:16.799859Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv04",
+      "name": "Paradox Rift",
+      "cardCount": 266,
+      "first_seen_at": "2026-07-10T06:47:16.799861Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv04.5",
+      "name": "Paldean Fates",
+      "cardCount": 245,
+      "first_seen_at": "2026-07-10T06:47:16.799863Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv05",
+      "name": "Temporal Forces",
+      "cardCount": 218,
+      "first_seen_at": "2026-07-10T06:47:16.799865Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv06",
+      "name": "Twilight Masquerade",
+      "cardCount": 226,
+      "first_seen_at": "2026-07-10T06:47:16.799867Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv06.5",
+      "name": "Shrouded Fable",
+      "cardCount": 99,
+      "first_seen_at": "2026-07-10T06:47:16.799869Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv07",
+      "name": "Stellar Crown",
+      "cardCount": 175,
+      "first_seen_at": "2026-07-10T06:47:16.799872Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "p-a",
+      "name": "Promos-A",
+      "cardCount": 100,
+      "first_seen_at": "2026-07-10T06:47:16.799874Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "a1",
+      "name": "Genetic Apex",
+      "cardCount": 286,
+      "first_seen_at": "2026-07-10T06:47:16.799877Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv08",
+      "name": "Surging Sparks",
+      "cardCount": 252,
+      "first_seen_at": "2026-07-10T06:47:16.799879Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "2024sv",
+      "name": "McDonald's Collection 2024",
+      "cardCount": 15,
+      "first_seen_at": "2026-07-10T06:47:16.799881Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "a1a",
+      "name": "Mythical Island",
+      "cardCount": 86,
+      "first_seen_at": "2026-07-10T06:47:16.799883Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv08.5",
+      "name": "Prismatic Evolutions",
+      "cardCount": 180,
+      "first_seen_at": "2026-07-10T06:47:16.799885Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "a2",
+      "name": "Space-Time Smackdown",
+      "cardCount": 207,
+      "first_seen_at": "2026-07-10T06:47:16.799887Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "a2a",
+      "name": "Triumphant Light",
+      "cardCount": 96,
+      "first_seen_at": "2026-07-10T06:47:16.799889Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "a2b",
+      "name": "Shining Revelry",
+      "cardCount": 111,
+      "first_seen_at": "2026-07-10T06:47:16.799892Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv09",
+      "name": "Journey Together",
+      "cardCount": 190,
+      "first_seen_at": "2026-07-10T06:47:16.799894Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "a3",
+      "name": "Celestial Guardians",
+      "cardCount": 239,
+      "first_seen_at": "2026-07-10T06:47:16.799896Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "a3a",
+      "name": "Extradimensional Crisis",
+      "cardCount": 103,
+      "first_seen_at": "2026-07-10T06:47:16.799898Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv10",
+      "name": "Destined Rivals",
+      "cardCount": 244,
+      "first_seen_at": "2026-07-10T06:47:16.799900Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "a3b",
+      "name": "Eevee Grove",
+      "cardCount": 107,
+      "first_seen_at": "2026-07-10T06:47:16.799902Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv10.5b",
+      "name": "Black Bolt",
+      "cardCount": 172,
+      "first_seen_at": "2026-07-10T06:47:16.799904Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "sv10.5w",
+      "name": "White Flare",
+      "cardCount": 173,
+      "first_seen_at": "2026-07-10T06:47:16.799906Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "a4",
+      "name": "Wisdom of Sea and Sky",
+      "cardCount": 241,
+      "first_seen_at": "2026-07-10T06:47:16.799908Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "a4a",
+      "name": "Secluded Springs",
+      "cardCount": 105,
+      "first_seen_at": "2026-07-10T06:47:16.799910Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "mee",
+      "name": "Mega Evolution Energy",
+      "cardCount": 8,
+      "first_seen_at": "2026-07-10T06:47:16.799912Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "me01",
+      "name": "Mega Evolution",
+      "cardCount": 188,
+      "first_seen_at": "2026-07-10T06:47:16.799914Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "mep",
+      "name": "MEP Black Star Promos",
+      "cardCount": 60,
+      "first_seen_at": "2026-07-10T06:47:16.799916Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "b1",
+      "name": "Mega Rising",
+      "cardCount": 331,
+      "first_seen_at": "2026-07-10T06:47:16.799919Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "me02",
+      "name": "Phantasmal Flames",
+      "cardCount": 130,
+      "first_seen_at": "2026-07-10T06:47:16.799921Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "b1a",
+      "name": "Crimson Blaze",
+      "cardCount": 103,
+      "first_seen_at": "2026-07-10T06:47:16.799923Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "b2",
+      "name": "Fantastical Parade",
+      "cardCount": 234,
+      "first_seen_at": "2026-07-10T06:47:16.799925Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "me02.5",
+      "name": "Ascended Heroes",
+      "cardCount": 295,
+      "first_seen_at": "2026-07-10T06:47:16.799928Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "b2a",
+      "name": "Paldean Wonders",
+      "cardCount": 131,
+      "first_seen_at": "2026-07-10T06:47:16.799930Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "me03",
+      "name": "Perfect Order",
+      "cardCount": 124,
+      "first_seen_at": "2026-07-10T06:47:16.799932Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "me04",
+      "name": "Chaos Rising",
+      "cardCount": 122,
+      "first_seen_at": "2026-07-10T06:47:16.799934Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "base1",
+      "name": "Base",
+      "cardCount": 102,
+      "first_seen_at": "2026-07-10T16:51:08.187658Z",
+      "releaseDate": "1999/01/09",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "base2",
+      "name": "Jungle",
+      "cardCount": 64,
+      "first_seen_at": "2026-07-10T16:51:08.187663Z",
+      "releaseDate": "1999/06/16",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "basep",
+      "name": "Wizards Black Star Promos",
+      "cardCount": 53,
+      "first_seen_at": "2026-07-10T16:51:08.187667Z",
+      "releaseDate": "1999/07/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "base3",
+      "name": "Fossil",
+      "cardCount": 62,
+      "first_seen_at": "2026-07-10T16:51:08.187670Z",
+      "releaseDate": "1999/10/10",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "base4",
+      "name": "Base Set 2",
+      "cardCount": 130,
+      "first_seen_at": "2026-07-10T16:51:08.187672Z",
+      "releaseDate": "2000/02/24",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "base5",
+      "name": "Team Rocket",
+      "cardCount": 83,
+      "first_seen_at": "2026-07-10T16:51:08.187675Z",
+      "releaseDate": "2000/04/24",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "gym1",
+      "name": "Gym Heroes",
+      "cardCount": 132,
+      "first_seen_at": "2026-07-10T16:51:08.187678Z",
+      "releaseDate": "2000/08/14",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "gym2",
+      "name": "Gym Challenge",
+      "cardCount": 132,
+      "first_seen_at": "2026-07-10T16:51:08.187680Z",
+      "releaseDate": "2000/10/16",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "neo1",
+      "name": "Neo Genesis",
+      "cardCount": 111,
+      "first_seen_at": "2026-07-10T16:51:08.187682Z",
+      "releaseDate": "2000/12/16",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "neo2",
+      "name": "Neo Discovery",
+      "cardCount": 75,
+      "first_seen_at": "2026-07-10T16:51:08.187685Z",
+      "releaseDate": "2001/06/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "si1",
+      "name": "Southern Islands",
+      "cardCount": 18,
+      "first_seen_at": "2026-07-10T16:51:08.187687Z",
+      "releaseDate": "2001/07/31",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "neo3",
+      "name": "Neo Revelation",
+      "cardCount": 66,
+      "first_seen_at": "2026-07-10T16:51:08.187690Z",
+      "releaseDate": "2001/09/21",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "neo4",
+      "name": "Neo Destiny",
+      "cardCount": 113,
+      "first_seen_at": "2026-07-10T16:51:08.187692Z",
+      "releaseDate": "2002/02/28",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "base6",
+      "name": "Legendary Collection",
+      "cardCount": 110,
+      "first_seen_at": "2026-07-10T16:51:08.187694Z",
+      "releaseDate": "2002/05/24",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ecard1",
+      "name": "Expedition Base Set",
+      "cardCount": 165,
+      "first_seen_at": "2026-07-10T16:51:08.187697Z",
+      "releaseDate": "2002/09/15",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ecard2",
+      "name": "Aquapolis",
+      "cardCount": 182,
+      "first_seen_at": "2026-07-10T16:51:08.187699Z",
+      "releaseDate": "2003/01/15",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ecard3",
+      "name": "Skyridge",
+      "cardCount": 182,
+      "first_seen_at": "2026-07-10T16:51:08.187702Z",
+      "releaseDate": "2003/05/12",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex1",
+      "name": "Ruby & Sapphire",
+      "cardCount": 109,
+      "first_seen_at": "2026-07-10T16:51:08.187704Z",
+      "releaseDate": "2003/07/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex2",
+      "name": "Sandstorm",
+      "cardCount": 100,
+      "first_seen_at": "2026-07-10T16:51:08.187706Z",
+      "releaseDate": "2003/09/18",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex3",
+      "name": "Dragon",
+      "cardCount": 100,
+      "first_seen_at": "2026-07-10T16:51:08.187709Z",
+      "releaseDate": "2003/11/24",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "np",
+      "name": "Nintendo Black Star Promos",
+      "cardCount": 40,
+      "first_seen_at": "2026-07-10T16:51:08.187711Z",
+      "releaseDate": "2003/10/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex4",
+      "name": "Team Magma vs Team Aqua",
+      "cardCount": 97,
+      "first_seen_at": "2026-07-10T16:51:08.187714Z",
+      "releaseDate": "2004/03/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex5",
+      "name": "Hidden Legends",
+      "cardCount": 102,
+      "first_seen_at": "2026-07-10T16:51:08.187717Z",
+      "releaseDate": "2004/06/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex6",
+      "name": "FireRed & LeafGreen",
+      "cardCount": 116,
+      "first_seen_at": "2026-07-10T16:51:08.187719Z",
+      "releaseDate": "2004/09/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pop1",
+      "name": "POP Series 1",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T16:51:08.187722Z",
+      "releaseDate": "2004/09/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex7",
+      "name": "Team Rocket Returns",
+      "cardCount": 111,
+      "first_seen_at": "2026-07-10T16:51:08.187725Z",
+      "releaseDate": "2004/11/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex8",
+      "name": "Deoxys",
+      "cardCount": 108,
+      "first_seen_at": "2026-07-10T16:51:08.187727Z",
+      "releaseDate": "2005/02/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex9",
+      "name": "Emerald",
+      "cardCount": 107,
+      "first_seen_at": "2026-07-10T16:51:08.187730Z",
+      "releaseDate": "2005/05/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex10",
+      "name": "Unseen Forces",
+      "cardCount": 145,
+      "first_seen_at": "2026-07-10T16:51:08.187732Z",
+      "releaseDate": "2005/08/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pop2",
+      "name": "POP Series 2",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T16:51:08.187734Z",
+      "releaseDate": "2005/08/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex11",
+      "name": "Delta Species",
+      "cardCount": 114,
+      "first_seen_at": "2026-07-10T16:51:08.187737Z",
+      "releaseDate": "2005/10/31",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex12",
+      "name": "Legend Maker",
+      "cardCount": 93,
+      "first_seen_at": "2026-07-10T16:51:08.187739Z",
+      "releaseDate": "2006/02/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pop3",
+      "name": "POP Series 3",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T16:51:08.187741Z",
+      "releaseDate": "2006/04/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex13",
+      "name": "Holon Phantoms",
+      "cardCount": 111,
+      "first_seen_at": "2026-07-10T16:51:08.187744Z",
+      "releaseDate": "2006/05/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex14",
+      "name": "Crystal Guardians",
+      "cardCount": 100,
+      "first_seen_at": "2026-07-10T16:51:08.187746Z",
+      "releaseDate": "2006/08/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pop4",
+      "name": "POP Series 4",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T16:51:08.187749Z",
+      "releaseDate": "2006/08/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex15",
+      "name": "Dragon Frontiers",
+      "cardCount": 101,
+      "first_seen_at": "2026-07-10T16:51:08.187751Z",
+      "releaseDate": "2006/11/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pop5",
+      "name": "POP Series 5",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T16:51:08.187754Z",
+      "releaseDate": "2007/03/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ex16",
+      "name": "Power Keepers",
+      "cardCount": 108,
+      "first_seen_at": "2026-07-10T16:51:08.187756Z",
+      "releaseDate": "2007/02/02",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "dp1",
+      "name": "Diamond & Pearl",
+      "cardCount": 130,
+      "first_seen_at": "2026-07-10T16:51:08.187759Z",
+      "releaseDate": "2007/05/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "dpp",
+      "name": "DP Black Star Promos",
+      "cardCount": 56,
+      "first_seen_at": "2026-07-10T16:51:08.187761Z",
+      "releaseDate": "2007/05/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "dp2",
+      "name": "Mysterious Treasures",
+      "cardCount": 124,
+      "first_seen_at": "2026-07-10T16:51:08.187763Z",
+      "releaseDate": "2007/08/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pop6",
+      "name": "POP Series 6",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T16:51:08.187766Z",
+      "releaseDate": "2007/09/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "dp3",
+      "name": "Secret Wonders",
+      "cardCount": 132,
+      "first_seen_at": "2026-07-10T16:51:08.187768Z",
+      "releaseDate": "2007/11/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "dp4",
+      "name": "Great Encounters",
+      "cardCount": 106,
+      "first_seen_at": "2026-07-10T16:51:08.187770Z",
+      "releaseDate": "2008/02/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pop7",
+      "name": "POP Series 7",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T16:51:08.187773Z",
+      "releaseDate": "2008/03/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "dp5",
+      "name": "Majestic Dawn",
+      "cardCount": 100,
+      "first_seen_at": "2026-07-10T16:51:08.187775Z",
+      "releaseDate": "2008/05/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "dp6",
+      "name": "Legends Awakened",
+      "cardCount": 146,
+      "first_seen_at": "2026-07-10T16:51:08.187777Z",
+      "releaseDate": "2008/08/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pop8",
+      "name": "POP Series 8",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T16:51:08.187780Z",
+      "releaseDate": "2008/09/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "dp7",
+      "name": "Stormfront",
+      "cardCount": 106,
+      "first_seen_at": "2026-07-10T16:51:08.187782Z",
+      "releaseDate": "2008/11/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pl1",
+      "name": "Platinum",
+      "cardCount": 133,
+      "first_seen_at": "2026-07-10T16:51:08.187784Z",
+      "releaseDate": "2009/02/11",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pop9",
+      "name": "POP Series 9",
+      "cardCount": 17,
+      "first_seen_at": "2026-07-10T16:51:08.187787Z",
+      "releaseDate": "2009/03/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pl2",
+      "name": "Rising Rivals",
+      "cardCount": 120,
+      "first_seen_at": "2026-07-10T16:51:08.187789Z",
+      "releaseDate": "2009/05/16",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pl3",
+      "name": "Supreme Victors",
+      "cardCount": 153,
+      "first_seen_at": "2026-07-10T16:51:08.187792Z",
+      "releaseDate": "2009/08/19",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pl4",
+      "name": "Arceus",
+      "cardCount": 111,
+      "first_seen_at": "2026-07-10T16:51:08.187794Z",
+      "releaseDate": "2009/11/04",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "ru1",
+      "name": "Pok\u00e9mon Rumble",
+      "cardCount": 16,
+      "first_seen_at": "2026-07-10T16:51:08.187797Z",
+      "releaseDate": "2009/12/02",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "hgss1",
+      "name": "HeartGold & SoulSilver",
+      "cardCount": 124,
+      "first_seen_at": "2026-07-10T16:51:08.187799Z",
+      "releaseDate": "2010/02/10",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "hsp",
+      "name": "HGSS Black Star Promos",
+      "cardCount": 25,
+      "first_seen_at": "2026-07-10T16:51:08.187802Z",
+      "releaseDate": "2010/02/10",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "hgss2",
+      "name": "HS\u2014Unleashed",
+      "cardCount": 96,
+      "first_seen_at": "2026-07-10T16:51:08.187804Z",
+      "releaseDate": "2010/05/12",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "hgss3",
+      "name": "HS\u2014Undaunted",
+      "cardCount": 91,
+      "first_seen_at": "2026-07-10T16:51:08.187807Z",
+      "releaseDate": "2010/08/18",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "hgss4",
+      "name": "HS\u2014Triumphant",
+      "cardCount": 103,
+      "first_seen_at": "2026-07-10T16:51:08.187810Z",
+      "releaseDate": "2010/11/03",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "col1",
+      "name": "Call of Legends",
+      "cardCount": 106,
+      "first_seen_at": "2026-07-10T16:51:08.187813Z",
+      "releaseDate": "2011/02/09",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bwp",
+      "name": "BW Black Star Promos",
+      "cardCount": 101,
+      "first_seen_at": "2026-07-10T16:51:08.187815Z",
+      "releaseDate": "2011/03/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bw1",
+      "name": "Black & White",
+      "cardCount": 115,
+      "first_seen_at": "2026-07-10T16:51:08.187818Z",
+      "releaseDate": "2011/04/25",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "mcd11",
+      "name": "McDonald's Collection 2011",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T16:51:08.187820Z",
+      "releaseDate": "2011/06/17",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bw2",
+      "name": "Emerging Powers",
+      "cardCount": 98,
+      "first_seen_at": "2026-07-10T16:51:08.187823Z",
+      "releaseDate": "2011/08/31",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bw3",
+      "name": "Noble Victories",
+      "cardCount": 102,
+      "first_seen_at": "2026-07-10T16:51:08.187825Z",
+      "releaseDate": "2011/11/16",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bw4",
+      "name": "Next Destinies",
+      "cardCount": 103,
+      "first_seen_at": "2026-07-10T16:51:08.187827Z",
+      "releaseDate": "2012/02/08",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bw5",
+      "name": "Dark Explorers",
+      "cardCount": 111,
+      "first_seen_at": "2026-07-10T16:51:08.187830Z",
+      "releaseDate": "2012/05/09",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "mcd12",
+      "name": "McDonald's Collection 2012",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T16:51:08.187832Z",
+      "releaseDate": "2012/06/15",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bw6",
+      "name": "Dragons Exalted",
+      "cardCount": 128,
+      "first_seen_at": "2026-07-10T16:51:08.187835Z",
+      "releaseDate": "2012/08/15",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "dv1",
+      "name": "Dragon Vault",
+      "cardCount": 21,
+      "first_seen_at": "2026-07-10T16:51:08.187837Z",
+      "releaseDate": "2012/10/05",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bw7",
+      "name": "Boundaries Crossed",
+      "cardCount": 153,
+      "first_seen_at": "2026-07-10T16:51:08.187840Z",
+      "releaseDate": "2012/11/07",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bw8",
+      "name": "Plasma Storm",
+      "cardCount": 138,
+      "first_seen_at": "2026-07-10T16:51:08.187842Z",
+      "releaseDate": "2013/02/06",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bw9",
+      "name": "Plasma Freeze",
+      "cardCount": 122,
+      "first_seen_at": "2026-07-10T16:51:08.187844Z",
+      "releaseDate": "2013/05/08",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bw10",
+      "name": "Plasma Blast",
+      "cardCount": 105,
+      "first_seen_at": "2026-07-10T16:51:08.187847Z",
+      "releaseDate": "2013/08/14",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xyp",
+      "name": "XY Black Star Promos",
+      "cardCount": 216,
+      "first_seen_at": "2026-07-10T16:51:08.187849Z",
+      "releaseDate": "2013/10/12",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bw11",
+      "name": "Legendary Treasures",
+      "cardCount": 140,
+      "first_seen_at": "2026-07-10T16:51:08.187852Z",
+      "releaseDate": "2013/11/06",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy0",
+      "name": "Kalos Starter Set",
+      "cardCount": 39,
+      "first_seen_at": "2026-07-10T16:51:08.187854Z",
+      "releaseDate": "2013/11/08",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy1",
+      "name": "XY",
+      "cardCount": 146,
+      "first_seen_at": "2026-07-10T16:51:08.187856Z",
+      "releaseDate": "2014/02/05",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy2",
+      "name": "Flashfire",
+      "cardCount": 110,
+      "first_seen_at": "2026-07-10T16:51:08.187859Z",
+      "releaseDate": "2014/05/07",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy3",
+      "name": "Furious Fists",
+      "cardCount": 114,
+      "first_seen_at": "2026-07-10T16:51:08.187861Z",
+      "releaseDate": "2014/08/13",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy4",
+      "name": "Phantom Forces",
+      "cardCount": 124,
+      "first_seen_at": "2026-07-10T16:51:08.187864Z",
+      "releaseDate": "2014/11/05",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy5",
+      "name": "Primal Clash",
+      "cardCount": 164,
+      "first_seen_at": "2026-07-10T16:51:08.187867Z",
+      "releaseDate": "2015/02/04",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "dc1",
+      "name": "Double Crisis",
+      "cardCount": 34,
+      "first_seen_at": "2026-07-10T16:51:08.187869Z",
+      "releaseDate": "2015/03/25",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy6",
+      "name": "Roaring Skies",
+      "cardCount": 112,
+      "first_seen_at": "2026-07-10T16:51:08.187871Z",
+      "releaseDate": "2015/05/06",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy7",
+      "name": "Ancient Origins",
+      "cardCount": 100,
+      "first_seen_at": "2026-07-10T16:51:08.187874Z",
+      "releaseDate": "2015/08/12",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy8",
+      "name": "BREAKthrough",
+      "cardCount": 165,
+      "first_seen_at": "2026-07-10T16:51:08.187876Z",
+      "releaseDate": "2015/11/04",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy9",
+      "name": "BREAKpoint",
+      "cardCount": 126,
+      "first_seen_at": "2026-07-10T16:51:08.187879Z",
+      "releaseDate": "2016/02/03",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "g1",
+      "name": "Generations",
+      "cardCount": 117,
+      "first_seen_at": "2026-07-10T16:51:08.187881Z",
+      "releaseDate": "2016/02/22",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy10",
+      "name": "Fates Collide",
+      "cardCount": 129,
+      "first_seen_at": "2026-07-10T16:51:08.187883Z",
+      "releaseDate": "2016/05/02",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy11",
+      "name": "Steam Siege",
+      "cardCount": 116,
+      "first_seen_at": "2026-07-10T16:51:08.187886Z",
+      "releaseDate": "2016/08/03",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "mcd16",
+      "name": "McDonald's Collection 2016",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T16:51:08.187888Z",
+      "releaseDate": "2016/08/19",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "xy12",
+      "name": "Evolutions",
+      "cardCount": 113,
+      "first_seen_at": "2026-07-10T16:51:08.187891Z",
+      "releaseDate": "2016/11/02",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm1",
+      "name": "Sun & Moon",
+      "cardCount": 173,
+      "first_seen_at": "2026-07-10T16:51:08.187893Z",
+      "releaseDate": "2017/02/03",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "smp",
+      "name": "SM Black Star Promos",
+      "cardCount": 250,
+      "first_seen_at": "2026-07-10T16:51:08.187895Z",
+      "releaseDate": "2017/02/03",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm2",
+      "name": "Guardians Rising",
+      "cardCount": 180,
+      "first_seen_at": "2026-07-10T16:51:08.187898Z",
+      "releaseDate": "2017/05/05",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm3",
+      "name": "Burning Shadows",
+      "cardCount": 177,
+      "first_seen_at": "2026-07-10T16:51:08.187900Z",
+      "releaseDate": "2017/08/05",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm35",
+      "name": "Shining Legends",
+      "cardCount": 81,
+      "first_seen_at": "2026-07-10T16:51:08.187902Z",
+      "releaseDate": "2017/10/06",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm4",
+      "name": "Crimson Invasion",
+      "cardCount": 126,
+      "first_seen_at": "2026-07-10T16:51:08.187905Z",
+      "releaseDate": "2017/11/03",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm5",
+      "name": "Ultra Prism",
+      "cardCount": 178,
+      "first_seen_at": "2026-07-10T16:51:08.187908Z",
+      "releaseDate": "2018/02/02",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm6",
+      "name": "Forbidden Light",
+      "cardCount": 150,
+      "first_seen_at": "2026-07-10T16:51:08.187910Z",
+      "releaseDate": "2018/05/04",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm7",
+      "name": "Celestial Storm",
+      "cardCount": 187,
+      "first_seen_at": "2026-07-10T16:51:08.187913Z",
+      "releaseDate": "2018/08/03",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm75",
+      "name": "Dragon Majesty",
+      "cardCount": 80,
+      "first_seen_at": "2026-07-10T16:51:08.187915Z",
+      "releaseDate": "2018/09/07",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm8",
+      "name": "Lost Thunder",
+      "cardCount": 240,
+      "first_seen_at": "2026-07-10T16:51:08.187917Z",
+      "releaseDate": "2018/11/02",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm9",
+      "name": "Team Up",
+      "cardCount": 198,
+      "first_seen_at": "2026-07-10T16:51:08.187920Z",
+      "releaseDate": "2019/02/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "det1",
+      "name": "Detective Pikachu",
+      "cardCount": 18,
+      "first_seen_at": "2026-07-10T16:51:08.187922Z",
+      "releaseDate": "2019/04/05",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm10",
+      "name": "Unbroken Bonds",
+      "cardCount": 234,
+      "first_seen_at": "2026-07-10T16:51:08.187925Z",
+      "releaseDate": "2019/05/03",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm11",
+      "name": "Unified Minds",
+      "cardCount": 260,
+      "first_seen_at": "2026-07-10T16:51:08.187927Z",
+      "releaseDate": "2019/08/02",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm115",
+      "name": "Hidden Fates",
+      "cardCount": 69,
+      "first_seen_at": "2026-07-10T16:51:08.187930Z",
+      "releaseDate": "2019/08/23",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sma",
+      "name": "Hidden Fates Shiny Vault",
+      "cardCount": 94,
+      "first_seen_at": "2026-07-10T16:51:08.187932Z",
+      "releaseDate": "2019/08/23",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "mcd19",
+      "name": "McDonald's Collection 2019",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T16:51:08.187934Z",
+      "releaseDate": "2019/10/15",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sm12",
+      "name": "Cosmic Eclipse",
+      "cardCount": 272,
+      "first_seen_at": "2026-07-10T16:51:08.187937Z",
+      "releaseDate": "2019/11/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swshp",
+      "name": "SWSH Black Star Promos",
+      "cardCount": 304,
+      "first_seen_at": "2026-07-10T16:51:08.187939Z",
+      "releaseDate": "2019/11/15",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh1",
+      "name": "Sword & Shield",
+      "cardCount": 216,
+      "first_seen_at": "2026-07-10T16:51:08.187942Z",
+      "releaseDate": "2020/02/07",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh2",
+      "name": "Rebel Clash",
+      "cardCount": 209,
+      "first_seen_at": "2026-07-10T16:51:08.187944Z",
+      "releaseDate": "2020/05/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh3",
+      "name": "Darkness Ablaze",
+      "cardCount": 201,
+      "first_seen_at": "2026-07-10T16:51:08.187946Z",
+      "releaseDate": "2020/08/14",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh35",
+      "name": "Champion's Path",
+      "cardCount": 80,
+      "first_seen_at": "2026-07-10T16:51:08.187949Z",
+      "releaseDate": "2020/09/25",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh4",
+      "name": "Vivid Voltage",
+      "cardCount": 203,
+      "first_seen_at": "2026-07-10T16:51:08.187951Z",
+      "releaseDate": "2020/11/13",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh45",
+      "name": "Shining Fates",
+      "cardCount": 73,
+      "first_seen_at": "2026-07-10T16:51:08.187953Z",
+      "releaseDate": "2021/02/19",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh5",
+      "name": "Battle Styles",
+      "cardCount": 183,
+      "first_seen_at": "2026-07-10T16:51:08.187956Z",
+      "releaseDate": "2021/03/19",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh6",
+      "name": "Chilling Reign",
+      "cardCount": 233,
+      "first_seen_at": "2026-07-10T16:51:08.187959Z",
+      "releaseDate": "2021/06/18",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh7",
+      "name": "Evolving Skies",
+      "cardCount": 237,
+      "first_seen_at": "2026-07-10T16:51:08.187961Z",
+      "releaseDate": "2021/08/27",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "cel25",
+      "name": "Celebrations",
+      "cardCount": 25,
+      "first_seen_at": "2026-07-10T16:51:08.187963Z",
+      "releaseDate": "2021/10/08",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "cel25c",
+      "name": "Celebrations: Classic Collection",
+      "cardCount": 25,
+      "first_seen_at": "2026-07-10T16:51:08.187966Z",
+      "releaseDate": "2021/10/08",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "mcd14",
+      "name": "McDonald's Collection 2014",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T16:51:08.187968Z",
+      "releaseDate": "2014/05/23",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "mcd15",
+      "name": "McDonald's Collection 2015",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T16:51:08.187971Z",
+      "releaseDate": "2015/11/27",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "mcd18",
+      "name": "McDonald's Collection 2018",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T16:51:08.187973Z",
+      "releaseDate": "2018/10/16",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "mcd17",
+      "name": "McDonald's Collection 2017",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T16:51:08.187975Z",
+      "releaseDate": "2017/11/07",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "mcd21",
+      "name": "McDonald's Collection 2021",
+      "cardCount": 25,
+      "first_seen_at": "2026-07-10T16:51:08.187978Z",
+      "releaseDate": "2021/02/09",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "bp",
+      "name": "Best of Game",
+      "cardCount": 9,
+      "first_seen_at": "2026-07-10T16:51:08.187980Z",
+      "releaseDate": "2002/12/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh8",
+      "name": "Fusion Strike",
+      "cardCount": 284,
+      "first_seen_at": "2026-07-10T16:51:08.187983Z",
+      "releaseDate": "2021/11/12",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "fut20",
+      "name": "Pok\u00e9mon Futsal Collection",
+      "cardCount": 5,
+      "first_seen_at": "2026-07-10T16:51:08.187986Z",
+      "releaseDate": "2020/09/11",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "tk1a",
+      "name": "EX Trainer Kit Latias",
+      "cardCount": 10,
+      "first_seen_at": "2026-07-10T16:51:08.187988Z",
+      "releaseDate": "2004/06/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "tk1b",
+      "name": "EX Trainer Kit Latios",
+      "cardCount": 10,
+      "first_seen_at": "2026-07-10T16:51:08.187991Z",
+      "releaseDate": "2004/06/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "tk2a",
+      "name": "EX Trainer Kit 2 Plusle",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T16:51:08.187993Z",
+      "releaseDate": "2006/03/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "tk2b",
+      "name": "EX Trainer Kit 2 Minun",
+      "cardCount": 12,
+      "first_seen_at": "2026-07-10T16:51:08.187995Z",
+      "releaseDate": "2006/03/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh9",
+      "name": "Brilliant Stars",
+      "cardCount": 186,
+      "first_seen_at": "2026-07-10T16:51:08.187998Z",
+      "releaseDate": "2022/02/25",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh10",
+      "name": "Astral Radiance",
+      "cardCount": 216,
+      "first_seen_at": "2026-07-10T16:51:08.188000Z",
+      "releaseDate": "2022/05/27",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh10tg",
+      "name": "Astral Radiance Trainer Gallery",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-10T16:51:08.188003Z",
+      "releaseDate": "2022/05/27",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "pgo",
+      "name": "Pok\u00e9mon GO",
+      "cardCount": 88,
+      "first_seen_at": "2026-07-10T16:51:08.188005Z",
+      "releaseDate": "2022/07/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh11",
+      "name": "Lost Origin",
+      "cardCount": 217,
+      "first_seen_at": "2026-07-10T16:51:08.188008Z",
+      "releaseDate": "2022/09/09",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh12",
+      "name": "Silver Tempest",
+      "cardCount": 215,
+      "first_seen_at": "2026-07-10T16:51:08.188010Z",
+      "releaseDate": "2022/11/11",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "mcd22",
+      "name": "McDonald's Collection 2022",
+      "cardCount": 15,
+      "first_seen_at": "2026-07-10T16:51:08.188013Z",
+      "releaseDate": "2022/08/03",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "swsh12pt5",
+      "name": "Crown Zenith",
+      "cardCount": 160,
+      "first_seen_at": "2026-07-10T16:51:08.188016Z",
+      "releaseDate": "2023/01/20",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv1",
+      "name": "Scarlet & Violet",
+      "cardCount": 258,
+      "first_seen_at": "2026-07-10T16:51:08.188018Z",
+      "releaseDate": "2023/03/31",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "svp",
+      "name": "Scarlet & Violet Black Star Promos",
+      "cardCount": 196,
+      "first_seen_at": "2026-07-10T16:51:08.188020Z",
+      "releaseDate": "2023/01/01",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv2",
+      "name": "Paldea Evolved",
+      "cardCount": 279,
+      "first_seen_at": "2026-07-10T16:51:08.188023Z",
+      "releaseDate": "2023/06/09",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sve",
+      "name": "Scarlet & Violet Energies",
+      "cardCount": 8,
+      "first_seen_at": "2026-07-10T16:51:08.188025Z",
+      "releaseDate": "2023/03/31",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv3",
+      "name": "Obsidian Flames",
+      "cardCount": 230,
+      "first_seen_at": "2026-07-10T16:51:08.188028Z",
+      "releaseDate": "2023/08/11",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv3pt5",
+      "name": "151",
+      "cardCount": 207,
+      "first_seen_at": "2026-07-10T16:51:08.188030Z",
+      "releaseDate": "2023/09/22",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv4",
+      "name": "Paradox Rift",
+      "cardCount": 266,
+      "first_seen_at": "2026-07-10T16:51:08.188033Z",
+      "releaseDate": "2023/11/03",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv4pt5",
+      "name": "Paldean Fates",
+      "cardCount": 245,
+      "first_seen_at": "2026-07-10T16:51:08.188035Z",
+      "releaseDate": "2024/01/26",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv5",
+      "name": "Temporal Forces",
+      "cardCount": 218,
+      "first_seen_at": "2026-07-10T16:51:08.188038Z",
+      "releaseDate": "2024/03/22",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv6",
+      "name": "Twilight Masquerade",
+      "cardCount": 226,
+      "first_seen_at": "2026-07-10T16:51:08.188040Z",
+      "releaseDate": "2024/05/24",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv6pt5",
+      "name": "Shrouded Fable",
+      "cardCount": 99,
+      "first_seen_at": "2026-07-10T16:51:08.188042Z",
+      "releaseDate": "2024/08/02",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv7",
+      "name": "Stellar Crown",
+      "cardCount": 175,
+      "first_seen_at": "2026-07-10T16:51:08.188045Z",
+      "releaseDate": "2024/09/13",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv8",
+      "name": "Surging Sparks",
+      "cardCount": 252,
+      "first_seen_at": "2026-07-10T16:51:08.188047Z",
+      "releaseDate": "2024/11/08",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv8pt5",
+      "name": "Prismatic Evolutions",
+      "cardCount": 180,
+      "first_seen_at": "2026-07-10T16:51:08.188049Z",
+      "releaseDate": "2025/01/17",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv9",
+      "name": "Journey Together",
+      "cardCount": 190,
+      "first_seen_at": "2026-07-10T16:51:08.188052Z",
+      "releaseDate": "2025/03/28",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "sv10",
+      "name": "Destined Rivals",
+      "cardCount": 244,
+      "first_seen_at": "2026-07-10T16:51:08.188054Z",
+      "releaseDate": "2025/05/30",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "zsv10pt5",
+      "name": "Black Bolt",
+      "cardCount": 172,
+      "first_seen_at": "2026-07-10T16:51:08.188057Z",
+      "releaseDate": "2025/07/18",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "rsv10pt5",
+      "name": "White Flare",
+      "cardCount": 173,
+      "first_seen_at": "2026-07-10T16:51:08.188059Z",
+      "releaseDate": "2025/07/18",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "me1",
+      "name": "Mega Evolution",
+      "cardCount": 188,
+      "first_seen_at": "2026-07-10T16:51:08.188061Z",
+      "releaseDate": "2025/09/26",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "me2",
+      "name": "Phantasmal Flames",
+      "cardCount": 130,
+      "first_seen_at": "2026-07-10T16:51:08.188064Z",
+      "releaseDate": "2025/11/14",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "me2pt5",
+      "name": "Ascended Heroes",
+      "cardCount": 295,
+      "first_seen_at": "2026-07-10T16:51:08.188066Z",
+      "releaseDate": "2026/01/30",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "me3",
+      "name": "Perfect Order",
+      "cardCount": 124,
+      "first_seen_at": "2026-07-10T16:51:08.188068Z",
+      "releaseDate": "2026/03/27",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "me4",
+      "name": "Chaos Rising",
+      "cardCount": 122,
+      "first_seen_at": "2026-07-10T16:51:08.188071Z",
+      "releaseDate": "2026/05/22",
+      "notified": true
+    },
+    {
+      "source": "pokemontcg_io",
+      "observed_id": "me5",
+      "name": "Pitch Black",
+      "cardCount": 120,
+      "first_seen_at": "2026-07-18T01:00:45.637029Z",
+      "releaseDate": "2026/07/17",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "miscp",
+      "name": "Miscellaneous Promos",
+      "cardCount": 1,
+      "first_seen_at": "2026-07-19T01:01:26.521487Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "cel25cc",
+      "name": "Celebrations Classic Collection",
+      "cardCount": 25,
+      "first_seen_at": "2026-07-19T01:01:26.521541Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "swsh10.5tg",
+      "name": "Astral Radiance Trainer Gallery",
+      "cardCount": 30,
+      "first_seen_at": "2026-07-19T01:01:26.521544Z",
+      "releaseDate": "",
+      "notified": true
+    },
+    {
+      "source": "tcgdex_en",
+      "observed_id": "me05",
+      "name": "Pitch Black",
+      "cardCount": 120,
+      "first_seen_at": "2026-07-19T01:01:26.521558Z",
+      "releaseDate": "",
+      "notified": true
+    }
+  ],
+  "discovery_baseline_done": true
 }
