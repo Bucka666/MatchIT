@@ -3961,6 +3961,7 @@ def _best_price_hint(prices, cm_updated=None, tcp_updated=None, sku=None):
 @app.route("/api/pokemon-search")
 def pokemon_search():
     raw = request.args.get("q", "").strip()
+    lang = request.args.get("lang", "en").lower()
 
     matches = []
     if "/" in raw:
@@ -3977,6 +3978,8 @@ def pokemon_search():
         if not num_part:
             return jsonify({"results": [], "count": 0})
         for entry in _pokemon_search_index:
+            if entry.get("lang", "en") != lang:
+                continue
             num_match = entry["number"].startswith(num_part)
             total_match = (str(entry.get("set_total") or "") == total_part) if total_part else True
             if num_match and total_match:
@@ -3988,10 +3991,17 @@ def pokemon_search():
         if len(q) < 2:
             return jsonify({"results": [], "count": 0})
         for entry in _pokemon_search_index:
-            if entry["name"].lower().startswith(q) or entry["number"].lower().startswith(q):
-                matches.append(entry)
-                if len(matches) >= 12:
-                    break
+            if entry.get("lang", "en") != lang:
+                continue
+            if lang == "ja":
+                # JP: number search only — names are Japanese script
+                if entry["number"].lower().startswith(q):
+                    matches.append(entry)
+            else:
+                if entry["name"].lower().startswith(q) or entry["number"].lower().startswith(q):
+                    matches.append(entry)
+            if len(matches) >= 12:
+                break
 
     db_root = get_db_root()
     data_dir = get_data_dir()
@@ -6816,10 +6826,17 @@ def rebuild_mtg_set_totals():
     from the actual CardsDB contents.
 
     Set list: every set_id flagged game=="MTG" in set_metadata.json,
-    EXCLUDING set_ids where sku_game_map disagrees (e.g. me1/me2/me3/me4
-    are flagged MTG in metadata but are real Pokemon sets per
-    sku_game_map — sku_game_map is authoritative, same rule the live
-    /api/sets/completion handler already applies per-SKU).
+    EXCLUDING set_ids where sku_game_map disagrees — sku_game_map is
+    authoritative, same rule the live /api/sets/completion handler
+    already applies per-SKU.
+
+    The Mega Evolution ids are all Pokemon and all correctly flagged
+    game=="POKEMON" in metadata now, so none of them reach this filter:
+    me1/me2/me2pt5/me3 always were, me4 (Chaos Rising, 86/122) was
+    corrected from a stale MTG entry, and me5 (Pitch Black, 84/120) was
+    added as Pokemon. MTG's Masters Edition IV is unaffected — its cards
+    use the mtg-me4-* SKU prefix, not bare me4-*. The sku_game_map guard
+    is kept as defence against any future metadata/SKU mismatch.
     """
     set_metadata = _load_set_metadata()
     candidate_ids = []

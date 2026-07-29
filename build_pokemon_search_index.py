@@ -5,7 +5,7 @@ Self-contained: iterates CardsDB/pokemon/*/profile.json directly (same pattern a
 rebuild_identifier_lookup in app.py — does NOT depend on sku_game_map.json freshness,
 so it is order-independent within the scheduler chain).
 
-English-only for now: jpn- prefixed SKUs are skipped.
+JP cards with images in images.db are included; all others are skipped.
 
 Entry shape (one per English Pokémon SKU):
     {
@@ -25,6 +25,7 @@ or run directly as a script for a manual local rebuild against C:\\CardsDB.
 """
 import json
 import os
+import sqlite3
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
@@ -45,6 +46,7 @@ def build_pokemon_search_index(data_root="."):
     # by set_id. Use printed_total (the on-card denominator, e.g. "/102"), falling
     # back to total. Map is read-only after build, safe to share across threads.
     set_totals = {}
+    _meta = {}
     set_meta_path = os.path.join(data_root, "set_metadata.json")
     try:
         with open(set_meta_path, "r", encoding="utf-8") as f:
@@ -60,12 +62,37 @@ def build_pokemon_search_index(data_root="."):
     except Exception as e:
         print(f"[PKM-SEARCH] WARN no set_metadata.json ({e}) — set_total will be null", flush=True)
 
+    # JP set-id normalisation: profile stores "SV4a", metadata key is "jpn-sv4a"
+    jp_setid_map = {}   # suffix.lower() → full jpn-... key
+    jp_setnames  = {}   # jpn-... key   → English name from set_metadata if present
+    for _sid, _entry in _meta.items():
+        if _sid.startswith("jpn-"):
+            _suffix = _sid[4:].lower()
+            jp_setid_map[_suffix] = _sid
+            if isinstance(_entry, dict):
+                _n = _entry.get("name", "")
+                if _n and _n != _sid:
+                    jp_setnames[_sid] = _n
+    print(f"[PKM-SEARCH] JP set-id map: {len(jp_setid_map)} entries", flush=True)
+
+    # JP image filter: only include JP cards present in images.db (~4,294 with R2 thumbnails)
+    imaged_jp_skus = set()
+    images_db_path = os.path.join(data_root, "MatchITv2_ProductMatch_Data", "cards", "images.db")
+    try:
+        with sqlite3.connect(images_db_path) as _conn:
+            _rows = _conn.execute("SELECT sku FROM images WHERE sku LIKE 'jpn-%'").fetchall()
+            imaged_jp_skus = {r[0] for r in _rows}
+        print(f"[PKM-SEARCH] {len(imaged_jp_skus)} imaged JP SKUs from images.db", flush=True)
+    except Exception as e:
+        print(f"[PKM-SEARCH] WARN could not load images.db ({e}) — JP cards will be excluded", flush=True)
+
     def _read_one(d):
         sku_dir = d.name
         if sku_dir.startswith("_"):
             return None
-        if sku_dir.startswith("jpn-"):          # English-only for now
-            return None
+        is_jp = sku_dir.startswith("jpn-")
+        if is_jp and sku_dir not in imaged_jp_skus:
+            return None   # JP card with no R2 image — skip
         profile_path = os.path.join(d.path, "profile.json")
         if not os.path.isfile(profile_path):
             return None
@@ -81,8 +108,17 @@ def build_pokemon_search_index(data_root="."):
 
         name = str(p.get("name") or "").strip()
         number = str(p.get("card_number") or "").strip()   # verbatim, unpadded
+        # Strip leading zeros for consistency with EN (so "001" → "1", matching normalizeQuery)
+        if number.isdigit():
+            number = str(int(number))
         set_id = str(p.get("set_id") or "").strip()
-        set_name = str(p.get("set_name") or "").strip() or set_id
+        lang = str(p.get("lang") or "en").lower()
+
+        # JP profiles store "SV4a"; normalise to the "jpn-sv4a" key used everywhere else
+        meta_set_id = jp_setid_map.get(set_id.lower(), "jpn-" + set_id.lower()) if is_jp else set_id
+        set_name_raw = str(p.get("set_name") or "").strip()
+        # Prefer English name from set_metadata, fall back to profile value, then set code
+        set_name = (jp_setnames.get(meta_set_id) if is_jp else None) or set_name_raw or meta_set_id
 
         if not name or not number:
             return None
@@ -116,9 +152,10 @@ def build_pokemon_search_index(data_root="."):
             "sku":       sku_dir,
             "name":      name,
             "number":    number,
-            "set_id":    set_id,
+            "set_id":    meta_set_id,
             "set_name":  set_name,
-            "set_total": set_totals.get(set_id),   # str (printed_total) or None
+            "set_total": set_totals.get(meta_set_id),
+            "lang":      lang,
             "price":     price_val,
             "currency":  price_currency,
             "img":       str(p.get("image_url_small") or "").strip() or None,
@@ -145,8 +182,10 @@ def build_pokemon_search_index(data_root="."):
         json.dump(index, f, ensure_ascii=False, separators=(",", ":"))
     os.replace(tmp_path, out_path)
 
-    print(f"[PKM-SEARCH] Built {len(index)} English Pokémon entries "
-          f"(scanned={seen}, skipped={skipped}) -> {out_path}", flush=True)
+    en_count = sum(1 for e in index if e.get("lang", "en") == "en")
+    jp_count  = sum(1 for e in index if e.get("lang") == "ja")
+    print(f"[PKM-SEARCH] Built {len(index)} entries (EN={en_count} JP={jp_count}) "
+          f"scanned={seen} skipped={skipped} -> {out_path}", flush=True)
 
     return {"total": len(index), "skipped": skipped, "out_path": out_path}
 

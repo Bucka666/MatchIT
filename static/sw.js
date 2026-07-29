@@ -1,12 +1,13 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
-// v117 (2026-07-22) — landing page (lpUpgrade) fix: added the missing Play
-// Billing branch so Android TWA users route correctly instead of falling
-// through to Stripe. Also removes the temporary DBG diagnostic alert used
-// to confirm gsHasPlayBilling()/UA values on a real device.
+// v118 (2026-07-28) — JP cards added to the collector search catalogue.
+// The bump is REQUIRED, not cosmetic: '/api/search-index/pokemon' is in
+// PRECACHE, and activate() only evicts caches whose key !== CACHE_NAME, so
+// installed users would otherwise keep the old JP-less index indefinitely
+// and never see the EN/JP toggle on a runtime-cached /search.
 // This comment ALSO changes the file's byte size on purpose — a bare version
-// bump (v116 -> v117) is the same length and gets silently skipped by Modal's
+// bump (v117 -> v118) is the same length and gets silently skipped by Modal's
 // add_local_dir mount diff, reusing the cached image (see CLAUDE.md gotcha).
-const CACHE_NAME = 'grailsweep-v117';
+const CACHE_NAME = 'grailsweep-v118';
 const PRECACHE = [
   '/',
   '/static/style.css',

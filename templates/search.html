@@ -87,12 +87,24 @@
   </header>
 
   <main class="gs-wrap">
+    <div id="gsLangToggle" style="display:flex;gap:8px;margin:0 0 12px;">
+      <button class="gs-lang-btn gs-lang-btn--active" data-lang="en"
+              style="flex:1;padding:8px 12px;border-radius:20px;border:1px solid #b14dff;
+                     background:#b14dff;color:#fff;font-size:0.85rem;font-weight:600;cursor:pointer;">
+        🇬🇧 English
+      </button>
+      <button class="gs-lang-btn" data-lang="ja"
+              style="flex:1;padding:8px 12px;border-radius:20px;border:1px solid #b14dff;
+                     background:transparent;color:#b14dff;font-size:0.85rem;font-weight:600;cursor:pointer;">
+        🇯🇵 Japanese
+      </button>
+    </div>
     <div class="gs-search-box" id="gsSearchBox">
       <input id="gsSearchInput" type="text" autocomplete="off" autocapitalize="off"
              spellcheck="false" autofocus
              placeholder="Card name or number, e.g. Charizard or 032/165">
     </div>
-    <p class="gs-hint">English Pokémon cards. Type a name or collector number.</p>
+    <p class="gs-hint" id="gsSearchHint">English Pokémon cards. Type a name or collector number.</p>
 
     <div id="gsOfflineKit" style="display:none;
       margin:12px 0 16px;
@@ -247,6 +259,10 @@
         var q = raw.trim().toLowerCase();
         var results = [];
         var slash = q.indexOf('/');
+        // Offline mode is EN-only (JP has no downloadable images), but the shared
+        // index now carries JP entries — filter them out so a number query like
+        // "001" can't surface JP cards in an English offline search.
+        index = index.filter(function(e) { return (e.lang || 'en') !== 'ja'; });
 
         if (slash >= 0) {
           var numPart = q.slice(0, slash).trim();
@@ -431,6 +447,44 @@
       });
     }
 
+    var currentLang = 'en';
+
+    document.querySelectorAll('.gs-lang-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        currentLang = btn.dataset.lang;
+        document.querySelectorAll('.gs-lang-btn').forEach(function(b) {
+          var active = b.dataset.lang === currentLang;
+          b.style.background = active ? '#b14dff' : 'transparent';
+          b.style.color = active ? '#fff' : '#b14dff';
+        });
+        var input = document.getElementById('gsSearchInput');
+        var hint  = document.getElementById('gsSearchHint');
+        var offlineKit = document.getElementById('gsOfflineKit');
+        if (currentLang === 'ja') {
+          input.placeholder = 'Collector number, e.g. 001 or 001/165';
+          hint.textContent  = 'Japanese Pokémon cards. Search by collector number.';
+          // Hide Card Show Mode — not available for JP
+          if (offlineKit) offlineKit.style.display = 'none';
+        } else {
+          input.placeholder = 'Card name or number, e.g. Charizard or 032/165';
+          hint.textContent  = 'English Pokémon cards. Type a name or collector number.';
+          // Restore only for Pro — same gate as the block's initial reveal below,
+          // so toggling JP→EN can't expose Card Show Mode to a free user.
+          if (offlineKit) {
+            var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
+            offlineKit.style.display = isPro ? 'block' : 'none';
+          }
+        }
+        // Clear results and re-run current query in new language
+        input.value = '';
+        var resultsBox = document.getElementById('gsResults');
+        if (resultsBox) resultsBox.innerHTML = '';
+        noResults.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        input.focus();
+      });
+    });
+
     function doSearch(raw) {
       var q = normalizeQuery(raw);
       if (q.length < 2) {
@@ -443,7 +497,7 @@
       box.classList.add('loading');
       var thisQuery = q;
       lastQuery = q;
-      fetch('/api/pokemon-search?q=' + encodeURIComponent(q))
+      fetch('/api/pokemon-search?q=' + encodeURIComponent(q) + '&lang=' + currentLang)
         .then(function(r){ return r.json(); })
         .then(function(d){
           if (thisQuery !== lastQuery) return; // stale response, ignore
@@ -459,6 +513,10 @@
         })
         .catch(function(){
           if (thisQuery !== lastQuery) return;
+          if (currentLang === 'ja') {
+            box.classList.remove('loading');
+            return; // JP search requires internet connection
+          }
           box.classList.remove('loading');
           _gsOfflineMode = true;
           document.getElementById('gsOfflineBanner').style.display = 'block';
