@@ -1278,11 +1278,27 @@ def _pokemontcg_set_lookup(set_id: str) -> Optional[Dict]:
         return None
 
 
-def _pokemontcg_first_card_imaged(set_id: str) -> bool:
+def _pokemontcg_first_card_imaged(set_id: str) -> Optional[bool]:
     """Cheap existence check: does at least one card in this set have
     image_url_large populated yet? Same field shape build_profile() reads.
-    Used by both the final-print gate and the Phase 6 latency probe."""
-    import urllib.request, urllib.parse
+    Used by both the final-print gate and the Phase 6 latency probe.
+
+    Three-state, so an upstream outage cannot masquerade as a genuinely
+    unimaged set. The old `except Exception: return False` meant any 500
+    or network blip stalled a set at catalog_ingested indefinitely while
+    logging a misleading "no images yet" (observed 2026-07-28, when
+    pokemontcg.io's ?q= endpoints 500'd and held Pitch Black back after
+    its cards had already been scraped successfully).
+
+      True  — at least one card has a large image
+      False — 200 from the API, but no cards / no image yet (genuine)
+      None  — upstream error (non-200, network, parse); state unknown,
+              caller should retry next tick rather than treat as blocked
+
+    Note both are falsy: callers that only care about the positive case
+    (e.g. the latency probe's first_imaged_at stamp) can keep using a
+    plain truth test and correctly decline to stamp on an unknown."""
+    import urllib.request, urllib.parse, urllib.error
     try:
         q = urllib.parse.quote(f"set.id:{set_id}")
         req = urllib.request.Request(
@@ -1290,11 +1306,21 @@ def _pokemontcg_first_card_imaged(set_id: str) -> bool:
             headers={"User-Agent": "Mozilla/5.0"}
         )
         with urllib.request.urlopen(req, timeout=15) as resp:
+            if resp.status != 200:
+                logger.warning(f"[INGEST-GATE] set_id={set_id} upstream_error status={resp.status}")
+                return None
             data = json.loads(resp.read())
-        cards = data.get("data") or []
-        return bool(cards and cards[0].get("images", {}).get("large"))
-    except Exception:
+    except urllib.error.HTTPError as e:
+        logger.warning(f"[INGEST-GATE] set_id={set_id} upstream_error status={e.code}")
+        return None
+    except Exception as e:
+        logger.warning(f"[INGEST-GATE] set_id={set_id} upstream_error status={type(e).__name__}")
+        return None
+    cards = data.get("data") or []
+    if not cards:
+        logger.info(f"[INGEST-GATE] set_id={set_id} genuine_empty — no cards at source")
         return False
+    return bool(cards[0].get("images", {}).get("large"))
 
 
 def _tcgdex_en_listing() -> List[Dict]:
@@ -1444,7 +1470,17 @@ def _try_index_server(entry: Dict, today: str, dry_run: bool, embed_fn=None) -> 
         return {"ok": False, "gate": "pre_release", "release_date": release_date, "today": today}
 
     set_id = entry.get("source_ids", {}).get("pokemontcg_io")
-    if not set_id or not _pokemontcg_first_card_imaged(set_id):
+    if not set_id:
+        return {"ok": False, "gate": "no_images_yet"}
+
+    imaged = _pokemontcg_first_card_imaged(set_id)
+    if imaged is None:
+        # Upstream error — we genuinely don't know whether images exist, so
+        # don't report a definitive block. Same no-op effect this tick (state
+        # is unchanged either way), but the distinct gate makes a stalled set
+        # attributable to the API rather than looking like a real gate miss.
+        return {"ok": False, "gate": "upstream_unavailable", "retry_next_tick": True}
+    if not imaged:
         return {"ok": False, "gate": "no_images_yet"}
 
     if dry_run:

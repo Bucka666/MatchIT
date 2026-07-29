@@ -908,6 +908,139 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
     print(f"[REBUILD] Done ({mode_label}). Volume committed.", flush=True)
 
 
+@app.function(image=image, volumes={"/modal_data": vol}, timeout=3600)
+def rebuild_identifier_lookup_only():
+    """Standalone entry point for rebuild_identifier_lookup.
+    Scoped to just the identifier_lookup.json rebuild — does not touch
+    set_metadata.json or sku_game_map.json. Safe to run in isolation."""
+    import os, sys
+    os.chdir("/app"); sys.path.insert(0, "/app")
+    os.environ["LOCALAPPDATA"] = "/modal_data"
+    vol.reload(); _fix_vertical_config()
+    from app import rebuild_identifier_lookup
+    result = rebuild_identifier_lookup()
+    vol.commit()
+    print(f"[REBUILD-LOOKUP] {result}")
+    return result
+
+
+@app.function(image=image, volumes={"/modal_data": vol}, timeout=600)
+def rebuild_identifier_lookup_delta(set_ids: str = ""):
+    """Delta rebuild of identifier_lookup.json for specific set IDs only.
+    Reads only the profile.json files for the given sets, then merges the
+    new entries into the existing file rather than a full rescan.
+    Used when a new set is ingested and only its entries need adding.
+
+    Why this exists: the full rebuild_identifier_lookup() stats+reads every
+    profile.json in CardsDB (~136k files) over the network volume, which
+    does NOT complete inside 3600s (observed 2026-07-28, twice). Scanning
+    two sets is ~242 reads instead, so this finishes in seconds.
+
+    Key shape is deliberately IDENTICAL to the full rebuild — same
+    {set_id}-{card_number} form, same jpn- handling, same lowercasing,
+    same first-write-wins collision rule, same per-game bucketing off
+    profile["category"]. A delta must be semantically indistinguishable
+    from a full rescan or the two will diverge over time. In particular it
+    does NOT add bare card-number keys: the full rebuild never creates
+    those, and a global "38" -> me5-38 key would hijack lookups for every
+    other set's card 38.
+
+    set_ids accepts a JSON list ('["me4","me5"]') or a comma-separated
+    string ("me4,me5").
+    """
+    # `re` is NOT imported at module level in this file — the YUGIOH
+    # passcode branch below needs it, so import it locally.
+    import os, sys, json, re
+    os.chdir("/app"); sys.path.insert(0, "/app")
+    os.environ["LOCALAPPDATA"] = "/modal_data"
+    vol.reload(); _fix_vertical_config()
+
+    raw = (set_ids or "").strip()
+    if raw.startswith("["):
+        wanted = [str(s).strip().lower() for s in json.loads(raw) if str(s).strip()]
+    else:
+        wanted = [s.strip().lower() for s in raw.split(",") if s.strip()]
+    if not wanted:
+        raise ValueError("set_ids is required, e.g. --set-ids 'me4,me5'")
+
+    lookup_path = "/modal_data/identifier_lookup.json"
+    cards_root = "/modal_data/CardsDB"
+
+    with open(lookup_path, encoding="utf-8") as f:
+        lookup = json.load(f)
+    before = {g: len(lookup.get(g, {})) for g in ("pokemon", "mtg", "ygo")}
+
+    added = 0
+    collisions = 0
+    scanned = 0
+
+    def add_key(game, key, sku):
+        # First-write-wins, same rule as the full rebuild.
+        nonlocal added, collisions
+        if not key:
+            return
+        sub = lookup.setdefault(game, {})
+        if key in sub:
+            if sub[key] != sku:
+                collisions += 1
+            return
+        sub[key] = sku
+        added += 1
+
+    for game_dir in ("pokemon", "mtg", "yugioh"):
+        game_path = os.path.join(cards_root, game_dir)
+        if not os.path.isdir(game_path):
+            continue
+        # ONE listdir per game dir; only matching folders get a file read.
+        for folder in os.listdir(game_path):
+            if not any(folder.lower().startswith(sid + "-") for sid in wanted):
+                continue
+            profile_path = os.path.join(game_path, folder, "profile.json")
+            if not os.path.isfile(profile_path):
+                continue
+            try:
+                with open(profile_path, encoding="utf-8") as pf:
+                    p = json.load(pf)
+            except Exception as e:
+                print(f"[LOOKUP-DELTA] WARN could not read {profile_path}: {e}")
+                continue
+            scanned += 1
+            sku = folder
+            card_number = str(p.get("card_number") or "").strip()
+            set_id = str(p.get("set_id") or "").strip()
+            category = str(p.get("category") or "").upper().strip()
+
+            if category == "POKEMON":
+                if not card_number or not set_id:
+                    continue
+                key = (f"jpn-{set_id}-{card_number}" if folder.startswith("jpn-")
+                       else f"{set_id}-{card_number}").lower()
+                add_key("pokemon", key, sku)
+            elif category == "MTG":
+                if not card_number or not set_id:
+                    continue
+                add_key("mtg", f"{set_id}-{card_number}".lower(), sku)
+            elif category == "YUGIOH":
+                if card_number:
+                    add_key("ygo", card_number.upper(), sku)
+                ygoprodeck_id = str(p.get("ygoprodeck_id") or "").strip()
+                if ygoprodeck_id and re.match(r"^\d{5,8}$", ygoprodeck_id):
+                    add_key("ygo", ygoprodeck_id, sku)
+
+    tmp = lookup_path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(lookup, f, ensure_ascii=False, separators=(",", ":"))
+    os.replace(tmp, lookup_path)
+    vol.commit()
+
+    after = {g: len(lookup.get(g, {})) for g in ("pokemon", "mtg", "ygo")}
+    result = (f"added {added} entries for sets {wanted} "
+              f"(profiles scanned={scanned}, collisions={collisions}, "
+              f"before={before}, after={after})")
+    print(f"[LOOKUP-DELTA] {result}")
+    return result
+
+
 @app.local_entrypoint()
 def rebuild_lookup_files_local():
     rebuild_lookup_files.remote()

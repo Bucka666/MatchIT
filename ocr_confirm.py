@@ -129,7 +129,7 @@ _PKM_SETCODE_MAP = {
     "ASC": "me2pt5",    # Ascended Heroes
     "MEG": "me1",       # Mega Evolution 1 (printed on card face)
     "POR": "me3",       # Perfect Order (EN printed set code)
-    "PBL": "me05",       # Pitch Black
+    "PBL": "me5",       # Pitch Black
     "GG": "swsh12pt5gg",  # Crown Zenith Galarian Gallery
 }
 
@@ -579,9 +579,18 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
     total = None
     set_code = None
     all_text = " ".join(texts).upper()
-    # Look for SV era set code in all extracted text
+    # Only scan the card-number-bearing line for the setcode.
+    # Scanning all pooled text causes rule-box text ("MEGA EVOLUTION EX RULE")
+    # to match MEG before the actual setcode on the number line matches PBL.
+    # .upper() matches all_text's normalisation — map keys are uppercase.
+    _number_line = next(
+        (ln.upper() for ln in texts if re.search(r'\d{1,4}\s*/\s*\d{1,4}', ln)),
+        None
+    )
+    _scan_text = _number_line if _number_line else all_text
+    logger.info(f"[OCR-PKM] setcode scan text: {_scan_text!r}")
     for code, db_id in _PKM_SETCODE_MAP.items():
-        if code in all_text:
+        if code in _scan_text:
             set_code = db_id
             break
     # JP set code fallback — check individual OCR tokens against JP map
@@ -949,6 +958,10 @@ def _denominator_blocks_promotion(candidate_sku, ocr_denominator, set_metadata, 
     missing/null/wrong-game data -> False (allow).
     """
     if not ocr_denominator or not candidate_sku or not set_metadata:
+        logger.debug(
+            f"[DENOM-VETO] fail-open: denom={ocr_denominator!r} "
+            f"sku={candidate_sku!r} meta={'yes' if set_metadata else 'no'}"
+        )
         return False
     set_id = candidate_sku.rsplit("-", 1)[0]
     meta = _trusted_set_meta(set_id, set_metadata, expected_game)
