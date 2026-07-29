@@ -1,4 +1,10 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
+// v120 (2026-07-29) — iOS resubmission: the subscription cancellation sentence on
+// /upgrade is now platform-aware (iOS -> Settings > Apple ID > Subscriptions,
+// Android -> Play Store > Subscriptions, web -> account settings), toggled by the
+// same IIFE in base.html that gates the store badges. Bump REQUIRED because that
+// IIFE lives in base.html and '/' is in PRECACHE, so installed users would keep
+// running the v119 script that has no cancellation-text branch at all.
 // v119 (2026-07-29) — iOS resubmission: store badges are now platform-gated in
 // base.html (Play badge hidden in the iOS app, App Store badge hidden in the
 // Android TWA) and upgrade.html gained the auto-renewing-subscription
@@ -13,7 +19,7 @@
 // This comment ALSO changes the file's byte size on purpose — a bare version
 // bump (v117 -> v118) is the same length and gets silently skipped by Modal's
 // add_local_dir mount diff, reusing the cached image (see CLAUDE.md gotcha).
-const CACHE_NAME = 'grailsweep-v119';
+const CACHE_NAME = 'grailsweep-v120';
 const PRECACHE = [
   '/',
   '/static/style.css',

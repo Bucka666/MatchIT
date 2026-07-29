@@ -1588,6 +1588,24 @@ function gsIsWatchlisted(sku) {
         el.style.display = 'none';
       });
     }
+
+    // Subscription cancellation text — show correct version per platform.
+    // Targets live in upgrade.html's {% raw %}{% block body %}{% endraw %} (rendered at base.html
+    // line ~982, i.e. earlier in the document than this script), so they are
+    // already in the DOM here. Absent on every other page — the null guards
+    // make this a no-op there.
+    if (gsIsRunningInIOSApp()) {
+      var el = document.querySelector('.gs-cancel-ios');
+      if (el) el.style.display = 'inline';
+      var web = document.querySelector('.gs-cancel-web');
+      if (web) web.style.display = 'none';
+    } else if (gsHasPlayBilling()) {
+      var el2 = document.querySelector('.gs-cancel-android');
+      if (el2) el2.style.display = 'inline';
+      var web2 = document.querySelector('.gs-cancel-web');
+      if (web2) web2.style.display = 'none';
+    }
+    // Web/Stripe: gs-cancel-web already visible, others hidden
   })();
 
 (function() {
