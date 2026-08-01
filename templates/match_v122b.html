@@ -99,12 +99,7 @@
                style="display:none;padding:8px 14px;border-radius:8px;margin-bottom:8px;font-size:0.85rem;">
             <!-- Populated by _updateScanBadge() -->
           </div>
-          <!-- gs-web-only: top-up codes are emailed for web/Stripe purchases.
-               iOS buys top-ups via StoreKit and receives no code, so a free-tier
-               reviewer must not see a redeem flow that cannot work. The existing
-               hide at _updateScanBadge() only fires for paid tiers, which left
-               this visible to free iOS users. -->
-          <div id="cxTopupRedeemRow" class="gs-web-only"
+          <div id="cxTopupRedeemRow"
                style="font-size:0.78rem;color:rgba(255,255,255,0.5);">
             Have a top-up code?
             <a href="#"

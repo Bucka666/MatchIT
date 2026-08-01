@@ -54,21 +54,6 @@ _TCP_FIELD_MAP = [
     ("high",   "highPrice"),
 ]
 
-# PokéWallet raw field names, keyed by the TCGdex-raw name _TCP_FIELD_MAP
-# uses. This bridge exists so _fetch_pokewallet_prices drives its output off
-# _TCP_FIELD_MAP rather than hardcoding its own field list — the two writers
-# then share one mapping and cannot drift apart. They previously did: the
-# PokéWallet path emitted variant key "Holofoil" with raw camelCase fields
-# (marketPrice/...), while the TCGdex path emits "holofoil" with normalised
-# fields (market/...), so every PokéWallet-priced card was invisible to
-# _best_price_hint's tcg.get("holofoil")/.get("market") lookup.
-_PW_SRC = {
-    "marketPrice": "market_price",
-    "midPrice":    "mid_price",
-    "lowPrice":    "low_price",
-    "highPrice":   "high_price",
-}
-
 # pokemontcg.io set_id → TCGdex set_id for the sets whose names don't
 # normalize-match TCGdex (the 11 resolvable misses; 3 absent sets — cel25c,
 # sve, svp — are deliberately omitted and skip gracefully).
@@ -260,23 +245,23 @@ def _fetch_pokewallet_prices(pw_set_id: str, card_number: str) -> dict | None:
                 tcp = card.get("tcgplayer")
                 if not tcp:
                     return None
-                # Emit the SAME shape _build_price_fields produces for the
-                # TCGdex path: lowercase variant key + normalised field names,
-                # driven off _TCP_FIELD_MAP so the two writers share one
-                # mapping. None values are dropped by the comprehension.
-                variant = {
-                    out_key: tcp.get(_PW_SRC[src_key])
-                    for out_key, src_key in _TCP_FIELD_MAP
-                    if tcp.get(_PW_SRC[src_key]) is not None
+                # Map PokéWallet field names to _TCP_FIELD_MAP shape
+                tcp_prices = {
+                    "Holofoil": {
+                        "marketPrice": tcp.get("market_price"),
+                        "midPrice":    tcp.get("mid_price"),
+                        "lowPrice":    tcp.get("low_price"),
+                        "highPrice":   tcp.get("high_price"),
+                    }
                 }
-                if not variant:
+                # Strip None values
+                tcp_prices["Holofoil"] = {
+                    k: v for k, v in tcp_prices["Holofoil"].items()
+                    if v is not None
+                }
+                if not tcp_prices["Holofoil"]:
                     return None
-                tcp_prices = {"holofoil": variant}
                 updated = tcp.get("updated_at", "")
-                # NOTE: cardmarket is {} here, and the caller assigns
-                # profile["prices"] wholesale — so a PokéWallet refresh
-                # discards any existing Cardmarket data for these five sets.
-                # Left as-is deliberately; separate concern from the shape fix.
                 return {
                     "tcgplayer":  tcp_prices,
                     "cardmarket": {},

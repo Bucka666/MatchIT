@@ -1,10 +1,4 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
-// v124 (2026-08-01) — TEMPORARY DIAGNOSTIC BUILD. Adds a 'message' handler so a
-// page can ask the ACTIVE controller to name its CACHE_NAME, feeding the
-// #gsDiagPill banner on /contact. Purpose: observe, on-device, (a) which SW
-// actually controls the document, (b) whether the new HTML reached the WebView,
-// (c) whether gsIsRunningInIOSApp() is true on that page load. REMOVE this
-// handler and the pill before App Store resubmit.
 // v123 (2026-08-01) — ROOT-CAUSE FIX: navigation requests are now network-first.
 // The previous stale-while-revalidate branch returned the cached page whenever
 // one existed, so the installed iOS app rendered pre-v122 HTML indefinitely —
@@ -58,7 +52,7 @@
 // This comment ALSO changes the file's byte size on purpose — a bare version
 // bump (v117 -> v118) is the same length and gets silently skipped by Modal's
 // add_local_dir mount diff, reusing the cached image (see CLAUDE.md gotcha).
-const CACHE_NAME = 'grailsweep-v124';
+const CACHE_NAME = 'grailsweep-v123';
 const PRECACHE = [
   '/',
   '/static/style.css',
@@ -86,16 +80,6 @@ self.addEventListener('activate', event => {
       Promise.all(keys.filter(k => k !== CACHE_NAME && k !== 'gs-images-v1').map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
-});
-
-// TEMPORARY DIAGNOSTIC (added v124) — lets a page ask the ACTIVE controller
-// which CACHE_NAME it is running, so we can see whether an old SW is still
-// controlling the document. If no reply arrives, the controller predates v124.
-// Remove together with the #gsDiagPill block in contact.html before resubmit.
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'GS_VERSION' && event.ports && event.ports[0]) {
-    event.ports[0].postMessage({ cache: CACHE_NAME });
-  }
 });
 
 const IMAGE_HOSTS = ['images.grailsweep.com',

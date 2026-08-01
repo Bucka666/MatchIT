@@ -228,12 +228,7 @@
         <p class="gs-feature-desc">Every photo match and scan gets an instant auto-grade. Pro users can request a Claude Vision deep grade — assessing centering, corners, edges and surface with a detailed breakdown. Monthly: 10/month · Ultimate Plan: 20/month. <span class="gs-feature-pro-tag">Pro</span></p>
       </div>
 
-      <!-- gs-referral-web: the referral discount is a Stripe coupon
-           (GRAILSWEEP_REFERRAL) and exists on web/Play/Microsoft only. There is
-           no iOS equivalent, so advertising "first month for £3.39" inside the
-           iOS app would promise a discount that cannot be redeemed there.
-           Hidden on iOS by the platform IIFE in base.html. -->
-      <div class="gs-feature gs-referral-web" id="featureReferral">
+      <div class="gs-feature" id="featureReferral">
         <div class="gs-feature-icon">🎁</div>
         <h3 class="gs-feature-title">Refer a Friend</h3>
         <p class="gs-feature-desc">Love GrailSweep? Share your referral code with friends. They get their first month for £3.39 — you get a free month added for every friend who subscribes. Up to 10 free months per year. <span class="gs-feature-pro-tag">Pro</span></p>
@@ -331,31 +326,6 @@
       </div>
 
     </div>
-
-    <!-- App Store guideline 3.1.2(c): lpUpgrade() routes to real StoreKit on
-         iOS, so the pricing controls need title, length, price and functional
-         Terms/Privacy links alongside them — the base.html footer links are
-         too far from the purchase action to satisfy this. Full /upgrade
-         wording here (unlike the condensed #gsTopupModal copy) since the
-         section has room and the cards already state length explicitly. -->
-    <p class="gs-sub-legal">
-      GrailSweep Pro Monthly (<span class="gs-legal-price-monthly">£4.39</span>/month)
-      and GrailSweep Ultimate
-      (<span class="gs-legal-price-annual">£34.99</span>/year)
-      are auto-renewing subscriptions. Your subscription
-      will automatically renew unless cancelled at least 24 hours before
-      the end of the current period.
-      <span class="gs-cancel-ios" style="display:none">Manage or cancel
-      your subscription in your iPhone/iPad Settings → Apple ID →
-      Subscriptions.</span>
-      <span class="gs-cancel-android" style="display:none">Manage or
-      cancel your subscription in the Google Play Store → Subscriptions.</span>
-      <span class="gs-cancel-web">Manage or cancel your subscription
-      in your account settings at any time.</span>
-      By subscribing you agree to our
-      <a href="/terms" target="_blank">Terms of Use</a> and
-      <a href="/privacy" target="_blank">Privacy Policy</a>.
-    </p>
   </div>
 </section>
 

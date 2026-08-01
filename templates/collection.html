@@ -1395,6 +1395,10 @@ function gsColLoadReferral() {
 }
 
 function gsColCopyRef() {
+  // Defence in depth: #colReferralBox is already hidden on iOS by
+  // gsColLoadReferral(), so this is unreachable there — but the message it
+  // builds hardcodes the £3.39 referral price, which does not exist on iOS.
+  if (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp()) return;
   var el = document.getElementById('colRefCode');
   var code = '';
   el.childNodes.forEach(function(node) {
@@ -1423,6 +1427,9 @@ function gsColCopyRef() {
 }
 
 function gsColShareRef() {
+  // Same guard as gsColCopyRef — the share text hardcodes the £3.39 referral
+  // price, which has no iOS equivalent.
+  if (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp()) return;
   var code = document.getElementById('colRefCode').textContent;
   var shareData = {
     title: 'GrailSweep \u2014 AI Card Scanner',

@@ -492,17 +492,6 @@ document.addEventListener('DOMContentLoaded', () => {
             disclaimer.innerHTML = '<p>Payments are processed securely through Google Play. Your subscription is managed via your Google Play account.</p>';
         }
     }
-    // iOS branch — previously absent, so the App Store build kept showing the
-    // web copy ("processed securely by Stripe on our website… enter the code
-    // emailed to you"). That steers to non-Apple payment (3.1.1) and describes
-    // a code flow that does not exist on iOS. This is the /upgrade screen a
-    // reviewer lands on from the ⚡ Pro pill.
-    if (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp()) {
-        var iosDisclaimer = document.getElementById('upgradeStripeDisclaimer');
-        if (iosDisclaimer) {
-            iosDisclaimer.innerHTML = '<p>Subscribe securely through the App Store. Your Pro access is tied to your Apple ID — manage or cancel anytime in Settings &rarr; Apple ID &rarr; Subscriptions.</p>';
-        }
-    }
 });
 
 async function handleUpgrade(tier) {

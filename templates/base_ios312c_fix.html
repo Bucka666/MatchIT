@@ -756,24 +756,6 @@
         white-space: nowrap !important;
       }
     }
-
-    /* Subscription disclosure (App Store guideline 3.1.2(c)) — shared so the
-       same block renders identically on /upgrade, the #gsTopupModal paywall
-       and landing.html's pricing section. Previously scoped to upgrade.html
-       only, which would have left the modal and landing copies unstyled. */
-    .gs-sub-legal {
-      font-size: 0.72rem;
-      color: rgba(255,255,255,0.45);
-      line-height: 1.5;
-      text-align: center;
-      max-width: 480px;
-      margin: 12px auto 0;
-      padding: 0 16px;
-    }
-    .gs-sub-legal a {
-      color: rgba(255,255,255,0.65);
-      text-decoration: underline;
-    }
   </style>
 
     <!-- SEO Meta Tags -->
@@ -1373,29 +1355,6 @@ function gsIsWatchlisted(sku) {
         Hitting the cap regularly? Tell us about it →
       </a>
     </div>
-
-    <!-- App Store guideline 3.1.2(c): this modal purchases via real StoreKit
-         (gsTopupBuy -> gsIosPurchase), so it must itself carry title, length,
-         price and functional Terms/Privacy links. Condensed vs /upgrade's
-         copy to fit the 420px dialog; the auto-renew sentence is required and
-         is NOT trimmed. Length is explicit here ("1 month"/"1 year") because
-         the buttons show only "/mo" and "/yr". -->
-    <p class="gs-sub-legal">
-      GrailSweep Pro (<span class="gs-legal-price-monthly">£4.39</span>/month,
-      1 month) and GrailSweep Ultimate
-      (<span class="gs-legal-price-annual">£34.99</span>/year, 1 year)
-      are auto-renewing subscriptions that renew
-      unless cancelled at least 24 hours before the period ends.
-      <span class="gs-cancel-ios" style="display:none">Manage or cancel in
-      Settings → Apple ID → Subscriptions.</span>
-      <span class="gs-cancel-android" style="display:none">Manage or cancel
-      in Google Play → Subscriptions.</span>
-      <span class="gs-cancel-web">Manage or cancel anytime in your account
-      settings.</span>
-      By subscribing you agree to our
-      <a href="/terms" target="_blank">Terms of Use</a> and
-      <a href="/privacy" target="_blank">Privacy Policy</a>.
-    </p>
   </div>
 </div>
 
@@ -1493,19 +1452,12 @@ function gsIsWatchlisted(sku) {
         document.querySelectorAll('.upgrade-referral-desc').forEach(el => {
           el.innerHTML = el.innerHTML.replace(/£[\d.]+(?=\.)/g, mp);
         });
-        // 3.1.2(c): keep the subscription disclosures in step with the
-        // button price. These spans contain ONLY the amount — the period
-        // ("/month") and the length ("1 month") sit OUTSIDE them in the
-        // markup, so overwriting textContent here cannot delete the length
-        // disclosure, which is itself one of Apple's four required elements.
-        document.querySelectorAll('.gs-legal-price-monthly').forEach(el => el.textContent = mp);
       }
       if (annual) {
         const ap = annual.priceString;
         document.querySelectorAll('#gsPriceAnnual, .upgrade-tier--annual .upgrade-tier-price').forEach(el => el.textContent = ap);
         const btnSpan = document.getElementById('gsPriceAnnualBtn');
         if (btnSpan) btnSpan.textContent = ap + '/yr';
-        document.querySelectorAll('.gs-legal-price-annual').forEach(el => el.textContent = ap);
       }
       if (topup) {
         const tp = topup.priceString;
@@ -1639,55 +1591,19 @@ function gsIsWatchlisted(sku) {
 
     // Subscription cancellation text — show correct version per platform.
     // Targets live in upgrade.html's {% raw %}{% block body %}{% endraw %} (rendered at base.html
-    // line ~982, i.e. earlier in the document than this script), AND in the
-    // #gsTopupModal disclosure below, AND in landing.html's pricing section.
-    // querySelectorAll (not querySelector) is REQUIRED: /upgrade renders both
-    // its own page-level disclosure and base.html's modal, so a singular
-    // lookup would flip only the first and leave the other showing the wrong
-    // platform's cancellation wording on the same screen — worse than none.
-    // Absent on other pages; the empty NodeList makes this a no-op there.
-    var _show = function(sel) {
-      document.querySelectorAll(sel).forEach(function(el) {
-        el.style.display = 'inline';
-      });
-    };
-    var _hide = function(sel) {
-      document.querySelectorAll(sel).forEach(function(el) {
-        el.style.display = 'none';
-      });
-    };
-    // Block-level variant — the legal <p> alternates must not be revealed as
-    // 'inline' or they lose paragraph spacing. Kept separate from _show so the
-    // inline cancel spans keep flowing mid-sentence.
-    var _showBlock = function(sel) {
-      document.querySelectorAll(sel).forEach(function(el) {
-        el.style.display = 'block';
-      });
-    };
+    // line ~982, i.e. earlier in the document than this script), so they are
+    // already in the DOM here. Absent on every other page — the null guards
+    // make this a no-op there.
     if (gsIsRunningInIOSApp()) {
-      _show('.gs-cancel-ios');
-      _hide('.gs-cancel-web');
-      // Legal alternates: the access-code wording in /terms and /privacy is a
-      // web/Play mechanism and is factually untrue on iOS, where Pro access is
-      // an Apple ID subscription entitlement with no emailed code.
-      _hide('.gs-legal-codes-web');
-      _showBlock('.gs-legal-codes-ios');
-      // General web-only / iOS-only block pair. Used for surfaces where the
-      // whole element is wrong on iOS rather than a sentence within it:
-      // the Stripe customer-portal control and access-code FAQs on /contact,
-      // the Stripe payment disclaimer on /upgrade, and the top-up redeem row
-      // on /match. .gs-ios-only elements carry style="display:none" in markup
-      // so web/Play never flash them.
-      _hide('.gs-web-only');
-      _showBlock('.gs-ios-only');
-      // Referral is a Stripe coupon (web) / Play offer — no iOS equivalent.
-      // Advertising it inside the iOS app promises an unredeemable discount,
-      // which Apple treats as misrepresentation separately from 3.1.2(c).
-      // NOT hidden for Play: the referral is genuinely available there.
-      _hide('.gs-referral-web');
+      var el = document.querySelector('.gs-cancel-ios');
+      if (el) el.style.display = 'inline';
+      var web = document.querySelector('.gs-cancel-web');
+      if (web) web.style.display = 'none';
     } else if (gsHasPlayBilling()) {
-      _show('.gs-cancel-android');
-      _hide('.gs-cancel-web');
+      var el2 = document.querySelector('.gs-cancel-android');
+      if (el2) el2.style.display = 'inline';
+      var web2 = document.querySelector('.gs-cancel-web');
+      if (web2) web2.style.display = 'none';
     }
     // Web/Stripe: gs-cancel-web already visible, others hidden
   })();

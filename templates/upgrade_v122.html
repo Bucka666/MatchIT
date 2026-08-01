@@ -174,10 +174,8 @@
   </div>
 
   <p class="gs-sub-legal">
-    GrailSweep Pro Monthly (<span class="gs-legal-price-monthly">£4.39</span>/month)
-    and GrailSweep Ultimate
-    (<span class="gs-legal-price-annual">£34.99</span>/year)
-    are auto-renewing subscriptions. Your subscription
+    GrailSweep Pro Monthly (£4.39/month) and GrailSweep Ultimate
+    (£34.99/year) are auto-renewing subscriptions. Your subscription
     will automatically renew unless cancelled at least 24 hours before
     the end of the current period.
     <span class="gs-cancel-ios" style="display:none">Manage or cancel
@@ -490,17 +488,6 @@ document.addEventListener('DOMContentLoaded', () => {
         var disclaimer = document.getElementById('upgradeStripeDisclaimer');
         if (disclaimer) {
             disclaimer.innerHTML = '<p>Payments are processed securely through Google Play. Your subscription is managed via your Google Play account.</p>';
-        }
-    }
-    // iOS branch — previously absent, so the App Store build kept showing the
-    // web copy ("processed securely by Stripe on our website… enter the code
-    // emailed to you"). That steers to non-Apple payment (3.1.1) and describes
-    // a code flow that does not exist on iOS. This is the /upgrade screen a
-    // reviewer lands on from the ⚡ Pro pill.
-    if (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp()) {
-        var iosDisclaimer = document.getElementById('upgradeStripeDisclaimer');
-        if (iosDisclaimer) {
-            iosDisclaimer.innerHTML = '<p>Subscribe securely through the App Store. Your Pro access is tied to your Apple ID — manage or cancel anytime in Settings &rarr; Apple ID &rarr; Subscriptions.</p>';
         }
     }
 });

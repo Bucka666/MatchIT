@@ -138,7 +138,7 @@ def _make_image_wsgi():
     ],
     timeout=300,
     min_containers=0,
-    scaledown_window=600,
+    scaledown_window=120,
     max_containers=2,
     enable_memory_snapshot=True,
     experimental_options={"enable_gpu_snapshot": True},

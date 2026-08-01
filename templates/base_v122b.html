@@ -1672,14 +1672,6 @@ function gsIsWatchlisted(sku) {
       // an Apple ID subscription entitlement with no emailed code.
       _hide('.gs-legal-codes-web');
       _showBlock('.gs-legal-codes-ios');
-      // General web-only / iOS-only block pair. Used for surfaces where the
-      // whole element is wrong on iOS rather than a sentence within it:
-      // the Stripe customer-portal control and access-code FAQs on /contact,
-      // the Stripe payment disclaimer on /upgrade, and the top-up redeem row
-      // on /match. .gs-ios-only elements carry style="display:none" in markup
-      // so web/Play never flash them.
-      _hide('.gs-web-only');
-      _showBlock('.gs-ios-only');
       // Referral is a Stripe coupon (web) / Play offer — no iOS equivalent.
       // Advertising it inside the iOS app promises an unredeemable discount,
       // which Apple treats as misrepresentation separately from 3.1.2(c).

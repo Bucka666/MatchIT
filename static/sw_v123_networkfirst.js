@@ -1,20 +1,4 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
-// v124 (2026-08-01) — TEMPORARY DIAGNOSTIC BUILD. Adds a 'message' handler so a
-// page can ask the ACTIVE controller to name its CACHE_NAME, feeding the
-// #gsDiagPill banner on /contact. Purpose: observe, on-device, (a) which SW
-// actually controls the document, (b) whether the new HTML reached the WebView,
-// (c) whether gsIsRunningInIOSApp() is true on that page load. REMOVE this
-// handler and the pill before App Store resubmit.
-// v123 (2026-08-01) — ROOT-CAUSE FIX: navigation requests are now network-first.
-// The previous stale-while-revalidate branch returned the cached page whenever
-// one existed, so the installed iOS app rendered pre-v122 HTML indefinitely —
-// every compliance fix (Stripe text, access-code copy, disclosures) verified
-// clean on the server and was invisible on device. Diagnosed 2026-08-01: the
-// live HTML contained gs-web-only/gs-ios-only and gsIsRunningInIOSApp() was
-// returning true (StoreKit prices updated fine), but the toggler had nothing to
-// hide because the SW handed it a stale document.
-// NOTE: the OLD sw.js must activate this one first, so the FIRST launch after
-// deploying still shows stale pages. Force-quit and reopen before filming.
 // v122 (2026-07-31) — supersedes the undeployed v121. iOS resubmit pass:
 //   A) the 3 gs-sub-legal disclosures now price-sync to StoreKit via
 //      gsUpdateIOSPrices (spans wrap ONLY the amount, so the required
@@ -58,7 +42,7 @@
 // This comment ALSO changes the file's byte size on purpose — a bare version
 // bump (v117 -> v118) is the same length and gets silently skipped by Modal's
 // add_local_dir mount diff, reusing the cached image (see CLAUDE.md gotcha).
-const CACHE_NAME = 'grailsweep-v124';
+const CACHE_NAME = 'grailsweep-v122';
 const PRECACHE = [
   '/',
   '/static/style.css',
@@ -86,16 +70,6 @@ self.addEventListener('activate', event => {
       Promise.all(keys.filter(k => k !== CACHE_NAME && k !== 'gs-images-v1').map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
-});
-
-// TEMPORARY DIAGNOSTIC (added v124) — lets a page ask the ACTIVE controller
-// which CACHE_NAME it is running, so we can see whether an old SW is still
-// controlling the document. If no reply arrives, the controller predates v124.
-// Remove together with the #gsDiagPill block in contact.html before resubmit.
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'GS_VERSION' && event.ports && event.ports[0]) {
-    event.ports[0].postMessage({ cache: CACHE_NAME });
-  }
 });
 
 const IMAGE_HOSTS = ['images.grailsweep.com',
@@ -142,42 +116,19 @@ self.addEventListener('fetch', event => {
     );
     return;
   }
-  // NETWORK-FIRST for navigation requests.
-  //
-  // This was stale-while-revalidate (`return cached || networkFetch`), which
-  // served the cached page UNCONDITIONALLY whenever one existed and only
-  // refreshed the cache in the background. Effect: the installed iOS app was
-  // permanently one deploy behind — it kept rendering pre-v122 HTML (old Stripe
-  // / access-code text, no gs-web-only classes), so the platform toggler found
-  // nothing to hide even though the server was serving the corrected markup and
-  // gsIsRunningInIOSApp() was returning true. That is what caused the repeated
-  // "fix verifies clean, ships, still broken on device" cycle, and it is a
-  // compliance risk: App Review sees whatever the cache decides to show.
-  //
-  // Now: always try the network, fall back to cache only when offline. The
-  // cache is still populated on every successful fetch, so offline use is
-  // unchanged; it is just no longer allowed to win over a live response.
+  // Stale-while-revalidate for navigation requests — serve cached landing instantly,
+  // fetch fresh from Modal in background so cold start doesn't show a blank screen
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).then(
-        function(response) {
-          // Only cache good responses. fetch() resolves on 500s and Cloudflare
-          // error pages, so an unguarded put would store one and later serve it
-          // as the offline fallback. Network-first turns the cache over on every
-          // navigation, which makes that far likelier than it was under
-          // stale-while-revalidate. Mirrors the image branch's status === 200
-          // guard. Bad responses still pass through to the app unchanged.
-          if (response.ok) {
+      caches.match(event.request).then(function(cached) {
+        var networkFetch = fetch(event.request).then(
+          function(response) {
             var clone = response.clone();
             caches.open(CACHE_NAME).then(function(cache) { cache.put(event.request, clone); });
+            return response;
           }
-          return response;
-        }
-      ).catch(function() {
-        // Offline: exact page if we have it, else the cached landing shell.
-        return caches.match(event.request).then(function(cached) {
-          return cached || caches.match('/');
-        });
+        );
+        return cached || networkFetch;
       })
     );
     return;
