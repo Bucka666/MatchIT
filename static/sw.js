@@ -1,4 +1,19 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
+// v126 (2026-08-01) — CLEANUP: diagnostic pills removed from /contact, /terms and
+// /privacy, and the v124 'message' handler removed with them. No functional
+// change: network-first navigation, the response.ok cache guard and the offline
+// fallback are all untouched, as are the v125 disclosure wording, the dropped
+// target="_blank" and the max-age=0 headers on the legal/contact routes.
+// This is the build intended for App Store resubmission.
+// v125 (2026-08-01) — disclosure paragraph on the three purchase surfaces now
+// reads '... Terms of Use and Privacy Policy — see links in the footer below.'
+// The two links REMAIN as anchors (3.1.2(c) requires functional Terms/Privacy
+// links on the purchase screen); target="_blank" was dropped last edit so they
+// navigate exactly like the footer links — in a Capacitor WKWebView _blank is
+// routed to a separate browser view with its own cache, the likely reason the
+// footer links showed fresh pages while these did not. UNTESTED LIVE until this
+// deploy. Diagnostic pills (v124) are still present and must be removed in a
+// final pass before resubmit.
 // v124 (2026-08-01) — TEMPORARY DIAGNOSTIC BUILD. Adds a 'message' handler so a
 // page can ask the ACTIVE controller to name its CACHE_NAME, feeding the
 // #gsDiagPill banner on /contact. Purpose: observe, on-device, (a) which SW
@@ -58,7 +73,7 @@
 // This comment ALSO changes the file's byte size on purpose — a bare version
 // bump (v117 -> v118) is the same length and gets silently skipped by Modal's
 // add_local_dir mount diff, reusing the cached image (see CLAUDE.md gotcha).
-const CACHE_NAME = 'grailsweep-v124';
+const CACHE_NAME = 'grailsweep-v126';
 const PRECACHE = [
   '/',
   '/static/style.css',
@@ -86,16 +101,6 @@ self.addEventListener('activate', event => {
       Promise.all(keys.filter(k => k !== CACHE_NAME && k !== 'gs-images-v1').map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
-});
-
-// TEMPORARY DIAGNOSTIC (added v124) — lets a page ask the ACTIVE controller
-// which CACHE_NAME it is running, so we can see whether an old SW is still
-// controlling the document. If no reply arrives, the controller predates v124.
-// Remove together with the #gsDiagPill block in contact.html before resubmit.
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'GS_VERSION' && event.ports && event.ports[0]) {
-    event.ports[0].postMessage({ cache: CACHE_NAME });
-  }
 });
 
 const IMAGE_HOSTS = ['images.grailsweep.com',

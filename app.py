@@ -5110,21 +5110,33 @@ def delete_price_alert():
 @app.route("/privacy")
 def privacy():
     resp = make_response(render_template("privacy.html"))
-    resp.headers["Cache-Control"] = "public, max-age=86400, s-maxage=604800"
+    # max-age=0 + must-revalidate: the browser/WKWebView MAY store this but
+    # MUST revalidate with the origin before serving it. The previous
+    # max-age=86400 let the device serve a 24-hour-old copy without asking the
+    # network at all — a third caching layer, independent of the service worker
+    # and of Cloudflare, and the one that kept showing pre-v122 compliance text
+    # in the iOS app. s-maxage=604800 is deliberately unchanged: the Cloudflare
+    # edge was verified serving current markup and is not the problem.
+    resp.headers["Cache-Control"] = "public, max-age=0, s-maxage=604800, must-revalidate"
     return resp
 
 
 @app.route("/terms")
 def terms():
     resp = make_response(render_template("terms.html"))
-    resp.headers["Cache-Control"] = "public, max-age=86400, s-maxage=604800"
+    # See /privacy above — same reasoning. max-age dropped so the device must
+    # revalidate; s-maxage (Cloudflare) left intact.
+    resp.headers["Cache-Control"] = "public, max-age=0, s-maxage=604800, must-revalidate"
     return resp
 
 
 @app.route("/delete-account")
 def delete_account():
     resp = make_response(render_template("delete_account.html"))
-    resp.headers["Cache-Control"] = "public, max-age=86400, s-maxage=604800"
+    # Included for consistency — carries access-code wording of the same
+    # class, and there is no reason for a legal/account page to be pinned
+    # on-device for 24h.
+    resp.headers["Cache-Control"] = "public, max-age=0, s-maxage=604800, must-revalidate"
     return resp
 
 
@@ -5136,7 +5148,11 @@ def ocr_test():
 @app.route("/contact")
 def contact():
     resp = make_response(render_template("contact.html"))
-    resp.headers["Cache-Control"] = "public, max-age=86400, s-maxage=604800"
+    # Same reasoning as /privacy and /terms — and this page matters most:
+    # it carries the Stripe customer-portal control, which is hidden on iOS
+    # by the gs-web-only toggler. A 24h device cache would keep serving the
+    # pre-fix page with that control still live, which is the 3.1.1 item.
+    resp.headers["Cache-Control"] = "public, max-age=0, s-maxage=604800, must-revalidate"
     return resp
 
 
