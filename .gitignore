@@ -99,3 +99,12 @@ profile_base64.txt
 # binaries bloat history permanently and are already backed up twice.
 # MANIFEST.txt IS tracked - it is the durable record of the set.
 eval_rescue/**/*.jpg
+
+# Labelling tool artifacts (2026-08-02). Both are regenerable from
+# C:\CardsDB + set_metadata.json + set_dates.json. label.html carries a
+# 6.9 MiB inline index; lookup_index.json is 22 MiB. Neither belongs in
+# history. images_shuffled.json IS tracked - it is the record of the
+# blind shuffle order and cannot be reproduced from the seed alone.
+eval_rescue/labelling/lookup_index.json
+eval_rescue/labelling/label.html
+eval_rescue/labelling/backup_prelookup_20260802/
