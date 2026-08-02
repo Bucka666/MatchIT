@@ -92,3 +92,10 @@ distribution.pem
 p12_base64.txt
 profile_base64.txt
 *.mobileprovision
+
+# Rescued scan query images (2026-08-02) - 593 MiB of binaries.
+# Verified copies live at C:\MatchIT\eval_rescue\ and
+# C:\Users\c_a_b\grailsweep-backups\. Deliberately NOT in git:
+# binaries bloat history permanently and are already backed up twice.
+# MANIFEST.txt IS tracked - it is the durable record of the set.
+eval_rescue/**/*.jpg
