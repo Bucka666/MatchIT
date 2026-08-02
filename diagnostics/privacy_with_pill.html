@@ -1,5 +1,93 @@
 {% extends "base.html" %}
 {% block body %}
+
+{# ════════════════════════════════════════════════════════════════════
+   TEMPORARY DIAGNOSTIC PILL — REMOVE BEFORE APP STORE RESUBMIT.
+   Also remove the 'message' handler in static/sw.js (added v124).
+   Present on /contact, /terms and /privacy — identical on all three so
+   the readings are directly comparable.
+   Reads three unknowns off the live WebView:
+     SW         — which CACHE_NAME actually CONTROLS this document
+     new-markup — whether ANY v122+ platform markup reached the device
+     iOS        — whether gsIsRunningInIOSApp() is true on this page load
+   The counter sums ALL SIX managed classes, not just gs-web-only/ios-only:
+   /terms and /privacy legitimately have ZERO of those two and use
+   gs-legal-codes-* instead, so a subset counter would report a correct
+   page as stale. new-markup:0 now means stale on EVERY page.
+   ════════════════════════════════════════════════════════════════════ #}
+<div id="gsDiagPill"
+     style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#000;
+            color:#0f0;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;
+            padding:6px 8px;text-align:center;border-bottom:2px solid #0f0;
+            word-break:break-word;">gs-diag: initialising…</div>
+<script>
+(function () {
+  var el = document.getElementById('gsDiagPill');
+  if (!el) return;
+  var o = { sw: '…', ctrl: '?', total: 0, brk: '', ios: '?', wait: '?' };
+
+  function render() {
+    el.textContent =
+      'SW:' + o.sw + ' | ctrl:' + o.ctrl +
+      ' | new-markup:' + o.total + ' (' + o.brk + ')' +
+      ' | iOS:' + o.ios + ' | waiting:' + o.wait;
+  }
+
+  // (2) Did ANY v122+ platform markup reach this device? Sum all six
+  // managed classes — each page carries a different subset.
+  function q(c) { return document.querySelectorAll(c).length; }
+  var w  = q('.gs-web-only'),        i  = q('.gs-ios-only'),
+      lw = q('.gs-legal-codes-web'), li = q('.gs-legal-codes-ios'),
+      cw = q('.gs-cancel-web'),      ci = q('.gs-cancel-ios');
+  o.total = w + i + lw + li + cw + ci;
+  o.brk = 'w' + w + ' i' + i + ' lw' + lw + ' li' + li + ' cw' + cw + ' ci' + ci;
+
+  // (3) Is the platform detector true on THIS page load?
+  try {
+    o.ios = (typeof gsIsRunningInIOSApp === 'function')
+      ? String(gsIsRunningInIOSApp())
+      : 'fn-undefined';
+  } catch (e) { o.ios = 'threw'; }
+  render();
+
+  if (!('serviceWorker' in navigator)) { o.sw = 'n/a'; o.ctrl = 'n/a'; render(); return; }
+
+  // (1a) Is this document controlled by a SW at all?
+  o.ctrl = navigator.serviceWorker.controller ? 'yes' : 'NONE';
+  render();
+
+  // (1b) Is a newer SW stuck in "waiting"?
+  navigator.serviceWorker.getRegistration()
+    .then(function (reg) {
+      o.wait = (reg && reg.waiting) ? 'YES-STUCK' : 'no';
+      render();
+    })
+    .catch(function () { o.wait = 'err'; render(); });
+
+  // (1c) Ask the ACTIVE controller to name its CACHE_NAME. No reply within
+  // 2s means the controlling SW has no 'message' handler — i.e. it predates
+  // v124, so an OLD service worker is still driving this document.
+  if (navigator.serviceWorker.controller && 'MessageChannel' in window) {
+    var mc = new MessageChannel(), replied = false;
+    mc.port1.onmessage = function (ev) {
+      replied = true;
+      o.sw = (ev.data && ev.data.cache) ? ev.data.cache : 'empty-reply';
+      render();
+    };
+    try {
+      navigator.serviceWorker.controller.postMessage({ type: 'GS_VERSION' }, [mc.port2]);
+    } catch (e) { o.sw = 'post-threw'; render(); }
+    setTimeout(function () {
+      if (!replied) { o.sw = 'OLD(pre-v124)'; render(); }
+    }, 2000);
+  } else {
+    o.sw = 'uncontrolled';
+    render();
+  }
+})();
+</script>
+{# ═══════════════ END TEMPORARY DIAGNOSTIC PILL ═══════════════ #}
+
 <div class="mi-card" style="max-width:800px;margin:0 auto;padding:32px;">
 
   <h1 class="mi-h1" style="font-size:1.6rem;margin-bottom:8px;">Privacy Policy</h1>
@@ -17,19 +105,24 @@
     <p><strong>Device identifiers and abuse-prevention data:</strong> To prevent misuse of our free tier, we generate and store a device identifier in your browser (cookie and localStorage) and compute a server-side identifier from your request data (browser type, language preference, and the first portion of your IP address, hashed together). These identifiers let us count scans against fair-tier limits without requiring an account. They are not used for advertising, profiling, or any purpose other than preventing abuse of the free service.</p>
     <p><strong>Scan counters:</strong> The number of free scans you have used in the current calendar month is recorded against the identifiers above. These counters reset at 00:00 UTC on the first day of each month.</p>
     <p><strong>Usage data:</strong> We collect aggregated usage statistics (total scan counts, match accuracy feedback, scan timing) to improve the service. Aggregated statistics are not linked to individual users. Note that the scan counters described above are pseudonymous rather than anonymous, since they are tied to device identifiers.</p>
-    <p><strong>Payment data:</strong> If you subscribe to GrailSweep Pro or purchase a top-up, payments are processed by Stripe. We do not store your card details &mdash; Stripe handles all payment information securely under PCI DSS compliance.</p>
+    <p><strong>Payment data:</strong> If you subscribe to GrailSweep Pro or purchase a top-up, payments are processed by our payment provider (Stripe on the web, or Apple or Google on their respective app stores). We do not store your card details &mdash; all payment information is handled securely by that provider under PCI DSS compliance.</p>
     <p><strong>Collection data:</strong> Your card collection is stored locally on your device using browser localStorage. A copy is also synchronised to our servers (via your access code) so it can be restored across devices and browser refreshes. We do not link this data to other personal identifiers beyond your access code.</p>
-    <p><strong>Email address:</strong> If you purchase a Pro subscription or top-up, we collect your email address to send your access code, transactional updates, and important service notices.</p>
-    <p><strong>Access codes:</strong> Pro subscriptions are validated via unique access codes (e.g. GRAIL-XXXX-XXXX). These are stored on our servers to verify subscription status.</p>
+    <!-- Email collection and GRAIL-XXXX-XXXX codes are the web/Stripe and Play
+         mechanism. App Store purchases are validated by subscription
+         entitlement and collect no email address, so the web wording is
+         untrue on iOS. -->
+    <p class="gs-legal-codes-web"><strong>Email address:</strong> If you purchase a Pro subscription or top-up, we collect your email address to send your access code, transactional updates, and important service notices.</p>
+    <p class="gs-legal-codes-web"><strong>Access codes:</strong> Pro subscriptions are validated via unique access codes (e.g. GRAIL-XXXX-XXXX). These are stored on our servers to verify subscription status.</p>
+    <p class="gs-legal-codes-ios" style="display:none"><strong>Subscription status:</strong> If you purchase a Pro subscription or top-up through the App Store, your subscription is validated via your Apple ID entitlement. We do not collect your email address for App Store purchases, and no access code is issued.</p>
   </div>
 
   <div class="legal-section">
     <h2>3. How We Use Your Data</h2>
     <ul>
       <li>To identify trading cards and return match results</li>
-      <li>To process payments and deliver access codes</li>
+      <li>To process payments and deliver Pro access</li>
       <li>To improve the accuracy of our AI matching engine</li>
-      <li>To send transactional emails (access codes, subscription updates, service notices)</li>
+      <li>To send transactional emails (Pro access details, subscription updates, service notices)</li>
       <li>To synchronise your collection across devices</li>
       <li>To enforce free-tier limits and prevent abuse of the service</li>
       <li>To diagnose technical issues and improve service reliability</li>
@@ -40,7 +133,7 @@
     <h2>4. Lawful Basis for Processing</h2>
     <p>Under UK GDPR, all processing of personal data must have a lawful basis. The bases we rely on are set out below for each purpose:</p>
     <ul>
-      <li><strong>Performance of a contract</strong> &mdash; processing card images, returning match results, syncing your collection, processing payments, and delivering access codes. These are services you have contracted with us to provide.</li>
+      <li><strong>Performance of a contract</strong> &mdash; processing card images, returning match results, syncing your collection, processing payments, and delivering Pro access. These are services you have contracted with us to provide.</li>
       <li><strong>Legitimate interest</strong> &mdash; storing device identifiers and scan counters to prevent abuse of the free tier, and retaining aggregated usage statistics to improve the service. We have assessed these interests as proportionate and necessary, and they do not override your rights or freedoms.</li>
       <li><strong>Consent</strong> &mdash; accessing your camera (granted via your browser's permission prompt) and any future use of your email address for non-transactional communications such as product updates or marketing. You can withdraw consent at any time.</li>
       <li><strong>Legal obligation</strong> &mdash; retaining payment records and responding to lawful requests from regulators or law enforcement.</li>
@@ -51,7 +144,9 @@
     <h2>5. Data Sharing</h2>
     <p>We do not sell your personal data. We share data only with the following processors, who act on our behalf under data-processing agreements:</p>
     <ul>
-      <li><strong>Stripe</strong> &mdash; for payment processing</li>
+      <li><strong>Stripe</strong> &mdash; for payment processing on the web</li>
+      <li><strong>Apple</strong> &mdash; for payment processing and subscription management for purchases made through the App Store</li>
+      <li><strong>Google</strong> &mdash; for payment processing and subscription management for purchases made through Google Play</li>
       <li><strong>Google Cloud Vision</strong> &mdash; for optical character recognition on cropped card-image regions (set codes and card numbers)</li>
       <li><strong>Modal</strong> &mdash; our cloud infrastructure provider, where image processing, AI matching, and scan counter storage occur</li>
       <li><strong>Cloudflare</strong> &mdash; for content delivery, security, and DDoS protection (Cloudflare sees inbound requests but does not access processed data)</li>
@@ -67,7 +162,7 @@
       <li><strong>Collection data:</strong> retained while your access code remains active; deleted on request</li>
       <li><strong>Device identifiers and scan counters:</strong> retained for as long as the legitimate interest in abuse prevention persists, with periodic review. These records are pseudonymous (not linked to your name or email) and are not used for any other purpose.</li>
       <li><strong>Usage statistics:</strong> retained in aggregated, anonymised form indefinitely</li>
-      <li><strong>Payment records:</strong> retained by Stripe per their policies; we do not retain card details ourselves</li>
+      <li><strong>Payment records:</strong> retained by our payment provider per their policies; we do not retain card details ourselves</li>
     </ul>
     <p>You may request deletion of your data at any time by contacting us.</p>
   </div>

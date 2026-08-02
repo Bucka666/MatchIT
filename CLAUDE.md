@@ -168,6 +168,43 @@ and minimal native additions.
 
 **Start after:** Current feature set is stable and subscriber base is growing
 
+## Cloudflare cache rules (dashboard-only, NOT in this repo)
+
+The cache rule covering /privacy, /terms, /contact and /sitemap.xml must be
+set to **"Respect origin TTL"** for BOTH Edge TTL and Browser TTL.
+
+**DO NOT set it to "Ignore cache-control header and use this TTL."** That
+setting was the root cause of a week-long "the app never sees updates"
+problem during the Aug 2026 iOS resubmission. The origin sends
+`max-age=0, must-revalidate` on those routes (see app.py) so device caches
+revalidate instead of holding content for 24 hours — Cloudflare overriding
+that header defeats the entire mechanism, and every server-side fix appears
+to do nothing on device while verifying perfectly clean at the origin.
+
+Symptom to recognise: origin curl shows correct HTML, edge curl shows
+correct HTML, yet the installed app still renders old content after a
+deploy + purge + relaunch.
+
+This config lives only in the Cloudflare dashboard. If the zone is ever
+rebuilt (DNS migration, new account) it must be recreated by hand.
+
+## Diagnostic pill (diagnostics/)
+
+Reusable tool for investigating iOS/WebView caching and platform-branch
+issues — i.e. "the server is serving the right thing but the app shows
+something else." Injected temporarily, read off the screen, then removed.
+
+Reports as a fixed banner: which CACHE_NAME controls the document, whether
+the document is SW-controlled, a count of platform-conditional classes in
+the DOM (proving whether new HTML reached the device), whether
+gsIsRunningInIOSApp() is true on that page load, and whether a newer SW is
+stuck in "waiting".
+
+See diagnostics/README.md for the fields, the reuse procedure, known-good
+readings, and the sw.js removal gotcha. Built during the Aug 2026 iOS
+resubmission; its design directly exposed the Cloudflare rule documented
+above.
+
 ## Known Issues / Outstanding
 - static/scanner.html is the old standalone scanner, kept for reference only — not the active scanner
 

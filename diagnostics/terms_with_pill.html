@@ -1,5 +1,93 @@
 {% extends "base.html" %}
 {% block body %}
+
+{# ════════════════════════════════════════════════════════════════════
+   TEMPORARY DIAGNOSTIC PILL — REMOVE BEFORE APP STORE RESUBMIT.
+   Also remove the 'message' handler in static/sw.js (added v124).
+   Present on /contact, /terms and /privacy — identical on all three so
+   the readings are directly comparable.
+   Reads three unknowns off the live WebView:
+     SW         — which CACHE_NAME actually CONTROLS this document
+     new-markup — whether ANY v122+ platform markup reached the device
+     iOS        — whether gsIsRunningInIOSApp() is true on this page load
+   The counter sums ALL SIX managed classes, not just gs-web-only/ios-only:
+   /terms and /privacy legitimately have ZERO of those two and use
+   gs-legal-codes-* instead, so a subset counter would report a correct
+   page as stale. new-markup:0 now means stale on EVERY page.
+   ════════════════════════════════════════════════════════════════════ #}
+<div id="gsDiagPill"
+     style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#000;
+            color:#0f0;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;
+            padding:6px 8px;text-align:center;border-bottom:2px solid #0f0;
+            word-break:break-word;">gs-diag: initialising…</div>
+<script>
+(function () {
+  var el = document.getElementById('gsDiagPill');
+  if (!el) return;
+  var o = { sw: '…', ctrl: '?', total: 0, brk: '', ios: '?', wait: '?' };
+
+  function render() {
+    el.textContent =
+      'SW:' + o.sw + ' | ctrl:' + o.ctrl +
+      ' | new-markup:' + o.total + ' (' + o.brk + ')' +
+      ' | iOS:' + o.ios + ' | waiting:' + o.wait;
+  }
+
+  // (2) Did ANY v122+ platform markup reach this device? Sum all six
+  // managed classes — each page carries a different subset.
+  function q(c) { return document.querySelectorAll(c).length; }
+  var w  = q('.gs-web-only'),        i  = q('.gs-ios-only'),
+      lw = q('.gs-legal-codes-web'), li = q('.gs-legal-codes-ios'),
+      cw = q('.gs-cancel-web'),      ci = q('.gs-cancel-ios');
+  o.total = w + i + lw + li + cw + ci;
+  o.brk = 'w' + w + ' i' + i + ' lw' + lw + ' li' + li + ' cw' + cw + ' ci' + ci;
+
+  // (3) Is the platform detector true on THIS page load?
+  try {
+    o.ios = (typeof gsIsRunningInIOSApp === 'function')
+      ? String(gsIsRunningInIOSApp())
+      : 'fn-undefined';
+  } catch (e) { o.ios = 'threw'; }
+  render();
+
+  if (!('serviceWorker' in navigator)) { o.sw = 'n/a'; o.ctrl = 'n/a'; render(); return; }
+
+  // (1a) Is this document controlled by a SW at all?
+  o.ctrl = navigator.serviceWorker.controller ? 'yes' : 'NONE';
+  render();
+
+  // (1b) Is a newer SW stuck in "waiting"?
+  navigator.serviceWorker.getRegistration()
+    .then(function (reg) {
+      o.wait = (reg && reg.waiting) ? 'YES-STUCK' : 'no';
+      render();
+    })
+    .catch(function () { o.wait = 'err'; render(); });
+
+  // (1c) Ask the ACTIVE controller to name its CACHE_NAME. No reply within
+  // 2s means the controlling SW has no 'message' handler — i.e. it predates
+  // v124, so an OLD service worker is still driving this document.
+  if (navigator.serviceWorker.controller && 'MessageChannel' in window) {
+    var mc = new MessageChannel(), replied = false;
+    mc.port1.onmessage = function (ev) {
+      replied = true;
+      o.sw = (ev.data && ev.data.cache) ? ev.data.cache : 'empty-reply';
+      render();
+    };
+    try {
+      navigator.serviceWorker.controller.postMessage({ type: 'GS_VERSION' }, [mc.port2]);
+    } catch (e) { o.sw = 'post-threw'; render(); }
+    setTimeout(function () {
+      if (!replied) { o.sw = 'OLD(pre-v124)'; render(); }
+    }, 2000);
+  } else {
+    o.sw = 'uncontrolled';
+    render();
+  }
+})();
+</script>
+{# ═══════════════ END TEMPORARY DIAGNOSTIC PILL ═══════════════ #}
+
 <div class="mi-card" style="max-width:800px;margin:0 auto;padding:32px;">
   <h1 class="mi-h1" style="font-size:1.6rem;margin-bottom:8px;">Terms of Service</h1>
   <p style="color:var(--mi-muted,#aaa);font-size:0.8rem;margin-bottom:32px;">Last updated: May 2026</p>
@@ -33,7 +121,11 @@
 
   <div class="legal-section">
     <h2 id="pro-subscription">5. Pro Subscription &amp; Top-Ups</h2>
-    <p>Pro subscriptions are billed monthly or annually via Stripe and auto-renew unless cancelled. You can cancel at any time from your account; cancellation takes effect at the end of your current billing period.</p>
+    <p>Pro subscriptions are billed monthly or annually through the payment provider for your platform and auto-renew unless cancelled.
+      <span class="gs-cancel-ios" style="display:none">You can cancel at any time in Settings &rarr; Apple ID &rarr; Subscriptions;</span>
+      <span class="gs-cancel-android" style="display:none">You can cancel at any time in the Google Play Store &rarr; Subscriptions;</span>
+      <span class="gs-cancel-web">You can cancel at any time from your account;</span>
+      cancellation takes effect at the end of your current billing period.</p>
     <p>Scan top-ups are one-time purchases that add a fixed number of paid scans to your account. Paid scans do not expire and roll over indefinitely. Free scans are consumed first; paid scans are only used once free scans are exhausted.</p>
   </div>
 
@@ -63,7 +155,7 @@
     <ul>
       <li>Use GrailSweep for any unlawful purpose</li>
       <li>Attempt to reverse engineer, scrape, or replicate our AI systems or card database</li>
-      <li>Share access codes with others or use a single Pro account across multiple users</li>
+      <li>Share your Pro access with others or use a single Pro account across multiple users</li>
       <li>Use automated tools, scripts, or bots to scan cards</li>
       <li>Attempt to circumvent the free tier limit by clearing browser data, switching devices, or any similar means</li>
       <li>Use the service for bulk commercial inventory digitisation without prior written agreement</li>
@@ -73,7 +165,11 @@
 
   <div class="legal-section">
     <h2 id="access-codes">9. Access Codes</h2>
-    <p>Access codes are issued upon successful payment and are non-transferable. Each code is intended for personal use by a single individual. Sharing access codes constitutes a breach of these terms.</p>
+    <!-- Access codes are a web/Stripe and Play mechanism. On iOS, Pro access is
+         an App Store subscription entitlement (via RevenueCat) with no emailed
+         code, so the web wording is factually untrue there. -->
+    <p class="gs-legal-codes-web">Access codes are issued upon successful payment and are non-transferable. Each code is intended for personal use by a single individual. Sharing access codes constitutes a breach of these terms.</p>
+    <p class="gs-legal-codes-ios" style="display:none">Pro access purchased through the App Store is tied to your Apple ID subscription and is non-transferable. It is intended for personal use by a single individual. Sharing your Pro access constitutes a breach of these terms.</p>
   </div>
 
   <div class="legal-section">

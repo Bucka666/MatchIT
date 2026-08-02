@@ -1,5 +1,93 @@
 {% extends "base.html" %}
 {% block body %}
+
+{# ════════════════════════════════════════════════════════════════════
+   TEMPORARY DIAGNOSTIC PILL — REMOVE BEFORE APP STORE RESUBMIT.
+   Also remove the 'message' handler in static/sw.js (added v124).
+   Present on /contact, /terms and /privacy — identical on all three so
+   the readings are directly comparable.
+   Reads three unknowns off the live WebView:
+     SW         — which CACHE_NAME actually CONTROLS this document
+     new-markup — whether ANY v122+ platform markup reached the device
+     iOS        — whether gsIsRunningInIOSApp() is true on this page load
+   The counter sums ALL SIX managed classes, not just gs-web-only/ios-only:
+   /terms and /privacy legitimately have ZERO of those two and use
+   gs-legal-codes-* instead, so a subset counter would report a correct
+   page as stale. new-markup:0 now means stale on EVERY page.
+   ════════════════════════════════════════════════════════════════════ #}
+<div id="gsDiagPill"
+     style="position:fixed;top:0;left:0;right:0;z-index:99999;background:#000;
+            color:#0f0;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;
+            padding:6px 8px;text-align:center;border-bottom:2px solid #0f0;
+            word-break:break-word;">gs-diag: initialising…</div>
+<script>
+(function () {
+  var el = document.getElementById('gsDiagPill');
+  if (!el) return;
+  var o = { sw: '…', ctrl: '?', total: 0, brk: '', ios: '?', wait: '?' };
+
+  function render() {
+    el.textContent =
+      'SW:' + o.sw + ' | ctrl:' + o.ctrl +
+      ' | new-markup:' + o.total + ' (' + o.brk + ')' +
+      ' | iOS:' + o.ios + ' | waiting:' + o.wait;
+  }
+
+  // (2) Did ANY v122+ platform markup reach this device? Sum all six
+  // managed classes — each page carries a different subset.
+  function q(c) { return document.querySelectorAll(c).length; }
+  var w  = q('.gs-web-only'),        i  = q('.gs-ios-only'),
+      lw = q('.gs-legal-codes-web'), li = q('.gs-legal-codes-ios'),
+      cw = q('.gs-cancel-web'),      ci = q('.gs-cancel-ios');
+  o.total = w + i + lw + li + cw + ci;
+  o.brk = 'w' + w + ' i' + i + ' lw' + lw + ' li' + li + ' cw' + cw + ' ci' + ci;
+
+  // (3) Is the platform detector true on THIS page load?
+  try {
+    o.ios = (typeof gsIsRunningInIOSApp === 'function')
+      ? String(gsIsRunningInIOSApp())
+      : 'fn-undefined';
+  } catch (e) { o.ios = 'threw'; }
+  render();
+
+  if (!('serviceWorker' in navigator)) { o.sw = 'n/a'; o.ctrl = 'n/a'; render(); return; }
+
+  // (1a) Is this document controlled by a SW at all?
+  o.ctrl = navigator.serviceWorker.controller ? 'yes' : 'NONE';
+  render();
+
+  // (1b) Is a newer SW stuck in "waiting"?
+  navigator.serviceWorker.getRegistration()
+    .then(function (reg) {
+      o.wait = (reg && reg.waiting) ? 'YES-STUCK' : 'no';
+      render();
+    })
+    .catch(function () { o.wait = 'err'; render(); });
+
+  // (1c) Ask the ACTIVE controller to name its CACHE_NAME. No reply within
+  // 2s means the controlling SW has no 'message' handler — i.e. it predates
+  // v124, so an OLD service worker is still driving this document.
+  if (navigator.serviceWorker.controller && 'MessageChannel' in window) {
+    var mc = new MessageChannel(), replied = false;
+    mc.port1.onmessage = function (ev) {
+      replied = true;
+      o.sw = (ev.data && ev.data.cache) ? ev.data.cache : 'empty-reply';
+      render();
+    };
+    try {
+      navigator.serviceWorker.controller.postMessage({ type: 'GS_VERSION' }, [mc.port2]);
+    } catch (e) { o.sw = 'post-threw'; render(); }
+    setTimeout(function () {
+      if (!replied) { o.sw = 'OLD(pre-v124)'; render(); }
+    }, 2000);
+  } else {
+    o.sw = 'uncontrolled';
+    render();
+  }
+})();
+</script>
+{# ═══════════════ END TEMPORARY DIAGNOSTIC PILL ═══════════════ #}
+
 <div class="mi-card" style="max-width:600px;margin:0 auto;padding:32px;text-align:center;">
 
   <div style="font-size:2.5rem;margin-bottom:16px;">📬</div>
@@ -36,19 +124,30 @@
       <div class="faq-a">We currently support Pokémon TCG, Magic: The Gathering, and Yu-Gi-Oh! with a database of 135,000+ cards.</div>
     </div>
 
-    <div class="faq-item">
+    <!-- Access codes are issued for web/Stripe and Play purchases only. App
+         Store purchases grant Pro via the Apple ID entitlement, so this Q&A
+         is meaningless on iOS and is hidden there with no alternate. -->
+    <div class="faq-item gs-web-only">
       <div class="faq-q">I paid but haven't received my access code.</div>
       <div class="faq-a">Check your spam folder first. If you still haven't received it after 30 minutes, email us at support@grailsweep.com with your payment confirmation and we'll issue your code manually.</div>
     </div>
 
-    <div class="faq-item">
+    <div class="faq-item gs-web-only">
       <div class="faq-q">Can I use GrailSweep on multiple devices?</div>
       <div class="faq-a">Your access code can be entered on any device. Your collection data is stored locally on each device separately.</div>
     </div>
+    <div class="faq-item gs-ios-only" style="display:none">
+      <div class="faq-q">Can I use GrailSweep on multiple devices?</div>
+      <div class="faq-a">Your Pro access follows your Apple ID &mdash; sign in with the same Apple ID on any device to access Pro. Your collection data is stored locally on each device separately.</div>
+    </div>
 
-    <div class="faq-item">
+    <div class="faq-item gs-web-only">
       <div class="faq-q">How do I cancel my subscription?</div>
       <div class="faq-a">Use the 'Manage My Subscription' section below to access the Stripe customer portal where you can cancel anytime. You'll retain access until the end of your billing period. If you have any trouble, email us at support@grailsweep.com and we'll help.</div>
+    </div>
+    <div class="faq-item gs-ios-only" style="display:none">
+      <div class="faq-q">How do I cancel my subscription?</div>
+      <div class="faq-a">Open Settings &rarr; Apple ID &rarr; Subscriptions on your iPhone or iPad to cancel anytime. You keep Pro access until the end of your current billing period. If you have any trouble, email us at support@grailsweep.com and we'll help.</div>
     </div>
 
     <div class="faq-item">
@@ -60,17 +159,29 @@
 
   <div style="margin-top:32px;padding:24px;background:rgba(255,45,111,0.06);border:1px solid rgba(255,45,111,0.2);border-radius:12px;">
     <h2 style="font-size:0.95rem;font-weight:700;color:#ff2d6f;margin-bottom:8px;font-family:'DM Sans',sans-serif;">⚙️ Manage My Subscription & Data</h2>
-    <p style="font-size:0.85rem;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:8px;">
+    <!-- Subscription management is Stripe-portal based on web. On iOS it runs
+         through Apple, so the portal copy AND the control below are hidden and
+         an Apple-accurate alternate is shown instead. The Delete-My-Local-Data
+         control is platform-neutral and survives on every platform. -->
+    <p class="gs-web-only" style="font-size:0.85rem;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:8px;">
         Use the Stripe customer portal to cancel or modify your subscription.
         Your subscription will remain active until the end of the current billing period — you won't be charged again after cancellation.
     </p>
-    <p style="font-size:0.85rem;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:16px;">
+    <p class="gs-web-only" style="font-size:0.85rem;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:16px;">
         To also delete your local app data (collection, scan history), use the button below after managing your subscription.
+    </p>
+    <p class="gs-ios-only" style="display:none;font-size:0.85rem;color:rgba(255,255,255,0.65);line-height:1.6;margin-bottom:16px;">
+        To cancel or manage your subscription, open Settings &rarr; Apple ID &rarr; Subscriptions on your iPhone or iPad.
+        Your subscription will remain active until the end of the current billing period — you won't be charged again after cancellation.
+        To delete your local app data (collection, scan history), use the button below.
     </p>
 
     <div style="display:flex;flex-direction:column;gap:12px;">
-      <!-- Stripe portal -->
-      <div>
+      <!-- Stripe portal — hidden on iOS: this is a functional control that
+           opens Stripe's billing portal (openCustomerPortal -> /api/customer-portal),
+           which App Store guideline 3.1.1 does not permit inside the app.
+           Subscription management on iOS happens in Settings -> Apple ID. -->
+      <div class="gs-web-only">
         <label style="font-size:0.8rem;color:#9b95b8;display:block;margin-bottom:6px;">Enter the email you used when subscribing:</label>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
           <input id="portalEmail" type="email" placeholder="you@example.com"
@@ -85,9 +196,13 @@
 
       <!-- Delete local data -->
       <div style="padding-top:12px;border-top:1px solid rgba(255,255,255,0.06);">
-        <p style="font-size:0.8rem;color:#9b95b8;margin-bottom:8px;">
+        <p class="gs-web-only" style="font-size:0.8rem;color:#9b95b8;margin-bottom:8px;">
           ⚠️ This removes your collection, Pro access and scan history from this device only.
           It does <strong>not</strong> cancel your subscription — use the portal above for that.
+        </p>
+        <p class="gs-ios-only" style="display:none;font-size:0.8rem;color:#9b95b8;margin-bottom:8px;">
+          ⚠️ This removes your collection, Pro access and scan history from this device only.
+          It does <strong>not</strong> cancel your subscription — use Settings &rarr; Apple ID &rarr; Subscriptions for that.
         </p>
         <button onclick="colDeleteAllData()"
                 style="padding:10px 20px;border-radius:8px;border:1px solid rgba(255,45,111,0.3);background:rgba(255,45,111,0.1);color:#ff2d6f;font-weight:700;font-size:0.85rem;cursor:pointer;">
