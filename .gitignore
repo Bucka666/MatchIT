@@ -74,6 +74,10 @@ store-submission/
 # (33f2bd1) since this pattern wasn't excluded yet at that point — un-bloating
 # those would need a history rewrite, not done here. This only stops NEW ones.
 *_pre_*
+# The pattern above needs a literal "_pre_", so suffixes where a word runs
+# straight on from "_pre" slip through. Today's two (2026-08-02):
+*_precontaminationfix_*
+*_prelookupflag_*
 
 # Misc scratch
 q3_secrets_usage.txt

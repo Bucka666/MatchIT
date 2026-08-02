@@ -224,7 +224,6 @@ def load_or_create_config() -> dict:
     cfg.setdefault("auto_mode_a_suppress_bg", True)
     cfg.setdefault("auto_mode_a_max_side", 1024)
 
-    # NOTE: multi_crop must be True to match DB embeddings
     cfg.setdefault("auto_mode_b_multi_crop", True)
     cfg.setdefault("auto_mode_b_suppress_bg", True)
     cfg.setdefault("auto_mode_b_max_side", 1024)
@@ -4429,7 +4428,10 @@ def db_review(batch_id):
             upload_to_r2(image_id, dst_path)
 
             try:
-                emb = embedder.embed_path(dst_path, multi_crop=True, suppress_bg=True)
+                # multi_crop/suppress_bg MUST stay False to match the index.
+                # Verified 2026-08-02: 1024/F/F reproduces stored vectors at
+                # cos 1.0000; 1024/T/T scores 0.8976 mean.
+                emb = embedder.embed_path(dst_path, multi_crop=False, suppress_bg=False)
             except TypeError:
                 emb = embedder.embed_path(dst_path)
 

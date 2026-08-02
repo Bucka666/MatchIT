@@ -320,7 +320,12 @@ def step_reembed():
             continue
 
         try:
-            emb = embedder.embed_path(file_path, multi_crop=True, suppress_bg=True)
+            # multi_crop/suppress_bg MUST stay False to match the index.
+            # Verified 2026-08-02: 1024/F/F reproduces stored vectors at
+            # cos 1.0000; 1024/T/T scores 0.8976 mean. This path ran at
+            # True/True on 2026-03-24/25 and produced 1,106 off-spec
+            # vectors (see eval_rescue/contaminated_cohort_20260802.json).
+            emb = embedder.embed_path(file_path, multi_crop=False, suppress_bg=False)
         except TypeError:
             emb = embedder.embed_path(file_path)
 

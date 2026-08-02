@@ -61,6 +61,11 @@ image = (
             "_snapshots",
             "ondevice_index_v1",
             "web_spike",
+            # Rescued scan images + blind labelling tool (2026-08-02). ~630 MB
+            # of JPEGs, a 22 MB reference index and a 7 MB inline-index HTML.
+            # Local analysis artefacts only — nothing here is imported or read
+            # at runtime, and .gitignore does not cover the Modal mount.
+            "eval_rescue",
             "*_pre_*",
             "*.bak*",
         ],
