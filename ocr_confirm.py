@@ -88,22 +88,78 @@ _JP_CODE_SHAPE_RE = re.compile(r'^(?!X\d$)(?=[A-Z0-9]{2,4}$)(?=.*[A-Z])(?=.*\d)[
 
 # Pokémon SWSH era: printed total → DB set ID (for disambiguation)
 # When OCR reads "106/217" the total 217 = swsh11 (Chilling Reign)
+# Denominator -> set fingerprint.
+#
+# 2026-08-02 AUDIT: 13 of the original 14 entries were keyed on the set's
+# FULL total (incl. secret rares) rather than its PRINTED total. OCR reads
+# the PRINTED denominator, so those keys could never legitimately match the
+# set they named — and several matched a DIFFERENT set's printed total
+# exactly, producing confident wrong answers:
+#
+#   key  claimed set   its printed_total   set that ACTUALLY prints that key
+#    73  swsh45                      72    sm35 (Shining Legends)  <- the bug
+#    80  swsh35                      73    jpn-m2 / jpn-m3
+#   160  swsh12pt5                  159    xy5
+#   203  swsh4                      185    swsh7
+#   215  swsh12                     195    svp
+#   183 186 201 209 216 233 237 284       full totals; no set prints them
+#
+# That is the mechanism behind sm35-1 -> swsh45-1. Two comments were also
+# wrong: 73 was labelled "Celebrations" (metadata: Shining Fates) and 80
+# "Shining Fates" (metadata: Champion's Path).
+#
+# All wrong-field entries removed. Only me2pt5 was correctly keyed on its
+# PRINTED total. The confident branch no longer trusts this table alone —
+# see _sets_with_printed_total(), which consults the full set_metadata
+# catalogue so a denominator shared with an unlisted set cannot look unique.
 _SWSH_TOTAL_MAP = {
-    216: ['swsh1', 'swsh10'],   # Sword & Shield base, Astral Radiance
-    209: ['swsh2'],             # Rebel Clash
-    201: ['swsh3'],             # Darkness Ablaze
-    203: ['swsh4'],             # Vivid Voltage
-    183: ['swsh5'],             # Battle Styles
-    233: ['swsh6'],             # Chilling Reign (oops — 233 not 217)
-    237: ['swsh7'],             # Evolving Skies
-    284: ['swsh8'],             # Fusion Strike
-    186: ['swsh9'],             # Brilliant Stars
-    217: ['swsh11', 'me2pt5'],  # Lost Origin / Ascended Heroes (same printed total)
-    215: ['swsh12'],            # Silver Tempest
-    160: ['swsh12pt5'],         # Crown Zenith
-    80:  ['swsh35'],            # Shining Fates
-    73:  ['swsh45'],            # Celebrations
+    217: ['me2pt5'],            # Ascended Heroes — printed_total 217 (verified)
 }
+
+_PRINTED_TOTAL_IDX = None
+
+
+def _sets_with_printed_total(total):
+    """Every POKEMON set whose PRINTED total equals `total`, from the full
+    set_metadata catalogue — not the partial table above.
+
+    len(...)==1 in the old code meant "one set in this 14-row table", which
+    is why a denominator shared with an unlisted set looked unambiguous and
+    was answered confidently. This checks all 302 Pokemon sets instead.
+
+    CAVEAT: 60 of 302 Pokemon sets have no printed_total in metadata, so a
+    denominator can still appear unique when an unrecorded set shares it.
+    This narrows the hazard; it does not eliminate it.
+    """
+    global _PRINTED_TOTAL_IDX
+    if _PRINTED_TOTAL_IDX is None:
+        idx = {}
+        try:
+            from app import _load_set_metadata as _lsm
+            meta = _lsm() or {}
+        except Exception:
+            meta = {}
+            try:
+                import json as _json
+                for p in (os.path.join(os.path.dirname(__file__), "set_metadata.json"),
+                          "/app/set_metadata.json"):
+                    if os.path.exists(p):
+                        with open(p, "r", encoding="utf-8") as f:
+                            meta = _json.load(f)
+                        break
+            except Exception as e:
+                logger.warning(f"[OCR-DENOM] set_metadata unavailable: {e}")
+        for sid, v in (meta or {}).items():
+            if not isinstance(v, dict):
+                continue
+            if (v.get("game") or "").upper() != "POKEMON":
+                continue
+            p = v.get("printed_total")
+            if isinstance(p, int):
+                idx.setdefault(p, []).append(sid)
+        _PRINTED_TOTAL_IDX = idx
+        logger.info(f"[OCR-DENOM] printed-total index built: {len(idx)} distinct totals")
+    return sorted(_PRINTED_TOTAL_IDX.get(int(total), []))
 
 # Pokémon SV era: printed set code → pokemontcg.io DB set ID
 _PKM_SETCODE_MAP = {
@@ -393,6 +449,450 @@ def _vision_api_read(crop_image, api_key: str) -> list:
 
 
 # ─────────────────────────────────────────────────────────────
+# Full-image OCR (position-aware) — feature-flagged, default OFF
+# ─────────────────────────────────────────────────────────────
+#
+# The region-based path above crops three BOTTOM-LEFT boxes. The Pokemon
+# collector number only moved bottom-left at SM; WOTC through XY print it
+# bottom-RIGHT, so those eras are missed entirely and the crops instead
+# capture the copyright year and attack text — which the bare-number
+# fallback then accepts (e.g. "PUT 7 DAMAGE COUNTERS" -> 7).
+#
+# This path makes ONE full-image TEXT_DETECTION call and picks the number
+# by WHERE it sits, which is era-agnostic and lets a year or a damage
+# value be rejected on position rather than on a numeric-range guess.
+
+# Raw Vision text cache. SAFE to cache: the raw strings are a pure function
+# of (image bytes, preprocessing). NOT safe to cache the PARSED result —
+# pass 2 sets _suppress_swsh_for_jpn differently from pass 1 (see
+# ocr_confirm.py:1073 vs :902), so the same raw text can legitimately parse
+# to different values. Keyed on (image_path, region_tag); query paths are
+# per-scan UUIDs so entries are naturally unique and short-lived.
+_RAW_OCR_CACHE: dict = {}
+_RAW_OCR_CACHE_MAX = 64
+
+# Structured trace of the LAST full-image extraction. Populated on every
+# call regardless of logging configuration — logger.info does not reach
+# stdout in standalone containers, which is why earlier iterations were
+# effectively blind. Harnesses read ocr_confirm._LAST_FULL_TRACE.
+_LAST_FULL_TRACE: dict = {}
+
+
+def _trace_dump(tr: dict) -> str:
+    """Human-readable per-token accept/reject trace."""
+    out = [f"IMAGE {tr.get('image')}",
+           f"  words={tr.get('n_words')} lines={len(tr.get('lines', []))} "
+           f"result={tr.get('result')!r}"]
+    for i, lt in enumerate(tr.get("lines", [])):
+        out.append(f"  line[{i}] y={lt['y0']:.3f}-{lt['y1']:.3f} {lt['text']!r}")
+    for t in tr.get("tokens", []):
+        mark = "ACCEPT" if t["decision"] == "accept" else "reject"
+        out.append(f"    {mark:<6} {t['token']!r:<14} kind={t['kind']:<5} "
+                   f"bbox=({t['x0']:.3f},{t['y0']:.3f})-({t['x1']:.3f},{t['y1']:.3f}) "
+                   f"line={t['line']} :: {t['reason']}")
+    if tr.get("selected"):
+        out.append(f"  SELECTED {tr['selected']}")
+    if tr.get("setcode_line") is not None:
+        out.append(f"  setcode scan line={tr['setcode_line']!r} -> {tr.get('setcode')}")
+    return "\n".join(out)
+
+
+def _raw_cache_get(path: str, tag: str):
+    return _RAW_OCR_CACHE.get((path, tag))
+
+
+def _raw_cache_put(path: str, tag: str, value):
+    if len(_RAW_OCR_CACHE) >= _RAW_OCR_CACHE_MAX:
+        _RAW_OCR_CACHE.clear()          # cheap bound; entries are per-scan
+    _RAW_OCR_CACHE[(path, tag)] = value
+    return value
+
+
+def _full_image_fallback_enabled() -> bool:
+    """config.json ocr_full_image_fallback, default False (dark by default).
+
+    Single flag — there is deliberately no separate 'replace' mode. The
+    region path is always primary; this only enables the fallback.
+    """
+    try:
+        from app import CFG as _CFG
+        return bool(_CFG.get("ocr_full_image_fallback", False))
+    except Exception:
+        pass
+    try:
+        import json as _json
+        for p in (os.path.join(os.path.dirname(__file__), "config.json"),
+                  "/app/config.json"):
+            if os.path.exists(p):
+                with open(p, "r", encoding="utf-8") as f:
+                    return bool(_json.load(f).get("ocr_full_image_fallback", False))
+    except Exception as e:
+        logger.debug(f"[OCR-FULL] flag read failed: {e}")
+    return False
+
+
+def _vision_read_boxes(pil_image, api_key: str) -> list:
+    """TEXT_DETECTION returning [(text, x0, y0, x1, y1)] with the box
+    normalised to fractions of image width/height. [] on any failure."""
+    import base64, json as _json, urllib.request, io as _io
+    try:
+        buf = _io.BytesIO()
+        pil_image.save(buf, format="JPEG", quality=95)
+        b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+        payload = {"requests": [{
+            "image": {"content": b64},
+            "features": [{"type": "TEXT_DETECTION", "maxResults": 100}],
+            "imageContext": {"languageHints": ["en"]},
+        }]}
+        req = urllib.request.Request(
+            f"https://vision.googleapis.com/v1/images:annotate?key={api_key}",
+            data=_json.dumps(payload).encode("utf-8"),
+            headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            result = _json.loads(resp.read())
+        rs = (result.get("responses") or [{}])[0]
+        if "error" in rs:
+            logger.warning(f"[OCR-FULL] Vision API error: {rs['error']}")
+            return []
+        anns = rs.get("textAnnotations", [])
+        if not anns:
+            return []
+        W, H = pil_image.size
+        out = []
+        for a in anns[1:]:                       # [0] is the whole block
+            vs = a.get("boundingPoly", {}).get("vertices", [])
+            if not vs:
+                continue
+            xs = [v.get("x", 0) for v in vs]
+            ys = [v.get("y", 0) for v in vs]
+            out.append((a.get("description", "").strip().upper(),
+                        min(xs) / W, min(ys) / H, max(xs) / W, max(ys) / H))
+        return out
+    except Exception as e:
+        logger.warning(f"[OCR-FULL] Vision call failed: {e}")
+        return []
+
+
+# Position gate: the collector number sits in the bottom strip on every
+# Pokemon era measured (y-centre 0.918-0.983 across WOTC/eCard/EX/DP/PL/
+# BW/XY/SM/SWSH/SV). x is deliberately unconstrained — that is what makes
+# this era-agnostic.
+_FULL_Y_MIN = 0.90
+_NOISE_WORDS = ("WEAKNESS", "RESISTANCE", "RETREAT", "DAMAGE", "COUNTER")
+_YEAR_MIN = 1990
+
+
+def _extract_pokemon_number_fullimage(image_path: str):
+    """Full-image, position-aware Pokemon collector-number extraction.
+
+    Same contract as _extract_pokemon_number: returns 'setcode-num',
+    'num', or None, and sets _last_pkm_denominator as a side effect.
+    """
+    global _last_pkm_denominator, _last_unmapped_jp_setcode
+    _last_pkm_denominator = None
+    _last_unmapped_jp_setcode = None
+
+    api_key = _get_vision_api_key()
+    if not api_key:
+        logger.warning("[OCR-FULL] no Vision key — cannot run")
+        return None
+
+    words = _raw_cache_get(image_path, "FULL")
+    if words is None:
+        try:
+            from PIL import Image, ImageOps
+            img = Image.open(image_path).convert("RGB")
+            # variant I: invert + 3x upscale, NO contrast/sharpness.
+            # Measured best single-call variant (18/24 vs 13/24 current).
+            img = ImageOps.invert(img)
+            img = img.resize((img.width * 3, img.height * 3), Image.LANCZOS)
+        except Exception as e:
+            logger.warning(f"[OCR-FULL] preprocess failed: {e}")
+            return None
+        words = _raw_cache_put(image_path, "FULL",
+                               _vision_read_boxes(img, api_key))
+    else:
+        logger.info("[OCR-FULL] raw Vision text served from cache")
+
+    global _LAST_FULL_TRACE
+    _LAST_FULL_TRACE = {"image": image_path, "n_words": len(words),
+                        "lines": [], "tokens": [], "selected": None,
+                        "result": None, "setcode_line": None, "setcode": None}
+    trace = _LAST_FULL_TRACE
+
+    def _tk(token, kind, w, li, decision, reason):
+        trace["tokens"].append({
+            "token": token, "kind": kind, "line": li,
+            "x0": w[1], "y0": w[2], "x1": w[3], "y1": w[4],
+            "decision": decision, "reason": reason})
+
+    if not words:
+        trace["result"] = None
+        logger.info("[OCR-FULL] no text detected")
+        return None
+
+    # ---- group words into LINES (needed by all three defect fixes) ----
+    heights = sorted((y1 - y0) for (_t, _a, y0, _c, y1) in words) or [0.01]
+    tol = max(0.004, heights[len(heights) // 2] * 0.6)
+    ordered = sorted(words, key=lambda w: (w[2] + w[4]) / 2.0)
+    lines = []
+    for w in ordered:
+        yc = (w[2] + w[4]) / 2.0
+        if lines and abs(yc - lines[-1]["yc"]) <= tol:
+            ln = lines[-1]
+            ln["words"].append(w)
+            ln["yc"] = sum((x[2] + x[4]) / 2.0 for x in ln["words"]) / len(ln["words"])
+        else:
+            lines.append({"words": [w], "yc": yc})
+    for li, ln in enumerate(lines):
+        ln["words"].sort(key=lambda w: w[1])
+        ln["text"] = " ".join(w[0] for w in ln["words"])
+        ln["y0"] = min(w[2] for w in ln["words"])
+        ln["y1"] = max(w[4] for w in ln["words"])
+        ln["idx"] = li
+        trace["lines"].append({"text": ln["text"], "y0": ln["y0"], "y1": ln["y1"]})
+
+    # DEFECT 3 fix, POSITIONAL. On WOTC the copyright run and the collector
+    # number share ONE line ("ILLUS. KEN SUGIMORI 1995 , 96 , 98 NINTENDO
+    # ... WIZARDS . 125 / 132"), so a whole-line veto discards the answer.
+    # Reject only the offending TOKENS: a bare 2-digit that trails a 4-digit
+    # year within _YEAR_LOOKBACK tokens on the same line. Everything else on
+    # that line stays eligible — the collector number lives there.
+    _YEAR_LOOKBACK = 6
+
+    def _trails_year(toks_, i) -> bool:
+        for j in range(max(0, i - _YEAR_LOOKBACK), i):
+            tj = toks_[j][0]
+            if len(tj) == 4 and tj.isdigit() and int(tj) >= _YEAR_MIN:
+                return True
+        return False
+
+    # kept: the run-shape veto, which was the right idea
+    _YEAR_RUN = re.compile(r"(?:19|20)\d{2}\s*,\s*\d{2}\s*(?:,\s*\d{2}\s*)*")
+
+    def _year_fragment(txt: str, tok: str) -> bool:
+        return bool(len(tok) == 2 and _YEAR_RUN.search(txt))
+
+    def _digits_only(s: str):
+        """'102-' -> 102 ; '/130' -> 130 ; 'X' -> None. Vision frequently
+        leaves punctuation attached to the denominator."""
+        d = re.sub(r"\D", "", s or "")
+        return int(d) if d else None
+
+    noise_bands = [(y0, y1) for (t, x0, y0, x1, y1) in words
+                   if any(w in t for w in _NOISE_WORDS)]
+
+    def in_noise(y0, y1):
+        return any(not (y1 < b0 or y0 > b1) for b0, b1 in noise_bands)
+
+    # the table is now a single verified row, so the "bare number equals a
+    # known set total" demotion draws on the full printed-total catalogue
+    _KNOWN_TOTALS = set(_SWSH_TOTAL_MAP.keys())
+    if _PRINTED_TOTAL_IDX is None:
+        _sets_with_printed_total(0)          # build the index once
+    if _PRINTED_TOTAL_IDX:
+        _KNOWN_TOTALS |= set(_PRINTED_TOTAL_IDX.keys())
+
+    accepted, rejected = [], []
+    for ln in lines:
+        toks = ln["words"]
+        lt = ln["text"]
+        used = set()
+        # DEFECT 1 fix: Vision often splits "1/189" into ["1","/","189"] or
+        # ["1","189"]. Re-join adjacent numerics on the same line so the
+        # FIRST is the number and the second the total.
+        for i, w in enumerate(toks):
+            t, x0, y0, x1, y1 = w
+            if i in used or not t.isdigit():
+                continue
+            n2 = t2 = None
+            # NOTE: _digits_only strips punctuation Vision leaves attached,
+            # e.g. "1 / 102->" tokenises as ['1','/','102-','>'].
+            if i + 2 < len(toks) and toks[i + 1][0] in ("/", "|", "\\") \
+                    and _digits_only(toks[i + 2][0]) is not None:
+                n2, t2, span = int(t), _digits_only(toks[i + 2][0]), (i, i + 1, i + 2)
+            elif i + 1 < len(toks) and toks[i + 1][0].startswith("/") \
+                    and _digits_only(toks[i + 1][0]) is not None:
+                n2, t2, span = int(t), _digits_only(toks[i + 1][0]), (i, i + 1)
+            elif i + 1 < len(toks) and toks[i + 1][0].isdigit() \
+                    and (toks[i + 1][1] - x1) < 0.03:
+                n2, t2, span = int(t), int(toks[i + 1][0]), (i, i + 1)
+            if n2 is not None:
+                last = toks[span[-1]]
+                yc = (y0 + last[4]) / 2.0
+                jw = (f"{n2}/{t2}", x0, y0, last[3], last[4])
+                lbl = f"{n2}/{t2}"
+                if n2 > 400 or t2 > 400:
+                    rejected.append((lbl, "impossible_values"))
+                    _tk(lbl, "N/T", jw, ln["idx"], "reject", "impossible_values")
+                elif yc < _FULL_Y_MIN:
+                    rejected.append((lbl, f"too_high y={yc:.3f}"))
+                    _tk(lbl, "N/T", jw, ln["idx"], "reject", f"too_high y={yc:.3f}")
+                elif in_noise(y0, last[4]):
+                    rejected.append((lbl, "overlaps_rules_text"))
+                    _tk(lbl, "N/T", jw, ln["idx"], "reject", "overlaps_rules_text")
+                else:
+                    accepted.append((2, n2, t2, lbl, ln,
+                                     x0, y0, last[3], last[4]))
+                    _tk(lbl, "N/T", jw, ln["idx"], "accept", "joined_adjacent")
+                used.update(span)
+
+        for i, w in enumerate(toks):
+            if i in used:
+                continue
+            t, x0, y0, x1, y1 = w
+            yc = (y0 + y1) / 2.0
+            m = _CARD_NUMBER_RE.search(t)
+            if m:
+                n, tot = int(m.group(1)), int(m.group(2))
+                if n > 400 or tot > 400:
+                    rejected.append((t, "impossible_values"))
+                    _tk(t, "N/T", w, ln["idx"], "reject", "impossible_values"); continue
+                if yc < _FULL_Y_MIN:
+                    rejected.append((t, f"too_high y={yc:.3f}"))
+                    _tk(t, "N/T", w, ln["idx"], "reject", f"too_high y={yc:.3f}"); continue
+                if in_noise(y0, y1):
+                    rejected.append((t, "overlaps_rules_text"))
+                    _tk(t, "N/T", w, ln["idx"], "reject", "overlaps_rules_text"); continue
+                accepted.append((2, n, tot, t, ln, x0, y0, x1, y1))
+                _tk(t, "N/T", w, ln["idx"], "accept", "single_token_N/T")
+                continue
+            if t.isdigit():
+                n = int(t)
+                if len(t) == 4 and n >= _YEAR_MIN:
+                    rejected.append((t, "copyright_year"))
+                    _tk(t, "bare", w, ln["idx"], "reject", "copyright_year"); continue
+                if len(t) == 2 and _trails_year(toks, i):
+                    rejected.append((t, "year_run_token"))
+                    _tk(t, "bare", w, ln["idx"], "reject",
+                        f"year_run_token (4-digit year within {_YEAR_LOOKBACK} tokens)")
+                    continue
+                if _year_fragment(lt, t) and _trails_year(toks, i):
+                    rejected.append((t, "year_run_fragment"))
+                    _tk(t, "bare", w, ln["idx"], "reject", "year_run_fragment"); continue
+                if not (1 <= n <= 400):
+                    rejected.append((t, "out_of_range"))
+                    _tk(t, "bare", w, ln["idx"], "reject", "out_of_range"); continue
+                if yc < _FULL_Y_MIN:
+                    rejected.append((t, f"too_high y={yc:.3f}"))
+                    _tk(t, "bare", w, ln["idx"], "reject", f"too_high y={yc:.3f}"); continue
+                if in_noise(y0, y1):
+                    rejected.append((t, "overlaps_rules_text"))
+                    _tk(t, "bare", w, ln["idx"], "reject", "overlaps_rules_text"); continue
+                # a bare number equal to a known set total is probably the
+                # denominator, not the card number — demote below other bares
+                kind = 0 if n in _KNOWN_TOTALS else 1
+                accepted.append((kind, n, None, t, ln, x0, y0, x1, y1))
+                _tk(t, "bare", w, ln["idx"], "accept",
+                    "known_total_demoted" if kind == 0 else "plain_bare")
+
+    if rejected:
+        logger.info(f"[OCR-FULL] rejected: {rejected[:14]}")
+    if not accepted:
+        trace["result"] = None
+        logger.info("[OCR-FULL] no candidate survived position/pattern gates")
+        return None
+
+    # N/T > plain bare > bare-equal-to-a-known-total; then lowest on the card
+    accepted.sort(key=lambda c: (-c[0], -((c[6] + c[8]) / 2.0)))
+    kind, num, total, text, line, x0, y0, x1, y1 = accepted[0]
+    logger.info(f"[OCR-FULL] selected {text!r} kind={('total?', 'bare', 'N/T')[kind]} "
+                f"bbox=({x0:.3f},{y0:.3f})-({x1:.3f},{y1:.3f}) "
+                f"| {len(accepted) - 1} other candidate(s)")
+
+    # DEFECT 2 fix: set code comes from the NUMBER-BEARING LINE ONLY, matched
+    # on word boundaries. The previous y-band + substring match let "PRE"
+    # hit inside unrelated words and emitted sv8pt5-* across four eras.
+    set_code = None
+    scan_text = line["text"].upper()
+    for code, db_id in _PKM_SETCODE_MAP.items():
+        if re.search(r"(?<![A-Z0-9])" + re.escape(code) + r"(?![A-Z0-9])", scan_text):
+            set_code = db_id
+            break
+    if set_code is None:
+        for tok in scan_text.split():
+            if tok in _JP_SETCODE_MAP:
+                set_code = f"jpn-{_JP_SETCODE_MAP[tok]}"
+                break
+    trace["selected"] = f"{text!r} kind={kind} bbox=({x0:.3f},{y0:.3f})-({x1:.3f},{y1:.3f})"
+    trace["setcode_line"] = scan_text
+    trace["setcode"] = set_code
+    logger.info(f"[OCR-FULL] set-code scan line={scan_text!r} -> {set_code}")
+
+    num_s = str(num)
+    if total and total > 300:
+        total = None
+
+    def _ret(v):
+        trace["result"] = v
+        return v
+
+    if set_code:
+        _last_pkm_denominator = total
+        logger.info(f"[OCR-FULL] extracted set+number: {set_code}-{num_s}")
+        return _ret(f"{set_code}-{num_s}")
+    if total and not _suppress_swsh_for_jpn:
+        cands = sorted(set(_sets_with_printed_total(total))
+                       | set(_SWSH_TOTAL_MAP.get(total, [])))
+        logger.info(f"[OCR-FULL] denom fingerprint: total={total} candidates={cands}")
+        if len(cands) == 1:
+            _last_pkm_denominator = total
+            logger.info(f"[OCR-FULL] denom fingerprint: total={total} -> {cands[0]}-{num_s}")
+            return _ret(f"{cands[0]}-{num_s}")
+        if len(cands) > 1:
+            _last_pkm_denominator = total
+            logger.info(f"[OCR-FULL] ambiguous total={total}, candidates={cands}")
+            return _ret(num_s)
+    if total:
+        _last_pkm_denominator = total
+    logger.info(f"[OCR-FULL] extracted card number only: {num_s} (denom={total})")
+    return _ret(num_s)
+
+
+def _extract_pokemon_number_dispatch(image_path: str):
+    """Region path is PRIMARY and unchanged. Full-image runs ONLY as a
+    fallback, and only when the flag is on.
+
+    Dispatch:
+      1. always run the region path first
+      2. flag OFF                       -> return it (byte-identical to today)
+      3. region gave a usable result     -> return it, full-image never runs
+      4. region gave None, or a bare number with NO denominator to
+         corroborate it (the shape that let attack text through, e.g.
+         "PUT 7 DAMAGE COUNTERS" -> 7) -> try full-image
+      5. full-image found nothing        -> restore the region path's result
+         AND its _last_pkm_denominator side effect, then return it
+
+    Never worse than the region path: the fallback can only replace a
+    result the region path itself could not corroborate.
+    """
+    global _last_pkm_denominator, _last_unmapped_jp_setcode
+
+    primary = _extract_pokemon_number(image_path)
+    if not _full_image_fallback_enabled():
+        return primary
+
+    p_denom = _last_pkm_denominator
+    p_unmapped = _last_unmapped_jp_setcode
+    has_setcode = bool(primary) and "-" in str(primary)
+    usable = bool(primary) and (has_setcode or p_denom is not None)
+    if usable:
+        return primary
+
+    logger.info(f"[OCR-FALLBACK] region path gave {primary!r} "
+                f"(denom={p_denom}) — trying full-image")
+    alt = _extract_pokemon_number_fullimage(image_path)
+    if alt:
+        logger.info(f"[OCR-FALLBACK] full-image supplied {alt!r}")
+        return alt
+    # restore the region path's result and its side effects
+    _last_pkm_denominator = p_denom
+    _last_unmapped_jp_setcode = p_unmapped
+    logger.info(f"[OCR-FALLBACK] full-image found nothing — keeping {primary!r}")
+    return primary
+
+
+# ─────────────────────────────────────────────────────────────
 # TCG-specific text extraction
 # ─────────────────────────────────────────────────────────────
 
@@ -587,12 +1087,24 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
         (ln.upper() for ln in texts if re.search(r'\d{1,4}\s*/\s*\d{1,4}', ln)),
         None
     )
-    _scan_text = _number_line if _number_line else all_text
-    logger.info(f"[OCR-PKM] setcode scan text: {_scan_text!r}")
-    for code, db_id in _PKM_SETCODE_MAP.items():
-        if code in _scan_text:
-            set_code = db_id
-            break
+    # FIX 3 (2026-08-02): the set code must come from the NUMBER-BEARING
+    # LINE only. Falling back to all pooled crop text was the unguarded
+    # path — it is exactly the pre-SM situation (no N/T printed), where
+    # card prose is all that remains to scan and a 3-letter code can match
+    # inside a word. When there is no number line, emit NO set code.
+    # Audit cost: 2 of 95 matches; the other 93 already came from the line.
+    # Substring matching within the line is deliberately UNCHANGED — it is
+    # load-bearing (ASCEN/MEGEN/PREEN are the code fused with the EN
+    # suffix, 60 of 95 matches, all correct).
+    _scan_text = _number_line
+    if _scan_text is None:
+        logger.info("[OCR-PKM] no number-bearing line — set-code scan skipped")
+    else:
+        logger.info(f"[OCR-PKM] setcode scan text: {_scan_text!r}")
+        for code, db_id in _PKM_SETCODE_MAP.items():
+            if code in _scan_text:
+                set_code = db_id
+                break
     # JP set code fallback — check individual OCR tokens against JP map
     if set_code is None:
         for raw in texts:  # individual OCR text lines, not all_text
@@ -664,12 +1176,20 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
     # printed total (e.g. 80 -> swsh35) must never override a correct JPN CLIP
     # match. Falls through to the bare-number path below, preserving visual rank.
     if num and total and not set_code and not _suppress_swsh_for_jpn:
-        candidates = _SWSH_TOTAL_MAP.get(total, [])
+        # Candidates come from the FULL metadata catalogue, not the partial
+        # table — a denominator shared with an unlisted set must not look
+        # unique. The table is consulted only as a union, so a verified
+        # entry (me2pt5/217) still contributes.
+        meta_c = _sets_with_printed_total(total)
+        table_c = _SWSH_TOTAL_MAP.get(total, [])
+        candidates = sorted(set(meta_c) | set(table_c))
+        logger.info(f"[OCR-PKM] denom fingerprint: total={total} "
+                    f"metadata={meta_c} table={table_c} -> candidates={candidates}")
         if len(candidates) == 1:
             combined = f"{candidates[0]}-{num}"
             if total:
                 _last_pkm_denominator = total
-            logger.info(f"[OCR-PKM] SWSH fingerprint: total={total} → {combined}")
+            logger.info(f"[OCR-PKM] denom fingerprint: total={total} → {combined}")
             return combined
         elif len(candidates) > 1:
             logger.info(f"[OCR-PKM] SWSH ambiguous total={total}, candidates={candidates}")
@@ -900,7 +1420,9 @@ def ocr_direct_lookup(
         # total fingerprint override a genuine JP card.
         global _suppress_swsh_for_jpn, _last_unmapped_jp_setcode
         _suppress_swsh_for_jpn = bool(jp_mode)
-        extracted = _extract_pokemon_number(image_path)
+        # CALL SITE 1 of 2 (pre-CLIP). Flag OFF -> _extract_pokemon_number,
+        # byte-identical to today.
+        extracted = _extract_pokemon_number_dispatch(image_path)
     else:
         return None, None
     if not extracted:
@@ -1076,7 +1598,8 @@ def ocr_confirm_ranking(
     if tcg_upper == "YUGIOH":
         extractors = [(_extract_ygo_setcode, _ygo_matches)]
     elif tcg_upper == "POKEMON":
-        extractors = [(_extract_pokemon_number, _pokemon_matches)]
+        # CALL SITE 2 of 2 (post-CLIP). Flag OFF -> _extract_pokemon_number.
+        extractors = [(_extract_pokemon_number_dispatch, _pokemon_matches)]
     elif tcg_upper == "MTG":
         extractors = [(_extract_mtg_collector, _mtg_matches)]
     else:
@@ -1084,7 +1607,7 @@ def ocr_confirm_ranking(
         if allow_pokemon_promote:
             extractors = [
                 (_extract_ygo_setcode,    _ygo_matches),
-                (_extract_pokemon_number, _pokemon_matches),
+                (_extract_pokemon_number_dispatch, _pokemon_matches),
                 (_extract_mtg_collector,  _mtg_matches),
             ]
         else:
@@ -1342,7 +1865,8 @@ def parse_pokemon_text(texts: list) -> Optional[str]:
     if num and set_code and num_is_clean:
         return f"{set_code}-{num}"
     if total and total <= 300 and num and num_is_clean and not set_code:
-        candidates = _SWSH_TOTAL_MAP.get(total, [])
+        candidates = sorted(set(_sets_with_printed_total(total))
+                            | set(_SWSH_TOTAL_MAP.get(total, [])))
         if len(candidates) == 1:
             return f"{candidates[0]}-{num}"
         elif candidates:
