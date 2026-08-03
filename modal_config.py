@@ -66,7 +66,14 @@ image = (
             # Local analysis artefacts only — nothing here is imported or read
             # at runtime, and .gitignore does not cover the Modal mount.
             "eval_rescue",
+            # Sidecars of config.json are copies of the same secrets.
+            # config.json.preocrflag / .prefallbackflag were baked into
+            # every deployed image up to v5. This pattern needs a suffix,
+            # so config.json ITSELF is untouched and still uploads —
+            # app.py reads it at runtime.
+            "config.json.*",
             "*_pre_*",
+            "*_preocr*",
             "*.bak*",
         ],
     )

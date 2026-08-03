@@ -2,7 +2,10 @@
 # Secrets — NEVER commit
 # ============================================
 config.json
-config.json.bak*
+# Any sidecar of config.json is a copy of the same secrets (the exact-name
+# rule above does not cover suffixed variants — .preocrflag/.prefallbackflag
+# style backups slipped through until 2026-08-03).
+config.json.*
 _secrets_inventory.tmp.txt
 KEYS.md
 *.env
@@ -78,6 +81,8 @@ store-submission/
 # straight on from "_pre" slip through. Today's two (2026-08-02):
 *_precontaminationfix_*
 *_prelookupflag_*
+# ...and the OCR-work backups (2026-08-03): _preocrfullimage_, _preocrsetcode_
+*_preocr*
 
 # Misc scratch
 q3_secrets_usage.txt
