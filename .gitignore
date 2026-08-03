@@ -83,6 +83,8 @@ store-submission/
 *_prelookupflag_*
 # ...and the OCR-work backups (2026-08-03): _preocrfullimage_, _preocrsetcode_
 *_preocr*
+# ...and the era-gate backup (2026-08-03): _preeragate_
+*_preeragate_*
 
 # Misc scratch
 q3_secrets_usage.txt

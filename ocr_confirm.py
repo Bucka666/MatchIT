@@ -602,10 +602,20 @@ def _extract_pokemon_number_fullimage(image_path: str):
         try:
             from PIL import Image, ImageOps
             img = Image.open(image_path).convert("RGB")
-            # variant I: invert + 3x upscale, NO contrast/sharpness.
+            # variant I: invert + 2x upscale, NO contrast/sharpness.
             # Measured best single-call variant (18/24 vs 13/24 current).
+            # 2026-08-03: 3x -> 2x. A/B over the 12 WOTC references and the 85
+            # fallback-firing photos (downscaled to the 1400px long edge that
+            # production actually stores): identical extraction (12/12) and
+            # correct rate (11/12) on WOTC, agreement with 3x on 84/85 photos
+            # and on all 6 hand-adjudicated cards, for ~40% less latency
+            # (WOTC 1.17s -> 0.90s, photos 2.34s -> 1.44s) and ~45% less
+            # Vision payload (963KB -> 537KB / 2234KB -> 1223KB).
+            # Headroom matters too: a raw 3472x4624 phone original at 3x
+            # produces a ~14MB payload that Vision rejects with "Bad image
+            # data" outright; 2x halves that exposure.
             img = ImageOps.invert(img)
-            img = img.resize((img.width * 3, img.height * 3), Image.LANCZOS)
+            img = img.resize((img.width * 2, img.height * 2), Image.LANCZOS)
         except Exception as e:
             logger.warning(f"[OCR-FULL] preprocess failed: {e}")
             return None
@@ -849,18 +859,98 @@ def _extract_pokemon_number_fullimage(image_path: str):
     return _ret(num_s)
 
 
-def _extract_pokemon_number_dispatch(image_path: str):
+# ── era gate for the full-image fallback ──────────────────────────────
+# Measured 2026-08-03 over 170 POKEMON-routed real photos: ungated, the
+# fallback fired 18 times and changed 6 answers — 3 right (all WOTC Base
+# Set) and 3 WRONG (all SM-onward, where the full-image path grabbed a
+# stray digit: "3" for swsh45sv-SV109, "2" for smp-SM62). Every correct
+# change was pre-SM; every wrong one was SM-onward. Gating on era keeps
+# 3/3 of the wins, removes 3/3 of the losses, and cuts firings 18 -> 8.
+#
+# Era comes from the per-card profile.json `set_era` field, which is
+# scraped alongside the rest of the card data — deliberately NOT a set
+# code prefix list. A set added later carries its own scraped era tag, or
+# none at all, so a new set can never silently qualify as pre-SM. Only an
+# era we positively recognise as pre-SM opens the gate; unknown, missing,
+# unscraped and non-Pokemon all FAIL CLOSED (no fallback).
+_PRE_SM_ERAS = frozenset({"WOTC", "EX_ERA", "DP_ERA", "BW_ERA", "XY_ERA"})
+_SM_ONWARD_ERAS = frozenset({"SM_ERA", "SWSH_ERA", "SV_ERA"})
+_SET_ERA_CACHE: Dict[str, Optional[str]] = {}
+
+
+def _set_era_for_sku(sku: Optional[str]) -> Optional[str]:
+    """Scraped `set_era` for a SKU's set, or None when it can't be resolved.
+
+    Cached per set_id — era is a property of the set, and a scan storm on
+    one set should not re-read the same profile.json every request. A None
+    result is cached too: it means "fail closed", which is the safe
+    direction, and re-reading a missing profile on every scan would just
+    buy latency for the same answer.
+    """
+    if not sku or not _is_pokemon_sku(sku):
+        return None
+    set_id = sku.rsplit("-", 1)[0] if "-" in sku else sku
+    if set_id in _SET_ERA_CACHE:
+        return _SET_ERA_CACHE[set_id]
+    era = None
+    try:
+        import json as _json
+        # Try the vertical's configured db_root first, then the same
+        # LOCALAPPDATA-or-/modal_data convention _get_images_db_path() uses.
+        # Don't rely on vertical_loader alone: it isn't importable in every
+        # context that imports this module, and a bare relative "CardsDB"
+        # resolves against the cwd, which silently disables the gate instead
+        # of failing loudly.
+        roots = []
+        try:
+            from vertical_loader import get_db_root as _gdbr
+            if _gdbr():
+                roots.append(_gdbr())
+        except Exception:
+            pass
+        roots.append(os.path.join(
+            os.environ.get("LOCALAPPDATA", "/modal_data"), "CardsDB"))
+        roots.append("CardsDB")
+        for root in roots:
+            path = os.path.join(root, "pokemon", sku, "profile.json")
+            if os.path.exists(path):
+                with open(path, "r", encoding="utf-8") as f:
+                    era = ((_json.load(f) or {}).get("set_era") or "").strip() or None
+                break
+        else:
+            logger.warning(f"[OCR-ERA] no profile.json for {sku} under {roots} "
+                           f"— era gate will fail closed")
+    except Exception as e:
+        logger.warning(f"[OCR-ERA] could not resolve set_era for {sku}: {e}")
+        era = None
+    _SET_ERA_CACHE[set_id] = era
+    return era
+
+
+def _is_pre_sm_sku(sku: Optional[str]) -> bool:
+    """True only when the SKU's era is KNOWN and predates Sun & Moon."""
+    era = _set_era_for_sku(sku)
+    ok = era in _PRE_SM_ERAS
+    logger.info(f"[OCR-ERA] {sku} set_era={era!r} pre_sm={ok}")
+    return ok
+
+
+def _extract_pokemon_number_dispatch(image_path: str,
+                                     fallback_allowed: bool = False):
     """Region path is PRIMARY and unchanged. Full-image runs ONLY as a
-    fallback, and only when the flag is on.
+    fallback, and only when the flag is on AND the caller allows it.
 
     Dispatch:
       1. always run the region path first
       2. flag OFF                       -> return it (byte-identical to today)
-      3. region gave a usable result     -> return it, full-image never runs
-      4. region gave None, or a bare number with NO denominator to
+      3. fallback_allowed False          -> return it. Defaults to False so
+         every call site must opt in explicitly; see the era gate above and
+         the pre-CLIP note in ocr_direct_lookup.
+      4. region gave a usable result     -> return it, full-image never runs
+      5. region gave None, or a bare number with NO denominator to
          corroborate it (the shape that let attack text through, e.g.
          "PUT 7 DAMAGE COUNTERS" -> 7) -> try full-image
-      5. full-image found nothing        -> restore the region path's result
+      6. full-image found nothing        -> restore the region path's result
          AND its _last_pkm_denominator side effect, then return it
 
     Never worse than the region path: the fallback can only replace a
@@ -870,6 +960,11 @@ def _extract_pokemon_number_dispatch(image_path: str):
 
     primary = _extract_pokemon_number(image_path)
     if not _full_image_fallback_enabled():
+        return primary
+
+    if not fallback_allowed:
+        logger.info("[OCR-FALLBACK] gate closed for this call site — "
+                    f"keeping region result {primary!r}")
         return primary
 
     p_denom = _last_pkm_denominator
@@ -1420,8 +1515,16 @@ def ocr_direct_lookup(
         # total fingerprint override a genuine JP card.
         global _suppress_swsh_for_jpn, _last_unmapped_jp_setcode
         _suppress_swsh_for_jpn = bool(jp_mode)
-        # CALL SITE 1 of 2 (pre-CLIP). Flag OFF -> _extract_pokemon_number,
-        # byte-identical to today.
+        # CALL SITE 1 of 2 (pre-CLIP). The full-image fallback is deliberately
+        # NOT enabled here, flag on or off: this runs before CLIP, so there is
+        # no top-1 SKU to resolve an era from, and the era gate is the only
+        # thing that stops the fallback emitting the wrong-answer class it was
+        # measured producing on SM-onward cards. Firing ungated here would
+        # reintroduce exactly the 3 wrong answers the gate removes, and would
+        # do it EARLIER in the pipeline where a bad number goes straight to a
+        # direct DB lookup with no visual ranking left to disagree with it.
+        # Nothing is lost: the post-CLIP call site sees the same image and
+        # catches the same cards with a working gate.
         extracted = _extract_pokemon_number_dispatch(image_path)
     else:
         return None, None
@@ -1594,12 +1697,23 @@ def ocr_confirm_ranking(
     _top_sku = results[0].get("sku", "") if isinstance(results[0], dict) else getattr(results[0], "sku", "")
     _suppress_swsh_for_jpn = bool(jpn_mode) or bool(_top_sku and _top_sku.startswith("jpn-"))
 
+    # ERA GATE (post-CLIP only). CLIP's top-1 gives us an era to gate on, and
+    # the era is far more robust than the SKU: over the 14 images with
+    # established truth, top-1 named the right ERA 14/14 while naming the right
+    # SKU only 6/14 — the gate needs only the former. Resolved once per call,
+    # from scraped profile data, and fails closed.
+    _pkm_fallback_ok = _is_pre_sm_sku(_top_sku)
+    from functools import partial as _partial
+    _pkm_extract = _partial(_extract_pokemon_number_dispatch,
+                            fallback_allowed=_pkm_fallback_ok)
+    _pkm_extract.__name__ = "_extract_pokemon_number_dispatch"
+
     # Select extractor and matcher
     if tcg_upper == "YUGIOH":
         extractors = [(_extract_ygo_setcode, _ygo_matches)]
     elif tcg_upper == "POKEMON":
         # CALL SITE 2 of 2 (post-CLIP). Flag OFF -> _extract_pokemon_number.
-        extractors = [(_extract_pokemon_number_dispatch, _pokemon_matches)]
+        extractors = [(_pkm_extract, _pokemon_matches)]
     elif tcg_upper == "MTG":
         extractors = [(_extract_mtg_collector, _mtg_matches)]
     else:
@@ -1607,7 +1721,7 @@ def ocr_confirm_ranking(
         if allow_pokemon_promote:
             extractors = [
                 (_extract_ygo_setcode,    _ygo_matches),
-                (_extract_pokemon_number_dispatch, _pokemon_matches),
+                (_pkm_extract, _pokemon_matches),
                 (_extract_mtg_collector,  _mtg_matches),
             ]
         else:
