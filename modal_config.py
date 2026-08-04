@@ -7,10 +7,41 @@ like incremental_embed.py are run directly via `modal run`.
 """
 
 import modal
+import subprocess as _sp
 
 VOLUME_NAME = "matchit-data-v2"
 
 vol = modal.Volume.from_name(VOLUME_NAME, version=2)
+
+
+def _git_sha() -> str:
+    """Short HEAD hash, resolved LOCALLY at deploy time and baked into the
+    image as GS_GIT_SHA. app.py prints it at startup as [VERSION].
+
+    .git is in the add_local_dir ignore list, so the container cannot work
+    this out for itself — it has to be passed in. Deploy verification twice
+    this week had to fall back on circumstantial evidence (cold-start
+    duration, byte-size deltas) because the changes were on silent code
+    paths; one baked-in line removes that permanently.
+
+    Falls back to "unknown" rather than raising: a deploy must never fail
+    because git is unavailable.
+    """
+    try:
+        sha = _sp.check_output(["git", "rev-parse", "--short", "HEAD"],
+                               cwd="C:/MatchIT", stderr=_sp.DEVNULL,
+                               timeout=10).decode().strip()
+        try:
+            _sp.check_output(["git", "diff", "--quiet", "HEAD"], cwd="C:/MatchIT",
+                             stderr=_sp.DEVNULL, timeout=10)
+        except _sp.CalledProcessError:
+            sha += "-dirty"      # uncommitted changes are in this image
+        return sha or "unknown"
+    except Exception:
+        return "unknown"
+
+
+GIT_SHA = _git_sha()
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
@@ -43,6 +74,10 @@ image = (
     .env({
         "HF_HUB_OFFLINE": "1",
         "PYTHONWARNINGS": "ignore::UserWarning",
+        # Resolved locally at deploy time — see _git_sha(). Printed by
+        # app.py at startup as [VERSION], so a deploy can be verified
+        # directly instead of by inference.
+        "GS_GIT_SHA": GIT_SHA,
     })
     .add_local_dir(
         "C:/MatchIT",

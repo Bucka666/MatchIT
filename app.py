@@ -6618,6 +6618,147 @@ def _preload_pokemon_search_index():
 
 _preload_pokemon_search_index()
 
+
+# ── Startup integrity check for the volume-backed preloads ────────────
+# SET_METADATA_PATH / SKU_GAME_MAP_PATH / IDENTIFIER_LOOKUP_PATH /
+# MTG_SET_TOTALS_PATH (and POKEMON_SEARCH_INDEX_PATH) all bind at IMPORT
+# via `if _os.path.exists("/modal_data")`. If the mount is invisible at
+# that instant they bind to the in-image copies under /app, which freeze
+# at the last commit while the volume copies are updated by the
+# scheduler. The staleness therefore always takes the form "newest sets
+# missing" (measured 2026-08-04: me4 + me5). Because the preloads run at
+# import, the wrong binding is baked into the memory snapshot and
+# persists for the container's whole life.
+#
+# This makes that state VISIBLE. It does NOT fix it — resolving the
+# paths at first use is a separate task. Never observed to fire in 4
+# container starts, and it cannot produce a wrong answer: the affected
+# readers degrade to "no answer" or "feature off", never to a wrong SKU.
+#
+# FLOORS, not equality: these files grow with every set ingested, so an
+# equality check would fail on every legitimate scheduler update. Each
+# floor sits below the current value with headroom and above the
+# measured stale value.
+_PRELOAD_FLOORS = {
+    # name                  floor    healthy  stale-if-bound-to-/app
+    "sku_game_map":         (30_000,  33_132, 20_236),
+    "identifier_lookup":    (155_000, 162_338, 162_096),
+    "pokemon_search_index": (22_000,  24_652, 0),
+}
+
+# NOTE — identifier_lookup is NOT protected by its floor. Its stale value
+# (162,096) is only 242 short of healthy (162,338), far inside the
+# headroom any usable floor needs. No floor can separate them. Two things
+# mitigate that, and neither is the floor:
+#   1. The four constants bind TOGETHER, from one os.path.exists() call in
+#      one import. If identifier_lookup is stale then sku_game_map is too
+#      (20,236 vs floor 30,000) and the search index is absent (0 vs
+#      22,000) — both trip loudly, so the EVENT is still detected.
+#   2. A direct content probe catches it independently, including the case
+#      the floors would miss: a truncated file written to the volume,
+#      where the other two are fine. me5-1 is present on the volume and
+#      absent from the in-image copy.
+# The probe hardcodes a SKU and must be advanced when a newer set ships —
+# it detects "older than me5", not "stale" in general.
+_PRELOAD_PROBE_SKU = "me5-1"
+
+
+def _check_preload_integrity():
+    """Emit resolved paths, a version marker, and a [PRELOAD-STALE] marker
+    if any preloaded count is below its floor. Logs and counts; does NOT
+    crash — see the rationale below."""
+    import subprocess as _sp
+
+    # ── version marker ────────────────────────────────────────────────
+    # Deploy verification has twice had to rely on circumstantial evidence
+    # (cold-start duration, byte-size deltas) because the changes were on
+    # silent code paths. This makes it direct and permanent.
+    _sha = _os.environ.get("GS_GIT_SHA", "").strip()
+    if not _sha:
+        try:
+            with open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                                    "GIT_SHA"), "r", encoding="utf-8") as f:
+                _sha = f.read().strip()
+        except Exception:
+            _sha = ""
+    if not _sha:
+        try:
+            _sha = _sp.check_output(["git", "rev-parse", "--short", "HEAD"],
+                                    stderr=_sp.DEVNULL, timeout=5).decode().strip()
+        except Exception:
+            _sha = "unknown"
+    print(f"[VERSION] {_sha}", flush=True)
+
+    # ── which copy did each constant actually bind to? ────────────────
+    # Direct evidence of the failure, independent of any count.
+    for _name, _p in (("set_metadata", SET_METADATA_PATH),
+                      ("sku_game_map", SKU_GAME_MAP_PATH),
+                      ("identifier_lookup", IDENTIFIER_LOOKUP_PATH),
+                      ("mtg_set_totals", MTG_SET_TOTALS_PATH),
+                      ("pokemon_search_index", POKEMON_SEARCH_INDEX_PATH)):
+        _src = "volume" if str(_p).startswith("/modal_data") else "IN-IMAGE"
+        print(f"[PRELOAD-PATH] {_name:<21} -> {_p}  ({_src})", flush=True)
+
+    # ── counts vs floors ──────────────────────────────────────────────
+    counts = {
+        "sku_game_map": len(_sku_game_cache),
+        "identifier_lookup": sum(len(v) for v in _identifier_lookup.values()
+                                 if isinstance(v, dict)),
+        "pokemon_search_index": len(_pokemon_search_index),
+    }
+    failures = []
+    for _name, (_floor, _healthy, _stale) in _PRELOAD_FLOORS.items():
+        _got = counts.get(_name, 0)
+        if _got < _floor:
+            failures.append(f"{_name}={_got} (floor {_floor}, healthy {_healthy}, "
+                            f"known-stale {_stale})")
+
+    # Content probe — catches what the identifier_lookup floor cannot.
+    _pk = _identifier_lookup.get("pokemon", {})
+    if _pk and _PRELOAD_PROBE_SKU not in _pk:
+        failures.append(f"identifier_lookup missing probe SKU "
+                        f"{_PRELOAD_PROBE_SKU} (present on the volume copy, "
+                        f"absent from the in-image copy)")
+
+    if failures:
+        # ERROR, not a crash. Justification:
+        #  - this has never fired in any observed container start;
+        #  - it cannot produce a WRONG answer, only a missing one;
+        #  - a bad floor would take production down on a legitimate file
+        #    change, and a crash-loop is a strictly worse failure than the
+        #    silent degradation being guarded against.
+        # If the counter ever shows this firing, revisit — crashing so
+        # Modal retries onto a fresh container becomes defensible once the
+        # floors are known to be sound in production.
+        _detail = "; ".join(failures)
+        print(f"[PRELOAD-STALE] volume-backed preload below floor — "
+              f"container is serving stale or empty data: {_detail}", flush=True)
+        # ERROR level as well as stdout: app.py has no module-level logger,
+        # so use the same local-import idiom as _safe_grade (app.py:7763).
+        try:
+            import logging as _lg
+            _lg.getLogger(__name__).error("[PRELOAD-STALE] %s", _detail)
+        except Exception:
+            pass
+        try:
+            import modal, datetime as _dtm
+            _d = modal.Dict.from_name("matchit-health", create_if_missing=True)
+            _d["preload_stale_containers"] = int(
+                _d.get("preload_stale_containers", 0)) + 1
+            _d["preload_stale_last"] = _dtm.datetime.now(
+                _dtm.timezone.utc).isoformat(timespec="seconds")
+            _d["preload_stale_detail"] = "; ".join(failures)[:500]
+        except Exception as _e:
+            print(f"[PRELOAD-STALE] counter unavailable: {_e}", flush=True)
+    else:
+        print(f"[PRELOAD-OK] sku_game_map={counts['sku_game_map']} "
+              f"identifier_lookup={counts['identifier_lookup']} "
+              f"pokemon_search_index={counts['pokemon_search_index']}", flush=True)
+
+
+_check_preload_integrity()
+
+
 def _load_set_metadata():
     global _set_metadata_cache, _set_metadata_mtime
     try:
