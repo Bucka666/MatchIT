@@ -201,17 +201,22 @@
              Passive text only: no modal, no extra tap, nothing that can
              reject a capture. Sits OUTSIDE .cx-desktop-only so it renders on
              mobile and desktop alike. -->
-        <!-- Guide box (2026-08-04). The hint above tells the user what to do
-             but cannot show them HOW CLOSE is close enough — the one thing the
-             OS camera withholds, and what the Darkrai capture got wrong (card
-             at ~30% of frame, otherwise sharp and well exposed). An
-             aspect-correct box is a different signal from a sentence.
+        <!-- Guide box (2026-08-04). Shows HOW CLOSE is close enough — the one
+             thing the OS camera withholds, and what the Darkrai capture got
+             wrong (card at ~30% of frame, otherwise sharp and well exposed).
              Reuses .cx-card-guide and .cx-corner wholesale, so the shape,
              ratio, border and corner ticks are the scanner's own — no new CSS
              for the box itself, only a height-constraining wrapper.
              Static example, NOT a viewfinder: aria-hidden, pointer-events
              none, no handler, no cursor change. Sits BELOW the capture
-             buttons so it can never push them off-screen. -->
+             buttons so it can never push them off-screen.
+
+             Deliberately WORDLESS. The .cx-photo-tips block further down this
+             form already says "Fill the frame — keep edges visible" and
+             "Avoid glare, shadows and blur"; a text hint here duplicated it
+             (glare appeared twice on one page). The tips carry the words, the
+             box carries what words cannot, and its position directly under the
+             capture buttons — where the tips are not — is the whole point. -->
         <div class="cx-capture-hint" id="cxCaptureHint">
           <div class="cx-guide-example" aria-hidden="true">
             <div class="cx-card-guide">
@@ -221,7 +226,7 @@
               <div class="cx-corner cx-corner-br"></div>
               <!-- Faint card silhouette: art window plus a bottom strip, so
                    the box reads as "aim for this" rather than an empty frame
-                   or a drop target. The bottom strip echoes the copy. -->
+                   or a drop target. -->
               <svg class="cx-guide-silhouette" viewBox="0 0 50 70" fill="none" preserveAspectRatio="none">
                 <rect x="6" y="7" width="38" height="30" rx="2" fill="currentColor" opacity="0.20"/>
                 <rect x="6" y="42" width="38" height="3" rx="1.5" fill="currentColor" opacity="0.13"/>
@@ -230,11 +235,6 @@
               </svg>
             </div>
           </div>
-          <!-- "Fill the frame" dropped 2026-08-04: the guide box beside this
-               carries that visually. The remaining clauses are the ones a box
-               cannot express — and glare was the strongest signal in the
-               capture-quality calibration (Spearman -0.32). -->
-          <span class="cx-capture-hint-text">Align full card — include bottom strip. Avoid glare.</span>
         </div>
 
         <button type="button" id="langToggle"
@@ -632,18 +632,16 @@ body             { overflow: visible !important; }
 
 /* File buttons */
 .cx-btn-row { display:flex;gap:8px;flex-shrink:0; }
-/* Pre-capture framing hint — muted, matches .cx-drop-sub weight so it reads
-   as guidance rather than a warning. Renders on every platform. */
-/* Hint row: guide box + copy side by side so they read as one instruction. */
-.cx-capture-hint { margin-top:7px;display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0; }
-.cx-capture-hint-text { font-size:0.6rem;line-height:1.35;color:rgba(255,255,255,0.34);text-align:left;max-width:190px; }
+/* Pre-capture framing guide — centres the wordless guide box under the
+   capture buttons. Renders on every platform. */
+.cx-capture-hint { margin-top:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
 /* Height-constraining wrapper ONLY — the box shape, ratio, border and corner
    ticks all come from .cx-card-guide / .cx-corner unchanged. Static example,
    never interactive. */
 .cx-guide-example { height:88px;display:flex;align-items:center;justify-content:center;flex-shrink:0;pointer-events:none;-webkit-user-select:none;user-select:none; }
 .cx-guide-silhouette { position:absolute;inset:4px;color:var(--cx-violet); }
 /* Short viewports: shrink the box, never move the buttons (which sit above it). */
-@media (max-height: 720px) { .cx-guide-example { height:70px; } .cx-capture-hint-text { font-size:0.56rem; } }
+@media (max-height: 720px) { .cx-guide-example { height:70px; } }
 @media (max-height: 600px) { .cx-guide-example { height:56px; } }
 .cx-file-btn { flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 12px;border-radius:9px;cursor:pointer;font-size:0.76rem;font-weight:600;transition:all 0.2s;border:none; }
 .cx-file-btn input[type="file"] { display:none; }
