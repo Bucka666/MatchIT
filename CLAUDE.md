@@ -56,19 +56,127 @@ SAME byte length, and Modal's add_local_dir mount change-detection can miss it �
 it reuses the cached /app image layer and your new sw.js NEVER SHIPS. Installed
 apps keep serving the old cached /collection etc.
 
-- The tell: a suspiciously fast deploy (~15s) instead of the normal ~35s cold
-  rebuild. Fast deploy == mount cache hit == your change may not be in the image.
 - The fix: change the file's BYTE SIZE too — add or edit a comment line alongside
-  the version bump (e.g. a dated `// vNNN — <reason>` line). Then redeploy; you
-  should see the slower ~35s rebuild.
+  the version bump (e.g. a dated `// vNNN — <reason>` line). Then redeploy.
 - Verify it actually shipped (don't trust the deploy log). curl the origin
   directly via the Modal-UA bypass (app.py _enforce_cf_proxy() exempts Modal/*
   UAs) with a cache-buster to rule out any HTTP cache:
     curl -s "https://c-a-buckley--matchit-api-serve.modal.run/sw.js?cb=$RANDOM" \
       -H "User-Agent: Modal/verify" | grep CACHE_NAME
-  It must show the NEW version. Old-container note: with scaledown_window=600s a
-  stale container can answer for up to 10 min, so a genuine cold start (warm shows
-  ~38s, not ~7s) confirms you're hitting the freshly-built image.
+  It must show the NEW version.
+
+### Deploy timing is NOT diagnostic (corrected 2026-08-04)
+
+An earlier version of this file said "fast deploy (~15s) == mount cache hit ==
+your change may not be in the image." **That inference is wrong and cost a
+near-miss.** Measured 2026-08-04: a **12.6s** deploy shipped a changed app.py
+correctly, confirmed by the [VERSION] marker. A second, genuinely no-op deploy
+of identical content took 14.3s — indistinguishable by timing.
+
+Deploy duration tells you whether layers were rebuilt. It does NOT tell you
+whether your change is in the image. The same-byte-length trap above is real,
+but timing alone cannot detect it. **Use [VERSION], not the stopwatch.**
+
+### Verifying a deploy actually shipped — the reliable procedure
+
+    1. modal deploy matchit_modal.py --strategy recreate
+    2. WAIT past scaledown_window — serve() is 120s (serve_light is 600s).
+       Skipping this is the single biggest source of false readings.
+    3. modal run matchit_modal.py::warm
+    4. modal app logs matchit-api | grep VERSION
+    5. compare against:  git rev-parse --short HEAD
+
+[VERSION] is emitted at startup by app.py's _check_preload_integrity(), sourced
+from GS_GIT_SHA which modal_config.py bakes in at deploy time (.git is in the
+add_local_dir ignore list, so the container cannot derive it itself). It appends
+**-dirty** when the working tree had uncommitted changes at deploy — if you see
+-dirty on a supposedly clean deploy, the image was built from unclean state.
+
+This is the only direct check. Everything else — cold-start duration, byte-size
+deltas, deploy timing — is circumstantial, and two deploys in the week of
+2026-08-04 could only be verified that way because every change was on a silent
+code path.
+
+### GOTCHA — `modal app logs` replays PRE-deploy container startups
+
+`modal app logs` returns a buffer that can include the startup output of
+snapshot-restored containers that predate the deploy. Reading logs immediately
+after deploying will happily show you a pre-deploy container's startup lines and
+lead you to conclude the change did not ship.
+
+Happened 2026-08-04 and produced a false negative: two container startups in the
+buffer both showed the OLD startup sequence, and the change was briefly declared
+un-shipped. It had shipped. Waiting past scaledown_window (120s) and re-warming
+produced a genuinely fresh container that showed the new markers immediately.
+
+- Symptom: expected new startup lines absent, everything else looks normal.
+- Cause: you are reading a container that started BEFORE the deploy.
+- Fix: wait out scaledown_window, warm, then read. Confirm with [VERSION].
+- Note `modal app logs` fetches only the last ~100 entries, so this buffer is
+  small and historical rates cannot be established from it.
+
+### Startup markers — [VERSION] / [PRELOAD-PATH] / [PRELOAD-OK] / [PRELOAD-STALE]
+
+Emitted by app.py `_check_preload_integrity()`, immediately after the three
+preloads. Costs 0.1ms — it counts already-loaded in-memory structures and reads
+no files.
+
+    [VERSION] <short sha>          the deployed commit; -dirty if built unclean
+    [PRELOAD-PATH] <name> -> <path>  (volume) or (IN-IMAGE), one per constant
+    [PRELOAD-OK] <counts>          all preloads above their floors
+    [PRELOAD-STALE] <detail>       ERROR — container is serving stale/empty data
+
+**Healthy** (all five [PRELOAD-PATH] show `(volume)`):
+
+    sku_game_map=33132  identifier_lookup=162338  pokemon_search_index=24652
+
+**Known-stale signature** (all five show `(IN-IMAGE)`):
+
+    [SKU-GAME]   Preloaded 20236        (healthy 33132)
+    [OCR-LOOKUP] Preloaded 162096       (healthy 162338)
+    [SEARCH]     search unavailable     (healthy 24652)
+
+What it guards: SET_METADATA_PATH / SKU_GAME_MAP_PATH / IDENTIFIER_LOOKUP_PATH /
+MTG_SET_TOTALS_PATH / POKEMON_SEARCH_INDEX_PATH all bind at IMPORT via
+`os.path.exists("/modal_data")`. If the mount is invisible at that instant they
+bind to the in-image copies under /app, which freeze at the last commit while the
+volume copies are updated by the scheduler. The preloads then run at import, so
+the wrong binding is baked into the memory snapshot and persists for the
+container's whole life. Staleness always takes the form "newest sets missing".
+
+It does NOT crash — a crash-loop from a bad floor is worse than the degradation
+being guarded, and this has never been observed to fire. It increments
+`preload_stale_containers` in the `matchit-health` modal.Dict. If that counter
+ever moves, revisit: crashing so Modal retries onto a fresh container becomes
+defensible once the floors are known sound in production.
+
+Floors are FLOORS, not equality — these files grow with every set ingested and an
+equality check would fail on every legitimate scheduler update.
+
+**MAINTENANCE — the me5-1 probe must be advanced.** identifier_lookup cannot be
+protected by a count floor (stale 162096 vs healthy 162338 is inside any usable
+headroom), so it is covered by a content probe for a SKU that exists on the
+volume but not in the in-image copy. `_PRELOAD_PROBE_SKU = "me5-1"` in app.py
+detects "older than me5", not staleness in general. **When a Pokémon set newer
+than me5 ships, advance the probe to a SKU from that set** — otherwise it
+silently stops detecting anything, because the in-image copy will by then
+contain me5.
+
+### Modal mount ignore list — what still gets uploaded
+
+modal_config.py `add_local_dir("C:/MatchIT", "/app", ignore=[...])` excludes
+`*.txt`, `*.md`, `__pycache__`, `*.pyc`, `.git`, `.venv`, `*.log`, eval_rescue,
+`config.json.*`, `*_pre_*`, `*_preocr*`, `*.bak*` and several scratch dirs.
+
+Watch out:
+
+- `*.txt` IS ignored, but `.json`, `.csv` and any other extension are NOT — stray
+  captures left in C:\MatchIT get uploaded into /app on the next deploy and bloat
+  the image. Clean scratch files out of the repo root before deploying.
+- The backup-suffix patterns need a LITERAL `_pre_`. Suffixes where a word runs
+  straight on from `_pre` (e.g. `_preeragate_`, `_predbretry_`,
+  `_prepreloadcheck_`) slip through and DO get uploaded. Same gap exists in
+  .gitignore, which is why each new suffix needs its own rule added there.
 
 ## Pre-deploy regression test
 Before every `modal deploy`, run:
