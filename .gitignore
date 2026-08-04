@@ -77,18 +77,18 @@ store-submission/
 # (33f2bd1) since this pattern wasn't excluded yet at that point — un-bloating
 # those would need a history rewrite, not done here. This only stops NEW ones.
 *_pre_*
-# The pattern above needs a literal "_pre_", so suffixes where a word runs
-# straight on from "_pre" slip through. Today's two (2026-08-02):
-*_precontaminationfix_*
-*_prelookupflag_*
-# ...and the OCR-work backups (2026-08-03): _preocrfullimage_, _preocrsetcode_
-*_preocr*
-# ...and the era-gate backup (2026-08-03): _preeragate_
-*_preeragate_*
-# ...and the images.db retry backup (2026-08-04): _predbretry_
-*_predbretry_*
-# ...and the preload-integrity backup (2026-08-04): _prepreloadcheck_
-*_prepreloadcheck_*
+# The pattern above needs a LITERAL "_pre_", so every suffix where a word
+# runs straight on from "_pre" slipped through — _precontaminationfix_,
+# _prelookupflag_, _preocrfullimage_, _preocrsetcode_, _preeragate_,
+# _predbretry_, _prepreloadcheck_, _preuploadguidance_, _preuploadguide_.
+# Each needed its own rule, added one task at a time, five weeks running.
+#
+# Replaced 2026-08-04 by the general form below. Verified against the repo
+# at that date: catches 13/13 existing backup files, and matches 0 of 529
+# tracked files. The trailing _2026 anchors it to the dated-backup naming
+# convention, so ordinary sources (prepare_2026.py, report_2026.md) do not
+# match — the "_pre" and the date must BOTH be present.
+*_pre*_2026*
 
 # Misc scratch
 q3_secrets_usage.txt

@@ -8823,6 +8823,18 @@ def app_slash():
     return redirect(url_for("match"), code=308)
 
 
+# Upload-path failure copy (2026-08-04). The bare "No confident match found."
+# told the user nothing actionable, while the live scanner has had specific,
+# proven advice all along. This is the scanner's own wording, reused verbatim
+# from the scFailCount===3 toast in match.html — nothing invented, and no gate
+# or threshold changes: the 0.65 cutoff and low_cert config are untouched.
+# Scanner routes (/capture_submit and the JSON API) are deliberately NOT
+# changed — they already escalate through their own guide text and fail gate.
+_UPLOAD_ADVICE = ("Try holding the camera steady and make sure the card fills "
+                  "the frame. Avoid glare and shadows.")
+NO_MATCH_ERROR = "No confident match found. " + _UPLOAD_ADVICE
+
+
 @app.route("/match", methods=["GET", "POST"])
 def match():
     if request.method == "GET":
@@ -9202,7 +9214,7 @@ def match():
     # Mirrors the pre-OCR gate already in api_routes.py. The existing post-OCR gate
     # at ~line 6561 stays as a backstop.
     if not results or (results[0].get('score', 0) if isinstance(results[0], dict) else getattr(results[0], 'score', 0)) < 0.65:
-        return render_template("match.html", error="No confident match found.")
+        return render_template("match.html", error=NO_MATCH_ERROR, scan_failed=True)
 
     import uuid as _uuid
     feedback_token = str(_uuid.uuid4())
@@ -9340,7 +9352,7 @@ def match():
 
     # Score gate: only charge on confident match (Option B)
     if results[0].get('score', 0) < 0.65:
-        return render_template("match.html", error="No confident match found.")
+        return render_template("match.html", error=NO_MATCH_ERROR, scan_failed=True)
 
     # Honest no-match: OCR read nothing at all AND DINOv2 (which only ever
     # runs when CLIP itself was already stuck in a near-tie) is also a

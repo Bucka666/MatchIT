@@ -75,10 +75,37 @@
       <div class="res-qhint">Click image to enlarge</div>
 
       {% if low_cert %}
+      {# 2026-08-04: extended with the live scanner's proven advice (the
+         scFailCount===3 toast wording). "Try a cleaner photo" alone gave the
+         user nothing to act on. Copy reused verbatim, nothing invented. #}
       <div class="mi-flash err res-lowcert">
-        ⚠ Low certainty — results may be ambiguous. Try a cleaner photo.
+        ⚠ Low certainty — results may be ambiguous. Try holding the camera
+        steady and make sure the card fills the frame. Avoid glare and shadows.
       </div>
       {% endif %}
+      {# Counter half of the upload escalation — see the note in match.html.
+         A low-certainty result counts as a failure; a confident one resets.
+         Same sessionStorage key, so the two halves stay in step across the
+         document.write() page replacement. #}
+      <script>
+      (function () {
+        var KEY = 'gs_upload_fail_v1';
+        try {
+          {% if low_cert %}
+          var n = parseInt(sessionStorage.getItem(KEY) || '0', 10) + 1;
+          sessionStorage.setItem(KEY, String(n));
+          if (n === 3 && typeof gsShowToast === 'function') {
+            gsShowToast(
+              "Try holding the camera steady and make sure the card fills the frame. Avoid glare and shadows.",
+              { title: "Having trouble?", variant: 'info', duration: 6000 }
+            );
+          }
+          {% else %}
+          sessionStorage.setItem(KEY, '0');
+          {% endif %}
+        } catch (e) { /* sessionStorage unavailable — skip silently */ }
+      })();
+      </script>
     </div>
 
     <div class="res-right-col">

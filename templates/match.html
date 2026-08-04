@@ -22,6 +22,40 @@
 <div class="mi-flash err" style="margin:8px 16px;">{{ error }}</div>
 {% endif %}
 
+{% if scan_failed %}
+<script>
+/* Consecutive-upload-failure escalation (2026-08-04).
+   The live scanner escalates at 3 fails (toast) and 5 (fail gate); the upload
+   path had no equivalent, so a user failing repeatedly saw identical terse
+   copy every time.
+
+   WHY sessionStorage: the upload path does document.open()/write()/close()
+   (match.html ~line 1358), which destroys the document and every in-memory
+   variable with it. A JS counter cannot survive that. sessionStorage does,
+   and the scripts inside the written HTML still execute — so the counter is
+   incremented by the REPLACEMENT page on arrival rather than by the page that
+   issued the fetch. That inverts the usual ordering but is the only place the
+   outcome is actually known, and it survives the rewrite cleanly.
+
+   Scoped to scan_failed, which app.py sets only on the two /match
+   low-score renders — never on the scanner, and never on unrelated errors
+   like "Embedder failed". */
+(function () {
+  var KEY = 'gs_upload_fail_v1';
+  try {
+    var n = parseInt(sessionStorage.getItem(KEY) || '0', 10) + 1;
+    sessionStorage.setItem(KEY, String(n));
+    if (n === 3 && typeof gsShowToast === 'function') {
+      gsShowToast(
+        "Try holding the camera steady and make sure the card fills the frame. Avoid glare and shadows.",
+        { title: "Having trouble?", variant: 'info', duration: 6000 }
+      );
+    }
+  } catch (e) { /* sessionStorage unavailable (private mode) — skip silently */ }
+})();
+</script>
+{% endif %}
+
 <div class="cx-wrap">
 
   <!-- ── LEFT / BOTTOM: Photo Upload Panel ── -->
@@ -156,6 +190,51 @@
             Take photo
             <input type="file" name="query_image" accept="image/*" capture="environment" id="cxCam">
           </label>
+        </div>
+
+        <!-- Pre-capture framing hint (2026-08-04). The upload path had no
+             framing guidance at all: mobile taps "Take photo" straight into
+             the OS camera with no guide box, and the drop-zone copy above is
+             desktop-only and is a drag label. Wording is the scanner's own,
+             reused verbatim from the #scGuideText default and the
+             scFailCount===3 toast — proven copy, nothing invented.
+             Passive text only: no modal, no extra tap, nothing that can
+             reject a capture. Sits OUTSIDE .cx-desktop-only so it renders on
+             mobile and desktop alike. -->
+        <!-- Guide box (2026-08-04). The hint above tells the user what to do
+             but cannot show them HOW CLOSE is close enough — the one thing the
+             OS camera withholds, and what the Darkrai capture got wrong (card
+             at ~30% of frame, otherwise sharp and well exposed). An
+             aspect-correct box is a different signal from a sentence.
+             Reuses .cx-card-guide and .cx-corner wholesale, so the shape,
+             ratio, border and corner ticks are the scanner's own — no new CSS
+             for the box itself, only a height-constraining wrapper.
+             Static example, NOT a viewfinder: aria-hidden, pointer-events
+             none, no handler, no cursor change. Sits BELOW the capture
+             buttons so it can never push them off-screen. -->
+        <div class="cx-capture-hint" id="cxCaptureHint">
+          <div class="cx-guide-example" aria-hidden="true">
+            <div class="cx-card-guide">
+              <div class="cx-corner cx-corner-tl"></div>
+              <div class="cx-corner cx-corner-tr"></div>
+              <div class="cx-corner cx-corner-bl"></div>
+              <div class="cx-corner cx-corner-br"></div>
+              <!-- Faint card silhouette: art window plus a bottom strip, so
+                   the box reads as "aim for this" rather than an empty frame
+                   or a drop target. The bottom strip echoes the copy. -->
+              <svg class="cx-guide-silhouette" viewBox="0 0 50 70" fill="none" preserveAspectRatio="none">
+                <rect x="6" y="7" width="38" height="30" rx="2" fill="currentColor" opacity="0.20"/>
+                <rect x="6" y="42" width="38" height="3" rx="1.5" fill="currentColor" opacity="0.13"/>
+                <rect x="6" y="48" width="28" height="3" rx="1.5" fill="currentColor" opacity="0.13"/>
+                <rect x="6" y="60" width="17" height="3.5" rx="1.5" fill="currentColor" opacity="0.26"/>
+              </svg>
+            </div>
+          </div>
+          <!-- "Fill the frame" dropped 2026-08-04: the guide box beside this
+               carries that visually. The remaining clauses are the ones a box
+               cannot express — and glare was the strongest signal in the
+               capture-quality calibration (Spearman -0.32). -->
+          <span class="cx-capture-hint-text">Align full card — include bottom strip. Avoid glare.</span>
         </div>
 
         <button type="button" id="langToggle"
@@ -553,6 +632,19 @@ body             { overflow: visible !important; }
 
 /* File buttons */
 .cx-btn-row { display:flex;gap:8px;flex-shrink:0; }
+/* Pre-capture framing hint — muted, matches .cx-drop-sub weight so it reads
+   as guidance rather than a warning. Renders on every platform. */
+/* Hint row: guide box + copy side by side so they read as one instruction. */
+.cx-capture-hint { margin-top:7px;display:flex;align-items:center;justify-content:center;gap:10px;flex-shrink:0; }
+.cx-capture-hint-text { font-size:0.6rem;line-height:1.35;color:rgba(255,255,255,0.34);text-align:left;max-width:190px; }
+/* Height-constraining wrapper ONLY — the box shape, ratio, border and corner
+   ticks all come from .cx-card-guide / .cx-corner unchanged. Static example,
+   never interactive. */
+.cx-guide-example { height:88px;display:flex;align-items:center;justify-content:center;flex-shrink:0;pointer-events:none;-webkit-user-select:none;user-select:none; }
+.cx-guide-silhouette { position:absolute;inset:4px;color:var(--cx-violet); }
+/* Short viewports: shrink the box, never move the buttons (which sit above it). */
+@media (max-height: 720px) { .cx-guide-example { height:70px; } .cx-capture-hint-text { font-size:0.56rem; } }
+@media (max-height: 600px) { .cx-guide-example { height:56px; } }
 .cx-file-btn { flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:11px 12px;border-radius:9px;cursor:pointer;font-size:0.76rem;font-weight:600;transition:all 0.2s;border:none; }
 .cx-file-btn input[type="file"] { display:none; }
 .cx-file-btn--primary { background:linear-gradient(135deg,#b14dff,#4d8eff,#00e5ff);color:#fff; }
