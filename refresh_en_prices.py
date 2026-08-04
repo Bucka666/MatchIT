@@ -54,21 +54,6 @@ _TCP_FIELD_MAP = [
     ("high",   "highPrice"),
 ]
 
-# PokéWallet raw field names, keyed by the TCGdex-raw name _TCP_FIELD_MAP
-# uses. This bridge exists so _fetch_pokewallet_prices drives its output off
-# _TCP_FIELD_MAP rather than hardcoding its own field list — the two writers
-# then share one mapping and cannot drift apart. They previously did: the
-# PokéWallet path emitted variant key "Holofoil" with raw camelCase fields
-# (marketPrice/...), while the TCGdex path emits "holofoil" with normalised
-# fields (market/...), so every PokéWallet-priced card was invisible to
-# _best_price_hint's tcg.get("holofoil")/.get("market") lookup.
-_PW_SRC = {
-    "marketPrice": "market_price",
-    "midPrice":    "mid_price",
-    "lowPrice":    "low_price",
-    "highPrice":   "high_price",
-}
-
 # pokemontcg.io set_id → TCGdex set_id for the sets whose names don't
 # normalize-match TCGdex (the 11 resolvable misses; 3 absent sets — cel25c,
 # sve, svp — are deliberately omitted and skip gracefully).
@@ -85,19 +70,6 @@ MANUAL_OVERRIDES = {
     "swsh12pt5gg": "swsh12pt5",   # Galarian Gallery → Crown Zenith parent
     "swsh45sv":    "swsh45",      # Shiny Vault → Shining Fates parent
 }
-
-# Sub-sets that TCGdex doesn't track separately — use PokéWallet
-# TCGPlayer prices instead (set_id values from pokewallet.io/sets).
-POKEWALLET_SET_IDS = {
-    "swsh45sv":    "2781",   # Shining Fates: Shiny Vault
-    "swsh9tg":     "3020",   # SWSH09: Brilliant Stars Trainer Gallery
-    "swsh11tg":    "3172",   # SWSH11: Lost Origin Trainer Gallery
-    "swsh12tg":    "17674",  # SWSH12: Silver Tempest Trainer Gallery
-    "swsh12pt5gg": "17689",  # Crown Zenith: Galarian Gallery
-}
-
-_POKEWALLET_CACHE: dict = {}  # set_id -> list of card dicts, populated once per run
-
 
 def _norm(s: str) -> str:
     return re.sub(r"[^a-z0-9]", "", (s or "").lower())
@@ -228,67 +200,6 @@ def _is_fresh(profile: dict, hours: int = 23) -> bool:
         return False
 
 
-def _fetch_pokewallet_prices(pw_set_id: str, card_number: str) -> dict | None:
-    """Fetch TCGPlayer prices from PokéWallet for a single card.
-    Returns a price dict in the same shape as _build_price_fields,
-    or None if no price data found. card_number is the local folder
-    name suffix e.g. 'SV001' or 'GG14'."""
-    api_key = os.environ.get("POKEWALLET_API_KEY", "")
-    if not api_key:
-        logging.warning("[POKEWALLET] POKEWALLET_API_KEY not set — skipping")
-        return None
-    try:
-        if pw_set_id not in _POKEWALLET_CACHE:
-            r = requests.get(
-                f"https://api.pokewallet.io/prices/{pw_set_id}",
-                headers={"X-API-Key": api_key},
-                timeout=15,
-            )
-            if r.status_code == 429:
-                logging.warning(f"[POKEWALLET] 429 rate limit on set {pw_set_id}")
-                return None
-            if not r.ok:
-                logging.warning(f"[POKEWALLET] {r.status_code} for set {pw_set_id}")
-                return None
-            _POKEWALLET_CACHE[pw_set_id] = r.json().get("data", [])
-        data = _POKEWALLET_CACHE[pw_set_id]
-        # card_number in PokéWallet is "SV001/SV122" or "GG14/GG70"
-        # our local_id is just "SV001" or "GG14" — match on prefix
-        for card in data:
-            pw_num = card.get("card_number", "").split("/")[0].strip()
-            if pw_num.upper() == card_number.upper():
-                tcp = card.get("tcgplayer")
-                if not tcp:
-                    return None
-                # Emit the SAME shape _build_price_fields produces for the
-                # TCGdex path: lowercase variant key + normalised field names,
-                # driven off _TCP_FIELD_MAP so the two writers share one
-                # mapping. None values are dropped by the comprehension.
-                variant = {
-                    out_key: tcp.get(_PW_SRC[src_key])
-                    for out_key, src_key in _TCP_FIELD_MAP
-                    if tcp.get(_PW_SRC[src_key]) is not None
-                }
-                if not variant:
-                    return None
-                tcp_prices = {"holofoil": variant}
-                updated = tcp.get("updated_at", "")
-                # NOTE: cardmarket is {} here, and the caller assigns
-                # profile["prices"] wholesale — so a PokéWallet refresh
-                # discards any existing Cardmarket data for these five sets.
-                # Left as-is deliberately; separate concern from the shape fix.
-                return {
-                    "tcgplayer":  tcp_prices,
-                    "cardmarket": {},
-                    "tcgplayer_updated": updated,
-                }
-        logging.info(f"[POKEWALLET] card {card_number} not found in set {pw_set_id}")
-        return None
-    except Exception as e:
-        logging.warning(f"[POKEWALLET] error fetching set {pw_set_id}: {e}")
-        return None
-
-
 def _refresh_one(folder: Path, tcgdex_set_id: str, set_prefix: str, force: bool = False) -> dict:
     """Refresh a single English card. Never raises — all failures are caught
     and reported in the returned dict for the orchestrating pool."""
@@ -304,30 +215,6 @@ def _refresh_one(folder: Path, tcgdex_set_id: str, set_prefix: str, force: bool 
         return {"folder": folder.name, "status": "fresh_skip"}
 
     local_id = folder.name[len(set_prefix):]
-
-    # PokéWallet path — for sub-sets TCGdex doesn't track separately.
-    # set_prefix is our_id + "-" (see refresh_set's `prefix = our_id + "-"`),
-    # so strip the trailing hyphen before matching against POKEWALLET_SET_IDS.
-    our_id = set_prefix.rstrip("-")
-    if our_id in POKEWALLET_SET_IDS:
-        pw_set_id = POKEWALLET_SET_IDS[our_id]
-        pw_prices = _fetch_pokewallet_prices(pw_set_id, local_id)
-        if pw_prices:
-            profile["prices"] = {
-                "tcgplayer":  pw_prices["tcgplayer"],
-                "cardmarket": pw_prices["cardmarket"],
-            }
-            if pw_prices.get("tcgplayer_updated"):
-                profile["tcgplayer_updated"] = pw_prices["tcgplayer_updated"]
-            now_str = datetime.now(timezone.utc).isoformat()
-            profile["prices_updated"] = now_str
-            profile_path.write_text(
-                json.dumps(profile, ensure_ascii=False, indent=2),
-                encoding="utf-8"
-            )
-            logging.info(f"[POKEWALLET] {folder.name} refreshed via PokéWallet")
-            return {"folder": folder.name, "status": "refreshed"}
-        return {"folder": folder.name, "status": "no_data"}
 
     # TCGdex path — standard EN sets
     tcgdex_id = f"{tcgdex_set_id}-{local_id}"
@@ -426,28 +313,6 @@ def refresh_en_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8
 
     stats = {"refreshed": 0, "no_data": 0, "no_price": 0, "fresh_skip": 0,
              "no_profile": 0, "errors": 0, "sets_done": 0, "sets_skipped": len(unmapped)}
-
-    # Pre-fetch PokéWallet prices for all known sub-sets so the
-    # cache is warm before threads start — avoids N API calls per set.
-    import os as _os
-    _pw_key = _os.environ.get("POKEWALLET_API_KEY", "")
-    if _pw_key:
-        for _prefix, _pw_id in POKEWALLET_SET_IDS.items():
-            if _pw_id not in _POKEWALLET_CACHE:
-                try:
-                    import requests as _rq
-                    _r = _rq.get(
-                        f"https://api.pokewallet.io/prices/{_pw_id}",
-                        headers={"X-API-Key": _pw_key},
-                        timeout=15,
-                    )
-                    if _r.ok:
-                        _POKEWALLET_CACHE[_pw_id] = _r.json().get("data", [])
-                        print(f"[POKEWALLET-PREFETCH] {_prefix} -> {len(_POKEWALLET_CACHE[_pw_id])} cards cached", flush=True)
-                    else:
-                        print(f"[POKEWALLET-PREFETCH] {_prefix} failed: {_r.status_code}", flush=True)
-                except Exception as _e:
-                    print(f"[POKEWALLET-PREFETCH] {_prefix} error: {_e}", flush=True)
 
     sorted_sets = sorted(folders_by_set)
     total_sets = len(sorted_sets)

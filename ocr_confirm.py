@@ -121,11 +121,21 @@ _PRINTED_TOTAL_IDX = None
 
 def _sets_with_printed_total(total):
     """Every POKEMON set whose PRINTED total equals `total`, from the full
-    set_metadata catalogue — not the partial table above.
+    set_metadata catalogue — not the partial table above — and imaged
+    (has at least one embedding in the current cache), not merely present
+    in metadata.
 
     len(...)==1 in the old code meant "one set in this 14-row table", which
     is why a denominator shared with an unlisted set looked unambiguous and
     was answered confidently. This checks all 302 Pokemon sets instead.
+
+    Unimaged sets are excluded from the returned candidates: a set with
+    metadata but zero embeddings can never actually be the CLIP match, so
+    counting it as a candidate only manufactures false ambiguity. Found
+    2026-08-04 — backfilling JP printed_total made total=190 look ambiguous
+    between jpn-sv4a (imaged) and jpn-s4a (metadata only, zero embeddings),
+    even though jpn-s4a could never be the real answer. Applies to EN and
+    JP alike via _is_set_imaged.
 
     CAVEAT: 60 of 302 Pokemon sets have no printed_total in metadata, so a
     denominator can still appear unique when an unrecorded set shares it.
@@ -159,7 +169,17 @@ def _sets_with_printed_total(total):
                 idx.setdefault(p, []).append(sid)
         _PRINTED_TOTAL_IDX = idx
         logger.info(f"[OCR-DENOM] printed-total index built: {len(idx)} distinct totals")
-    return sorted(_PRINTED_TOTAL_IDX.get(int(total), []))
+
+    cands = _PRINTED_TOTAL_IDX.get(int(total), [])
+    try:
+        from app import _is_set_imaged as _isi
+        cands = [sid for sid in cands if _isi("POKEMON", sid)]
+    except Exception as e:
+        # Fail-open: if the imaged-set signal isn't available (e.g. app not
+        # fully initialised yet), don't filter rather than wrongly excluding
+        # everyone — matches this module's existing fail-open convention.
+        logger.warning(f"[OCR-DENOM] imaged-set filter unavailable, unfiltered: {e}")
+    return sorted(cands)
 
 # Pokémon SV era: printed set code → pokemontcg.io DB set ID
 _PKM_SETCODE_MAP = {

@@ -580,7 +580,6 @@ def scheduled_jp_price_refresh():
 @app.function(
     image=image,
     volumes={"/modal_data": vol},
-    secrets=[modal.Secret.from_name("pokewallet-credentials")],
     schedule=modal.Cron("0 4 * * *"),  # 4am UTC — after the 3am JP price refresh
     timeout=5400,
 )
