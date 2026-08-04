@@ -85,6 +85,8 @@ store-submission/
 *_preocr*
 # ...and the era-gate backup (2026-08-03): _preeragate_
 *_preeragate_*
+# ...and the images.db retry backup (2026-08-04): _predbretry_
+*_predbretry_*
 
 # Misc scratch
 q3_secrets_usage.txt

@@ -1399,6 +1399,77 @@ def _get_images_db_path() -> 'Path':
     return Path(localappdata) / "MatchITv2_ProductMatch_Data" / "cards" / "images.db"
 
 
+# ── transient-mount recovery for images.db ────────────────────────────
+# serve() runs with enable_memory_snapshot + enable_gpu_snapshot, and
+# vol.reload() only runs at container init (matchit_modal.py:153). A
+# snapshot-restored container therefore may never re-run it, and the
+# volume mount can be briefly invisible to that one container while its
+# peers see the file fine. Observed live 2026-08-03 22:38:18: one
+# container logged exists=False for a 593 MB file that was present.
+#
+# Before this, a miss returned None silently and the request continued
+# CLIP-only — indistinguishable, to the user, from the matcher simply
+# being wrong, and invisible unless someone read the logs.
+#
+# One reload attempt per CONTAINER LIFETIME. A genuinely absent DB (local
+# dev, a misconfigured mount) must not fire a network reload on every
+# request; a transient mount race only needs one.
+_DB_RELOAD_ATTEMPTED = False
+_DB_MISSING_COUNTED = False
+
+
+def _reload_volume_once() -> bool:
+    """Re-materialise the Modal volume. True only if a reload actually ran
+    (i.e. this is the first attempt in this container)."""
+    global _DB_RELOAD_ATTEMPTED
+    if _DB_RELOAD_ATTEMPTED:
+        return False
+    _DB_RELOAD_ATTEMPTED = True
+    try:
+        from modal_config import vol
+        vol.reload()
+        logger.info("[DB-RETRY] vol.reload() completed")
+        return True
+    except Exception as e:
+        # Not on Modal, or the volume handle is unavailable — normal in
+        # local dev and in test harnesses. Fall through to the miss path.
+        logger.warning(f"[DB-RETRY] vol.reload() unavailable: {e}")
+        return False
+
+
+def _count_db_missing() -> None:
+    """Best-effort tally so this failure mode is measurable over time.
+
+    `modal app logs` retains only the last 100 entries, so the log marker
+    alone cannot establish a rate — a counter that survives container
+    churn is the only way to know whether this is rare or routine.
+
+    ONCE PER CONTAINER, like the reload. Measured 2026-08-04: a
+    modal.Dict round-trip costs 950-1500 ms, so incrementing per request
+    would add a second of latency to every already-degraded request —
+    instrumentation must not make the failure it measures worse. Counting
+    per container is also the more honest unit: a bad mount is a property
+    of a container, not of an individual request. Request-level counts
+    remain available from the [DB-MISSING] log marker, which still fires
+    every time. Fully swallowed on failure.
+    """
+    global _DB_MISSING_COUNTED
+    if _DB_MISSING_COUNTED:
+        return
+    _DB_MISSING_COUNTED = True
+    try:
+        import modal, datetime as _dt
+        d = modal.Dict.from_name("matchit-health", create_if_missing=True)
+        d["images_db_missing_containers"] = int(
+            d.get("images_db_missing_containers", 0)) + 1
+        d["images_db_missing_last"] = _dt.datetime.now(
+            _dt.timezone.utc).isoformat(timespec="seconds")
+        logger.info("[DB-MISSING] container tallied in modal.Dict "
+                    "'matchit-health'")
+    except Exception as e:
+        logger.warning(f"[DB-MISSING] counter unavailable: {e}")
+
+
 def _is_pokemon_sku(sku: str) -> bool:
     return not (sku.startswith('ygo-') or sku.startswith('mtg-'))
 
@@ -1413,8 +1484,19 @@ def _lookup_sku_by_setcode(extracted: str, tcg: str) -> Optional[str]:
     db_path = _get_images_db_path()
     logger.info(f"[OCR-DB] Called with extracted={extracted}, tcg={tcg}, db_path={db_path}, exists={db_path.exists()}")
     if not db_path.exists():
-        logger.warning(f"[OCR-DB] DB NOT FOUND at {db_path}")
-        return None
+        # Transient mount, or genuinely absent? Reload once and re-check
+        # before giving up. See _reload_volume_once() for why.
+        logger.warning(f"[DB-RETRY] images.db not visible at {db_path} — reloading volume")
+        _reload_volume_once()
+        if db_path.exists():
+            logger.info(f"[DB-RETRY] recovered: images.db present at {db_path} "
+                        f"after vol.reload()")
+        else:
+            # ERROR, not warning: this silently drops OCR for the request.
+            logger.error(f"[DB-MISSING] ocr skipped — images.db not found at "
+                         f"{db_path} after reload; request continues CLIP-only")
+            _count_db_missing()
+            return None
     try:
         conn = sqlite3.connect(str(db_path))
         if tcg == "YUGIOH":
