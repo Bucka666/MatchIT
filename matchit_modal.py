@@ -135,6 +135,11 @@ def _make_image_wsgi():
         # (Project settings > Webhooks > Authorization header value). Create
         # via: modal secret create revenuecat-webhook-secret REVENUECAT_WEBHOOK_SECRET=<value>
         modal.Secret.from_name("revenuecat-webhook-secret"),
+        # REVENUECAT_API_KEY — V1 secret key, used by _rc_verify_entitlement()
+        # to ask RevenueCat directly whether a given app_user_id has an
+        # active entitlement, rather than trusting only our own (possibly
+        # stale) subscriptions.json.
+        modal.Secret.from_name("revenuecat-api-key"),
     ],
     timeout=300,
     min_containers=0,

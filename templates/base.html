@@ -14,7 +14,11 @@
   <link rel="manifest" href="/static/manifest.json">
   <meta name="theme-color" content="#1a1830">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- "black" gives an opaque black strip with white text, which sits
+       against the dark theme. "default" is a white strip with black text
+       and would band awkwardly above the purple gradient. "black-translucent"
+       is what caused the original status-bar overlap — do not revert to it. -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <link rel="apple-touch-icon" href="/static/assets/grailsweep_app_icon.png">
   <script>window.GS_SCANNER_KEY = '{{ cfg.get("grailsweep_scanner_key", "") }}';</script>
 
@@ -1533,8 +1537,26 @@ function gsIsWatchlisted(sku) {
       if (!pkg) { alert('Product not found.'); return; }
       const result = await Purchases.purchasePackage({ aPackage: pkg });
       if (result) {
-        alert('Purchase complete!');
-        setTimeout(() => { window.location.reload(); }, 800);
+        // purchasePackage succeeding only means Apple/RevenueCat accepted the
+        // purchase — it does NOT by itself grant local Pro access (that
+        // requires the webhook-created subscriptions.json entry, looked up
+        // here by RC app user id). Without this reconcile step a buyer saw
+        // "Purchase complete!" but the app never actually unlocked.
+        const info = result.customerInfo || result;
+        let appUserId = '';
+        try {
+          const idRes = await Purchases.getAppUserID();
+          appUserId = (idRes && idRes.appUserID) || '';
+        } catch (_e) {}
+        const originalAppUserId = (info && info.originalAppUserId) || '';
+        const data = await gsRcRestoreWithRetry(appUserId, originalAppUserId);
+        if (data && data.code) {
+          await gsActivateSubscriptionCode(data.code, data.tier || tier);
+          alert('Purchase complete!');
+          setTimeout(() => { window.location.reload(); }, 800);
+        } else {
+          alert('Purchase complete! Your account is syncing — if Pro features don\'t appear in a few seconds, use "Restore Purchases" on the Upgrade screen.');
+        }
       }
     } catch(e) {
       if (!e.message?.includes('userCancelled')) {
@@ -1559,6 +1581,91 @@ function gsIsWatchlisted(sku) {
       }
     } catch (_e) {}
   }
+
+  // Poll the RevenueCat reconcile endpoint for a subscriptions.json entry
+  // matching this device's RC app user id(s). Needed because the webhook
+  // that creates the entry (see app.py _handle_revenuecat_event) fires
+  // asynchronously — a purchase or restore routinely completes on-device
+  // before that entry exists server-side. Shared by gsIosPurchase() below
+  // and the Restore Purchases button in upgrade.html so there is exactly
+  // one retry/backoff policy to maintain. ~12s total across 5 attempts.
+  function gsRcRestoreWithRetry(appUserId, originalAppUserId) {
+    var delays = [1000, 3000, 4000, 4000];
+    function attempt(i) {
+      return fetch('/api/revenuecat/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ app_user_id: appUserId, original_app_user_id: originalAppUserId })
+      })
+      .then(function(r) { return r.json().catch(function(){ return {}; }); })
+      .then(function(data) {
+        if (data && data.found) return data;
+        if (i >= delays.length) return null;
+        return new Promise(function(resolve) {
+          setTimeout(function() { resolve(attempt(i + 1)); }, delays[i]);
+        });
+      })
+      .catch(function() {
+        if (i >= delays.length) return null;
+        return new Promise(function(resolve) {
+          setTimeout(function() { resolve(attempt(i + 1)); }, delays[i]);
+        });
+      });
+    }
+    return attempt(0);
+  }
+  window.gsRcRestoreWithRetry = gsRcRestoreWithRetry;
+
+  // Restore-Purchases click handler — shared by every page that offers iOS
+  // purchases (Apple 3.1.1 requires it wherever purchases are offered, not
+  // just on /upgrade). statusElId is the only page-specific input; the
+  // button's id is derived from it by convention ('...-status[-suffix]' ->
+  // '...-btn[-suffix]'), matching the gs-restore-btn*/gs-restore-status*
+  // id pairs used in upgrade.html and landing.html.
+  async function gsRestorePurchases(statusElId) {
+    var status = document.getElementById(statusElId);
+    var btn    = document.getElementById(statusElId.replace('status', 'btn'));
+    if (!btn || !status) return;
+    btn.disabled = true;
+    status.textContent = 'Restoring…';
+    try {
+        const Purchases = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases;
+        if (!Purchases) {
+            status.textContent = 'Store not available. Please try again.';
+            btn.disabled = false;
+            return;
+        }
+        const res = await Purchases.restorePurchases();
+        const info = res.customerInfo || res;
+        const active = Object.keys((info.entitlements && info.entitlements.active) || {});
+        if (active.length === 0) {
+            status.textContent = 'No previous purchases found for this Apple ID.';
+            btn.disabled = false;
+            return;
+        }
+        let appUserId = '';
+        try {
+            const idRes = await Purchases.getAppUserID();
+            appUserId = (idRes && idRes.appUserID) || '';
+        } catch (_e) {}
+        const originalAppUserId = info.originalAppUserId || '';
+
+        status.textContent = 'Checking your account…';
+        const data = await gsRcRestoreWithRetry(appUserId, originalAppUserId);
+        if (data && data.code) {
+            await gsActivateSubscriptionCode(data.code, data.tier || 'monthly');
+            status.textContent = 'Purchases restored!';
+            setTimeout(function() { window.location.reload(); }, 800);
+        } else {
+            status.textContent = 'Purchase found — syncing, please try again shortly.';
+            btn.disabled = false;
+        }
+    } catch (e) {
+        status.textContent = 'Restore failed. Please try again.';
+        btn.disabled = false;
+    }
+  }
+  window.gsRestorePurchases = gsRestorePurchases;
 
   async function gsPlayBillingPurchase(tier) {
     var skuId = GS_PLAY_SKU_MAP[tier];

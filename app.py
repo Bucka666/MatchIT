@@ -6117,23 +6117,74 @@ _REVENUECAT_PRODUCT_TIER = {
 
 
 def _revenuecat_tier_for_product(product_id):
-    return _REVENUECAT_PRODUCT_TIER.get(product_id)
+    return _REVENUECAT_PRODUCT_TIER.get((product_id or "").strip().lower())
+
+
+def _rc_find_entry(subs, app_user_id):
+    """
+    Scan for the subscriptions.json entry whose stripe_subscription_id
+    matches this RevenueCat app_user_id. Entries are keyed by the generated
+    GRAIL-XXXX-XXXX code, NOT by app_user_id — a direct dict lookup
+    (subs.get(app_user_id)) never matches, which was the bug here before:
+    every RENEWAL/EXPIRATION/CANCELLATION/BILLING_ISSUE silently no-opped
+    even after a successful INITIAL_PURCHASE had created an entry. Same
+    scan /api/revenuecat/restore uses. Returns (code, entry) or (None, None).
+    """
+    for code, entry in subs.items():
+        if entry.get("stripe_subscription_id") == app_user_id:
+            return code, entry
+    return None, None
+
+
+def _rc_find_or_create_entry(subs, app_user_id, product_id, event_type):
+    """
+    Self-healing lookup: find the entry for this app_user_id, or create one
+    via _issue_new_code if none exists yet. Covers RENEWAL/PRODUCT_CHANGE/
+    UNCANCELLATION arriving without (or before) a successfully-processed
+    INITIAL_PURCHASE — a missed webhook, out-of-order delivery, or an event
+    that predates this handler ever recording the purchase — instead of
+    silently dropping it. Returns (code, entry), or (None, None) if
+    product_id is unrecognised and there's nothing to fall back on.
+    """
+    code, entry = _rc_find_entry(subs, app_user_id)
+    if entry is not None:
+        return code, entry
+
+    tier = _revenuecat_tier_for_product(product_id)
+    if not tier:
+        print(f"[REVENUECAT] No entry for app_user_id={app_user_id} and unknown "
+              f"product_id={product_id} (event={event_type}) — cannot self-heal", flush=True)
+        return None, None
+
+    new_code = _issue_new_code(email="", tier=tier, subscription_id=app_user_id,
+                                ref_code="", source="revenuecat_ios")
+    print(f"[REVENUECAT] Self-healed: created code={new_code} tier={tier} for "
+          f"app_user_id={app_user_id} on event={event_type}", flush=True)
+    # _issue_new_code's _load_subs()/_save_subs() operate on the same
+    # request-scoped (flask.g-cached) dict as our `subs`, so the new entry
+    # is already visible here — no reload needed.
+    return new_code, subs.get(new_code)
 
 
 def _handle_revenuecat_event(event):
     """
-    Given a decoded RevenueCat webhook event, update (or create) the
-    matching subscriptions.json entry. app_user_id is expected to be the
-    GrailSweep access code itself (the iOS app configures the RevenueCat
-    SDK with appUserID=<existing code>), so lookup is a direct dict key —
-    unlike the RTDN handler, which has to linear-scan for a purchaseToken
-    since Google doesn't let us choose that identifier.
+    Given a decoded RevenueCat webhook event, update (or self-heal-create)
+    the matching subscriptions.json entry via _rc_find_entry /
+    _rc_find_or_create_entry — see those for why a direct dict lookup by
+    app_user_id doesn't work.
+
+    app_user_id is stored verbatim (.strip() only, NOT .upper()) — RC's
+    app_user_id namespace is case-sensitive (confirmed: a real sandbox
+    subscriber was only found under its exact original casing,
+    "$RCAnonymousID:<lowercase hex>"; uppercasing it broke every match
+    against RevenueCat's own API and was the root cause of restore/webhook
+    self-heal entries never lining up with real subscribers).
     """
     from datetime import datetime, timedelta
 
     event_type  = event.get("type", "")
-    app_user_id = (event.get("app_user_id") or "").strip().upper()
-    product_id  = event.get("product_id", "")
+    app_user_id = (event.get("app_user_id") or "").strip()
+    product_id  = (event.get("product_id") or "").strip().lower()
 
     if not app_user_id:
         print("[REVENUECAT] event missing app_user_id", flush=True)
@@ -6142,30 +6193,18 @@ def _handle_revenuecat_event(event):
     print(f"[REVENUECAT] event type={event_type} app_user_id={app_user_id} product_id={product_id}", flush=True)
 
     subs = _load_subs()
-    entry = subs.get(app_user_id)
     now_iso = datetime.utcnow().isoformat()
 
-    if event_type in ("INITIAL_PURCHASE", "RENEWAL"):
+    if event_type in ("INITIAL_PURCHASE", "RENEWAL", "PRODUCT_CHANGE", "UNCANCELLATION"):
+        code, entry = _rc_find_or_create_entry(subs, app_user_id, product_id, event_type)
         if entry is None:
-            if event_type != "INITIAL_PURCHASE":
-                print(f"[REVENUECAT] No subscriptions.json entry for app_user_id={app_user_id} "
-                      f"(event={event_type}) — nothing to update", flush=True)
-                return
-            tier = _revenuecat_tier_for_product(product_id)
-            if not tier:
-                print(f"[REVENUECAT] Unknown product_id={product_id} for app_user_id={app_user_id} "
-                      f"— cannot issue code", flush=True)
-                return
-            new_code = _issue_new_code(email="", tier=tier, subscription_id=app_user_id,
-                                        ref_code="", source="revenuecat_ios")
-            print(f"[REVENUECAT] Issued new code={new_code} for app_user_id={app_user_id} tier={tier} "
-                  f"— NOTE: this code is not returned to the purchasing device by this webhook", flush=True)
             return
 
-        # Existing entry — renew/extend. Prefer the tier implied by this
-        # event's product_id (matches a plan/product change); fall back to
-        # the tier already on file if product_id is missing/unrecognised.
-        tier = _revenuecat_tier_for_product(product_id) or entry.get("tier")
+        # Prefer the tier implied by this event's product_id (covers
+        # PRODUCT_CHANGE and any plan switch); fall back to the tier
+        # already on file if product_id is missing/unrecognised.
+        old_tier = entry.get("tier")
+        tier = _revenuecat_tier_for_product(product_id) or old_tier
         if tier == "lifetime":
             expires = None
         elif tier == "annual":
@@ -6173,13 +6212,18 @@ def _handle_revenuecat_event(event):
         else:
             expires = (datetime.utcnow() + timedelta(days=32)).isoformat()
         entry["status"] = "active"
+        entry["tier"] = tier
         entry["expires_at"] = expires
         entry["revenuecat_last_event"] = event_type
         entry["revenuecat_updated_at"] = now_iso
         _save_subs(subs)
-        print(f"[REVENUECAT] {app_user_id} {event_type.lower()} (tier={tier}), new expires_at={expires}", flush=True)
+
+        if event_type == "PRODUCT_CHANGE" and old_tier != tier:
+            print(f"[REVENUECAT] {app_user_id} product change: tier {old_tier} -> {tier} (code={code})", flush=True)
+        print(f"[REVENUECAT] {app_user_id} {event_type.lower()} (tier={tier}), new expires_at={expires} (code={code})", flush=True)
 
     elif event_type in ("EXPIRATION", "CANCELLATION", "BILLING_ISSUE"):
+        code, entry = _rc_find_entry(subs, app_user_id)
         if entry is None:
             print(f"[REVENUECAT] No subscriptions.json entry for app_user_id={app_user_id} "
                   f"(event={event_type}) — nothing to update", flush=True)
@@ -6189,7 +6233,7 @@ def _handle_revenuecat_event(event):
         entry["revenuecat_last_event"] = event_type
         entry["revenuecat_updated_at"] = now_iso
         _save_subs(subs)
-        print(f"[REVENUECAT] {app_user_id} set to expired (event={event_type})", flush=True)
+        print(f"[REVENUECAT] {app_user_id} set to expired (event={event_type}, code={code})", flush=True)
 
     else:
         print(f"[REVENUECAT] Unhandled event type: {event_type}", flush=True)
@@ -6215,6 +6259,9 @@ def revenuecat_webhook():
     body = request.get_json(silent=True) or {}
     event = body.get("event") or {}
     event_id = event.get("id", "")
+
+    print(f"[REVENUECAT-WEBHOOK] received app_user_id={event.get('app_user_id')!r} "
+          f"original_app_user_id={event.get('original_app_user_id')!r}", flush=True)
 
     # Idempotency — RevenueCat retries webhooks on non-2xx responses and
     # can redeliver the same event; event.id is unique per event (same
@@ -6244,6 +6291,216 @@ def revenuecat_webhook():
 
     return jsonify({"status": "ok"}), 200
 # ─────────────────────────────────────────────────────────────────────────────
+
+
+# In-memory per-IP cap for /api/revenuecat/restore. Resets on container
+# restart and isn't shared across containers — acceptable here since this
+# only guards against casual scan abuse (RC app user ids are high-entropy,
+# not guessable), not a real auth boundary.
+_RC_RESTORE_HITS = {}
+_RC_RESTORE_MAX_PER_WINDOW = 30
+_RC_RESTORE_WINDOW_SECS = 300
+
+
+def _rc_verify_entitlement(app_user_id):
+    """
+    Ask RevenueCat directly whether app_user_id has an active entitlement,
+    using RC's V1 REST API as source of truth rather than trusting only our
+    own (possibly stale/never-populated) subscriptions.json.
+
+    Requires BOTH the Authorization header and X-Is-Sandbox: true — without
+    the latter, RC silently excludes StoreKit sandbox/test transactions
+    from the response, which is exactly what made a genuine active sandbox
+    subscriber look like "no purchase at all" in earlier diagnosis.
+
+    A 201 means RC had no prior record for this app_user_id at all (GET
+    auto-vivifies a blank subscriber) — that's NOT entitled, not an error.
+    Any other non-200 (401, 5xx, etc.) is also treated as unverified.
+
+    expires_date is parsed as UTC-aware (explicit "Z" -> "+00:00"; never
+    compared as a naive datetime). expires_date == null means non-expiring
+    (lifetime-style entitlement) — treated as entitled.
+
+    Returns {"product_id": ..., "expires_date": ...} for the first active
+    entitlement found, or None on: no active entitlement, non-200/201,
+    timeout, auth failure, or any exception. Never raises into the request
+    path. Logs status code + entitled true/false — never the key.
+    """
+    from datetime import datetime, timezone
+
+    key = os.environ.get("REVENUECAT_API_KEY", "").strip()
+    if not app_user_id or not key:
+        return None
+
+    import requests as _requests
+    try:
+        resp = _requests.get(
+            f"https://api.revenuecat.com/v1/subscribers/{app_user_id}",
+            headers={"Authorization": f"Bearer {key}", "X-Is-Sandbox": "true"},
+            timeout=5,
+        )
+    except Exception as e:
+        print(f"[REVENUECAT-VERIFY] request failed app_user_id={app_user_id}: {e}", flush=True)
+        return None
+
+    if resp.status_code == 201:
+        print(f"[REVENUECAT-VERIFY] status=201 (no prior RC subscriber) entitled=False", flush=True)
+        return None
+    if resp.status_code != 200:
+        print(f"[REVENUECAT-VERIFY] status={resp.status_code} entitled=False", flush=True)
+        return None
+
+    try:
+        entitlements = (resp.json().get("subscriber") or {}).get("entitlements") or {}
+    except Exception as e:
+        print(f"[REVENUECAT-VERIFY] status=200 but could not parse response: {e} entitled=False", flush=True)
+        return None
+
+    now = datetime.now(timezone.utc)
+    for ent_id, ent in entitlements.items():
+        expires_raw = ent.get("expires_date")
+        if expires_raw is None:
+            print(f"[REVENUECAT-VERIFY] status=200 entitled=True (entitlement={ent_id}, non-expiring)", flush=True)
+            return {"product_id": ent.get("product_identifier"), "expires_date": None}
+        try:
+            _s = expires_raw[:-1] + "+00:00" if expires_raw.endswith("Z") else expires_raw
+            expires_dt = datetime.fromisoformat(_s)
+            if expires_dt.tzinfo is None:
+                expires_dt = expires_dt.replace(tzinfo=timezone.utc)
+        except Exception:
+            continue
+        if expires_dt > now:
+            print(f"[REVENUECAT-VERIFY] status=200 entitled=True (entitlement={ent_id}, expires={expires_raw})", flush=True)
+            return {"product_id": ent.get("product_identifier"), "expires_date": expires_raw}
+
+    print(f"[REVENUECAT-VERIFY] status=200 entitled=False (no active entitlement)", flush=True)
+    return None
+
+
+@app.route("/api/revenuecat/restore", methods=["POST"])
+def revenuecat_restore():
+    """
+    Client-facing reconcile for iOS Restore Purchases (and for the purchase
+    flow itself — see gsRcRestoreWithRetry in base.html).
+
+    Two-tier lookup:
+      1. Local subscriptions.json scan (fast path, no network call) — keeps
+         this endpoint working even if RevenueCat's API is down, once an
+         entry exists and is genuinely active/unexpired.
+      2. If no usable local match, verify directly against RevenueCat via
+         _rc_verify_entitlement() — this is the actual source of truth.
+         Tries app_user_id, then original_app_user_id if it differs and
+         the first attempt didn't verify.
+
+    IDs are compared verbatim (.strip() only) — NOT uppercased. RC's
+    app_user_id namespace is case-sensitive; a prior .upper() normalization
+    here (and in the webhook) silently broke every match against RC's real
+    records. See _handle_revenuecat_event's docstring for how that was
+    confirmed.
+
+    No shared-secret auth on this endpoint: entitlement is proven either by
+    an existing local record or by a live RevenueCat lookup, not by
+    anything the client merely claims.
+    """
+    ip = (request.headers.get("CF-Connecting-IP") or
+          request.headers.get("X-Forwarded-For") or
+          request.remote_addr or "").split(",")[0].strip()
+    now = time.time()
+    hits = [t for t in _RC_RESTORE_HITS.get(ip, []) if now - t < _RC_RESTORE_WINDOW_SECS]
+    if len(hits) >= _RC_RESTORE_MAX_PER_WINDOW:
+        return jsonify({"found": False, "error": "rate_limited"}), 429
+    hits.append(now)
+    _RC_RESTORE_HITS[ip] = hits
+
+    data = request.get_json(silent=True) or {}
+    app_user_id = (data.get("app_user_id") or "").strip()
+    original_app_user_id = (data.get("original_app_user_id") or "").strip()
+    candidates = {v for v in (app_user_id, original_app_user_id) if v}
+    if not candidates:
+        return jsonify({"found": False}), 400
+
+    subs = _load_subs()
+    match_code = None
+    match_entry = None
+    for _code, _entry in subs.items():
+        if (_entry.get("stripe_subscription_id") or "").strip() in candidates:
+            match_code = _code
+            match_entry = _entry
+            break
+
+    # ── Fast path: local entry, active and unexpired ──────────────────────
+    if match_entry and match_entry.get("status") == "active":
+        expires = match_entry.get("expires_at")
+        local_ok = True
+        if expires:
+            try:
+                from datetime import datetime
+                if datetime.fromisoformat(expires) < datetime.utcnow():
+                    local_ok = False
+            except Exception:
+                pass
+        if local_ok:
+            print(f"[REVENUECAT-RESTORE] local match code={match_code} for candidates={candidates}", flush=True)
+            return jsonify({"found": True, "code": match_code, "tier": match_entry.get("tier", "monthly")})
+
+    # ── No usable local match — verify directly against RevenueCat ────────
+    rc_attempted = False
+    rc_result = None
+    verified_id = None
+    for candidate_id in (app_user_id, original_app_user_id):
+        if not candidate_id:
+            continue
+        rc_attempted = True
+        rc_result = _rc_verify_entitlement(candidate_id)
+        if rc_result:
+            verified_id = candidate_id
+            break
+        if original_app_user_id == app_user_id:
+            break  # same value twice — no point re-checking
+
+    if not rc_result:
+        known_rc_ids = [e.get("stripe_subscription_id") for e in subs.values()
+                        if e.get("source") == "revenuecat_ios"]
+        print(f"[REVENUECAT-RESTORE] NO MATCH candidates={candidates} known_rc_ids={known_rc_ids} "
+              f"rc_verify_attempted={rc_attempted} rc_verify_result=not_entitled", flush=True)
+        return jsonify({"found": False})
+
+    tier = _revenuecat_tier_for_product(rc_result.get("product_id"))
+    if not tier:
+        print(f"[REVENUECAT-RESTORE] verified entitlement for app_user_id={verified_id} but unknown "
+              f"product_id={rc_result.get('product_id')!r} — cannot map tier, not guessing", flush=True)
+        return jsonify({"found": False})
+
+    # ── Idempotent code issuance — mirrors google-play-purchase-tokens ────
+    _rc_codes = None
+    code = None
+    try:
+        import modal as _modal
+        _rc_codes = _modal.Dict.from_name("revenuecat-restore-codes", create_if_missing=True)
+        code = _rc_codes.get(verified_id)
+    except Exception as _e:
+        print(f"[REVENUECAT-RESTORE] code-dict lookup failed: {_e} — proceeding anyway", flush=True)
+
+    if code:
+        _entry = _load_subs().get(code)
+        response_tier = (_entry or {}).get("tier", tier)
+        print(f"[REVENUECAT-RESTORE] verified, existing code={code} for app_user_id={verified_id}", flush=True)
+        return jsonify({"found": True, "code": code, "tier": response_tier})
+
+    code = _issue_new_code(email="", tier=tier, subscription_id=verified_id, source="revenuecat_ios")
+    if _rc_codes is not None:
+        try:
+            _rc_codes.put(verified_id, code)
+        except Exception as _e:
+            print(f"[REVENUECAT-RESTORE] failed to cache issued code: {_e}", flush=True)
+    if _vol_commit_fn:
+        try:
+            _vol_commit_fn()
+        except Exception as _e:
+            print(f"[REVENUECAT-RESTORE] vol commit failed: {_e}", flush=True)
+
+    print(f"[REVENUECAT-RESTORE] verified, issued new code={code} tier={tier} for app_user_id={verified_id}", flush=True)
+    return jsonify({"found": True, "code": code, "tier": tier})
 
 
 @app.route("/api/topup-status", methods=["GET"])

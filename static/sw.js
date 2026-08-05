@@ -73,7 +73,32 @@
 // This comment ALSO changes the file's byte size on purpose — a bare version
 // bump (v117 -> v118) is the same length and gets silently skipped by Modal's
 // add_local_dir mount diff, reusing the cached image (see CLAUDE.md gotcha).
-const CACHE_NAME = 'grailsweep-v126';
+// v127 (2026-08-04) — Restore Purchases button (Apple 3.1.1 rejection fix):
+// upgrade.html gained #gs-restore-btn + /api/revenuecat/restore reconcile,
+// and base.html's gsIosPurchase now reconciles+activates on purchase too.
+// v128 (2026-08-04) — Restore Purchases now also on landing.html (Apple
+// 3.1.1 applies there too, since it offers purchases). gsRestorePurchases()
+// moved from upgrade.html into base.html (now shared, id-parameterized) so
+// landing.html's #gs-restore-btn-landing can reuse it without duplication.
+// v129 (2026-08-04) — TEMPORARY DIAGNOSTIC BUILD. Adds a #gsDiagPillLanding
+// banner to landing.html to determine, on-device, whether the restore
+// button is missing from the DOM entirely (stale HTML) or present but
+// hidden (reveal not firing). REMOVE before App Store resubmit — see the
+// comment wrapping the pill block in templates/landing.html.
+// v130 (2026-08-04) — RevenueCat webhook self-heal: _handle_revenuecat_event
+// now looks up entries by scanning stripe_subscription_id instead of a
+// direct subs.get(app_user_id) dict lookup (which could never match, since
+// entries are keyed by the generated code, not app_user_id) — fixes
+// RENEWAL/EXPIRATION/CANCELLATION/BILLING_ISSUE silently no-opping, adds
+// PRODUCT_CHANGE/UNCANCELLATION handling, and makes product_id matching
+// case-insensitive. Also removes the temporary #gsDiagPillLanding banner
+// added in v129 (its job is done) and raises the /api/revenuecat/restore
+// rate limit from 10 to 30 per 5 minutes.
+// v131 (2026-08-04) — match.html's initInstallBanner() now early-returns
+// when gsIsRunningInIOSApp() is true, so the "Add to Home Screen" web-PWA
+// banner no longer shows inside the native iOS app (nothing to add from —
+// there's no browser chrome). Reuses the existing detector, no new checks.
+const CACHE_NAME = 'grailsweep-v131';
 const PRECACHE = [
   '/',
   '/static/style.css',

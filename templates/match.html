@@ -208,16 +208,20 @@
              ratio, border and corner ticks are the scanner's own — no new CSS
              for the box itself, only a height-constraining wrapper.
              Static example, NOT a viewfinder: aria-hidden, pointer-events
-             none, no handler, no cursor change. Sits BELOW the capture
-             buttons so it can never push them off-screen.
+             none, no handler, no cursor change.
 
-             Deliberately WORDLESS. The .cx-photo-tips block further down this
-             form already says "Fill the frame — keep edges visible" and
+             Deliberately WORDLESS. The .cx-photo-tips block beside it
+             already says "Fill the frame — keep edges visible" and
              "Avoid glare, shadows and blur"; a text hint here duplicated it
-             (glare appeared twice on one page). The tips carry the words, the
-             box carries what words cannot, and its position directly under the
-             capture buttons — where the tips are not — is the whole point. -->
-        <div class="cx-capture-hint" id="cxCaptureHint">
+             (glare appeared twice on one page). Do NOT add a caption to the
+             box — that recreates the duplication removed in 9650b25.
+             The tips carry the words, the box carries what words cannot.
+
+             Moved 2026-08-05 (from a bottom-of-form position after the Find
+             Match button) into .cx-capture-guide, directly under the
+             capture buttons, paired side by side with the tips — in the eye
+             path before tapping, not below the submit button. -->
+        <div class="cx-capture-guide">
           <div class="cx-guide-example" aria-hidden="true">
             <div class="cx-card-guide">
               <div class="cx-corner cx-corner-tl"></div>
@@ -234,6 +238,17 @@
                 <rect x="6" y="60" width="17" height="3.5" rx="1.5" fill="currentColor" opacity="0.26"/>
               </svg>
             </div>
+          </div>
+
+          <div class="cx-photo-tips">
+            <div class="cx-tips-list">
+              <span>📸 Lay card flat in good, even lighting</span>
+              <span>🔲 Fill the frame — keep edges visible</span>
+              <span>✨ Avoid glare, shadows and blur</span>
+              <span>🃏 Front of card only, nice and sharp</span>
+            </div>
+            <div class="cx-tips-highlight">For rare or valuable cards, Photo Match gives you the deepest accuracy.</div>
+            <div class="cx-tips-tagline">You frame it. We name it.</div>
           </div>
         </div>
 
@@ -265,17 +280,6 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/><path d="M11 8v6M8 11h6"/></svg>
           Find Match
         </button>
-
-        <div class="cx-photo-tips">
-          <div class="cx-tips-list">
-            <span>📸 Lay card flat in good, even lighting</span>
-            <span>🔲 Fill the frame — keep edges visible</span>
-            <span>✨ Avoid glare, shadows and blur</span>
-            <span>🃏 Front of card only, nice and sharp</span>
-          </div>
-          <div class="cx-tips-highlight">For rare or valuable cards, Photo Match gives you the deepest accuracy.</div>
-          <div class="cx-tips-tagline">You frame it. We name it.</div>
-        </div>
 
       </form>
     </div>
@@ -632,14 +636,47 @@ body             { overflow: visible !important; }
 
 /* File buttons */
 .cx-btn-row { display:flex;gap:8px;flex-shrink:0; }
-/* Pre-capture framing guide — centres the wordless guide box under the
-   capture buttons. Renders on every platform. */
-.cx-capture-hint { margin-top:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+/* Pre-capture framing guide — pairs the wordless guide box with the
+   .cx-photo-tips list beside it, directly under the capture buttons.
+   Renders on every platform. */
+.cx-capture-guide {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin:12px 0 4px;
+}
+.cx-capture-guide .cx-guide-example { flex:0 0 auto; width:78px; }
+.cx-capture-guide .cx-photo-tips { flex:1 1 auto; min-width:0; margin-top:0; }
+@media (max-width:360px) {
+  .cx-capture-guide {
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+  }
+}
 /* Height-constraining wrapper ONLY — the box shape, ratio, border and corner
    ticks all come from .cx-card-guide / .cx-corner unchanged. Static example,
    never interactive. */
 .cx-guide-example { height:88px;display:flex;align-items:center;justify-content:center;flex-shrink:0;pointer-events:none;-webkit-user-select:none;user-select:none; }
-.cx-guide-silhouette { position:absolute;inset:4px;color:var(--cx-violet); }
+/* Silhouette fit to ~92% of .cx-card-guide on the constraining axis, at the
+   card's true ratio (63:88), centred with an even margin to the corner
+   ticks — position:absolute + inset:0 + margin:auto centres a box of
+   auto/aspect-ratio-derived size, and max-width/max-height keep it from
+   exceeding 92% on whichever axis is tighter. Previously inset:4px, which
+   (since .cx-card-guide's own box isn't exactly 63:88) rendered visibly
+   smaller than intended with gaps top and bottom — the opposite of the
+   "fill the frame" advice the tips give beside it. */
+.cx-guide-silhouette {
+  position:absolute;
+  inset:0;
+  margin:auto;
+  max-width:92%;
+  max-height:92%;
+  aspect-ratio:63/88;
+  width:auto;
+  height:auto;
+  color:var(--cx-violet);
+}
 /* Short viewports: shrink the box, never move the buttons (which sit above it). */
 @media (max-height: 720px) { .cx-guide-example { height:70px; } }
 @media (max-height: 600px) { .cx-guide-example { height:56px; } }
@@ -1122,7 +1159,15 @@ html.gs-weak-device .cx-upload {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 14px;
+  /* Safe-area-aware — replaces the old flat "padding: 10px 14px" so the
+     banner's own text/buttons clear the status bar / notch instead of
+     sitting under it. Scoped to this selector only; .mi-shell,
+     .mi-shell-main, body and .cx-wrap are untouched. */
+  padding-top:    calc(env(safe-area-inset-top, 0px) + 10px);
+  padding-right:  calc(env(safe-area-inset-right, 0px) + 12px);
+  padding-bottom: 10px;
+  padding-left:   calc(env(safe-area-inset-left, 0px) + 12px);
+  box-sizing: border-box;
   font-family: 'DM Sans', sans-serif;
   font-size: 0.82rem;
   font-weight: 600;
@@ -2901,6 +2946,7 @@ window.addEventListener('load', function() {
 
 /* ── PWA Install ── */
 function initInstallBanner() {
+  if (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp()) return;
   if (window.matchMedia('(display-mode: standalone)').matches) return;
   if (localStorage.getItem('gs_install_dismissed')) return;
   document.getElementById('installBanner').style.display = 'block';

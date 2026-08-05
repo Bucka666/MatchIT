@@ -166,6 +166,13 @@
 
   </div>
 
+  <!-- iOS only (Apple 3.1.1). Hidden by default like other .gs-ios-only
+       elements; revealed by base.html's platform-toggler IIFE. -->
+  <button id="gs-restore-btn" class="gs-restore-btn gs-ios-only" style="display:none" onclick="gsRestorePurchases('gs-restore-status')">
+    Restore Purchases
+  </button>
+  <div id="gs-restore-status" class="gs-restore-status" aria-live="polite"></div>
+
   <div class="upgrade-fair-usage-notice">
     <p>
       Fair usage limits apply to all Pro subscriptions.
@@ -417,6 +424,29 @@
 }
 .upgrade-import-link:hover {
     color: #00e5ff;
+}
+
+.gs-restore-btn {
+    display: block;
+    margin: 20px auto 0;
+    padding: 10px 24px;
+    background: transparent;
+    color: rgba(255,255,255,0.75);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.gs-restore-btn:hover { border-color: rgba(255,255,255,0.45); color: #fff; }
+.gs-restore-btn:disabled { opacity: 0.55; cursor: default; }
+.gs-restore-status {
+    text-align: center;
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.6);
+    margin-top: 8px;
+    min-height: 1.2em;
 }
 
 .gs-sub-legal {
