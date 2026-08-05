@@ -2945,20 +2945,63 @@ window.addEventListener('load', function() {
 });
 
 /* ── PWA Install ── */
+// TODO (2026-08-05): gsShowInstallBanner() below carries a TEMPORARY
+// diagnostic tag appended to the banner text, added to debug a TestFlight
+// report of the banner appearing inside the native app. Remove the try
+// block in gsShowInstallBanner() once that's confirmed fixed.
 function initInstallBanner() {
-  // Already installed — never offer to install again.
-  // navigator.standalone is the iOS-only legacy flag; iOS Safari
-  // has historically been unreliable on display-mode, so check both.
+  // Cheap guards first — these cannot race.
   var isStandalone =
     (window.matchMedia &&
      window.matchMedia('(display-mode: standalone)').matches) ||
     window.navigator.standalone === true;
   if (isStandalone) return;
-
-  if (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp()) return;
-  if (window.matchMedia('(display-mode: standalone)').matches) return;
   if (localStorage.getItem('gs_install_dismissed')) return;
-  document.getElementById('installBanner').style.display = 'block';
+
+  // The native check CAN race. In server mode the page loads over
+  // the network and window.Capacitor injection order relative to
+  // the load event is not guaranteed, so a single-shot check at
+  // load may miss the bridge. Poll instead: a race cannot beat a
+  // poll. Cost is the banner appearing ~2s later for real web
+  // users, which is fine for an install prompt.
+  var tries = 0;
+  var MAX_TRIES = 10;      // 10 x 200ms = 2s
+  (function waitForBridge() {
+    if (typeof gsIsRunningInIOSApp === 'function'
+        && gsIsRunningInIOSApp()) return;   // native — stay hidden
+    if (window.Capacitor && ++tries < MAX_TRIES) {
+      // Bridge object exists but did not report ios yet — could
+      // still be initialising. Keep waiting.
+      return setTimeout(waitForBridge, 200);
+    }
+    if (!window.Capacitor && ++tries < MAX_TRIES) {
+      return setTimeout(waitForBridge, 200);
+    }
+    gsShowInstallBanner();
+  })();
+}
+
+function gsShowInstallBanner() {
+  var el = document.getElementById('installBanner');
+  if (!el) return;
+  // TEMPORARY DIAGNOSTIC — remove once the TestFlight banner issue
+  // is confirmed fixed. The banner is default-hidden and only ever
+  // revealed here, so this text is only ever visible when the bug
+  // reproduces. No console available (no Mac / Web Inspector), so
+  // the banner reports its own cause.
+  try {
+    var d = 'cap=' + (window.Capacitor ? 'y' : 'n')
+      + ' inp=' + (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function'
+          ? String(window.Capacitor.isNativePlatform()) : 'na')
+      + ' plat=' + (window.Capacitor && typeof window.Capacitor.getPlatform === 'function'
+          ? String(window.Capacitor.getPlatform()) : 'na');
+    var tag = document.createElement('span');
+    tag.style.cssText = 'display:block;font-size:10px;opacity:.75';
+    tag.textContent = d;
+    var inner = el.querySelector('.install-banner') || el;
+    inner.appendChild(tag);
+  } catch (e) {}
+  el.style.display = 'block';
 }
 
 function dismissInstallBanner() {

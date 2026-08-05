@@ -1462,7 +1462,13 @@ function gsIsWatchlisted(sku) {
   }
 
   function gsIsRunningInIOSApp() {
-    return !!(window.Capacitor && window.Capacitor.isNativePlatform() && window.Capacitor.getPlatform() === 'ios');
+    try {
+      return !!(window.Capacitor
+        && typeof window.Capacitor.isNativePlatform === 'function'
+        && window.Capacitor.isNativePlatform()
+        && typeof window.Capacitor.getPlatform === 'function'
+        && window.Capacitor.getPlatform() === 'ios');
+    } catch (e) { return false; }
   }
   window.gsIsRunningInIOSApp = gsIsRunningInIOSApp;
 
