@@ -2946,6 +2946,15 @@ window.addEventListener('load', function() {
 
 /* ── PWA Install ── */
 function initInstallBanner() {
+  // Already installed — never offer to install again.
+  // navigator.standalone is the iOS-only legacy flag; iOS Safari
+  // has historically been unreliable on display-mode, so check both.
+  var isStandalone =
+    (window.matchMedia &&
+     window.matchMedia('(display-mode: standalone)').matches) ||
+    window.navigator.standalone === true;
+  if (isStandalone) return;
+
   if (typeof gsIsRunningInIOSApp === 'function' && gsIsRunningInIOSApp()) return;
   if (window.matchMedia('(display-mode: standalone)').matches) return;
   if (localStorage.getItem('gs_install_dismissed')) return;
