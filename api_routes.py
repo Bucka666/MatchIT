@@ -631,18 +631,35 @@ def register_api_routes(app):
         import sqlite3
         from vertical_loader import get_db_root
 
-        # Load image_ids for matched SKUs from SQLite
-        from app import get_images_db_path
-        db_path = get_images_db_path()
-        sku_image_map = {}
-        try:
-            conn = sqlite3.connect(db_path)
-            matched_skus = set()
-            for r in results[:top_k]:
-                sku = r.get("sku", "") if isinstance(r, dict) else getattr(r, "sku", "")
-                if sku:
-                    matched_skus.add(sku)
+        # Load image_ids for matched SKUs from SQLite. Uses the same
+        # transient-mount-recovery helpers _lookup_sku_by_setcode() relies on
+        # (ocr_confirm.py) instead of a second, unguarded connect() — a
+        # snapshot-restored container's volume mount can be briefly invisible
+        # right after "Restoring Function from memory snapshot" (see
+        # _reload_volume_once() docstring).
+        from ocr_confirm import _get_images_db_path, _reload_volume_once
+        db_path = _get_images_db_path()
 
+        # Always bound, regardless of whether the DB lookup below succeeds —
+        # matched_skus feeds the profile-loading loop further down and must
+        # never be conditionally assigned inside the try that follows.
+        sku_image_map = {}
+        matched_skus = set()
+        for r in results[:top_k]:
+            sku = r.get("sku", "") if isinstance(r, dict) else getattr(r, "sku", "")
+            if sku:
+                matched_skus.add(sku)
+
+        if not db_path.exists():
+            logger.warning(f"[IMAGE-MAP] images.db not visible at {db_path} — reloading volume")
+            _reload_fired = _reload_volume_once()
+            logger.info(
+                f"[IMAGE-MAP] reload retry fired={_reload_fired} "
+                f"exists_after={db_path.exists()}"
+            )
+
+        try:
+            conn = sqlite3.connect(str(db_path))
             for sku in matched_skus:
                 rows = conn.execute(
                     "SELECT image_id, original_filename FROM images WHERE sku = ? LIMIT 3",
@@ -653,8 +670,8 @@ def register_api_routes(app):
                     for row in rows
                 ]
             conn.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"[IMAGE-MAP] sku_image_map build failed: {e}")
 
         # Load profile data for matched SKUs
         # Supports two patterns:

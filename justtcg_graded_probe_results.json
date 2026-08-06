@@ -1,0 +1,2849 @@
+{
+  "generated_at": "2026-08-05T22:57:47.749395+00:00",
+  "requests_used": 19,
+  "request_cap": 30,
+  "request_log": [
+    "https://api.justtcg.com/v2/cards?q=Charizard&game=pokemon&limit=20",
+    "https://api.justtcg.com/v2/cards?q=Blastoise&game=pokemon&limit=20",
+    "https://api.justtcg.com/v2/cards?q=Venusaur&game=pokemon&limit=20",
+    "https://api.justtcg.com/v2/cards?q=Charizard%20ex&game=pokemon&limit=20",
+    "https://api.justtcg.com/v2/cards?q=Wo-Chien%20ex&game=pokemon&limit=20",
+    "https://api.justtcg.com/v2/cards?q=Koraidon%20ex&game=pokemon&limit=20",
+    "https://api.justtcg.com/v2/cards?q=Umbreon%20VMAX&game=pokemon&limit=20",
+    "https://api.justtcg.com/v2/cards?q=Lugia%20VSTAR&game=pokemon&limit=20",
+    "https://api.justtcg.com/v2/cards?q=Black%20Lotus&game=mtg&limit=20",
+    "https://api.justtcg.com/v2/cards?q=The%20One%20Ring&game=mtg&limit=20",
+    "https://api.justtcg.com/v2/cards?q=Blue-Eyes%20White%20Dragon&game=yugioh&limit=20",
+    "https://api.justtcg.com/v2/cards?q=Dark%20Magician&game=yugioh&limit=20",
+    "https://api.justtcg.com/v2/cards?card_id=pokemon-base-set-2-charizard-holo-rare&graded=only",
+    "https://api.justtcg.com/v2/cards?card_id=pokemon-base-set-2-blastoise-holo-rare&graded=only",
+    "https://api.justtcg.com/v2/cards?card_id=pokemon-base-set-2-venusaur-holo-rare&graded=only",
+    "https://api.justtcg.com/v2/cards?card_id=pokemon-sv-paldean-fates-wo-chien-ex-hyper-rare&graded=only",
+    "https://api.justtcg.com/v2/cards?card_id=pokemon-swsh07-evolving-skies-umbreon-vmax-ultra-rare&graded=only",
+    "https://api.justtcg.com/v2/cards?card_id=pokemon-swsh12-silver-tempest-lugia-vstar-ultra-rare&graded=only",
+    "https://api.justtcg.com/v2/cards?card_id=magic-the-gathering-universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-the-one-ring-mythic&graded=only"
+  ],
+  "test_cards": [
+    {
+      "_sku": "base1-4",
+      "_category": "pokemon",
+      "name": "Charizard",
+      "set_id": "base1",
+      "set_name": "Base",
+      "rarity": "RARE_HOLO",
+      "card_number": "4"
+    },
+    {
+      "_sku": "base1-2",
+      "_category": "pokemon",
+      "name": "Blastoise",
+      "set_id": "base1",
+      "set_name": "Base",
+      "rarity": "RARE_HOLO",
+      "card_number": "2"
+    },
+    {
+      "_sku": "base1-15",
+      "_category": "pokemon",
+      "name": "Venusaur",
+      "set_id": "base1",
+      "set_name": "Base",
+      "rarity": "RARE_HOLO",
+      "card_number": "15"
+    },
+    {
+      "_sku": "sv3pt5-199",
+      "_category": "pokemon",
+      "name": "Charizard ex",
+      "set_id": "sv3pt5",
+      "set_name": "151",
+      "rarity": "RARE_FULL_ART",
+      "card_number": "199"
+    },
+    {
+      "_sku": "sv4pt5-240",
+      "_category": "pokemon",
+      "name": "Wo-Chien ex",
+      "set_id": "sv4pt5",
+      "set_name": "Paldean Fates",
+      "rarity": "RARE_RAINBOW",
+      "card_number": "240"
+    },
+    {
+      "_sku": "sv1-254",
+      "_category": "pokemon",
+      "name": "Koraidon ex",
+      "set_id": "sv1",
+      "set_name": "Scarlet & Violet",
+      "rarity": "RARE_RAINBOW",
+      "card_number": "254"
+    },
+    {
+      "_sku": "swsh7-215",
+      "_category": "pokemon",
+      "name": "Umbreon VMAX",
+      "set_id": "swsh7",
+      "set_name": "Evolving Skies",
+      "rarity": "RARE_RAINBOW",
+      "card_number": "215"
+    },
+    {
+      "_sku": "swsh12-202",
+      "_category": "pokemon",
+      "name": "Lugia VSTAR",
+      "set_id": "swsh12",
+      "set_name": "Silver Tempest",
+      "rarity": "RARE_RAINBOW",
+      "card_number": "202"
+    },
+    {
+      "_sku": "mtg-lea-232",
+      "_category": "mtg",
+      "name": "Black Lotus",
+      "set_id": "lea",
+      "set_name": "Limited Edition Alpha",
+      "rarity": "RARE",
+      "card_number": "232"
+    },
+    {
+      "_sku": "mtg-ltr-246",
+      "_category": "mtg",
+      "name": "The One Ring",
+      "set_id": "ltr",
+      "set_name": "The Lord of the Rings: Tales of Middle-earth",
+      "rarity": "MYTHIC",
+      "card_number": "246"
+    },
+    {
+      "_sku": "ygo-LOB-001-89631139",
+      "_category": "yugioh",
+      "name": "Blue-Eyes White Dragon",
+      "set_id": "LOB",
+      "set_name": "Legend of Blue Eyes White Dragon",
+      "rarity": "ULTRA_RARE_YGO",
+      "card_number": "LOB-001"
+    },
+    {
+      "_sku": "ygo-LOB-005-36996508",
+      "_category": "yugioh",
+      "name": "Dark Magician",
+      "set_id": "LOB",
+      "set_name": "Legend of Blue Eyes White Dragon",
+      "rarity": "ULTRA_RARE_YGO",
+      "card_number": "LOB-005"
+    }
+  ],
+  "resolutions": [
+    {
+      "sku": "base1-4",
+      "query": "Charizard",
+      "game_param": "pokemon",
+      "num_results": 20,
+      "all_results": [
+        {
+          "id": "2f43cf33-cf85-588d-b523-187e45cd7f02",
+          "slug": "pokemon-arceus-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Arceus",
+          "rarity": "Holo Rare",
+          "number": "1/99"
+        },
+        {
+          "id": "4d24f1a0-1d2c-5445-a1b2-764a7b61ea47",
+          "slug": "pokemon-base-set-2-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Base Set 2",
+          "rarity": "Holo Rare",
+          "number": "004/130"
+        },
+        {
+          "id": "004d6ac4-92db-51b7-9cd6-8c2d46479bdc",
+          "slug": "pokemon-base-set-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Base Set",
+          "rarity": "Holo Rare",
+          "number": "004/102"
+        },
+        {
+          "id": "2daec851-d5be-51a3-bcd7-889116693556",
+          "slug": "pokemon-base-set-shadowless-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Base Set (Shadowless)",
+          "rarity": "Holo Rare",
+          "number": "004/102"
+        },
+        {
+          "id": "d22a1906-114b-5a15-a228-0bc184bf8060",
+          "slug": "pokemon-boundaries-crossed-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Boundaries Crossed",
+          "rarity": "Holo Rare",
+          "number": "20/149"
+        },
+        {
+          "id": "57e326b8-2c95-5c7a-8c33-d799178689cb",
+          "slug": "pokemon-celebrations-classic-collection-charizard-classic-collection",
+          "name": "Charizard",
+          "set_name": "Celebrations: Classic Collection",
+          "rarity": "Classic Collection",
+          "number": "4/102"
+        },
+        {
+          "id": "bd19074e-efa9-5db1-bb75-5d2e5f1346ca",
+          "slug": "pokemon-detective-pikachu-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Detective Pikachu",
+          "rarity": "Holo Rare",
+          "number": "5/18"
+        },
+        {
+          "id": "0e2405dd-0940-582e-803c-594ecbe8bebb",
+          "slug": "pokemon-dragon-charizard-secret-rare",
+          "name": "Charizard",
+          "set_name": "Dragon",
+          "rarity": "Secret Rare",
+          "number": "100/97"
+        },
+        {
+          "id": "ec4d1847-6bb7-5d5a-86cd-45812b620917",
+          "slug": "pokemon-dragon-majesty-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Dragon Majesty",
+          "rarity": "Holo Rare",
+          "number": "3/70"
+        },
+        {
+          "id": "bd2a4428-cedc-5bc7-8043-8c7c01f7f2f5",
+          "slug": "pokemon-generations-radiant-collection-charizard-uncommon",
+          "name": "Charizard",
+          "set_name": "Generations: Radiant Collection",
+          "rarity": "Uncommon",
+          "number": "RC5/RC32"
+        },
+        {
+          "id": "c1a2ba25-a8cd-5760-8a70-e612945228f9",
+          "slug": "pokemon-legendary-collection-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Legendary Collection",
+          "rarity": "Holo Rare",
+          "number": "003/110"
+        },
+        {
+          "id": "6380c7e2-8294-558e-916c-cb423ce73cd9",
+          "slug": "pokemon-legendary-treasures-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Legendary Treasures",
+          "rarity": "Holo Rare",
+          "number": "19/113"
+        },
+        {
+          "id": "bb8f08f1-1637-5833-aa89-97f5113a98bc",
+          "slug": "pokemon-mcdonald-s-promos-2024-charizard-promo",
+          "name": "Charizard",
+          "set_name": "McDonald's Promos 2024",
+          "rarity": "Promo",
+          "number": "001/015"
+        },
+        {
+          "id": "fa9b82df-8575-5c48-ae86-807d1aaeecda",
+          "slug": "pokemon-plasma-storm-charizard-secret-rare",
+          "name": "Charizard",
+          "set_name": "Plasma Storm",
+          "rarity": "Secret Rare",
+          "number": "136/135"
+        },
+        {
+          "id": "705ce940-54bf-5b2a-ada4-f8a2d6499eaf",
+          "slug": "pokemon-pokemon-go-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Pokemon GO",
+          "rarity": "Holo Rare",
+          "number": "010/078"
+        },
+        {
+          "id": "96c1b1ab-c493-5788-b26f-6cd18ac325d1",
+          "slug": "pokemon-power-keepers-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Power Keepers",
+          "rarity": "Holo Rare",
+          "number": "6/108"
+        },
+        {
+          "id": "f59382e0-9c60-5af8-9ecc-d98d04537fba",
+          "slug": "pokemon-secret-wonders-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Secret Wonders",
+          "rarity": "Holo Rare",
+          "number": "3/132"
+        },
+        {
+          "id": "f711ea68-18c5-544c-b49d-b75386261d11",
+          "slug": "pokemon-skyridge-charizard-secret-rare",
+          "name": "Charizard",
+          "set_name": "Skyridge",
+          "rarity": "Secret Rare",
+          "number": "146/144"
+        },
+        {
+          "id": "2a9e678e-2a8e-506c-9c1a-365086e54638",
+          "slug": "pokemon-sm-team-up-charizard-rare",
+          "name": "Charizard",
+          "set_name": "SM - Team Up",
+          "rarity": "Rare",
+          "number": "14/181"
+        },
+        {
+          "id": "26b3dc92-e810-5245-94cb-cc66064eec92",
+          "slug": "pokemon-stormfront-charizard-secret-rare",
+          "name": "Charizard",
+          "set_name": "Stormfront",
+          "rarity": "Secret Rare",
+          "number": "103/100"
+        }
+      ],
+      "observed_sets": [
+        {
+          "justtcg_set_id": "arceus-pokemon",
+          "justtcg_set_name": "Arceus"
+        },
+        {
+          "justtcg_set_id": "base-set-2-pokemon",
+          "justtcg_set_name": "Base Set 2"
+        },
+        {
+          "justtcg_set_id": "base-set-pokemon",
+          "justtcg_set_name": "Base Set"
+        },
+        {
+          "justtcg_set_id": "base-set-shadowless-pokemon",
+          "justtcg_set_name": "Base Set (Shadowless)"
+        },
+        {
+          "justtcg_set_id": "boundaries-crossed-pokemon",
+          "justtcg_set_name": "Boundaries Crossed"
+        },
+        {
+          "justtcg_set_id": "celebrations-classic-collection-pokemon",
+          "justtcg_set_name": "Celebrations: Classic Collection"
+        },
+        {
+          "justtcg_set_id": "detective-pikachu-pokemon",
+          "justtcg_set_name": "Detective Pikachu"
+        },
+        {
+          "justtcg_set_id": "dragon-pokemon",
+          "justtcg_set_name": "Dragon"
+        },
+        {
+          "justtcg_set_id": "dragon-majesty-pokemon",
+          "justtcg_set_name": "Dragon Majesty"
+        },
+        {
+          "justtcg_set_id": "generations-radiant-collection-pokemon",
+          "justtcg_set_name": "Generations: Radiant Collection"
+        },
+        {
+          "justtcg_set_id": "legendary-collection-pokemon",
+          "justtcg_set_name": "Legendary Collection"
+        },
+        {
+          "justtcg_set_id": "legendary-treasures-pokemon",
+          "justtcg_set_name": "Legendary Treasures"
+        },
+        {
+          "justtcg_set_id": "mcdonald-s-promos-2024-pokemon",
+          "justtcg_set_name": "McDonald's Promos 2024"
+        },
+        {
+          "justtcg_set_id": "plasma-storm-pokemon",
+          "justtcg_set_name": "Plasma Storm"
+        },
+        {
+          "justtcg_set_id": "pokemon-go-pokemon",
+          "justtcg_set_name": "Pokemon GO"
+        },
+        {
+          "justtcg_set_id": "power-keepers-pokemon",
+          "justtcg_set_name": "Power Keepers"
+        },
+        {
+          "justtcg_set_id": "secret-wonders-pokemon",
+          "justtcg_set_name": "Secret Wonders"
+        },
+        {
+          "justtcg_set_id": "skyridge-pokemon",
+          "justtcg_set_name": "Skyridge"
+        },
+        {
+          "justtcg_set_id": "sm-team-up-pokemon",
+          "justtcg_set_name": "SM - Team Up"
+        },
+        {
+          "justtcg_set_id": "stormfront-pokemon",
+          "justtcg_set_name": "Stormfront"
+        }
+      ],
+      "num_plausible": 3,
+      "classification": "AMBIGUOUS",
+      "picked": {
+        "id": "4d24f1a0-1d2c-5445-a1b2-764a7b61ea47",
+        "slug": "pokemon-base-set-2-charizard-holo-rare",
+        "name": "Charizard",
+        "set_name": "Base Set 2",
+        "rarity": "Holo Rare"
+      },
+      "rule": "3 results matched name+set; tiebroke by rarity-keyword overlap (our rarity keywords=['holo', 'rare'])",
+      "rarity_field_in_chosen_slug": true
+    },
+    {
+      "sku": "base1-2",
+      "query": "Blastoise",
+      "game_param": "pokemon",
+      "num_results": 20,
+      "all_results": [
+        {
+          "id": "7f8eeeb1-37c0-50f3-be63-600cd253219d",
+          "slug": "pokemon-base-set-2-blastoise-holo-rare",
+          "name": "Blastoise",
+          "set_name": "Base Set 2",
+          "rarity": "Holo Rare",
+          "number": "002/130"
+        },
+        {
+          "id": "bcbbb2a5-104e-5be8-bdc5-356ca79637ab",
+          "slug": "pokemon-base-set-blastoise-holo-rare",
+          "name": "Blastoise",
+          "set_name": "Base Set",
+          "rarity": "Holo Rare",
+          "number": "002/102"
+        },
+        {
+          "id": "3ea4f34e-e37a-5723-a9da-0d6d5068526f",
+          "slug": "pokemon-base-set-shadowless-blastoise-holo-rare",
+          "name": "Blastoise",
+          "set_name": "Base Set (Shadowless)",
+          "rarity": "Holo Rare",
+          "number": "002/102"
+        },
+        {
+          "id": "1d6bf5f0-663b-58b9-8d55-f6caac5e1815",
+          "slug": "pokemon-boundaries-crossed-blastoise-holo-rare",
+          "name": "Blastoise",
+          "set_name": "Boundaries Crossed",
+          "rarity": "Holo Rare",
+          "number": "31/149"
+        },
+        {
+          "id": "90c1ef87-5420-5f8c-8b8b-b07d66656e07",
+          "slug": "pokemon-celebrations-classic-collection-blastoise-classic-collection",
+          "name": "Blastoise",
+          "set_name": "Celebrations: Classic Collection",
+          "rarity": "Classic Collection",
+          "number": "2/102"
+        },
+        {
+          "id": "9c45c042-6fc3-5f35-a4b0-5a836ec7dbef",
+          "slug": "pokemon-crystal-guardians-blastoise-rare",
+          "name": "Blastoise",
+          "set_name": "Crystal Guardians",
+          "rarity": "Rare",
+          "number": "14/100"
+        },
+        {
+          "id": "dd1c04f4-b087-50c3-8dea-634c201dbdbb",
+          "slug": "pokemon-plasma-blast-blastoise-holo-rare",
+          "name": "Blastoise",
+          "set_name": "Plasma Blast",
+          "rarity": "Holo Rare",
+          "number": "16/101"
+        },
+        {
+          "id": "f878d6e5-d827-5a97-86bf-73f51213eb04",
+          "slug": "pokemon-plasma-storm-blastoise-secret-rare",
+          "name": "Blastoise",
+          "set_name": "Plasma Storm",
+          "rarity": "Secret Rare",
+          "number": "137/135"
+        },
+        {
+          "id": "e2bb9024-ffc6-5a55-9108-76bc21b8ea84",
+          "slug": "pokemon-platinum-blastoise-holo-rare",
+          "name": "Blastoise",
+          "set_name": "Platinum",
+          "rarity": "Holo Rare",
+          "number": "2/127"
+        },
+        {
+          "id": "213faeb2-23cc-56a4-b365-ea7126536151",
+          "slug": "pokemon-pokemon-go-blastoise-holo-rare",
+          "name": "Blastoise",
+          "set_name": "Pokemon GO",
+          "rarity": "Holo Rare",
+          "number": "017/078"
+        },
+        {
+          "id": "770a4fc6-7faa-5b4b-8bfd-9ce4c411d76f",
+          "slug": "pokemon-pop-series-3-blastoise-rare",
+          "name": "Blastoise",
+          "set_name": "POP Series 3",
+          "rarity": "Rare",
+          "number": "001/017"
+        },
+        {
+          "id": "5669a623-7a1b-576c-ab2c-f4814c7feb86",
+          "slug": "pokemon-secret-wonders-blastoise-holo-rare",
+          "name": "Blastoise",
+          "set_name": "Secret Wonders",
+          "rarity": "Holo Rare",
+          "number": "2/132"
+        },
+        {
+          "id": "32e0c809-d0c4-5ee8-ab9c-99414ae3dd4b",
+          "slug": "pokemon-sm-team-up-blastoise-rare",
+          "name": "Blastoise",
+          "set_name": "SM - Team Up",
+          "rarity": "Rare",
+          "number": "25/181"
+        },
+        {
+          "id": "4183198c-dda9-5e24-b5ce-9630b2cb0d2a",
+          "slug": "pokemon-trading-card-game-classic-blastoise-classic-collection",
+          "name": "Blastoise",
+          "set_name": "Trading Card Game Classic",
+          "rarity": "Classic Collection",
+          "number": "003/034"
+        },
+        {
+          "id": "1ed3d61f-f717-5c22-a852-8a0079a057f5",
+          "slug": "pokemon-unleashed-blastoise-rare",
+          "name": "Blastoise",
+          "set_name": "Unleashed",
+          "rarity": "Rare",
+          "number": "13/95"
+        },
+        {
+          "id": "02b16307-136f-502e-83d2-b6baa65189ab",
+          "slug": "pokemon-expedition-blastoise-4-holo-rare",
+          "name": "Blastoise (4)",
+          "set_name": "Expedition",
+          "rarity": "Holo Rare",
+          "number": "004/165"
+        },
+        {
+          "id": "9bfe5356-f86f-5b0c-a565-141d40bf6228",
+          "slug": "pokemon-expedition-blastoise-36-rare",
+          "name": "Blastoise (36)",
+          "set_name": "Expedition",
+          "rarity": "Rare",
+          "number": "036/165"
+        },
+        {
+          "id": "a734ab69-27fb-5685-879e-1bf45812b34b",
+          "slug": "pokemon-expedition-blastoise-37-rare",
+          "name": "Blastoise (37)",
+          "set_name": "Expedition",
+          "rarity": "Rare",
+          "number": "037/165"
+        },
+        {
+          "id": "80134eb7-db61-5ff0-9802-f2ab240749d7",
+          "slug": "pokemon-firered-leafgreen-blastoise-ex-ultra-rare",
+          "name": "Blastoise ex",
+          "set_name": "FireRed & LeafGreen",
+          "rarity": "Ultra Rare",
+          "number": "104/112"
+        },
+        {
+          "id": "dfeecd87-15ec-5932-8698-d96acc642d56",
+          "slug": "pokemon-generations-blastoise-ex-ultra-rare",
+          "name": "Blastoise EX",
+          "set_name": "Generations",
+          "rarity": "Ultra Rare",
+          "number": "17/83"
+        }
+      ],
+      "observed_sets": [
+        {
+          "justtcg_set_id": "base-set-2-pokemon",
+          "justtcg_set_name": "Base Set 2"
+        },
+        {
+          "justtcg_set_id": "base-set-pokemon",
+          "justtcg_set_name": "Base Set"
+        },
+        {
+          "justtcg_set_id": "base-set-shadowless-pokemon",
+          "justtcg_set_name": "Base Set (Shadowless)"
+        },
+        {
+          "justtcg_set_id": "boundaries-crossed-pokemon",
+          "justtcg_set_name": "Boundaries Crossed"
+        },
+        {
+          "justtcg_set_id": "celebrations-classic-collection-pokemon",
+          "justtcg_set_name": "Celebrations: Classic Collection"
+        },
+        {
+          "justtcg_set_id": "crystal-guardians-pokemon",
+          "justtcg_set_name": "Crystal Guardians"
+        },
+        {
+          "justtcg_set_id": "plasma-blast-pokemon",
+          "justtcg_set_name": "Plasma Blast"
+        },
+        {
+          "justtcg_set_id": "plasma-storm-pokemon",
+          "justtcg_set_name": "Plasma Storm"
+        },
+        {
+          "justtcg_set_id": "platinum-pokemon",
+          "justtcg_set_name": "Platinum"
+        },
+        {
+          "justtcg_set_id": "pokemon-go-pokemon",
+          "justtcg_set_name": "Pokemon GO"
+        },
+        {
+          "justtcg_set_id": "pop-series-3-pokemon",
+          "justtcg_set_name": "POP Series 3"
+        },
+        {
+          "justtcg_set_id": "secret-wonders-pokemon",
+          "justtcg_set_name": "Secret Wonders"
+        },
+        {
+          "justtcg_set_id": "sm-team-up-pokemon",
+          "justtcg_set_name": "SM - Team Up"
+        },
+        {
+          "justtcg_set_id": "trading-card-game-classic-pokemon",
+          "justtcg_set_name": "Trading Card Game Classic"
+        },
+        {
+          "justtcg_set_id": "unleashed-pokemon",
+          "justtcg_set_name": "Unleashed"
+        },
+        {
+          "justtcg_set_id": "expedition-pokemon",
+          "justtcg_set_name": "Expedition"
+        },
+        {
+          "justtcg_set_id": "expedition-pokemon",
+          "justtcg_set_name": "Expedition"
+        },
+        {
+          "justtcg_set_id": "expedition-pokemon",
+          "justtcg_set_name": "Expedition"
+        },
+        {
+          "justtcg_set_id": "firered-leafgreen-pokemon",
+          "justtcg_set_name": "FireRed & LeafGreen"
+        },
+        {
+          "justtcg_set_id": "generations-pokemon",
+          "justtcg_set_name": "Generations"
+        }
+      ],
+      "num_plausible": 3,
+      "classification": "AMBIGUOUS",
+      "picked": {
+        "id": "7f8eeeb1-37c0-50f3-be63-600cd253219d",
+        "slug": "pokemon-base-set-2-blastoise-holo-rare",
+        "name": "Blastoise",
+        "set_name": "Base Set 2",
+        "rarity": "Holo Rare"
+      },
+      "rule": "3 results matched name+set; tiebroke by rarity-keyword overlap (our rarity keywords=['holo', 'rare'])",
+      "rarity_field_in_chosen_slug": true
+    },
+    {
+      "sku": "base1-15",
+      "query": "Venusaur",
+      "game_param": "pokemon",
+      "num_results": 20,
+      "all_results": [
+        {
+          "id": "afc9b0ee-9fa0-50f6-a130-e8bf6f0e734d",
+          "slug": "pokemon-base-set-2-venusaur-holo-rare",
+          "name": "Venusaur",
+          "set_name": "Base Set 2",
+          "rarity": "Holo Rare",
+          "number": "018/130"
+        },
+        {
+          "id": "4c1974e7-6f36-5112-921d-962be716210c",
+          "slug": "pokemon-base-set-shadowless-venusaur-holo-rare",
+          "name": "Venusaur",
+          "set_name": "Base Set (Shadowless)",
+          "rarity": "Holo Rare",
+          "number": "015/102"
+        },
+        {
+          "id": "ec46dd5e-20e0-59e8-a456-d9644ebd72c9",
+          "slug": "pokemon-base-set-venusaur-holo-rare",
+          "name": "Venusaur",
+          "set_name": "Base Set",
+          "rarity": "Holo Rare",
+          "number": "015/102"
+        },
+        {
+          "id": "131df0dd-b5a9-50e4-89de-b10bf1172682",
+          "slug": "pokemon-celebrations-classic-collection-venusaur-classic-collection",
+          "name": "Venusaur",
+          "set_name": "Celebrations: Classic Collection",
+          "rarity": "Classic Collection",
+          "number": "15/102"
+        },
+        {
+          "id": "fff0875a-f8ef-5d6b-a6ca-658caa8e0fb7",
+          "slug": "pokemon-crystal-guardians-venusaur-rare",
+          "name": "Venusaur",
+          "set_name": "Crystal Guardians",
+          "rarity": "Rare",
+          "number": "28/100"
+        },
+        {
+          "id": "ad62c160-f3d2-569d-b415-5a515b17e7c0",
+          "slug": "pokemon-dark-explorers-venusaur-holo-rare",
+          "name": "Venusaur",
+          "set_name": "Dark Explorers",
+          "rarity": "Holo Rare",
+          "number": "3/108"
+        },
+        {
+          "id": "5e14b6a3-9f26-5471-956c-6aaef57300b1",
+          "slug": "pokemon-legendary-collection-venusaur-holo-rare",
+          "name": "Venusaur",
+          "set_name": "Legendary Collection",
+          "rarity": "Holo Rare",
+          "number": "018/110"
+        },
+        {
+          "id": "119aa203-d306-5ee5-acad-ca0e007c3763",
+          "slug": "pokemon-pokemon-go-venusaur-holo-rare",
+          "name": "Venusaur",
+          "set_name": "Pokemon GO",
+          "rarity": "Holo Rare",
+          "number": "003/078"
+        },
+        {
+          "id": "a8e9fdba-ab08-58c5-ac12-240c54a1e380",
+          "slug": "pokemon-pop-series-2-venusaur-rare",
+          "name": "Venusaur",
+          "set_name": "POP Series 2",
+          "rarity": "Rare",
+          "number": "006/017"
+        },
+        {
+          "id": "0f661a71-2ca0-59d2-a5c3-e607d696fde6",
+          "slug": "pokemon-rumble-venusaur-promo",
+          "name": "Venusaur",
+          "set_name": "Rumble",
+          "rarity": "Promo",
+          "number": "1"
+        },
+        {
+          "id": "244e85b1-8e2a-50ec-8fe1-08b582bbb734",
+          "slug": "pokemon-secret-wonders-venusaur-holo-rare",
+          "name": "Venusaur",
+          "set_name": "Secret Wonders",
+          "rarity": "Holo Rare",
+          "number": "20/132"
+        },
+        {
+          "id": "e6e292cb-5351-569e-8886-a46ab05ce1b6",
+          "slug": "pokemon-shining-legends-venusaur-uncommon",
+          "name": "Venusaur",
+          "set_name": "Shining Legends",
+          "rarity": "Uncommon",
+          "number": "3/73"
+        },
+        {
+          "id": "9400e0af-ff99-532d-b575-d892e3b8de39",
+          "slug": "pokemon-supreme-victors-venusaur-holo-rare",
+          "name": "Venusaur",
+          "set_name": "Supreme Victors",
+          "rarity": "Holo Rare",
+          "number": "13"
+        },
+        {
+          "id": "4b7aa2de-cafb-50ec-ad95-733645a3997b",
+          "slug": "pokemon-trading-card-game-classic-venusaur-classic-collection",
+          "name": "Venusaur",
+          "set_name": "Trading Card Game Classic",
+          "rarity": "Classic Collection",
+          "number": "003/034"
+        },
+        {
+          "id": "7c6c6a37-b9c9-5961-bdc5-a8639232ec96",
+          "slug": "pokemon-wotc-promo-venusaur-promo",
+          "name": "Venusaur",
+          "set_name": "WoTC Promo",
+          "rarity": "Promo",
+          "number": "13/53"
+        },
+        {
+          "id": "63d9f33d-e1ca-56ff-989e-4d9c33ae650f",
+          "slug": "pokemon-champion-s-path-venusaur-v-ultra-rare",
+          "name": "Venusaur V",
+          "set_name": "Champion's Path",
+          "rarity": "Ultra Rare",
+          "number": "01/73"
+        },
+        {
+          "id": "1405ff09-a184-57af-8725-c9b7b26f43af",
+          "slug": "pokemon-expedition-venusaur-30-holo-rare",
+          "name": "Venusaur (30)",
+          "set_name": "Expedition",
+          "rarity": "Holo Rare",
+          "number": "030/165"
+        },
+        {
+          "id": "3b1f3607-36ce-5ad3-a887-57734770cea9",
+          "slug": "pokemon-expedition-venusaur-67-rare",
+          "name": "Venusaur (67)",
+          "set_name": "Expedition",
+          "rarity": "Rare",
+          "number": "067/165"
+        },
+        {
+          "id": "90789e20-ec53-5120-a062-13712bf47a2e",
+          "slug": "pokemon-expedition-venusaur-68-rare",
+          "name": "Venusaur (68)",
+          "set_name": "Expedition",
+          "rarity": "Rare",
+          "number": "068/165"
+        },
+        {
+          "id": "d7aa0d51-62c3-5fa8-be82-cbd9ca5c1540",
+          "slug": "pokemon-firered-leafgreen-venusaur-ex-ultra-rare",
+          "name": "Venusaur ex",
+          "set_name": "FireRed & LeafGreen",
+          "rarity": "Ultra Rare",
+          "number": "112/112"
+        }
+      ],
+      "observed_sets": [
+        {
+          "justtcg_set_id": "base-set-2-pokemon",
+          "justtcg_set_name": "Base Set 2"
+        },
+        {
+          "justtcg_set_id": "base-set-shadowless-pokemon",
+          "justtcg_set_name": "Base Set (Shadowless)"
+        },
+        {
+          "justtcg_set_id": "base-set-pokemon",
+          "justtcg_set_name": "Base Set"
+        },
+        {
+          "justtcg_set_id": "celebrations-classic-collection-pokemon",
+          "justtcg_set_name": "Celebrations: Classic Collection"
+        },
+        {
+          "justtcg_set_id": "crystal-guardians-pokemon",
+          "justtcg_set_name": "Crystal Guardians"
+        },
+        {
+          "justtcg_set_id": "dark-explorers-pokemon",
+          "justtcg_set_name": "Dark Explorers"
+        },
+        {
+          "justtcg_set_id": "legendary-collection-pokemon",
+          "justtcg_set_name": "Legendary Collection"
+        },
+        {
+          "justtcg_set_id": "pokemon-go-pokemon",
+          "justtcg_set_name": "Pokemon GO"
+        },
+        {
+          "justtcg_set_id": "pop-series-2-pokemon",
+          "justtcg_set_name": "POP Series 2"
+        },
+        {
+          "justtcg_set_id": "rumble-pokemon",
+          "justtcg_set_name": "Rumble"
+        },
+        {
+          "justtcg_set_id": "secret-wonders-pokemon",
+          "justtcg_set_name": "Secret Wonders"
+        },
+        {
+          "justtcg_set_id": "shining-legends-pokemon",
+          "justtcg_set_name": "Shining Legends"
+        },
+        {
+          "justtcg_set_id": "supreme-victors-pokemon",
+          "justtcg_set_name": "Supreme Victors"
+        },
+        {
+          "justtcg_set_id": "trading-card-game-classic-pokemon",
+          "justtcg_set_name": "Trading Card Game Classic"
+        },
+        {
+          "justtcg_set_id": "wotc-promo-pokemon",
+          "justtcg_set_name": "WoTC Promo"
+        },
+        {
+          "justtcg_set_id": "champion-s-path-pokemon",
+          "justtcg_set_name": "Champion's Path"
+        },
+        {
+          "justtcg_set_id": "expedition-pokemon",
+          "justtcg_set_name": "Expedition"
+        },
+        {
+          "justtcg_set_id": "expedition-pokemon",
+          "justtcg_set_name": "Expedition"
+        },
+        {
+          "justtcg_set_id": "expedition-pokemon",
+          "justtcg_set_name": "Expedition"
+        },
+        {
+          "justtcg_set_id": "firered-leafgreen-pokemon",
+          "justtcg_set_name": "FireRed & LeafGreen"
+        }
+      ],
+      "num_plausible": 3,
+      "classification": "AMBIGUOUS",
+      "picked": {
+        "id": "afc9b0ee-9fa0-50f6-a130-e8bf6f0e734d",
+        "slug": "pokemon-base-set-2-venusaur-holo-rare",
+        "name": "Venusaur",
+        "set_name": "Base Set 2",
+        "rarity": "Holo Rare"
+      },
+      "rule": "3 results matched name+set; tiebroke by rarity-keyword overlap (our rarity keywords=['holo', 'rare'])",
+      "rarity_field_in_chosen_slug": true
+    },
+    {
+      "sku": "sv3pt5-199",
+      "query": "Charizard ex",
+      "game_param": "pokemon",
+      "num_results": 20,
+      "all_results": [
+        {
+          "id": "143c28e4-2375-5fbd-a884-87bfc84b855e",
+          "slug": "pokemon-firered-leafgreen-charizard-ex-ultra-rare",
+          "name": "Charizard ex",
+          "set_name": "FireRed & LeafGreen",
+          "rarity": "Ultra Rare",
+          "number": "105/112"
+        },
+        {
+          "id": "9a2e0445-647c-548a-995b-e0f2ac2c708c",
+          "slug": "pokemon-generations-charizard-ex-ultra-rare",
+          "name": "Charizard EX",
+          "set_name": "Generations",
+          "rarity": "Ultra Rare",
+          "number": "11/83"
+        },
+        {
+          "id": "84fefe11-a0af-5a85-9954-251e49d6efba",
+          "slug": "pokemon-xy-evolutions-charizard-ex-ultra-rare",
+          "name": "Charizard EX",
+          "set_name": "XY - Evolutions",
+          "rarity": "Ultra Rare",
+          "number": "12/108"
+        },
+        {
+          "id": "7b19e056-3aab-5f01-8746-3442b75d7ba2",
+          "slug": "pokemon-generations-m-charizard-ex-ultra-rare",
+          "name": "M Charizard EX",
+          "set_name": "Generations",
+          "rarity": "Ultra Rare",
+          "number": "12/83"
+        },
+        {
+          "id": "21070050-4cdc-593c-a686-81bed037ddf7",
+          "slug": "pokemon-xy-evolutions-m-charizard-ex-ultra-rare",
+          "name": "M Charizard EX",
+          "set_name": "XY - Evolutions",
+          "rarity": "Ultra Rare",
+          "number": "13/108"
+        },
+        {
+          "id": "54fe5905-e52f-54a2-ae7d-23d46aa0effb",
+          "slug": "pokemon-xy-flashfire-charizard-ex-11-ultra-rare",
+          "name": "Charizard EX (11)",
+          "set_name": "XY - Flashfire",
+          "rarity": "Ultra Rare",
+          "number": "11/106"
+        },
+        {
+          "id": "ebdd8b7d-b1e0-5f8f-b70a-7561866feb15",
+          "slug": "pokemon-xy-flashfire-charizard-ex-12-ultra-rare",
+          "name": "Charizard EX (12)",
+          "set_name": "XY - Flashfire",
+          "rarity": "Ultra Rare",
+          "number": "12/106"
+        },
+        {
+          "id": "483465b3-fde5-5b46-8d7c-076ef45a8fb0",
+          "slug": "pokemon-jumbo-cards-charizard-ex-196-promo",
+          "name": "Charizard ex -196",
+          "set_name": "Jumbo Cards",
+          "rarity": "Promo",
+          "number": "196"
+        },
+        {
+          "id": "66d44780-d892-56a8-981a-784cc753b304",
+          "slug": "pokemon-sv-scarlet-violet-promo-cards-charizard-ex-056-promo",
+          "name": "Charizard ex - 056",
+          "set_name": "SV: Scarlet & Violet Promo Cards",
+          "rarity": "Promo",
+          "number": "056"
+        },
+        {
+          "id": "5bcb5905-73b0-57cc-8125-bd2de251dc35",
+          "slug": "pokemon-sv-scarlet-violet-promo-cards-charizard-ex-074-promo",
+          "name": "Charizard ex - 074",
+          "set_name": "SV: Scarlet & Violet Promo Cards",
+          "rarity": "Promo",
+          "number": "074"
+        },
+        {
+          "id": "241e9190-7aa1-57f6-ba0b-644d8f4a860e",
+          "slug": "pokemon-sv-scarlet-violet-promo-cards-charizard-ex-161-promo",
+          "name": "Charizard ex - 161",
+          "set_name": "SV: Scarlet & Violet Promo Cards",
+          "rarity": "Promo",
+          "number": "161"
+        },
+        {
+          "id": "cea781db-2fed-552d-ae91-1852bf6602aa",
+          "slug": "pokemon-sv-scarlet-violet-promo-cards-charizard-ex-196-promo",
+          "name": "Charizard ex -196",
+          "set_name": "SV: Scarlet & Violet Promo Cards",
+          "rarity": "Promo",
+          "number": "196"
+        },
+        {
+          "id": "accd4a6b-6b0f-5c6c-8f22-7f09380ad734",
+          "slug": "pokemon-xy-evolutions-charizard-ex-box",
+          "name": "Charizard EX Box",
+          "set_name": "XY - Evolutions",
+          "rarity": "",
+          "number": "N/A"
+        },
+        {
+          "id": "33862ac2-a8d3-530d-9763-bd45fe7d7501",
+          "slug": "pokemon-xy-flashfire-m-charizard-ex-x-ultra-rare",
+          "name": "M Charizard EX (X)",
+          "set_name": "XY - Flashfire",
+          "rarity": "Ultra Rare",
+          "number": "69/106"
+        },
+        {
+          "id": "b3e33da2-0ec3-54cf-8791-ddddc127aa89",
+          "slug": "pokemon-xy-flashfire-m-charizard-ex-y-ultra-rare",
+          "name": "M Charizard EX (Y)",
+          "set_name": "XY - Flashfire",
+          "rarity": "Ultra Rare",
+          "number": "13/106"
+        },
+        {
+          "id": "199e0110-e642-5fe0-a150-1b4df39dd5f0",
+          "slug": "pokemon-xy-promos-charizard-ex-xy17-promo",
+          "name": "Charizard EX - XY17",
+          "set_name": "XY Promos",
+          "rarity": "Promo",
+          "number": "XY17"
+        },
+        {
+          "id": "5aa89375-3d5e-5438-a63a-18eaa0948271",
+          "slug": "pokemon-xy-promos-charizard-ex-xy29-promo",
+          "name": "Charizard EX - XY29",
+          "set_name": "XY Promos",
+          "rarity": "Promo",
+          "number": "XY29"
+        },
+        {
+          "id": "e94edb8e-a3c8-55ae-b4ae-962d03908cc5",
+          "slug": "pokemon-jumbo-cards-charizard-ex-11-106-promo",
+          "name": "Charizard EX - 11/106",
+          "set_name": "Jumbo Cards",
+          "rarity": "Promo",
+          "number": "011/106"
+        },
+        {
+          "id": "28cb35a8-bc21-5657-9364-925cd95394ab",
+          "slug": "pokemon-xy-promos-charizard-ex-xy121-promo",
+          "name": "Charizard EX - XY121",
+          "set_name": "XY Promos",
+          "rarity": "Promo",
+          "number": "XY121"
+        },
+        {
+          "id": "2f43cf33-cf85-588d-b523-187e45cd7f02",
+          "slug": "pokemon-arceus-charizard-holo-rare",
+          "name": "Charizard",
+          "set_name": "Arceus",
+          "rarity": "Holo Rare",
+          "number": "1/99"
+        }
+      ],
+      "observed_sets": [
+        {
+          "justtcg_set_id": "firered-leafgreen-pokemon",
+          "justtcg_set_name": "FireRed & LeafGreen"
+        },
+        {
+          "justtcg_set_id": "generations-pokemon",
+          "justtcg_set_name": "Generations"
+        },
+        {
+          "justtcg_set_id": "xy-evolutions-pokemon",
+          "justtcg_set_name": "XY - Evolutions"
+        },
+        {
+          "justtcg_set_id": "generations-pokemon",
+          "justtcg_set_name": "Generations"
+        },
+        {
+          "justtcg_set_id": "xy-evolutions-pokemon",
+          "justtcg_set_name": "XY - Evolutions"
+        },
+        {
+          "justtcg_set_id": "xy-flashfire-pokemon",
+          "justtcg_set_name": "XY - Flashfire"
+        },
+        {
+          "justtcg_set_id": "xy-flashfire-pokemon",
+          "justtcg_set_name": "XY - Flashfire"
+        },
+        {
+          "justtcg_set_id": "jumbo-cards-pokemon",
+          "justtcg_set_name": "Jumbo Cards"
+        },
+        {
+          "justtcg_set_id": "sv-scarlet-violet-promo-cards-pokemon",
+          "justtcg_set_name": "SV: Scarlet & Violet Promo Cards"
+        },
+        {
+          "justtcg_set_id": "sv-scarlet-violet-promo-cards-pokemon",
+          "justtcg_set_name": "SV: Scarlet & Violet Promo Cards"
+        },
+        {
+          "justtcg_set_id": "sv-scarlet-violet-promo-cards-pokemon",
+          "justtcg_set_name": "SV: Scarlet & Violet Promo Cards"
+        },
+        {
+          "justtcg_set_id": "sv-scarlet-violet-promo-cards-pokemon",
+          "justtcg_set_name": "SV: Scarlet & Violet Promo Cards"
+        },
+        {
+          "justtcg_set_id": "xy-evolutions-pokemon",
+          "justtcg_set_name": "XY - Evolutions"
+        },
+        {
+          "justtcg_set_id": "xy-flashfire-pokemon",
+          "justtcg_set_name": "XY - Flashfire"
+        },
+        {
+          "justtcg_set_id": "xy-flashfire-pokemon",
+          "justtcg_set_name": "XY - Flashfire"
+        },
+        {
+          "justtcg_set_id": "xy-promos-pokemon",
+          "justtcg_set_name": "XY Promos"
+        },
+        {
+          "justtcg_set_id": "xy-promos-pokemon",
+          "justtcg_set_name": "XY Promos"
+        },
+        {
+          "justtcg_set_id": "jumbo-cards-pokemon",
+          "justtcg_set_name": "Jumbo Cards"
+        },
+        {
+          "justtcg_set_id": "xy-promos-pokemon",
+          "justtcg_set_name": "XY Promos"
+        },
+        {
+          "justtcg_set_id": "arceus-pokemon",
+          "justtcg_set_name": "Arceus"
+        }
+      ],
+      "num_plausible": 0,
+      "classification": "MISS",
+      "picked": null,
+      "rule": "no result matched both normalized name and set name",
+      "rarity_field_in_chosen_slug": null
+    },
+    {
+      "sku": "sv4pt5-240",
+      "query": "Wo-Chien ex",
+      "game_param": "pokemon",
+      "num_results": 19,
+      "all_results": [
+        {
+          "id": "e37a2ffd-37be-5c8d-8037-14c5869d24bd",
+          "slug": "pokemon-sv-paldean-fates-wo-chien-ex-hyper-rare",
+          "name": "Wo-Chien ex",
+          "set_name": "SV: Paldean Fates",
+          "rarity": "Hyper Rare",
+          "number": "240/091"
+        },
+        {
+          "id": "cfb6768a-4d52-5dcd-9c13-adf01a9bcac2",
+          "slug": "pokemon-sv04-paradox-rift-wo-chien-rare",
+          "name": "Wo-Chien",
+          "set_name": "SV04: Paradox Rift",
+          "rarity": "Rare",
+          "number": "018/182"
+        },
+        {
+          "id": "a993a4ed-34e2-5ef2-9020-4074bcfe8107",
+          "slug": "pokemon-sv08-surging-sparks-wo-chien-uncommon",
+          "name": "Wo-Chien",
+          "set_name": "SV08: Surging Sparks",
+          "rarity": "Uncommon",
+          "number": "015/191"
+        },
+        {
+          "id": "fc903c2f-a76c-5a00-952b-cff021b454c2",
+          "slug": "pokemon-sv02-paldea-evolved-wo-chien-ex-027-193-double-rare",
+          "name": "Wo-Chien ex - 027/193",
+          "set_name": "SV02: Paldea Evolved",
+          "rarity": "Double Rare",
+          "number": "027/193"
+        },
+        {
+          "id": "ca1342a3-4ee4-58b6-a8e9-8fe315b8e9e8",
+          "slug": "pokemon-sv02-paldea-evolved-wo-chien-ex-232-193-ultra-rare",
+          "name": "Wo-Chien ex - 232/193",
+          "set_name": "SV02: Paldea Evolved",
+          "rarity": "Ultra Rare",
+          "number": "232/193"
+        },
+        {
+          "id": "82574d0d-02e1-54a2-b2af-61898eaf8492",
+          "slug": "pokemon-sv02-paldea-evolved-wo-chien-ex-257-193-special-illustration-rare",
+          "name": "Wo-Chien ex - 257/193",
+          "set_name": "SV02: Paldea Evolved",
+          "rarity": "Special Illustration Rare",
+          "number": "257/193"
+        },
+        {
+          "id": "1385ef64-1a2e-5bac-acef-cb5a053fb27f",
+          "slug": "pokemon-sv-paldean-fates-chien-pao-ex-hyper-rare",
+          "name": "Chien-Pao ex",
+          "set_name": "SV: Paldean Fates",
+          "rarity": "Hyper Rare",
+          "number": "242/091"
+        },
+        {
+          "id": "4b983737-9fcb-5345-a1ab-91bede35a82e",
+          "slug": "pokemon-sv-scarlet-violet-promo-cards-chien-pao-ex-030-promo",
+          "name": "Chien-Pao ex - 030",
+          "set_name": "SV: Scarlet & Violet Promo Cards",
+          "rarity": "Promo",
+          "number": "030"
+        },
+        {
+          "id": "77198949-c85d-50ac-8865-203fb063a474",
+          "slug": "pokemon-me03-perfect-order-chien-pao-rare",
+          "name": "Chien-Pao",
+          "set_name": "ME03: Perfect Order",
+          "rarity": "Rare",
+          "number": "054/088"
+        },
+        {
+          "id": "69be274d-4aa0-557a-8c88-8fd245fbc22a",
+          "slug": "pokemon-prize-pack-series-cards-chien-pao-ex-double-rare",
+          "name": "Chien-Pao ex",
+          "set_name": "Prize Pack Series Cards",
+          "rarity": "Double Rare",
+          "number": "061/193"
+        },
+        {
+          "id": "66f8642f-792d-59a5-bce1-84459677cdcf",
+          "slug": "pokemon-sv02-paldea-evolved-chien-pao-ex-061-193-double-rare",
+          "name": "Chien-Pao ex - 061/193",
+          "set_name": "SV02: Paldea Evolved",
+          "rarity": "Double Rare",
+          "number": "061/193"
+        },
+        {
+          "id": "9fddd47d-6a34-54ec-8c5c-60ab294ea94c",
+          "slug": "pokemon-sv02-paldea-evolved-chien-pao-ex-236-193-ultra-rare",
+          "name": "Chien-Pao ex - 236/193",
+          "set_name": "SV02: Paldea Evolved",
+          "rarity": "Ultra Rare",
+          "number": "236/193"
+        },
+        {
+          "id": "14b24aea-201f-5695-8b3e-bc30c3bd4a94",
+          "slug": "pokemon-sv02-paldea-evolved-chien-pao-ex-261-193-special-illustration-rare",
+          "name": "Chien-Pao ex - 261/193",
+          "set_name": "SV02: Paldea Evolved",
+          "rarity": "Special Illustration Rare",
+          "number": "261/193"
+        },
+        {
+          "id": "08f0b7aa-88ba-58d6-98a8-dcf1e733c5a3",
+          "slug": "pokemon-sv02-paldea-evolved-chien-pao-ex-274-193-hyper-rare",
+          "name": "Chien-Pao ex - 274/193",
+          "set_name": "SV02: Paldea Evolved",
+          "rarity": "Hyper Rare",
+          "number": "274/193"
+        },
+        {
+          "id": "b5963e6e-db38-543f-80b4-205eb3343db2",
+          "slug": "pokemon-sv04-paradox-rift-chien-pao-rare",
+          "name": "Chien-Pao",
+          "set_name": "SV04: Paradox Rift",
+          "rarity": "Rare",
+          "number": "057/182"
+        },
+        {
+          "id": "660d110e-35fc-5ecc-a00f-2e7746bef472",
+          "slug": "pokemon-sv08-surging-sparks-chien-pao-rare",
+          "name": "Chien-Pao",
+          "set_name": "SV08: Surging Sparks",
+          "rarity": "Rare",
+          "number": "056/191"
+        },
+        {
+          "id": "78abd864-c8a4-56a7-a791-dd90e68056cb",
+          "slug": "pokemon-sv-paldean-fates-chi-yu-ex-hyper-rare",
+          "name": "Chi-Yu ex",
+          "set_name": "SV: Paldean Fates",
+          "rarity": "Hyper Rare",
+          "number": "241/091"
+        },
+        {
+          "id": "0e32d10e-92a4-59c9-8185-c26a0ab36688",
+          "slug": "pokemon-miscellaneous-cards-products-ex-battle-deck-chien-pao-ex",
+          "name": "ex Battle Deck [Chien-Pao ex]",
+          "set_name": "Miscellaneous Cards & Products",
+          "rarity": "",
+          "number": "N/A"
+        },
+        {
+          "id": "f8aba3d9-2539-5f1a-969b-ecabf2445477",
+          "slug": "pokemon-sv-scarlet-violet-promo-cards-chien-pao-152-promo",
+          "name": "Chien-Pao - 152",
+          "set_name": "SV: Scarlet & Violet Promo Cards",
+          "rarity": "Promo",
+          "number": "152"
+        }
+      ],
+      "observed_sets": [
+        {
+          "justtcg_set_id": "sv-paldean-fates-pokemon",
+          "justtcg_set_name": "SV: Paldean Fates"
+        },
+        {
+          "justtcg_set_id": "sv04-paradox-rift-pokemon",
+          "justtcg_set_name": "SV04: Paradox Rift"
+        },
+        {
+          "justtcg_set_id": "sv08-surging-sparks-pokemon",
+          "justtcg_set_name": "SV08: Surging Sparks"
+        },
+        {
+          "justtcg_set_id": "sv02-paldea-evolved-pokemon",
+          "justtcg_set_name": "SV02: Paldea Evolved"
+        },
+        {
+          "justtcg_set_id": "sv02-paldea-evolved-pokemon",
+          "justtcg_set_name": "SV02: Paldea Evolved"
+        },
+        {
+          "justtcg_set_id": "sv02-paldea-evolved-pokemon",
+          "justtcg_set_name": "SV02: Paldea Evolved"
+        },
+        {
+          "justtcg_set_id": "sv-paldean-fates-pokemon",
+          "justtcg_set_name": "SV: Paldean Fates"
+        },
+        {
+          "justtcg_set_id": "sv-scarlet-violet-promo-cards-pokemon",
+          "justtcg_set_name": "SV: Scarlet & Violet Promo Cards"
+        },
+        {
+          "justtcg_set_id": "me03-perfect-order-pokemon",
+          "justtcg_set_name": "ME03: Perfect Order"
+        },
+        {
+          "justtcg_set_id": "prize-pack-series-cards-pokemon",
+          "justtcg_set_name": "Prize Pack Series Cards"
+        },
+        {
+          "justtcg_set_id": "sv02-paldea-evolved-pokemon",
+          "justtcg_set_name": "SV02: Paldea Evolved"
+        },
+        {
+          "justtcg_set_id": "sv02-paldea-evolved-pokemon",
+          "justtcg_set_name": "SV02: Paldea Evolved"
+        },
+        {
+          "justtcg_set_id": "sv02-paldea-evolved-pokemon",
+          "justtcg_set_name": "SV02: Paldea Evolved"
+        },
+        {
+          "justtcg_set_id": "sv02-paldea-evolved-pokemon",
+          "justtcg_set_name": "SV02: Paldea Evolved"
+        },
+        {
+          "justtcg_set_id": "sv04-paradox-rift-pokemon",
+          "justtcg_set_name": "SV04: Paradox Rift"
+        },
+        {
+          "justtcg_set_id": "sv08-surging-sparks-pokemon",
+          "justtcg_set_name": "SV08: Surging Sparks"
+        },
+        {
+          "justtcg_set_id": "sv-paldean-fates-pokemon",
+          "justtcg_set_name": "SV: Paldean Fates"
+        },
+        {
+          "justtcg_set_id": "miscellaneous-cards-products-pokemon",
+          "justtcg_set_name": "Miscellaneous Cards & Products"
+        },
+        {
+          "justtcg_set_id": "sv-scarlet-violet-promo-cards-pokemon",
+          "justtcg_set_name": "SV: Scarlet & Violet Promo Cards"
+        }
+      ],
+      "num_plausible": 1,
+      "classification": "EXACT",
+      "picked": {
+        "id": "e37a2ffd-37be-5c8d-8037-14c5869d24bd",
+        "slug": "pokemon-sv-paldean-fates-wo-chien-ex-hyper-rare",
+        "name": "Wo-Chien ex",
+        "set_name": "SV: Paldean Fates",
+        "rarity": "Hyper Rare"
+      },
+      "rule": "unique name+set match",
+      "rarity_field_in_chosen_slug": false
+    },
+    {
+      "sku": "sv1-254",
+      "query": "Koraidon ex",
+      "game_param": "pokemon",
+      "num_results": 20,
+      "all_results": [
+        {
+          "id": "12a0a667-04a4-5f8c-b678-733dec02a61c",
+          "slug": "pokemon-jumbo-cards-koraidon-ex-ultra-rare",
+          "name": "Koraidon ex",
+          "set_name": "Jumbo Cards",
+          "rarity": "Ultra Rare",
+          "number": "125/198"
+        },
+        {
+          "id": "ebae887c-a981-583d-93fe-771819099a48",
+          "slug": "pokemon-me-ascended-heroes-koraidon-ex-double-rare",
+          "name": "Koraidon ex",
+          "set_name": "ME: Ascended Heroes",
+          "rarity": "Double Rare",
+          "number": "121/217"
+        },
+        {
+          "id": "422d37b4-a1c1-57ec-8e6a-c1e4014f8730",
+          "slug": "pokemon-sv03-obsidian-flames-koraidon-ex-double-rare",
+          "name": "Koraidon ex",
+          "set_name": "SV03: Obsidian Flames",
+          "rarity": "Double Rare",
+          "number": "124/197"
+        },
+        {
+          "id": "b23aa4d5-974b-52f6-b659-32dfc1a22b12",
+          "slug": "pokemon-sv05-temporal-forces-koraidon-ex-double-rare",
+          "name": "Koraidon ex",
+          "set_name": "SV05: Temporal Forces",
+          "rarity": "Double Rare",
+          "number": "120/162"
+        },
+        {
+          "id": "a96b0dcb-0702-51fa-9ecb-9c54a4c9b08e",
+          "slug": "pokemon-sv-paldean-fates-koraidon-ex-hyper-rare",
+          "name": "Koraidon ex",
+          "set_name": "SV: Paldean Fates",
+          "rarity": "Hyper Rare",
+          "number": "245/091"
+        },
+        {
+          "id": "11d8e966-18e0-51a3-9aa8-57927373f144",
+          "slug": "pokemon-sv-scarlet-violet-promo-cards-koraidon-ex-029-promo",
+          "name": "Koraidon ex - 029",
+          "set_name": "SV: Scarlet & Violet Promo Cards",
+          "rarity": "Promo",
+          "number": "029"
+        },
+        {
+          "id": "4eb1b57c-a7aa-5259-9f89-4c944eb20e56",
+          "slug": "pokemon-sv-scarlet-violet-promo-cards-koraidon-ex-197-promo",
+          "name": "Koraidon ex - 197",
+          "set_name": "SV: Scarlet & Violet Promo Cards",
+          "rarity": "Promo",
+          "number": "197"
+        },
+        {
+          "id": "7bcc9428-42a3-590d-90ca-8d95784a1a7d",
+          "slug": "pokemon-mcdonald-s-promos-2024-koraidon-promo",
+          "name": "Koraidon",
+          "set_name": "McDonald's Promos 2024",
+          "rarity": "Promo",
+          "number": "008/015"
+        },
+        {
+          "id": "c6ed1fc0-96d8-546b-b533-9b48df28fb01",
+          "slug": "pokemon-me05-pitch-black-koraidon-rare",
+          "name": "Koraidon",
+          "set_name": "ME05: Pitch Black",
+          "rarity": "Rare",
+          "number": "047/084"
+        },
+        {
+          "id": "e17a9b2b-d678-5a71-b43a-c6fce61c0343",
+          "slug": "pokemon-sv01-scarlet-violet-base-set-koraidon-rare",
+          "name": "Koraidon",
+          "set_name": "SV01: Scarlet & Violet Base Set",
+          "rarity": "Rare",
+          "number": "124/198"
+        },
+        {
+          "id": "2c69de6c-75f4-574a-8d90-3465d4334222",
+          "slug": "pokemon-sv05-temporal-forces-koraidon-rare",
+          "name": "Koraidon",
+          "set_name": "SV05: Temporal Forces",
+          "rarity": "Rare",
+          "number": "119/162"
+        },
+        {
+          "id": "1d05ad0a-1cbd-500a-851e-21dae076ffaf",
+          "slug": "pokemon-sv07-stellar-crown-koraidon-uncommon",
+          "name": "Koraidon",
+          "set_name": "SV07: Stellar Crown",
+          "rarity": "Uncommon",
+          "number": "090/142"
+        },
+        {
+          "id": "9bf6c330-42b8-59ea-8e4b-634c37bcaedb",
+          "slug": "pokemon-sv08-surging-sparks-koraidon-uncommon",
+          "name": "Koraidon",
+          "set_name": "SV08: Surging Sparks",
+          "rarity": "Uncommon",
+          "number": "116/191"
+        },
+        {
+          "id": "609d937a-6ed6-52c3-8f25-820baae26dd9",
+          "slug": "pokemon-prize-pack-series-cards-koraidon-ex-double-rare",
+          "name": "Koraidon ex",
+          "set_name": "Prize Pack Series Cards",
+          "rarity": "Double Rare",
+          "number": "125/198"
+        },
+        {
+          "id": "18813555-d6ec-567b-b407-29dc6f72b9a5",
+          "slug": "pokemon-sv01-scarlet-violet-base-set-koraidon-ex-125-198-double-rare",
+          "name": "Koraidon ex - 125/198",
+          "set_name": "SV01: Scarlet & Violet Base Set",
+          "rarity": "Double Rare",
+          "number": "125/198"
+        },
+        {
+          "id": "a5a09515-f8f2-5717-b4f6-fcc36d58371c",
+          "slug": "pokemon-sv01-scarlet-violet-base-set-koraidon-ex-231-198-ultra-rare",
+          "name": "Koraidon ex - 231/198",
+          "set_name": "SV01: Scarlet & Violet Base Set",
+          "rarity": "Ultra Rare",
+          "number": "231/198"
+        },
+        {
+          "id": "9ba1c97c-ec15-5da7-8023-ca3db7c01164",
+          "slug": "pokemon-sv01-scarlet-violet-base-set-koraidon-ex-247-198-special-illustration-rare",
+          "name": "Koraidon ex - 247/198",
+          "set_name": "SV01: Scarlet & Violet Base Set",
+          "rarity": "Special Illustration Rare",
+          "number": "247/198"
+        },
+        {
+          "id": "ac62e0f8-17ec-5159-8a97-2afcb3655022",
+          "slug": "pokemon-sv01-scarlet-violet-base-set-koraidon-ex-254-198-hyper-rare",
+          "name": "Koraidon ex - 254/198",
+          "set_name": "SV01: Scarlet & Violet Base Set",
+          "rarity": "Hyper Rare",
+          "number": "254/198"
+        },
+        {
+          "id": "c7c2c5fb-d29a-54c6-8422-4afef069e1d9",
+          "slug": "pokemon-jumbo-cards-koraidon-ex-unnumbered-promo",
+          "name": "Koraidon ex (Unnumbered)",
+          "set_name": "Jumbo Cards",
+          "rarity": "Promo",
+          "number": "N/A"
+        },
+        {
+          "id": "4a8fcfed-d68c-5f00-ae74-0f2c78c65d4a",
+          "slug": "pokemon-sv-scarlet-violet-promo-cards-koraidon-014-promo",
+          "name": "Koraidon - 014",
+          "set_name": "SV: Scarlet & Violet Promo Cards",
+          "rarity": "Promo",
+          "number": "014"
+        }
+      ],
+      "observed_sets": [
+        {
+          "justtcg_set_id": "jumbo-cards-pokemon",
+          "justtcg_set_name": "Jumbo Cards"
+        },
+        {
+          "justtcg_set_id": "me-ascended-heroes-pokemon",
+          "justtcg_set_name": "ME: Ascended Heroes"
+        },
+        {
+          "justtcg_set_id": "sv03-obsidian-flames-pokemon",
+          "justtcg_set_name": "SV03: Obsidian Flames"
+        },
+        {
+          "justtcg_set_id": "sv05-temporal-forces-pokemon",
+          "justtcg_set_name": "SV05: Temporal Forces"
+        },
+        {
+          "justtcg_set_id": "sv-paldean-fates-pokemon",
+          "justtcg_set_name": "SV: Paldean Fates"
+        },
+        {
+          "justtcg_set_id": "sv-scarlet-violet-promo-cards-pokemon",
+          "justtcg_set_name": "SV: Scarlet & Violet Promo Cards"
+        },
+        {
+          "justtcg_set_id": "sv-scarlet-violet-promo-cards-pokemon",
+          "justtcg_set_name": "SV: Scarlet & Violet Promo Cards"
+        },
+        {
+          "justtcg_set_id": "mcdonald-s-promos-2024-pokemon",
+          "justtcg_set_name": "McDonald's Promos 2024"
+        },
+        {
+          "justtcg_set_id": "me05-pitch-black-pokemon",
+          "justtcg_set_name": "ME05: Pitch Black"
+        },
+        {
+          "justtcg_set_id": "sv01-scarlet-violet-base-set-pokemon",
+          "justtcg_set_name": "SV01: Scarlet & Violet Base Set"
+        },
+        {
+          "justtcg_set_id": "sv05-temporal-forces-pokemon",
+          "justtcg_set_name": "SV05: Temporal Forces"
+        },
+        {
+          "justtcg_set_id": "sv07-stellar-crown-pokemon",
+          "justtcg_set_name": "SV07: Stellar Crown"
+        },
+        {
+          "justtcg_set_id": "sv08-surging-sparks-pokemon",
+          "justtcg_set_name": "SV08: Surging Sparks"
+        },
+        {
+          "justtcg_set_id": "prize-pack-series-cards-pokemon",
+          "justtcg_set_name": "Prize Pack Series Cards"
+        },
+        {
+          "justtcg_set_id": "sv01-scarlet-violet-base-set-pokemon",
+          "justtcg_set_name": "SV01: Scarlet & Violet Base Set"
+        },
+        {
+          "justtcg_set_id": "sv01-scarlet-violet-base-set-pokemon",
+          "justtcg_set_name": "SV01: Scarlet & Violet Base Set"
+        },
+        {
+          "justtcg_set_id": "sv01-scarlet-violet-base-set-pokemon",
+          "justtcg_set_name": "SV01: Scarlet & Violet Base Set"
+        },
+        {
+          "justtcg_set_id": "sv01-scarlet-violet-base-set-pokemon",
+          "justtcg_set_name": "SV01: Scarlet & Violet Base Set"
+        },
+        {
+          "justtcg_set_id": "jumbo-cards-pokemon",
+          "justtcg_set_name": "Jumbo Cards"
+        },
+        {
+          "justtcg_set_id": "sv-scarlet-violet-promo-cards-pokemon",
+          "justtcg_set_name": "SV: Scarlet & Violet Promo Cards"
+        }
+      ],
+      "num_plausible": 0,
+      "classification": "MISS",
+      "picked": null,
+      "rule": "no result matched both normalized name and set name",
+      "rarity_field_in_chosen_slug": null
+    },
+    {
+      "sku": "swsh7-215",
+      "query": "Umbreon VMAX",
+      "game_param": "pokemon",
+      "num_results": 20,
+      "all_results": [
+        {
+          "id": "938816b2-c846-5b50-a295-c5b26cdf76e8",
+          "slug": "pokemon-swsh07-evolving-skies-umbreon-vmax-ultra-rare",
+          "name": "Umbreon VMAX",
+          "set_name": "SWSH07: Evolving Skies",
+          "rarity": "Ultra Rare",
+          "number": "095/203"
+        },
+        {
+          "id": "483f2c8f-48a0-5c3d-9131-307f36f58490",
+          "slug": "pokemon-swsh09-brilliant-stars-trainer-gallery-umbreon-vmax-ultra-rare",
+          "name": "Umbreon VMAX",
+          "set_name": "SWSH09: Brilliant Stars Trainer Gallery",
+          "rarity": "Ultra Rare",
+          "number": "TG23/TG30"
+        },
+        {
+          "id": "d3de0f56-628b-5143-a9a1-dc408c8c1466",
+          "slug": "pokemon-swsh07-evolving-skies-umbreon-vmax-secret-secret-rare",
+          "name": "Umbreon VMAX (Secret)",
+          "set_name": "SWSH07: Evolving Skies",
+          "rarity": "Secret Rare",
+          "number": "214/203"
+        },
+        {
+          "id": "7d183196-4543-54a4-87dc-285733ce94e2",
+          "slug": "pokemon-prize-pack-series-cards-umbreon-vmax-ultra-rare",
+          "name": "Umbreon VMAX",
+          "set_name": "Prize Pack Series Cards",
+          "rarity": "Ultra Rare",
+          "number": "095/203"
+        },
+        {
+          "id": "e83d6e48-877a-5d06-b5ea-0a711108624f",
+          "slug": "pokemon-swsh07-evolving-skies-umbreon-v-ultra-rare",
+          "name": "Umbreon V",
+          "set_name": "SWSH07: Evolving Skies",
+          "rarity": "Ultra Rare",
+          "number": "094/203"
+        },
+        {
+          "id": "bcc7aabc-6ba2-5703-8622-4169d4402079",
+          "slug": "pokemon-swsh09-brilliant-stars-trainer-gallery-umbreon-v-ultra-rare",
+          "name": "Umbreon V",
+          "set_name": "SWSH09: Brilliant Stars Trainer Gallery",
+          "rarity": "Ultra Rare",
+          "number": "TG22/TG30"
+        },
+        {
+          "id": "866af024-4313-59f0-9e61-a94048833782",
+          "slug": "pokemon-aquapolis-umbreon-rare",
+          "name": "Umbreon",
+          "set_name": "Aquapolis",
+          "rarity": "Rare",
+          "number": "041/147"
+        },
+        {
+          "id": "274d2eac-e610-5d16-ac88-e56fb74957b9",
+          "slug": "pokemon-call-of-legends-umbreon-holo-rare",
+          "name": "Umbreon",
+          "set_name": "Call of Legends",
+          "rarity": "Holo Rare",
+          "number": "22/95"
+        },
+        {
+          "id": "c9a10371-adf4-535c-aa15-5c87a837a639",
+          "slug": "pokemon-majestic-dawn-umbreon-rare",
+          "name": "Umbreon",
+          "set_name": "Majestic Dawn",
+          "rarity": "Rare",
+          "number": "32/100"
+        },
+        {
+          "id": "9c713f1a-fbe1-5adc-996e-3b04f8bbd1be",
+          "slug": "pokemon-mcdonald-s-promos-2024-umbreon-promo",
+          "name": "Umbreon",
+          "set_name": "McDonald's Promos 2024",
+          "rarity": "Promo",
+          "number": "009/015"
+        },
+        {
+          "id": "1dfcadd3-78bb-5908-b5d9-7aa5d1354446",
+          "slug": "pokemon-sandstorm-umbreon-rare",
+          "name": "Umbreon",
+          "set_name": "Sandstorm",
+          "rarity": "Rare",
+          "number": "24/100"
+        },
+        {
+          "id": "878d9527-36df-5e84-84dd-f8627423a259",
+          "slug": "pokemon-sm-lost-thunder-umbreon-rare",
+          "name": "Umbreon",
+          "set_name": "SM - Lost Thunder",
+          "rarity": "Rare",
+          "number": "120/214"
+        },
+        {
+          "id": "b4721759-09f7-5215-93a2-a965cbf75b8a",
+          "slug": "pokemon-sv03-obsidian-flames-umbreon-uncommon",
+          "name": "Umbreon",
+          "set_name": "SV03: Obsidian Flames",
+          "rarity": "Uncommon",
+          "number": "130/197"
+        },
+        {
+          "id": "6ddcec0e-8d03-53f3-9d12-ff564f283329",
+          "slug": "pokemon-sv-prismatic-evolutions-umbreon-rare",
+          "name": "Umbreon",
+          "set_name": "SV: Prismatic Evolutions",
+          "rarity": "Rare",
+          "number": "059/131"
+        },
+        {
+          "id": "7464ac94-d054-58ea-802c-1e853b337ef7",
+          "slug": "pokemon-trick-or-trade-booster-bundle-2024-umbreon-uncommon",
+          "name": "Umbreon",
+          "set_name": "Trick or Trade BOOster Bundle 2024",
+          "rarity": "Uncommon",
+          "number": "130/197"
+        },
+        {
+          "id": "fe931e1d-8f25-56b9-9cb6-3a2e9628c63a",
+          "slug": "pokemon-undaunted-umbreon-holo-rare",
+          "name": "Umbreon",
+          "set_name": "Undaunted",
+          "rarity": "Holo Rare",
+          "number": "10/90"
+        },
+        {
+          "id": "04259fb2-b39c-5b44-bca0-6bc77f58b8d3",
+          "slug": "pokemon-xy-promos-umbreon-promo",
+          "name": "Umbreon",
+          "set_name": "XY Promos",
+          "rarity": "Promo",
+          "number": "XY96"
+        },
+        {
+          "id": "4105a810-a76f-5ab6-87bf-7c56341c1bfd",
+          "slug": "pokemon-dark-explorers-umbreon-60-uncommon",
+          "name": "Umbreon (60)",
+          "set_name": "Dark Explorers",
+          "rarity": "Uncommon",
+          "number": "60/108"
+        },
+        {
+          "id": "141a1545-65b0-5235-9b74-5f5cf57ce490",
+          "slug": "pokemon-dark-explorers-umbreon-61-uncommon",
+          "name": "Umbreon (61)",
+          "set_name": "Dark Explorers",
+          "rarity": "Uncommon",
+          "number": "61/108"
+        },
+        {
+          "id": "fe9aa248-28bb-588d-91e2-f80fa0c1485a",
+          "slug": "pokemon-hidden-fates-shiny-vault-umbreon-gx-shiny-holo-rare",
+          "name": "Umbreon GX",
+          "set_name": "Hidden Fates: Shiny Vault",
+          "rarity": "Shiny Holo Rare",
+          "number": "SV69/SV94"
+        }
+      ],
+      "observed_sets": [
+        {
+          "justtcg_set_id": "swsh07-evolving-skies-pokemon",
+          "justtcg_set_name": "SWSH07: Evolving Skies"
+        },
+        {
+          "justtcg_set_id": "swsh09-brilliant-stars-trainer-gallery-pokemon",
+          "justtcg_set_name": "SWSH09: Brilliant Stars Trainer Gallery"
+        },
+        {
+          "justtcg_set_id": "swsh07-evolving-skies-pokemon",
+          "justtcg_set_name": "SWSH07: Evolving Skies"
+        },
+        {
+          "justtcg_set_id": "prize-pack-series-cards-pokemon",
+          "justtcg_set_name": "Prize Pack Series Cards"
+        },
+        {
+          "justtcg_set_id": "swsh07-evolving-skies-pokemon",
+          "justtcg_set_name": "SWSH07: Evolving Skies"
+        },
+        {
+          "justtcg_set_id": "swsh09-brilliant-stars-trainer-gallery-pokemon",
+          "justtcg_set_name": "SWSH09: Brilliant Stars Trainer Gallery"
+        },
+        {
+          "justtcg_set_id": "aquapolis-pokemon",
+          "justtcg_set_name": "Aquapolis"
+        },
+        {
+          "justtcg_set_id": "call-of-legends-pokemon",
+          "justtcg_set_name": "Call of Legends"
+        },
+        {
+          "justtcg_set_id": "majestic-dawn-pokemon",
+          "justtcg_set_name": "Majestic Dawn"
+        },
+        {
+          "justtcg_set_id": "mcdonald-s-promos-2024-pokemon",
+          "justtcg_set_name": "McDonald's Promos 2024"
+        },
+        {
+          "justtcg_set_id": "sandstorm-pokemon",
+          "justtcg_set_name": "Sandstorm"
+        },
+        {
+          "justtcg_set_id": "sm-lost-thunder-pokemon",
+          "justtcg_set_name": "SM - Lost Thunder"
+        },
+        {
+          "justtcg_set_id": "sv03-obsidian-flames-pokemon",
+          "justtcg_set_name": "SV03: Obsidian Flames"
+        },
+        {
+          "justtcg_set_id": "sv-prismatic-evolutions-pokemon",
+          "justtcg_set_name": "SV: Prismatic Evolutions"
+        },
+        {
+          "justtcg_set_id": "trick-or-trade-booster-bundle-2024-pokemon",
+          "justtcg_set_name": "Trick or Trade BOOster Bundle 2024"
+        },
+        {
+          "justtcg_set_id": "undaunted-pokemon",
+          "justtcg_set_name": "Undaunted"
+        },
+        {
+          "justtcg_set_id": "xy-promos-pokemon",
+          "justtcg_set_name": "XY Promos"
+        },
+        {
+          "justtcg_set_id": "dark-explorers-pokemon",
+          "justtcg_set_name": "Dark Explorers"
+        },
+        {
+          "justtcg_set_id": "dark-explorers-pokemon",
+          "justtcg_set_name": "Dark Explorers"
+        },
+        {
+          "justtcg_set_id": "hidden-fates-shiny-vault-pokemon",
+          "justtcg_set_name": "Hidden Fates: Shiny Vault"
+        }
+      ],
+      "num_plausible": 1,
+      "classification": "EXACT",
+      "picked": {
+        "id": "938816b2-c846-5b50-a295-c5b26cdf76e8",
+        "slug": "pokemon-swsh07-evolving-skies-umbreon-vmax-ultra-rare",
+        "name": "Umbreon VMAX",
+        "set_name": "SWSH07: Evolving Skies",
+        "rarity": "Ultra Rare"
+      },
+      "rule": "unique name+set match",
+      "rarity_field_in_chosen_slug": false
+    },
+    {
+      "sku": "swsh12-202",
+      "query": "Lugia VSTAR",
+      "game_param": "pokemon",
+      "num_results": 20,
+      "all_results": [
+        {
+          "id": "0f7d9373-a34d-5250-8297-59f3f4e337e1",
+          "slug": "pokemon-jumbo-cards-lugia-vstar-ultra-rare",
+          "name": "Lugia VSTAR",
+          "set_name": "Jumbo Cards",
+          "rarity": "Ultra Rare",
+          "number": "139/195"
+        },
+        {
+          "id": "cb093370-7875-50c6-8736-b78067fde9e8",
+          "slug": "pokemon-swsh12-silver-tempest-lugia-vstar-ultra-rare",
+          "name": "Lugia VSTAR",
+          "set_name": "SWSH12: Silver Tempest",
+          "rarity": "Ultra Rare",
+          "number": "139/195"
+        },
+        {
+          "id": "20d359df-3f65-51da-916f-8b61bd2d0d36",
+          "slug": "pokemon-prize-pack-series-cards-lugia-vstar-ultra-rare",
+          "name": "Lugia VSTAR",
+          "set_name": "Prize Pack Series Cards",
+          "rarity": "Ultra Rare",
+          "number": "139/195"
+        },
+        {
+          "id": "e50d7c25-d877-56e3-a7a6-e379e6f9b2a9",
+          "slug": "pokemon-swsh12-silver-tempest-lugia-vstar-secret-202-secret-rare",
+          "name": "Lugia VSTAR (Secret) (202)",
+          "set_name": "SWSH12: Silver Tempest",
+          "rarity": "Secret Rare",
+          "number": "202/195"
+        },
+        {
+          "id": "96aeb130-c284-556b-a9d0-13244966f92b",
+          "slug": "pokemon-swsh12-silver-tempest-lugia-vstar-secret-211-secret-rare",
+          "name": "Lugia VSTAR (Secret) (211)",
+          "set_name": "SWSH12: Silver Tempest",
+          "rarity": "Secret Rare",
+          "number": "211/195"
+        },
+        {
+          "id": "3058fd78-9874-5f4b-b18c-f38b1e09ded9",
+          "slug": "pokemon-swsh12-silver-tempest-lugia-v-ultra-rare",
+          "name": "Lugia V",
+          "set_name": "SWSH12: Silver Tempest",
+          "rarity": "Ultra Rare",
+          "number": "138/195"
+        },
+        {
+          "id": "a6bd6a51-3a53-581b-b962-122ce34396e3",
+          "slug": "pokemon-aquapolis-lugia-secret-rare",
+          "name": "Lugia",
+          "set_name": "Aquapolis",
+          "rarity": "Secret Rare",
+          "number": "149/147"
+        },
+        {
+          "id": "5a81f2d0-a989-5919-a6f5-5fcc689686f7",
+          "slug": "pokemon-call-of-legends-lugia-holo-rare",
+          "name": "Lugia",
+          "set_name": "Call of Legends",
+          "rarity": "Holo Rare",
+          "number": "15/95"
+        },
+        {
+          "id": "b2c09537-3839-5f59-80f6-dce7afab500e",
+          "slug": "pokemon-celebrations-lugia-holo-rare",
+          "name": "Lugia",
+          "set_name": "Celebrations",
+          "rarity": "Holo Rare",
+          "number": "022/025"
+        },
+        {
+          "id": "f85d7634-fc40-586b-8c78-b591a5b9a8ef",
+          "slug": "pokemon-neo-genesis-lugia-holo-rare",
+          "name": "Lugia",
+          "set_name": "Neo Genesis",
+          "rarity": "Holo Rare",
+          "number": "009/111"
+        },
+        {
+          "id": "d2342fdb-01e3-5b44-8f58-7795a7fb57ff",
+          "slug": "pokemon-neo-revelation-lugia-rare",
+          "name": "Lugia",
+          "set_name": "Neo Revelation",
+          "rarity": "Rare",
+          "number": "20/64"
+        },
+        {
+          "id": "7f532738-2319-5bb8-9938-6753a890fbf4",
+          "slug": "pokemon-pop-series-5-lugia-rare",
+          "name": "Lugia",
+          "set_name": "POP Series 5",
+          "rarity": "Rare",
+          "number": "002/017"
+        },
+        {
+          "id": "f82b12f9-5688-5a88-97f3-83d69270ed41",
+          "slug": "pokemon-secret-wonders-lugia-holo-rare",
+          "name": "Lugia",
+          "set_name": "Secret Wonders",
+          "rarity": "Holo Rare",
+          "number": "14/132"
+        },
+        {
+          "id": "5b468458-44ce-5b9a-bbda-10fa13ac60ef",
+          "slug": "pokemon-sm-team-up-lugia-holo-rare",
+          "name": "Lugia",
+          "set_name": "SM - Team Up",
+          "rarity": "Holo Rare",
+          "number": "131/181"
+        },
+        {
+          "id": "1bf9da41-8b6a-5565-b1dd-3bdbd6f36d12",
+          "slug": "pokemon-swsh03-darkness-ablaze-lugia-rare",
+          "name": "Lugia",
+          "set_name": "SWSH03: Darkness Ablaze",
+          "rarity": "Rare",
+          "number": "140/189"
+        },
+        {
+          "id": "809fecbd-f1a3-56bf-8e83-f5c987edc578",
+          "slug": "pokemon-swsh04-vivid-voltage-lugia-holo-rare",
+          "name": "Lugia",
+          "set_name": "SWSH04: Vivid Voltage",
+          "rarity": "Holo Rare",
+          "number": "132/185"
+        },
+        {
+          "id": "daf82e5c-daec-5364-b282-bec176ffe542",
+          "slug": "pokemon-unseen-forces-lugia-rare",
+          "name": "Lugia",
+          "set_name": "Unseen Forces",
+          "rarity": "Rare",
+          "number": "29/115"
+        },
+        {
+          "id": "3251db81-bf2b-5efd-b10e-9ffd9908f40a",
+          "slug": "pokemon-xy-fates-collide-lugia-rare",
+          "name": "Lugia",
+          "set_name": "XY - Fates Collide",
+          "rarity": "Rare",
+          "number": "78/124"
+        },
+        {
+          "id": "2a5d620f-a100-5302-a0a2-ae69a891cec7",
+          "slug": "pokemon-xy-promos-lugia-promo",
+          "name": "Lugia",
+          "set_name": "XY Promos",
+          "rarity": "Promo",
+          "number": "XY156"
+        },
+        {
+          "id": "ed2fadcf-8b93-5ed7-a823-567a00e1c7b6",
+          "slug": "pokemon-world-championship-decks-lugia-vstar-2023-gabriel-fernandez-ultra-rare",
+          "name": "Lugia VSTAR - 2023 (Gabriel Fernandez)",
+          "set_name": "World Championship Decks",
+          "rarity": "Ultra Rare",
+          "number": "139/195"
+        }
+      ],
+      "observed_sets": [
+        {
+          "justtcg_set_id": "jumbo-cards-pokemon",
+          "justtcg_set_name": "Jumbo Cards"
+        },
+        {
+          "justtcg_set_id": "swsh12-silver-tempest-pokemon",
+          "justtcg_set_name": "SWSH12: Silver Tempest"
+        },
+        {
+          "justtcg_set_id": "prize-pack-series-cards-pokemon",
+          "justtcg_set_name": "Prize Pack Series Cards"
+        },
+        {
+          "justtcg_set_id": "swsh12-silver-tempest-pokemon",
+          "justtcg_set_name": "SWSH12: Silver Tempest"
+        },
+        {
+          "justtcg_set_id": "swsh12-silver-tempest-pokemon",
+          "justtcg_set_name": "SWSH12: Silver Tempest"
+        },
+        {
+          "justtcg_set_id": "swsh12-silver-tempest-pokemon",
+          "justtcg_set_name": "SWSH12: Silver Tempest"
+        },
+        {
+          "justtcg_set_id": "aquapolis-pokemon",
+          "justtcg_set_name": "Aquapolis"
+        },
+        {
+          "justtcg_set_id": "call-of-legends-pokemon",
+          "justtcg_set_name": "Call of Legends"
+        },
+        {
+          "justtcg_set_id": "celebrations-pokemon",
+          "justtcg_set_name": "Celebrations"
+        },
+        {
+          "justtcg_set_id": "neo-genesis-pokemon",
+          "justtcg_set_name": "Neo Genesis"
+        },
+        {
+          "justtcg_set_id": "neo-revelation-pokemon",
+          "justtcg_set_name": "Neo Revelation"
+        },
+        {
+          "justtcg_set_id": "pop-series-5-pokemon",
+          "justtcg_set_name": "POP Series 5"
+        },
+        {
+          "justtcg_set_id": "secret-wonders-pokemon",
+          "justtcg_set_name": "Secret Wonders"
+        },
+        {
+          "justtcg_set_id": "sm-team-up-pokemon",
+          "justtcg_set_name": "SM - Team Up"
+        },
+        {
+          "justtcg_set_id": "swsh03-darkness-ablaze-pokemon",
+          "justtcg_set_name": "SWSH03: Darkness Ablaze"
+        },
+        {
+          "justtcg_set_id": "swsh04-vivid-voltage-pokemon",
+          "justtcg_set_name": "SWSH04: Vivid Voltage"
+        },
+        {
+          "justtcg_set_id": "unseen-forces-pokemon",
+          "justtcg_set_name": "Unseen Forces"
+        },
+        {
+          "justtcg_set_id": "xy-fates-collide-pokemon",
+          "justtcg_set_name": "XY - Fates Collide"
+        },
+        {
+          "justtcg_set_id": "xy-promos-pokemon",
+          "justtcg_set_name": "XY Promos"
+        },
+        {
+          "justtcg_set_id": "world-championship-decks-pokemon",
+          "justtcg_set_name": "World Championship Decks"
+        }
+      ],
+      "num_plausible": 1,
+      "classification": "EXACT",
+      "picked": {
+        "id": "cb093370-7875-50c6-8736-b78067fde9e8",
+        "slug": "pokemon-swsh12-silver-tempest-lugia-vstar-ultra-rare",
+        "name": "Lugia VSTAR",
+        "set_name": "SWSH12: Silver Tempest",
+        "rarity": "Ultra Rare"
+      },
+      "rule": "unique name+set match",
+      "rarity_field_in_chosen_slug": false
+    },
+    {
+      "sku": "mtg-lea-232",
+      "query": "Black Lotus",
+      "game_param": "mtg",
+      "num_results": 20,
+      "all_results": [
+        {
+          "id": "a208b497-550f-5b96-83d8-c45025515185",
+          "slug": "magic-the-gathering-30th-anniversary-edition-black-lotus-rare",
+          "name": "Black Lotus",
+          "set_name": "30th Anniversary Edition",
+          "rarity": "Rare",
+          "number": "228"
+        },
+        {
+          "id": "7d4d4ca3-550d-5935-a7f0-6d4d3f0de39e",
+          "slug": "magic-the-gathering-beta-edition-black-lotus-rare",
+          "name": "Black Lotus",
+          "set_name": "Beta Edition",
+          "rarity": "Rare",
+          "number": null
+        },
+        {
+          "id": "5a220b88-fe52-5965-bbf5-8b203161dd44",
+          "slug": "magic-the-gathering-unlimited-edition-black-lotus-rare",
+          "name": "Black Lotus",
+          "set_name": "Unlimited Edition",
+          "rarity": "Rare",
+          "number": null
+        },
+        {
+          "id": "affc1455-1243-5db0-a35a-996207e18089",
+          "slug": "magic-the-gathering-collector-s-edition-black-lotus-ce-rare",
+          "name": "Black Lotus (CE)",
+          "set_name": "Collector's Edition",
+          "rarity": "Rare",
+          "number": "N/A"
+        },
+        {
+          "id": "7e2b7d73-7873-5e59-8316-9e2b37dbf243",
+          "slug": "magic-the-gathering-unglued-blacker-lotus-rare",
+          "name": "Blacker Lotus",
+          "set_name": "Unglued",
+          "rarity": "Rare",
+          "number": "70"
+        },
+        {
+          "id": "0d74f504-ab27-5713-9ced-a07bc015b359",
+          "slug": "magic-the-gathering-oversize-cards-black-lotus-lounge-black-lotus-unknown-planechase-promo",
+          "name": "Black Lotus Lounge (Black Lotus Unknown Planechase)",
+          "set_name": "Oversize Cards",
+          "rarity": "Promo",
+          "number": "N/A"
+        },
+        {
+          "id": "b0cadba2-8ffe-53b8-b5fa-0b4b0e45861b",
+          "slug": "magic-the-gathering-oversize-cards-black-lotus-scrye-magazine-promo",
+          "name": "Black Lotus (Scrye Magazine)",
+          "set_name": "Oversize Cards",
+          "rarity": "Promo",
+          "number": "N/A"
+        },
+        {
+          "id": "b0ae5837-b080-5947-b7a8-d4d5927fcdf4",
+          "slug": "magic-the-gathering-launch-party-release-event-promos-lotus-bloom-promo",
+          "name": "Lotus Bloom",
+          "set_name": "Launch Party & Release Event Promos",
+          "rarity": "Promo",
+          "number": "411"
+        },
+        {
+          "id": "cbeaa504-dd22-5b02-9464-749e20841de5",
+          "slug": "magic-the-gathering-modern-masters-lotus-bloom-rare",
+          "name": "Lotus Bloom",
+          "set_name": "Modern Masters",
+          "rarity": "Rare",
+          "number": "208"
+        },
+        {
+          "id": "3bd5885f-ac36-5e14-94fc-0ccdb53c3cb5",
+          "slug": "magic-the-gathering-prerelease-cards-lotus-bloom-rare",
+          "name": "Lotus Bloom",
+          "set_name": "Prerelease Cards",
+          "rarity": "Rare",
+          "number": "31"
+        },
+        {
+          "id": "0d4e2d44-dd0c-50c0-8c95-e2879ee01f32",
+          "slug": "magic-the-gathering-the-list-reprints-lotus-bloom-rare",
+          "name": "Lotus Bloom",
+          "set_name": "The List Reprints",
+          "rarity": "Rare",
+          "number": "259/301"
+        },
+        {
+          "id": "0d4cffd4-1b46-59ce-afdd-b646aa27046d",
+          "slug": "magic-the-gathering-time-spiral-lotus-bloom-rare",
+          "name": "Lotus Bloom",
+          "set_name": "Time Spiral",
+          "rarity": "Rare",
+          "number": "259"
+        },
+        {
+          "id": "3d340b40-cadd-5123-b7bd-2b31689f7f26",
+          "slug": "magic-the-gathering-time-spiral-remastered-lotus-bloom-rare",
+          "name": "Lotus Bloom",
+          "set_name": "Time Spiral: Remastered",
+          "rarity": "Rare",
+          "number": "270"
+        },
+        {
+          "id": "8be773e5-2658-5f76-a288-99887dabb5b7",
+          "slug": "magic-the-gathering-dominaria-remastered-lotus-blossom-rare",
+          "name": "Lotus Blossom",
+          "set_name": "Dominaria Remastered",
+          "rarity": "Rare",
+          "number": "230"
+        },
+        {
+          "id": "0f7ed54d-6bc8-5605-8ece-215aa3803ed2",
+          "slug": "magic-the-gathering-urza-s-saga-lotus-blossom-rare",
+          "name": "Lotus Blossom",
+          "set_name": "Urza's Saga",
+          "rarity": "Rare",
+          "number": "300"
+        },
+        {
+          "id": "ad5f8b0c-a66d-5ba6-ad34-2483379feab2",
+          "slug": "magic-the-gathering-oversize-cards-shy-town-black-lotus-unknown-planechase-promo",
+          "name": "Shy Town (Black Lotus Unknown Planechase)",
+          "set_name": "Oversize Cards",
+          "rarity": "Promo",
+          "number": "N/A"
+        },
+        {
+          "id": "92046644-83c2-51a6-bdec-32ec51935228",
+          "slug": "magic-the-gathering-oversize-cards-sky-deck-black-lotus-unknown-planechase-promo",
+          "name": "Sky Deck (Black Lotus Unknown Planechase)",
+          "set_name": "Oversize Cards",
+          "rarity": "Promo",
+          "number": "N/A"
+        },
+        {
+          "id": "0565dc2b-beba-5f84-a574-88eb8799ab37",
+          "slug": "magic-the-gathering-oversize-cards-the-bean-black-lotus-unknown-planechase-promo",
+          "name": "The Bean (Black Lotus Unknown Planechase)",
+          "set_name": "Oversize Cards",
+          "rarity": "Promo",
+          "number": "N/A"
+        },
+        {
+          "id": "217ced3a-1a16-5962-834a-313654587c33",
+          "slug": "magic-the-gathering-secret-lair-drop-series-blacker-lotus-rainbow-foil-rare",
+          "name": "Blacker Lotus (Rainbow Foil)",
+          "set_name": "Secret Lair Drop Series",
+          "rarity": "Rare",
+          "number": "869"
+        },
+        {
+          "id": "420d9f84-78a9-5868-8b1b-96a896a15b0c",
+          "slug": "magic-the-gathering-media-promos-black-lotus-1-of-9-ultra-pro-puzzle-quest-special",
+          "name": "Black Lotus (1 of 9) (Ultra Pro Puzzle Quest)",
+          "set_name": "Media Promos",
+          "rarity": "Special",
+          "number": "1"
+        }
+      ],
+      "observed_sets": [
+        {
+          "justtcg_set_id": "30th-anniversary-edition-magic-the-gathering",
+          "justtcg_set_name": "30th Anniversary Edition"
+        },
+        {
+          "justtcg_set_id": "beta-edition-magic-the-gathering",
+          "justtcg_set_name": "Beta Edition"
+        },
+        {
+          "justtcg_set_id": "unlimited-edition-magic-the-gathering",
+          "justtcg_set_name": "Unlimited Edition"
+        },
+        {
+          "justtcg_set_id": "collector-s-edition-magic-the-gathering",
+          "justtcg_set_name": "Collector's Edition"
+        },
+        {
+          "justtcg_set_id": "unglued-magic-the-gathering",
+          "justtcg_set_name": "Unglued"
+        },
+        {
+          "justtcg_set_id": "oversize-cards-magic-the-gathering",
+          "justtcg_set_name": "Oversize Cards"
+        },
+        {
+          "justtcg_set_id": "oversize-cards-magic-the-gathering",
+          "justtcg_set_name": "Oversize Cards"
+        },
+        {
+          "justtcg_set_id": "launch-party-release-event-promos-magic-the-gathering",
+          "justtcg_set_name": "Launch Party & Release Event Promos"
+        },
+        {
+          "justtcg_set_id": "modern-masters-magic-the-gathering",
+          "justtcg_set_name": "Modern Masters"
+        },
+        {
+          "justtcg_set_id": "prerelease-cards-magic-the-gathering",
+          "justtcg_set_name": "Prerelease Cards"
+        },
+        {
+          "justtcg_set_id": "the-list-reprints-magic-the-gathering",
+          "justtcg_set_name": "The List Reprints"
+        },
+        {
+          "justtcg_set_id": "time-spiral-magic-the-gathering",
+          "justtcg_set_name": "Time Spiral"
+        },
+        {
+          "justtcg_set_id": "time-spiral-remastered-magic-the-gathering",
+          "justtcg_set_name": "Time Spiral: Remastered"
+        },
+        {
+          "justtcg_set_id": "dominaria-remastered-magic-the-gathering",
+          "justtcg_set_name": "Dominaria Remastered"
+        },
+        {
+          "justtcg_set_id": "urza-s-saga-magic-the-gathering",
+          "justtcg_set_name": "Urza's Saga"
+        },
+        {
+          "justtcg_set_id": "oversize-cards-magic-the-gathering",
+          "justtcg_set_name": "Oversize Cards"
+        },
+        {
+          "justtcg_set_id": "oversize-cards-magic-the-gathering",
+          "justtcg_set_name": "Oversize Cards"
+        },
+        {
+          "justtcg_set_id": "oversize-cards-magic-the-gathering",
+          "justtcg_set_name": "Oversize Cards"
+        },
+        {
+          "justtcg_set_id": "secret-lair-drop-series-magic-the-gathering",
+          "justtcg_set_name": "Secret Lair Drop Series"
+        },
+        {
+          "justtcg_set_id": "media-promos-magic-the-gathering",
+          "justtcg_set_name": "Media Promos"
+        }
+      ],
+      "num_plausible": 0,
+      "classification": "MISS",
+      "picked": null,
+      "rule": "no result matched both normalized name and set name",
+      "rarity_field_in_chosen_slug": null
+    },
+    {
+      "sku": "mtg-ltr-246",
+      "query": "The One Ring",
+      "game_param": "mtg",
+      "num_results": 20,
+      "all_results": [
+        {
+          "id": "dd44ecd6-b41c-5905-bd1f-0bf36c23999f",
+          "slug": "magic-the-gathering-prerelease-cards-the-one-ring-mythic",
+          "name": "The One Ring",
+          "set_name": "Prerelease Cards",
+          "rarity": "Mythic",
+          "number": "246"
+        },
+        {
+          "id": "8309df9c-fbd1-5ded-9165-d0db67ff7d86",
+          "slug": "magic-the-gathering-universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-the-one-ring-mythic",
+          "name": "The One Ring",
+          "set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth",
+          "rarity": "Mythic",
+          "number": "246"
+        },
+        {
+          "id": "e6da7198-b18d-5b0b-b60b-208d3426e74e",
+          "slug": "magic-the-gathering-the-hobbit-eternal-legal-the-one-ring-borderless-mythic",
+          "name": "The One Ring (Borderless)",
+          "set_name": "The Hobbit: Eternal-Legal",
+          "rarity": "Mythic",
+          "number": "44"
+        },
+        {
+          "id": "cac6db49-21f4-5bbe-a364-9a86db552620",
+          "slug": "magic-the-gathering-universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-the-one-ring-extended-art-mythic",
+          "name": "The One Ring (Extended Art)",
+          "set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth",
+          "rarity": "Mythic",
+          "number": "380"
+        },
+        {
+          "id": "e0f834c8-3bda-529f-bad1-ccc6173ac777",
+          "slug": "magic-the-gathering-secret-lair-drop-series-slip-on-the-ring-rare",
+          "name": "Slip on the Ring",
+          "set_name": "Secret Lair Drop Series",
+          "rarity": "Rare",
+          "number": "1293"
+        },
+        {
+          "id": "97357a5b-828b-525e-bd95-ec1a09fc1c60",
+          "slug": "magic-the-gathering-universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-slip-on-the-ring-common",
+          "name": "Slip on the Ring",
+          "set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth",
+          "rarity": "Common",
+          "number": "31"
+        },
+        {
+          "id": "5a2d5518-dfb6-53cc-b32f-f69f510dacea",
+          "slug": "magic-the-gathering-universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-the-one-ring-showcase-scrolls-mythic",
+          "name": "The One Ring (Showcase Scrolls)",
+          "set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth",
+          "rarity": "Mythic",
+          "number": "697"
+        },
+        {
+          "id": "7f05f3cd-44f0-50e5-9b09-77776c168790",
+          "slug": "magic-the-gathering-universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-the-one-ring-borderless-poster-mythic",
+          "name": "The One Ring (Borderless Poster)",
+          "set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth",
+          "rarity": "Mythic",
+          "number": "748"
+        },
+        {
+          "id": "030b93e8-1330-5642-8761-3ae6836b9495",
+          "slug": "magic-the-gathering-commander-legends-ring-of-thune-uncommon",
+          "name": "Ring of Thune",
+          "set_name": "Commander Legends",
+          "rarity": "Uncommon",
+          "number": "468"
+        },
+        {
+          "id": "35d657e6-14f2-51df-b036-6eb7e5e4c553",
+          "slug": "magic-the-gathering-magic-2013-m13-ring-of-thune-uncommon",
+          "name": "Ring of Thune",
+          "set_name": "Magic 2013 (M13)",
+          "rarity": "Uncommon",
+          "number": "213"
+        },
+        {
+          "id": "530952ce-9244-57e8-a37a-28457f95171e",
+          "slug": "magic-the-gathering-magic-game-night-free-for-all-ring-of-thune-uncommon",
+          "name": "Ring of Thune",
+          "set_name": "Magic Game Night: Free-For-All",
+          "rarity": "Uncommon",
+          "number": "119"
+        },
+        {
+          "id": "3eb1e16e-2cc3-5b8b-96c3-6a43d3ae2183",
+          "slug": "magic-the-gathering-prerelease-cards-call-of-the-ring-rare",
+          "name": "Call of the Ring",
+          "set_name": "Prerelease Cards",
+          "rarity": "Rare",
+          "number": "79"
+        },
+        {
+          "id": "b7450adc-906b-5573-ac49-f1b07290c6eb",
+          "slug": "magic-the-gathering-universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-call-of-the-ring-rare",
+          "name": "Call of the Ring",
+          "set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth",
+          "rarity": "Rare",
+          "number": "79"
+        },
+        {
+          "id": "0a905cfe-40bf-57ce-bab2-d2fb8cc582da",
+          "slug": "magic-the-gathering-unique-and-miscellaneous-promos-the-one-ring-borderless-ltr-bundle-promo",
+          "name": "The One Ring (Borderless) (LTR Bundle)",
+          "set_name": "Unique and Miscellaneous Promos",
+          "rarity": "Promo",
+          "number": "451"
+        },
+        {
+          "id": "8b673601-d8ff-54b8-b873-3288c59a8ae0",
+          "slug": "magic-the-gathering-prerelease-cards-one-ring-to-rule-them-all-rare",
+          "name": "One Ring to Rule Them All",
+          "set_name": "Prerelease Cards",
+          "rarity": "Rare",
+          "number": "102"
+        },
+        {
+          "id": "614e0eb5-c7cf-52ba-a88f-47bdd3806d4b",
+          "slug": "magic-the-gathering-universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-one-ring-to-rule-them-all-rare",
+          "name": "One Ring to Rule Them All",
+          "set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth",
+          "rarity": "Rare",
+          "number": "102"
+        },
+        {
+          "id": "17914d15-085e-5242-a5ef-e304bf52868d",
+          "slug": "magic-the-gathering-final-fantasy-ring-of-the-lucii-uncommon",
+          "name": "Ring of the Lucii",
+          "set_name": "FINAL FANTASY",
+          "rarity": "Uncommon",
+          "number": "269"
+        },
+        {
+          "id": "47de01ac-7bb0-5657-9f3e-593bf2c55722",
+          "slug": "magic-the-gathering-universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-the-one-ring-extended-art-surge-foil-mythic",
+          "name": "The One Ring (Extended Art) (Surge Foil)",
+          "set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth",
+          "rarity": "Mythic",
+          "number": "791"
+        },
+        {
+          "id": "bd2239e0-9acd-5283-ac31-3a3d785ebd60",
+          "slug": "magic-the-gathering-marvel-super-heroes-the-ten-rings-mythic",
+          "name": "The Ten Rings",
+          "set_name": "Marvel Super Heroes",
+          "rarity": "Mythic",
+          "number": "251"
+        },
+        {
+          "id": "5de63255-ce89-5430-b42c-927d463ed356",
+          "slug": "magic-the-gathering-double-masters-2022-disciple-of-the-ring-rare",
+          "name": "Disciple of the Ring",
+          "set_name": "Double Masters 2022",
+          "rarity": "Rare",
+          "number": "46"
+        }
+      ],
+      "observed_sets": [
+        {
+          "justtcg_set_id": "prerelease-cards-magic-the-gathering",
+          "justtcg_set_name": "Prerelease Cards"
+        },
+        {
+          "justtcg_set_id": "universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-magic-the-gathering",
+          "justtcg_set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth"
+        },
+        {
+          "justtcg_set_id": "the-hobbit-eternal-legal-magic-the-gathering",
+          "justtcg_set_name": "The Hobbit: Eternal-Legal"
+        },
+        {
+          "justtcg_set_id": "universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-magic-the-gathering",
+          "justtcg_set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth"
+        },
+        {
+          "justtcg_set_id": "secret-lair-drop-series-magic-the-gathering",
+          "justtcg_set_name": "Secret Lair Drop Series"
+        },
+        {
+          "justtcg_set_id": "universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-magic-the-gathering",
+          "justtcg_set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth"
+        },
+        {
+          "justtcg_set_id": "universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-magic-the-gathering",
+          "justtcg_set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth"
+        },
+        {
+          "justtcg_set_id": "universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-magic-the-gathering",
+          "justtcg_set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth"
+        },
+        {
+          "justtcg_set_id": "commander-legends-magic-the-gathering",
+          "justtcg_set_name": "Commander Legends"
+        },
+        {
+          "justtcg_set_id": "magic-2013-m13-magic-the-gathering",
+          "justtcg_set_name": "Magic 2013 (M13)"
+        },
+        {
+          "justtcg_set_id": "magic-game-night-free-for-all-magic-the-gathering",
+          "justtcg_set_name": "Magic Game Night: Free-For-All"
+        },
+        {
+          "justtcg_set_id": "prerelease-cards-magic-the-gathering",
+          "justtcg_set_name": "Prerelease Cards"
+        },
+        {
+          "justtcg_set_id": "universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-magic-the-gathering",
+          "justtcg_set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth"
+        },
+        {
+          "justtcg_set_id": "unique-and-miscellaneous-promos-magic-the-gathering",
+          "justtcg_set_name": "Unique and Miscellaneous Promos"
+        },
+        {
+          "justtcg_set_id": "prerelease-cards-magic-the-gathering",
+          "justtcg_set_name": "Prerelease Cards"
+        },
+        {
+          "justtcg_set_id": "universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-magic-the-gathering",
+          "justtcg_set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth"
+        },
+        {
+          "justtcg_set_id": "final-fantasy-magic-the-gathering",
+          "justtcg_set_name": "FINAL FANTASY"
+        },
+        {
+          "justtcg_set_id": "universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-magic-the-gathering",
+          "justtcg_set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth"
+        },
+        {
+          "justtcg_set_id": "marvel-super-heroes-magic-the-gathering",
+          "justtcg_set_name": "Marvel Super Heroes"
+        },
+        {
+          "justtcg_set_id": "double-masters-2022-magic-the-gathering",
+          "justtcg_set_name": "Double Masters 2022"
+        }
+      ],
+      "num_plausible": 1,
+      "classification": "EXACT",
+      "picked": {
+        "id": "8309df9c-fbd1-5ded-9165-d0db67ff7d86",
+        "slug": "magic-the-gathering-universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-the-one-ring-mythic",
+        "name": "The One Ring",
+        "set_name": "Universes Beyond: The Lord of the Rings: Tales of Middle-earth",
+        "rarity": "Mythic"
+      },
+      "rule": "unique name+set match",
+      "rarity_field_in_chosen_slug": true
+    },
+    {
+      "sku": "ygo-LOB-001-89631139",
+      "query": "Blue-Eyes White Dragon",
+      "game_param": "yugioh",
+      "num_results": 0,
+      "all_results": [],
+      "observed_sets": [],
+      "num_plausible": 0,
+      "classification": "MISS",
+      "picked": null,
+      "rule": "search returned zero results",
+      "rarity_field_in_chosen_slug": null
+    },
+    {
+      "sku": "ygo-LOB-005-36996508",
+      "query": "Dark Magician",
+      "game_param": "yugioh",
+      "num_results": 0,
+      "all_results": [],
+      "observed_sets": [],
+      "num_plausible": 0,
+      "classification": "MISS",
+      "picked": null,
+      "rule": "search returned zero results",
+      "rarity_field_in_chosen_slug": null
+    }
+  ],
+  "graded_results": [
+    {
+      "has_data": false,
+      "companies": {},
+      "markets_shape_sample": null,
+      "updated_ats": [],
+      "raw_error": "Rate limit exceeded. Please slow down your requests.",
+      "sku": "base1-4",
+      "category": "pokemon",
+      "slug": "pokemon-base-set-2-charizard-holo-rare"
+    },
+    {
+      "has_data": false,
+      "companies": {},
+      "markets_shape_sample": null,
+      "updated_ats": [],
+      "raw_error": "Rate limit exceeded. Please slow down your requests.",
+      "sku": "base1-2",
+      "category": "pokemon",
+      "slug": "pokemon-base-set-2-blastoise-holo-rare"
+    },
+    {
+      "has_data": false,
+      "companies": {},
+      "markets_shape_sample": null,
+      "updated_ats": [],
+      "raw_error": "Rate limit exceeded. Please slow down your requests.",
+      "sku": "base1-15",
+      "category": "pokemon",
+      "slug": "pokemon-base-set-2-venusaur-holo-rare"
+    },
+    {
+      "sku": "sv3pt5-199",
+      "skipped": true
+    },
+    {
+      "has_data": false,
+      "companies": {},
+      "markets_shape_sample": null,
+      "updated_ats": [],
+      "raw_error": "Rate limit exceeded. Please slow down your requests.",
+      "sku": "sv4pt5-240",
+      "category": "pokemon",
+      "slug": "pokemon-sv-paldean-fates-wo-chien-ex-hyper-rare"
+    },
+    {
+      "sku": "sv1-254",
+      "skipped": true
+    },
+    {
+      "has_data": false,
+      "companies": {},
+      "markets_shape_sample": null,
+      "updated_ats": [],
+      "raw_error": "Rate limit exceeded. Please slow down your requests.",
+      "sku": "swsh7-215",
+      "category": "pokemon",
+      "slug": "pokemon-swsh07-evolving-skies-umbreon-vmax-ultra-rare"
+    },
+    {
+      "has_data": false,
+      "companies": {},
+      "markets_shape_sample": null,
+      "updated_ats": [],
+      "raw_error": "Rate limit exceeded. Please slow down your requests.",
+      "sku": "swsh12-202",
+      "category": "pokemon",
+      "slug": "pokemon-swsh12-silver-tempest-lugia-vstar-ultra-rare"
+    },
+    {
+      "sku": "mtg-lea-232",
+      "skipped": true
+    },
+    {
+      "has_data": false,
+      "companies": {},
+      "markets_shape_sample": null,
+      "updated_ats": [],
+      "raw_error": "Rate limit exceeded. Please slow down your requests.",
+      "sku": "mtg-ltr-246",
+      "category": "mtg",
+      "slug": "magic-the-gathering-universes-beyond-the-lord-of-the-rings-tales-of-middle-earth-the-one-ring-mythic"
+    },
+    {
+      "sku": "ygo-LOB-001-89631139",
+      "skipped": true
+    },
+    {
+      "sku": "ygo-LOB-005-36996508",
+      "skipped": true
+    }
+  ],
+  "summary": {
+    "resolution": {
+      "EXACT": 4,
+      "AMBIGUOUS": 3,
+      "MISS": 5,
+      "total": 12
+    },
+    "any_graded_data": 0,
+    "psa_data": 0,
+    "psa_9_and_10": 0,
+    "distinct_grading_companies": [],
+    "median_age_days": null
+  }
+}

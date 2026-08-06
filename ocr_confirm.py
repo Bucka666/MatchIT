@@ -65,6 +65,13 @@ def _fuzzy_set_code_match(candidate, set_code_map, max_dist=2):
 
 _last_ocr_confidence = 0.0
 _last_pkm_denominator: Optional[int] = None
+# Set alongside _last_pkm_denominator when a denom fingerprint resolves to
+# MULTIPLE candidate sets (ambiguous) — carries that candidate list forward
+# so a bare-number match in ocr_confirm_ranking can be restricted to those
+# sets instead of matching any SKU in the top search_depth results,
+# regardless of set. None means "no restriction" (set-code was read, or no
+# denom fingerprint fired at all).
+_last_pkm_candidate_sets: Optional[list] = None
 # When True, the SWSH printed-total fingerprint path in _extract_pokemon_number
 # is skipped. Set per-scan by ocr_confirm_ranking when the scan is Japanese
 # (explicit jpn_mode from caller, OR the top CLIP candidate is a jpn- SKU) so an
@@ -608,9 +615,10 @@ def _extract_pokemon_number_fullimage(image_path: str):
     Same contract as _extract_pokemon_number: returns 'setcode-num',
     'num', or None, and sets _last_pkm_denominator as a side effect.
     """
-    global _last_pkm_denominator, _last_unmapped_jp_setcode
+    global _last_pkm_denominator, _last_unmapped_jp_setcode, _last_pkm_candidate_sets
     _last_pkm_denominator = None
     _last_unmapped_jp_setcode = None
+    _last_pkm_candidate_sets = None
 
     api_key = _get_vision_api_key()
     if not api_key:
@@ -871,6 +879,7 @@ def _extract_pokemon_number_fullimage(image_path: str):
             return _ret(f"{cands[0]}-{num_s}")
         if len(cands) > 1:
             _last_pkm_denominator = total
+            _last_pkm_candidate_sets = cands
             logger.info(f"[OCR-FULL] ambiguous total={total}, candidates={cands}")
             return _ret(num_s)
     if total:
@@ -976,7 +985,7 @@ def _extract_pokemon_number_dispatch(image_path: str,
     Never worse than the region path: the fallback can only replace a
     result the region path itself could not corroborate.
     """
-    global _last_pkm_denominator, _last_unmapped_jp_setcode
+    global _last_pkm_denominator, _last_unmapped_jp_setcode, _last_pkm_candidate_sets
 
     primary = _extract_pokemon_number(image_path)
     if not _full_image_fallback_enabled():
@@ -989,6 +998,7 @@ def _extract_pokemon_number_dispatch(image_path: str,
 
     p_denom = _last_pkm_denominator
     p_unmapped = _last_unmapped_jp_setcode
+    p_candidates = _last_pkm_candidate_sets
     has_setcode = bool(primary) and "-" in str(primary)
     usable = bool(primary) and (has_setcode or p_denom is not None)
     if usable:
@@ -1003,6 +1013,7 @@ def _extract_pokemon_number_dispatch(image_path: str,
     # restore the region path's result and its side effects
     _last_pkm_denominator = p_denom
     _last_unmapped_jp_setcode = p_unmapped
+    _last_pkm_candidate_sets = p_candidates
     logger.info(f"[OCR-FALLBACK] full-image found nothing — keeping {primary!r}")
     return primary
 
@@ -1151,9 +1162,10 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
     For SV era cards returns e.g. 'sv6-18' for direct DB lookup.
     For older cards returns plain number e.g. '18'.
     """
-    global _last_pkm_denominator, _last_unmapped_jp_setcode
+    global _last_pkm_denominator, _last_unmapped_jp_setcode, _last_pkm_candidate_sets
     _last_pkm_denominator = None
     _last_unmapped_jp_setcode = None
+    _last_pkm_candidate_sets = None
     # Try multiple regions — the card number position varies between card types.
     # Short-circuit: if a crop yields BOTH a set code and a valid card number
     # (the strongest signal — a direct DB-lookup key), stop early. Saves up to
@@ -1311,8 +1323,13 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
             # The set is ambiguous, but the /TTT denominator itself was read
             # cleanly — record it so _denominator_blocks_promotion can still
             # veto a candidate whose set total doesn't match, even though we
-            # can't pick a set ourselves (15a fix).
+            # can't pick a set ourselves (15a fix). Also carry the candidate
+            # list itself forward — without it, the bare number below matches
+            # any SKU in the top search_depth CLIP results regardless of set
+            # (the xy5-94 bug: a same-numbered card from a set that was never
+            # even among the ambiguous candidates).
             _last_pkm_denominator = total
+            _last_pkm_candidate_sets = candidates
             return num
     if num:
         if total:
@@ -1879,16 +1896,38 @@ def ocr_confirm_ranking(
     depth = min(search_depth, len(results))
     match_idx: Optional[int] = None
 
+    # A bare card number (no set code) can come from an AMBIGUOUS denom
+    # fingerprint — _last_pkm_candidate_sets then holds the specific sets
+    # that print that total. Restrict the bare-number match to those sets so
+    # a same-numbered card from an unrelated set can't be promoted just
+    # because it happens to rank somewhere in the top `search_depth` visual
+    # results (production case: OCR read a bare "94" off a denominator
+    # ambiguous between me4/rsv10pt5/zsv10pt5, but xy5-94 — not one of those
+    # three — matched at CLIP rank 8 and was promoted to rank 1).
+    _bare_number = isinstance(extracted, str) and "-" not in extracted
+    _candidate_sets = (
+        _last_pkm_candidate_sets
+        if (tcg_upper == "POKEMON" and _bare_number and _last_pkm_candidate_sets)
+        else None
+    )
+
     for i in range(depth):
         sku = results[i].get("sku", "")
-        if matcher and matcher(sku, extracted):
-            match_idx = i
-            ocr_info["matched_sku"] = sku
+        if not (matcher and matcher(sku, extracted)):
+            continue
+        if _candidate_sets is not None and sku.rsplit("-", 1)[0] not in _candidate_sets:
             logger.info(
-                f"[OCR] Match found: '{extracted}' → {sku} "
-                f"(was rank {i + 1})"
+                f"[OCR] bare-number match '{extracted}' -> {sku} rejected: "
+                f"set not in denom-fingerprint candidates {_candidate_sets}"
             )
-            break
+            continue
+        match_idx = i
+        ocr_info["matched_sku"] = sku
+        logger.info(
+            f"[OCR] Match found: '{extracted}' → {sku} "
+            f"(was rank {i + 1})"
+        )
+        break
 
     if match_idx is None:
         logger.info(
@@ -1984,6 +2023,15 @@ def ocr_confirm_ranking(
     blocked_reason = None
     if match_strength == "weak" and clip_confident:
         blocked_reason = "weak_ocr_vs_confident_clip"
+    elif match_strength == "weak" and clip_gap < clip_promote_block_gap:
+        # Neither signal is reliable here: OCR gave an unscoped/uncorroborated
+        # bare-number match AND CLIP itself can't separate rank1 from rank2
+        # (gap below the same clip_promote_block_gap threshold used above).
+        # Falling back to CLIP's rank1 is more honest than promoting a weak
+        # guess to rank1 in this state — this was the exact gap that let
+        # match_strength=weak, clip_gap=0.0009 through to promotion in
+        # production (the xy5-94 incident).
+        blocked_reason = "weak_ocr_and_uncertain_clip"
 
     logger.info(
         "[OCR-GATE] match_strength=%s clip0=%.4f clip1=%.4f clip_gap=%.4f promoted=%s blocked_reason=%s",
