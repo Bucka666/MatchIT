@@ -7,6 +7,9 @@ import shutil
 try:
     import stripe
 except ImportError:  # pragma: no cover - exercised in lightweight test envs
+    print("[STARTUP] stripe package not importable — all Stripe payment routes "
+          "will fail at request time. Web and Microsoft Store payments are DOWN.", flush=True)
+
     class _StripeStub:
         api_key = ""
 
@@ -370,6 +373,13 @@ CFG = load_or_create_config()
 _flask_secret = os.environ.get("FLASK_SECRET_KEY") or CFG.get("secret_key")
 if _flask_secret:
     app.secret_key = str(_flask_secret)
+elif app.secret_key == "dev-secret-change-me":
+    app.logger.warning(
+        "[STARTUP] No MATCHIT_SECRET, FLASK_SECRET_KEY, or config secret_key set — "
+        "Flask session signing is running on the hardcoded fallback "
+        "'dev-secret-change-me'. This value is public in the app.py source, so "
+        "sessions (including last_auth_result) can be forged by anyone who reads it."
+    )
 
 @app.context_processor
 def inject_config():
