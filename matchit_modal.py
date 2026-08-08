@@ -801,10 +801,19 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
             return None
 
     # Pokémon — single batch call to pokemontcg.io
-    if poke_new:
-        print(f"[REBUILD] Pokémon: {len(poke_new)} new sets to fetch...", flush=True)
+    poke_needs_ptcgo = {
+        set_id for set_id, entry in new_meta.items()
+        if entry.get("game") == "POKEMON" and "ptcgoCode" not in entry
+    }
+    ptcgo_backfilled = False
+    if poke_new or poke_needs_ptcgo:
+        print(
+            f"[REBUILD] Pokémon: {len(poke_new)} new sets to fetch, "
+            f"{len(poke_needs_ptcgo)} existing missing ptcgoCode...",
+            flush=True,
+        )
         data = _fetch_json(
-            "https://api.pokemontcg.io/v2/sets?select=id,name,total,printedTotal",
+            "https://api.pokemontcg.io/v2/sets?select=id,name,total,printedTotal,ptcgoCode",
             "pokemontcg.io",
         )
         api_lookup = {}
@@ -822,6 +831,7 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                     "printed_total": entry.get("printedTotal", entry.get("total")),
                     "total":         entry.get("total"),
                     "exclude":       "promo" in set_id.lower(),
+                    "ptcgoCode":     entry.get("ptcgoCode"),
                 }
                 print(f"[REBUILD]   + Pokémon {set_id}: {entry.get('name')}", flush=True)
             else:
@@ -829,9 +839,21 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                     "name": set_id, "game": "POKEMON",
                     "printed_total": None, "total": None,
                     "exclude": "promo" in set_id.lower(),
+                    "ptcgoCode": None,
                 }
                 print(f"[REBUILD]   ? Pokémon {set_id}: not in pokemontcg.io", flush=True)
             new_sets += 1
+
+        if data:
+            # Backfill ptcgoCode onto already-known entries without touching
+            # any other field. Only runs when the fetch actually succeeded —
+            # on failure this is skipped entirely, leaving prior state
+            # untouched rather than writing None everywhere (overlay
+            # contract, same as the existing-metadata load above).
+            for set_id in sorted(poke_needs_ptcgo):
+                entry = api_lookup.get(set_id.lower())
+                new_meta[set_id]["ptcgoCode"] = entry.get("ptcgoCode") if entry else None
+                ptcgo_backfilled = True
 
     # MTG — single batch call to Scryfall
     if mtg_new:
@@ -898,7 +920,7 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                 print(f"[REBUILD]   ? YGO {set_id}: not in YGOProDeck", flush=True)
             new_sets += 1
 
-    if new_sets or new_skus is not None:
+    if new_sets or new_skus is not None or ptcgo_backfilled:
         _meta_tmp = meta_path + ".tmp"
         with open(_meta_tmp, "w", encoding="utf-8") as f:
             json.dump(new_meta, f)

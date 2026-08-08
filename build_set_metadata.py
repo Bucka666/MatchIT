@@ -42,7 +42,7 @@ _DEFAULT_CARDSDB = Path("C:/CardsDB")
 CARDSDB_ROOT = Path(os.environ.get("CARDSDB_ROOT", str(_DEFAULT_CARDSDB)))
 OUTPUT_PATH = Path(__file__).parent / "set_metadata.json"
 
-POKEMON_SETS_API = "https://api.pokemontcg.io/v2/sets?select=id,name,total,printedTotal"
+POKEMON_SETS_API = "https://api.pokemontcg.io/v2/sets?select=id,name,total,printedTotal,ptcgoCode"
 MTG_SETS_API    = "https://api.scryfall.com/sets"
 YGO_SETS_API    = "https://db.ygoprodeck.com/api/v7/cardsets.php"
 
@@ -150,6 +150,7 @@ def build_pokemon_metadata(set_ids: Set[str]) -> Dict[str, dict]:
     result: Dict[str, dict] = {}
     missing = 0
     for set_id in sorted(set_ids):
+        ptcgo_code = None
         if set_id.startswith("jpn-"):
             set_code = set_id[len("jpn-"):]          # jpn-sv1a -> sv1a ; jpn-s-p -> s-p
             printed, total, jp_name = _fetch_jp_set_totals(set_code)
@@ -158,12 +159,14 @@ def build_pokemon_metadata(set_ids: Set[str]) -> Dict[str, dict]:
                 print(f"  [WARN-JP] '{set_id}' no TCGdex card data (set_code={set_code})")
                 missing += 1
             time.sleep(0.1)                          # be polite to TCGdex across ~128 sets
+            # pokemontcg.io is EN-only — JP sets have no ptcgoCode there.
         else:
             entry = api_lookup.get(set_id.lower())
             if entry:
-                name    = entry.get("name", set_id)
-                total   = entry.get("total")
-                printed = entry.get("printedTotal", total)
+                name       = entry.get("name", set_id)
+                total      = entry.get("total")
+                printed    = entry.get("printedTotal", total)
+                ptcgo_code = entry.get("ptcgoCode")
             else:
                 print(f"  [WARN] '{set_id}' not found in pokemontcg.io")
                 name    = set_id
@@ -177,6 +180,7 @@ def build_pokemon_metadata(set_ids: Set[str]) -> Dict[str, dict]:
             "printed_total": printed,
             "total":         total,
             "exclude":       "promo" in set_id.lower(),
+            "ptcgoCode":     ptcgo_code,
         }
 
     print(f"  Matched {len(result) - missing}/{len(result)}, warnings: {missing}")
