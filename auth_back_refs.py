@@ -15,6 +15,16 @@ image), but BACK_MATRIX is pooled unfiltered into the orientation-swap
 resolver, so anything added there has a live side effect on real scans.
 This reference store is a separate, tiny file with zero coupling to the
 matching engine.
+
+Also holds cross_check_back_language(), which compares the classifier's
+back_label against the confirmed SKU's own set_id (jpn- prefix = Japanese
+release). This is deliberately a separate, gentler check from
+_build_auth_result_for_result()'s existing back_type/expectedBack logic in
+app.py: that function's mismatch path terminates in "counterfeit", which
+is wrong here — a front/back language mismatch is just as likely to mean
+"user photographed two different cards" as anything about authenticity.
+cross_check_back_language() never returns counterfeit; its worst outcome
+is "needs_review".
 """
 
 import json
@@ -147,3 +157,61 @@ def classify_back_style(
           f"floor={BACK_PRESENCE_FLOOR} passed_stage1={passed_stage1}", flush=True)
 
     return label, sim_en, sim_jp, gap
+
+
+def cross_check_back_language(set_id: str, back_label: str) -> dict:
+    """Compare the classifier's back_label against the confirmed SKU's own
+    set_id. Standalone -- not called from /match yet.
+
+    front_language is derived from set_id.startswith("jpn-") alone (see
+    Phase 2 recon: this is a construction-time label assigned by which
+    scraper ingested the set, not a content-inspection heuristic — the
+    128 jpn- / 174 non-jpn- split across set_metadata.json's POKEMON
+    entries is exact and non-overlapping by definition of the prefix
+    check; no evidence found of a set mislabelled either direction).
+
+    Rules:
+        back_label == "unknown"                          -> no_back_signal
+        back_label == "japanese"      and jpn- front      -> back_consistent
+        back_label == "english-style" and non-jpn- front  -> back_consistent
+        anything else                                     -> needs_review
+
+    NEVER returns a counterfeit-flavoured status — worst case is
+    "needs_review" with a front_back_language_mismatch flag. A mismatch
+    here is just as likely to mean "two different cards got photographed"
+    as anything about authenticity, so this stays deliberately softer than
+    _build_auth_result_for_result()'s existing (still-inert) back_type
+    mismatch path in app.py, which terminates in "counterfeit".
+    """
+    set_id = (set_id or "").strip()
+    is_jpn_front = set_id.startswith("jpn-")
+    front_language = "japanese" if is_jpn_front else "english-style"
+
+    if back_label == "unknown":
+        status = "no_back_signal"
+        flags: list = []
+        reason = "No back-image language signal available."
+    elif (back_label == "japanese" and is_jpn_front) or (back_label == "english-style" and not is_jpn_front):
+        status = "back_consistent"
+        flags = []
+        back_desc = "Japanese" if back_label == "japanese" else "English"
+        reason = f"The card back appears {back_desc}, consistent with this set's release."
+    else:
+        status = "needs_review"
+        flags = ["front_back_language_mismatch"]
+        front_desc = "a Japanese release" if is_jpn_front else "an English release"
+        back_desc = "Japanese" if back_label == "japanese" else "English"
+        reason = f"The set code indicates {front_desc}, but the card back appears to be {back_desc}."
+
+    print(f"[AUTH-XCHECK] set_id={set_id} front_language={front_language} "
+          f"back_label={back_label} status={status} "
+          f"flag={flags[0] if flags else None}", flush=True)
+
+    return {
+        "status": status,
+        "flags": flags,
+        "reason": reason,
+        "set_id": set_id,
+        "front_language": front_language,
+        "back_label": back_label,
+    }

@@ -9609,6 +9609,21 @@ def _build_auth_result_for_result(result, card_payload=None):
             if number:
                 flags.append("number_mismatch")
 
+        # back_type is currently tautological (payload never carries a real
+        # "backType" -- see the assignment above, which always falls back to
+        # set_info's own expectedBack), so this comparison can never
+        # disagree with itself and this path is inert.
+        #
+        # Do NOT wire a real classifier result into payload["backType"] to
+        # activate it. This check terminates in "counterfeit" a few lines
+        # down (and again in the booster/starter fallthrough below) -- a
+        # single visual signal must not produce a counterfeit verdict.
+        # Use auth_back_refs.cross_check_back_language() instead, which
+        # caps at "needs_review" and never returns counterfeit, precisely
+        # because a front/back language mismatch is just as likely to mean
+        # two different cards were photographed as anything about
+        # authenticity. If this check is ever wanted live, that has to be
+        # a deliberate decision, not a side effect of populating backType.
         if back_type != set_info.get("expectedBack"):
             flags.append("back_mismatch")
 
@@ -9694,6 +9709,20 @@ def _build_auth_result_for_result(result, card_payload=None):
                 card_override={"back": back_type},
             )
 
+        # Same tautology as the back_mismatch check above: back_type always
+        # equals set_info's own expectedBack, so this branch only exists
+        # today because productType == "starter" can come from the legacy
+        # sets.json path (image-guess placeholder, capture_submit /
+        # api_authenticate) -- back_type there is EN starter decks'
+        # expectedBack, i.e. "english-style", always true. The counterfeit
+        # fallthrough immediately below is consequently unreachable in
+        # practice, not just inert -- but if that ever changes (e.g. a
+        # starter set with an expectedBack of "japanese" gets added to
+        # sets.json), the same rule applies: do NOT feed a real classifier
+        # result into payload["backType"] to make this live. Use
+        # auth_back_refs.cross_check_back_language() instead (caps at
+        # needs_review, never counterfeit) -- see the comment above the
+        # back_mismatch check for the full reasoning.
         if back_type == "english-style":
             return _emit(
                 "official_starter",

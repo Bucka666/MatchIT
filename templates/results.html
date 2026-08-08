@@ -29,8 +29,8 @@
       <button type="button" class="res-auth-btn" id="resAuthBtn" onclick="event.stopPropagation(); gsOpenAuthModal()">Details</button>
     </div>
     <div class="res-auth-badge res-auth-badge--{{ auth_result.status }}" id="resAuthBadge">
-      <span class="res-auth-status-icon" aria-hidden="true">{% if auth_result.status == 'official_booster' or auth_result.status == 'official_starter' %}✓{% elif auth_result.status == 'counterfeit' %}⚠{% elif auth_result.needsReview %}⏱{% else %}•{% endif %}</span>
-      <span>{% if auth_result.status == 'official_booster' or auth_result.status == 'official_starter' %}Authentic{% elif auth_result.status == 'counterfeit' %}Suspected counterfeit{% elif auth_result.needsReview %}Needs review{% else %}Unknown{% endif %}</span>
+      <span class="res-auth-status-icon" aria-hidden="true">{% if auth_result.status == 'official_booster' or auth_result.status == 'official_starter' %}✓{% elif auth_result.status == 'official' %}✓{% elif auth_result.status == 'counterfeit' %}⚠{% elif auth_result.needsReview %}⏱{% else %}•{% endif %}</span>
+      <span>{% if auth_result.status == 'official_booster' or auth_result.status == 'official_starter' %}Authentic{% elif auth_result.status == 'official' %}Official set{% elif auth_result.status == 'counterfeit' %}Suspected counterfeit{% elif auth_result.needsReview %}Needs review{% else %}Unknown{% endif %}</span>
     </div>
     <div class="res-auth-reason" id="resAuthReason">{{ auth_result.reason }}</div>
     {% if auth_result.confidence is defined %}

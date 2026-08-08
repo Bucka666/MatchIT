@@ -100,7 +100,10 @@
 // there's no browser chrome). Reuses the existing detector, no new checks.
 // v132 (2026-08-08) — match.html and results.html both changed (auth-engine
 // wiring), so the cached document HTML is stale for both routes.
-const CACHE_NAME = 'grailsweep-v132';
+// v133 (2026-08-08) — match.html and results.html both changed again: the
+// auth banner now renders Phase 1b's "official" status (icon + label)
+// instead of falling through to the generic Unknown bucket.
+const CACHE_NAME = 'grailsweep-v133';
 const PRECACHE = [
   '/',
   '/static/style.css',
