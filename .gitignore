@@ -123,3 +123,37 @@ eval_rescue/**/*.jpg
 eval_rescue/labelling/lookup_index.json
 eval_rescue/labelling/label.html
 eval_rescue/labelling/backup_prelookup_20260802/
+
+# ============================================
+# Node / TypeScript (added 2026-08-08 — auth-engine/ brought Node
+# dependencies into the tree for the first time)
+# ============================================
+# auth-engine/node_modules/ alone was 267 untracked files with no rule
+# catching it before this. node_modules is always regenerable from
+# package.json/package-lock.json, so it never belongs in history.
+node_modules/
+# tsc build output — regenerable from the .ts sources via `npm run build`.
+dist/
+build/
+# Next.js build cache — not used yet, but excluded pre-emptively so a
+# future Next app in this repo doesn't repeat the node_modules gap.
+.next/
+# Incremental compile cache tsc writes next to tsconfig.json — local
+# build-speed state, not source.
+*.tsbuildinfo
+# auth-engine/*.js compiled from same-named .ts sources (tsc, no outDir
+# set, so output lands next to the source) — regenerable, not source.
+# Listed explicitly by name rather than a blanket auth-engine/*.js
+# rule: registry.test.js is hand-written with no .ts sibling, and a
+# wildcard would silently swallow it (and any future hand-written JS).
+auth-engine/authEngine.js
+auth-engine/authEngineBrowser.js
+auth-engine/authFunction.js
+auth-engine/authWorker.js
+auth-engine/imageHooks.js
+auth-engine/index.js
+# 8 one-off discovery scripts written to locate auth-engine wiring points
+# during the 2026-08-08 build. Classified as scratch, not durable tooling.
+# Kept on disk, out of history — consistent with the _pre_* lesson recorded
+# above.
+tools/

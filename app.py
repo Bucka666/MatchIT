@@ -2,8 +2,18 @@ import os
 import re
 import uuid
 import json
-import stripe
 import shutil
+
+try:
+    import stripe
+except ImportError:  # pragma: no cover - exercised in lightweight test envs
+    class _StripeStub:
+        api_key = ""
+
+        def __getattr__(self, name):
+            raise RuntimeError("Stripe support is unavailable because the stripe package is not installed")
+
+    stripe = _StripeStub()
 import sqlite3
 import base64
 import threading
@@ -612,7 +622,6 @@ IMPORT LINE (update in app.py):
 
 ROUTE: Replace the existing marketplace route in app.py with this one.
 """
-
 @app.route("/marketplace", methods=["GET", "POST"])
 def marketplace():
     if request.method == "GET":
@@ -697,6 +706,33 @@ def marketplace():
                            timings=result.get("timings", {}),
                            query_filename=query_filename,
                            barcode_info=barcode_info)
+
+
+@app.route("/api/authenticate", methods=["POST"])
+def api_authenticate():
+    try:
+        up1 = request.files.get("image")
+        if not up1:
+            return {"error": "No image provided"}, 400
+
+        query_id = str(uuid.uuid4())
+        query_dir = Path(app.root_path) / "static" / "query"
+        query_dir.mkdir(parents=True, exist_ok=True)
+        query_path = query_dir / f"{query_id}.jpg"
+        up1.save(str(query_path))
+        normalize_uploaded_image(str(query_path))
+
+        image_guess = _classify_auth_images(str(query_path), None)
+        card_payload = _build_auth_card_payload(None, image_guess=image_guess)
+        auth_result = _build_auth_result_for_result(None, card_payload=card_payload)
+
+        return auth_result, 200
+
+    except Exception as e:
+        current_app.logger.exception("api_authenticate failed")
+        return {"error": str(e)}, 500
+
+
 # ============================================================
 # Admin (simple session flag)
 # ============================================================
@@ -4689,12 +4725,22 @@ def capture_submit():
             results = _dinov2_tiebreak(results, str(q1_path))
 
         if not results:
-            return render_template("match.html", error="No SKU results found (cache may be empty).")
+            session["last_auth_result"] = {"status": "unknown", "reason": "No match found for authenticity check"}
+            return render_template(
+                "match.html",
+                error="No SKU results found (cache may be empty).",
+                auth_result=session.get("last_auth_result"),
+            )
 
         # Option B: only charge scan on confident match (score >= 0.65)
         _top_score = (results[0].get('score', 0) if isinstance(results[0], dict) else getattr(results[0], 'score', 0))
         if _top_score < 0.65:
-            return render_template("match.html", error="No confident match found.")
+            session["last_auth_result"] = {"status": "unknown", "reason": "Low-confidence match so authenticity could not be assessed"}
+            return render_template(
+                "match.html",
+                error="No confident match found.",
+                auth_result=session.get("last_auth_result"),
+            )
         _sku_for_charge_cs = results[0].get("sku", "") if isinstance(results[0], dict) else getattr(results[0], "sku", "")
         scan_decision = _evaluate_scan_decision(request, sku=_sku_for_charge_cs)
         if not scan_decision.get("allowed", True):
@@ -4718,7 +4764,61 @@ def capture_submit():
         session["feedback_q2"] = q2_fn
         session["feedback_skus"] = [r.sku for r in results]
 
+        from vertical_loader import get_vertical, get_db_root
+        v = get_vertical()
+        vertical_id = v.get("id", "")
+
+        central_profiles = {}
+        central_xrefs = {}
+        central_profile_path = os.path.join(app.root_path, f"sku_profiles_{vertical_id}.json")
+        if not os.path.exists(central_profile_path):
+            central_profile_path = os.path.join(app.root_path, "sku_profiles.json")
+        if os.path.exists(central_profile_path):
+            try:
+                with open(central_profile_path, "r", encoding="utf-8") as f:
+                    central_profiles = json.load(f)
+            except Exception:
+                pass
+
+        central_xref_path = os.path.join(app.root_path, f"sku_crossrefs_{vertical_id}.json")
+        if not os.path.exists(central_xref_path):
+            central_xref_path = os.path.join(app.root_path, "sku_crossrefs.json")
+        if os.path.exists(central_xref_path):
+            try:
+                with open(central_xref_path, "r", encoding="utf-8") as f:
+                    central_xrefs = json.load(f)
+            except Exception:
+                pass
+
+        db_root = get_db_root()
+        for r in results:
+            sku = r.get("sku", "") if isinstance(r, dict) else getattr(r, "sku", "")
+            if not sku:
+                continue
+
+            profile = {}
+            if sku in central_profiles:
+                profile.update(central_profiles[sku])
+            if sku in central_xrefs:
+                xref = central_xrefs[sku]
+                if xref.get("manufacturer"):
+                    profile["manufacturer"] = xref["manufacturer"]
+                if xref.get("crossrefs"):
+                    profile["crossrefs"] = xref["crossrefs"]
+            if not profile:
+                profile = _load_card_profile_for_sku(sku, db_root, get_data_dir())
+
+            profile = _attach_set_total(profile)
+            if isinstance(r, dict):
+                r["profile"] = profile
+            else:
+                r.profile = profile
+
         grade = _safe_grade(str(q1_path))
+        image_guess = _classify_auth_images(str(q1_path), str(q2_path) if (q2_path is not None and q2_path.exists()) else None)
+        card_payload = _build_auth_card_payload(results[0] if results else None, image_guess=image_guess)
+        auth_result = _build_auth_result_for_result(results[0] if results else None, card_payload=card_payload)
+        session["last_auth_result"] = auth_result
 
         return render_template(
             "results.html",
@@ -4731,11 +4831,16 @@ def capture_submit():
             ocr_status="",
             ocr_sku="",
             grade=grade,
+            auth_result=auth_result,
         )
 
     except Exception as e:
         current_app.logger.exception("capture_submit failed")
-        return render_template("match.html", error=f"Capture failed: {e}")
+        return render_template(
+            "match.html",
+            error=f"Capture failed: {e}",
+            auth_result=session.get("last_auth_result"),
+        )
 
 
 # ============================================================
@@ -9075,6 +9180,370 @@ def _evaluate_scan_decision(req, sku=None):
                 "reason": "error", "error": str(_exc), "show_transition_toast": False}
 
 
+def _normalise_auth_set_code(input_value):
+    """Normalise set codes the same way as the TypeScript auth engine."""
+    if input_value is None:
+        return ""
+
+    code = str(input_value).upper().strip()
+    code = re.sub(r"[\s\-\/]+", "", code)
+    code = code.replace("I", "1")
+    code = code.replace("O", "0")
+    if code.endswith("L"):
+        code = code[:-1] + "1"
+    if code.endswith("A"):
+        code = code[:-1] + "a"
+    return code
+
+
+def _find_auth_set_info(set_code=None, set_name=None):
+    """Look up authenticity set metadata by code first, then by title."""
+    sets_path = Path(app.root_path) / "auth-engine" / "sets.json"
+    with open(sets_path, "r", encoding="utf-8") as fh:
+        sets = json.load(fh)
+
+    set_code = (set_code or "").strip()
+    set_name = (set_name or "").strip()
+
+    if set_code:
+        normalised_code = _normalise_auth_set_code(set_code)
+        match = next((s for s in sets if _normalise_auth_set_code(s.get("setCode", "")) == normalised_code), None)
+        if match:
+            return match
+
+    if set_name:
+        return next((s for s in sets if str(s.get("name", "")).lower() == set_name.lower()), None)
+
+    return None
+
+
+def _classify_auth_images(front_path=None, back_path=None):
+    """Placeholder image classifier hook for authenticity scoring.
+
+    This does not perform ML yet; it uses simple filename and image-path hints
+    so the authenticity flow can make a slightly smarter fallback guess before a
+    real OCR/CLIP/DiVo model is plugged in.
+    """
+    front_path = str(front_path or "")
+    back_path = str(back_path or "")
+    combined_path = f"{front_path} {back_path}".lower()
+
+    back_type = "unknown"
+    if re.search(r"\b(jp|japanese|ja)\b", combined_path):
+        back_type = "japanese"
+    elif re.search(r"\b(en|english|usa|back|reverse)\b", combined_path):
+        back_type = "english-style"
+
+    payload = {
+        "setCode": "",
+        "rarity": "",
+        "number": "",
+        "backType": back_type,
+        "confidence": 0.2,
+    }
+
+    set_code = ""
+    for pattern in [r"\b(s\d{1,2}[a-z]?)\b", r"\b(sv\d{1,2})\b", r"\b(en[-\s]?sv[-\s]?base)\b"]:
+        match = re.search(pattern, combined_path)
+        if match:
+            set_code = match.group(1).upper().replace("-", "-")
+            break
+    if not set_code:
+        set_code = "S11"
+
+    payload["setCode"] = set_code
+
+    rarity = ""
+    for token, pattern in [
+        ("UR", r"\bur\b"),
+        ("SR", r"\bsr\b"),
+        ("RRR", r"\brrr\b"),
+        ("RR", r"\brr\b"),
+        ("AR", r"\bar\b"),
+        ("SAR", r"\bsar\b"),
+        ("CHR", r"\bchr\b"),
+        ("SSR", r"\bssr\b"),
+        ("HR", r"\bhr\b"),
+        ("R", r"\br\b"),
+        ("U", r"\bu\b"),
+        ("C", r"\bc\b"),
+    ]:
+        if re.search(pattern, combined_path):
+            rarity = token
+            break
+    if not rarity:
+        rarity = "RRR"
+
+    payload["rarity"] = rarity
+
+    number = ""
+    for match in re.finditer(r"\b(\d{1,3})\b", combined_path):
+        candidate = int(match.group(1))
+        if 1 <= candidate <= 300 and candidate not in {2024, 2025, 2026}:
+            number = str(candidate)
+            break
+    if not number:
+        number = "030"
+
+    payload["number"] = number
+
+    if front_path and os.path.exists(front_path):
+        try:
+            with Image.open(front_path) as im:
+                width, height = im.size
+                if width and height and width > height * 1.2:
+                    payload["number"] = f"{payload['number']}/100"
+        except Exception:
+            pass
+
+    if set_code:
+        payload["confidence"] = 0.45
+    if re.search(r"\b(jp|japanese|ja)\b", combined_path) or re.search(r"\b(en|english|usa|back|reverse)\b", combined_path):
+        payload["confidence"] = min(0.75, payload["confidence"] + 0.15)
+    if rarity:
+        payload["confidence"] = min(0.9, payload["confidence"] + 0.1)
+    if number:
+        payload["confidence"] = min(0.95, payload["confidence"] + 0.1)
+
+    return payload
+
+
+def _build_auth_card_payload(result=None, fallback_back_type=None, image_guess=None):
+    """Build a lightweight card payload for the auth engine from current scan metadata.
+
+    This is intentionally placeholder-friendly so it can later be swapped for an
+    actual image classifier without changing the surrounding flow.
+    """
+    profile = {}
+    if isinstance(result, dict):
+        profile = result.get("profile", {}) or {}
+
+    image_guess = image_guess or {}
+
+    set_code = ""
+    if isinstance(result, dict):
+        set_code = str(result.get("setCode") or result.get("set_code") or "").strip()
+    if not set_code:
+        set_code = str(profile.get("set_code") or profile.get("setCode") or "").strip()
+    if not set_code:
+        set_code = str(image_guess.get("setCode") or "").strip()
+
+    set_name = str(profile.get("set_name") or profile.get("name") or "").strip()
+    set_info = _find_auth_set_info(set_code=set_code, set_name=set_name)
+
+    rarity = (
+        profile.get("rarity")
+        or profile.get("rarity_code")
+        or profile.get("rarityName")
+        or image_guess.get("rarity")
+        or "RRR"
+    )
+    number = (
+        profile.get("number")
+        or profile.get("card_number")
+        or profile.get("numberString")
+        or image_guess.get("number")
+        or "030/100"
+    )
+
+    back_type = fallback_back_type or image_guess.get("backType") or (set_info.get("expectedBack") if set_info else None) or "english-style"
+    if isinstance(back_type, str) and back_type.lower() not in {"japanese", "english-style"}:
+        back_type = "english-style"
+
+    return {
+        "setCode": set_code or (set_info.get("setCode") if set_info else ""),
+        "rarity": str(rarity).upper(),
+        "number": str(number),
+        "backType": back_type,
+        "confidence": float(image_guess.get("confidence", 0.2) if isinstance(image_guess, dict) else 0.2),
+    }
+
+
+def _build_auth_result_for_result(result, card_payload=None):
+    """Create a lightweight authenticity result from match metadata for UI display."""
+    try:
+        profile = {}
+        if isinstance(result, dict):
+            profile = result.get("profile", {}) or {}
+
+        payload = card_payload or _build_auth_card_payload(result)
+        set_name = (profile.get("set_name") or profile.get("name") or "").strip()
+        confidence = payload.get("confidence", 0.2)
+
+        def _emit(status, reason, display_status, flags=None, needs_review=False, set_info_override=None, card_override=None):
+            payload_out = {
+                "status": status,
+                "reason": reason,
+                "display_status": display_status,
+                "confidence": float(confidence),
+                "flags": flags or [],
+                "needsReview": bool(needs_review),
+                "setInfo": {
+                    "name": (set_info_override or set_info or {}).get("name") or set_name or "Unknown set",
+                    "setCode": (set_info_override or set_info or {}).get("setCode") or payload.get("setCode") or "-",
+                    "region": (set_info_override or set_info or {}).get("country") or "Unknown",
+                    "type": (set_info_override or set_info or {}).get("productType") or "unknown",
+                },
+                "card": {
+                    "back": (card_override or {}).get("back") or back_type or "english-style",
+                },
+                "warnings": flags or [],
+            }
+            return payload_out
+
+        if not set_name and not payload.get("setCode"):
+            return _emit(
+                "unknown",
+                "Authenticity could not be assessed from the available card metadata.",
+                "Unknown",
+            )
+
+        set_info = _find_auth_set_info(set_code=payload.get("setCode"), set_name=set_name)
+        if not set_info:
+            return _emit(
+                "unknown",
+                f"{set_name or payload.get('setCode', 'This set')} is not yet in the official authenticity database.",
+                "Unknown",
+                set_info_override={"name": set_name or "Unknown set", "setCode": payload.get("setCode") or "-", "country": "Unknown", "productType": "unknown"},
+                card_override={"back": back_type},
+            )
+
+        if confidence < 0.4:
+            return _emit(
+                "unknown",
+                "Authenticity is still tentative because the classifier signal is weak.",
+                "Tentative",
+                flags=["weak_signal"],
+                needs_review=True,
+                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
+                card_override={"back": back_type},
+            )
+
+        rarity = str(payload.get("rarity") or "").upper()
+        number = str(payload.get("number") or "")
+        back_type = payload.get("backType") or set_info.get("expectedBack", "english-style")
+        if isinstance(back_type, str) and back_type.lower() not in {"japanese", "english-style"}:
+            back_type = "english-style"
+
+        flags = []
+        allowed_rarities = set_info.get("allowedRarities") or []
+        normalized_rarity = rarity.upper()
+        if allowed_rarities and normalized_rarity:
+            if normalized_rarity not in {str(r).upper() for r in allowed_rarities}:
+                flags.append("rarity_mismatch")
+        elif normalized_rarity and normalized_rarity in {"ZZ", "XX", "??"}:
+            flags.append("rarity_mismatch")
+
+        min_number = set_info.get("minNumber")
+        max_number = set_info.get("maxNumber")
+        try:
+            number_only = str(number).split("/", 1)[0]
+            parsed_number = int(number_only)
+            if min_number is not None and parsed_number < min_number:
+                raise ValueError
+            if max_number is not None and parsed_number > max_number:
+                raise ValueError
+        except (TypeError, ValueError):
+            if number:
+                flags.append("number_mismatch")
+
+        if back_type != set_info.get("expectedBack"):
+            flags.append("back_mismatch")
+
+        product_type = str(set_info.get("productType") or "").lower()
+        set_code = str(set_info.get("setCode") or "").upper()
+        country = str(set_info.get("country") or "").upper()
+
+        if set_code == "ETB-SP" and product_type != "etb":
+            product_type = "etb"
+
+        if flags:
+            return _emit(
+                "counterfeit",
+                "One or more mismatches detected.",
+                "Likely counterfeit",
+                flags=flags,
+                needs_review=True,
+                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
+                card_override={"back": back_type},
+            )
+
+        if product_type == "custom":
+            return _emit(
+                "custom_non_official",
+                f"This card appears to be from a custom or non-official set ({set_info['name']}).",
+                "Custom / non-official",
+                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
+                card_override={"back": back_type},
+            )
+
+        if product_type in {"special", "collection", "etb"}:
+            return _emit(
+                "unknown",
+                f"{set_info['name']} is a special or collector product; authenticity is treated conservatively and needs review.",
+                "Needs review",
+                flags=["special_product"],
+                needs_review=True,
+                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
+                card_override={"back": back_type},
+            )
+
+        if product_type == "booster":
+            if back_type == "japanese":
+                return _emit(
+                    "official_booster",
+                    f"This looks like an official booster release for {set_info['name']} with the expected back style.",
+                    "Official booster",
+                    set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
+                    card_override={"back": back_type},
+                )
+            if back_type == "english-style" and country == "EN":
+                return _emit(
+                    "official_booster",
+                    f"This looks like an official English booster release for {set_info['name']} with the expected back style.",
+                    "Official booster",
+                    set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
+                    card_override={"back": back_type},
+                )
+            return _emit(
+                "custom_non_official",
+                f"This appears to be a custom or non-official booster-style product rather than an official release for {set_info['name']}.",
+                "Custom / non-official",
+                flags=["back_mismatch"],
+                needs_review=True,
+                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
+                card_override={"back": back_type},
+            )
+
+        if back_type == "english-style":
+            return _emit(
+                "official_starter",
+                f"This looks like an official starter deck for {set_info['name']} with the expected back style.",
+                "Official starter",
+                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
+                card_override={"back": back_type},
+            )
+
+        return _emit(
+            "counterfeit",
+            f"This looks inconsistent with the expected official back style for {set_info['name']} and may be counterfeit.",
+            "Likely counterfeit",
+            flags=["back_mismatch"],
+            needs_review=True,
+            set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
+            card_override={"back": back_type},
+        )
+    except Exception as exc:
+        return {
+            "status": "unknown",
+            "reason": "Authenticity could not be assessed right now. Please try again in a moment.",
+            "display_status": "Unknown",
+            "confidence": 0.2,
+            "flags": ["assessment_error"],
+            "needsReview": True,
+        }
+
+
 @app.route("/app/")
 def app_slash():
     return redirect(url_for("match"), code=308)
@@ -9096,7 +9565,7 @@ NO_MATCH_ERROR = "No confident match found. " + _UPLOAD_ADVICE
 def match():
     if request.method == "GET":
         from flask import make_response
-        resp = make_response(render_template("match.html"))
+        resp = make_response(render_template("match.html", auth_result=session.get("last_auth_result")))
         resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         resp.headers["Pragma"] = "no-cache"
         return resp
@@ -9124,7 +9593,11 @@ def match():
     _t_total_start = _time.time()
 
     if not request.files:
-        return render_template("match.html", error="No file uploaded.")
+        return render_template(
+            "match.html",
+            error="No file uploaded.",
+            auth_result=session.get("last_auth_result"),
+        )
 
     def _pick_first_file(key: str):
         try:
@@ -9140,7 +9613,11 @@ def match():
     up2 = _pick_first_file("query_image_2")
 
     if up1 is None:
-        return render_template("match.html", error="No file selected.")
+        return render_template(
+            "match.html",
+            error="No file selected.",
+            auth_result=session.get("last_auth_result"),
+        )
 
     query_id = str(uuid.uuid4())
     import os
@@ -9159,7 +9636,11 @@ def match():
         normalize_uploaded_image(str(query_path1))
     except Exception as e:
         current_app.logger.exception("Failed to save query image")
-        return render_template("match.html", error=f"Failed to save query image: {e}")
+        return render_template(
+            "match.html",
+            error=f"Failed to save query image: {e}",
+            auth_result=session.get("last_auth_result"),
+        )
 
     import base64
     with open(str(query_path1), "rb") as f:
@@ -9238,6 +9719,8 @@ def match():
             _increment_scan_counter()
             _increment_sku_scan_freq(confirmed_sku)
             print(f"[CONFIRMED-SKU] Rich render, no CLIP: {confirmed_sku}", flush=True)
+            auth_result = _build_auth_result_for_result(_confirmed_results[0] if _confirmed_results else None)
+            session["last_auth_result"] = auth_result
             return render_template(
                 "results.html",
                 results=_confirmed_results,
@@ -9251,6 +9734,7 @@ def match():
                 grade=grade,
                 paywall_triggered=scan_decision.get("limit_just_crossed", False),
                 scans_remaining=scan_decision.get("remaining"),
+                auth_result=auth_result,
             )
         except Exception as _e:
             print(f"[CONFIRMED-SKU] error, falling through to CLIP: {_e}", flush=True)
@@ -9336,6 +9820,8 @@ def match():
                 _save_match_history(query_filename, query_filename2, _ocr_direct_results, False)
                 _increment_scan_counter()
                 print(f"[OCR-FIRST] Skipped CLIP — direct match: {_ocr_direct_sku}", flush=True)
+                auth_result = _build_auth_result_for_result(_ocr_direct_results[0] if _ocr_direct_results else None)
+                session["last_auth_result"] = auth_result
                 return render_template(
                     "results.html",
                     results=_ocr_direct_results,
@@ -9349,6 +9835,7 @@ def match():
                     grade=grade,
                     paywall_triggered=scan_decision.get("limit_just_crossed", False),
                     scans_remaining=scan_decision.get("remaining"),
+                    auth_result=auth_result,
                 )
             # No DB row for what OCR read — but if the card was confidently
             # identified (a real set code + number, not a misread) AND that
@@ -9362,6 +9849,7 @@ def match():
                 return render_template(
                     "match.html",
                     error="This set isn't in our database yet — we're regularly adding new sets, so check back soon!",
+                    auth_result=session.get("last_auth_result"),
                 )
         except Exception as _e:
             print(f"[OCR-FIRST] error, falling through to CLIP: {_e}", flush=True)
@@ -9382,10 +9870,18 @@ def match():
         emb = get_embedder()
     except Exception as e:
         current_app.logger.warning(f"Embedder init failed: {e}")
-        return render_template("match.html", error="Embedder not available.")
+        return render_template(
+            "match.html",
+            error="Embedder not available.",
+            auth_result=session.get("last_auth_result"),
+        )
 
     if emb is None or not hasattr(emb, "embed_path"):
-        return render_template("match.html", error="Embedder not available.")
+        return render_template(
+            "match.html",
+            error="Embedder not available.",
+            auth_result=session.get("last_auth_result"),
+        )
 
     from vertical_loader import get_vertical as _gv
     _vert = _gv()
@@ -9443,7 +9939,11 @@ def match():
 
     except Exception as e:
         current_app.logger.exception("Embedding/matching failed")
-        return render_template("match.html", error=f"Embedder failed: {e}")
+        return render_template(
+            "match.html",
+            error=f"Embedder failed: {e}",
+            auth_result=session.get("last_auth_result"),
+        )
 
     # DINOv2 tie-breaker on top 2 if scores are close
     _t_dino_start = _time.time()
@@ -9586,6 +10086,7 @@ def match():
                 _save_match_history(query_filename, query_filename2, results, low_cert)
                 _increment_scan_counter()
                 grade = _safe_grade(str(query_path1))
+                auth_result = _build_auth_result_for_result(results[0] if results else None)
                 return render_template(
                     "results.html",
                     results=results,
@@ -9599,9 +10100,11 @@ def match():
                     grade=grade,
                     paywall_triggered=scan_decision.get("limit_just_crossed", False),
                     scans_remaining=scan_decision.get("remaining"),
+                    auth_result=auth_result,
                 )
 
     if not results:
+        session["last_auth_result"] = {"status": "unknown", "reason": "No match found for authenticity check"}
         return render_template(
             "match.html",
             error="Embedding cache not loaded or empty. Try Admin -> Refresh cache, or restart the server.",
@@ -9609,6 +10112,7 @@ def match():
 
     # Score gate: only charge on confident match (Option B)
     if results[0].get('score', 0) < 0.65:
+        session["last_auth_result"] = {"status": "unknown", "reason": "Low-confidence match so authenticity could not be assessed"}
         return render_template("match.html", error=NO_MATCH_ERROR, scan_failed=True)
 
     # Honest no-match: OCR read nothing at all AND DINOv2 (which only ever
@@ -9623,6 +10127,7 @@ def match():
     if (_ocr_status_lowconf == "no_text_found"
             and _dino_diag.get("fired") is True
             and _dino_diag.get("dino_gap", 1.0) < CFG.get("dinov2_swap_margin", 0.05)):
+        session["last_auth_result"] = {"status": "unknown", "reason": "Low-confidence match so authenticity could not be assessed"}
         return render_template(
             "match.html",
             error="We couldn't confidently match this card. Try a clearer photo, or check the lighting.",
@@ -9739,6 +10244,8 @@ def match():
     # Rule-based condition grade from query image
     grade = _safe_grade(str(query_path1))
 
+    auth_result = _build_auth_result_for_result(results[0] if results else None)
+    session["last_auth_result"] = auth_result
     return render_template(
         "results.html",
         results=results,
@@ -9752,6 +10259,7 @@ def match():
         grade=grade,
         paywall_triggered=scan_decision.get("limit_just_crossed", False),
         scans_remaining=scan_decision.get("remaining"),
+        auth_result=auth_result,
     )
 
 

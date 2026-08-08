@@ -98,7 +98,9 @@
 // when gsIsRunningInIOSApp() is true, so the "Add to Home Screen" web-PWA
 // banner no longer shows inside the native iOS app (nothing to add from —
 // there's no browser chrome). Reuses the existing detector, no new checks.
-const CACHE_NAME = 'grailsweep-v131';
+// v132 (2026-08-08) — match.html and results.html both changed (auth-engine
+// wiring), so the cached document HTML is stale for both routes.
+const CACHE_NAME = 'grailsweep-v132';
 const PRECACHE = [
   '/',
   '/static/style.css',

@@ -18,9 +18,192 @@
   </div>
 </div>
 
+{% if auth_result %}
+<div class="gs-auth-banner" id="gsAuthBanner" style="margin:12px 16px 0;" onclick="gsOpenAuthBannerModal()" role="button" tabindex="0" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); gsOpenAuthBannerModal(); }">
+  <div class="gs-auth-banner-head">
+    <span>🔐 Authenticity snapshot</span>
+    <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsOpenAuthBannerModal()">Details</button>
+  </div>
+  <div class="gs-auth-banner-status gs-auth-banner-status--{{ auth_result.status }}">
+    <span class="gs-auth-status-icon" aria-hidden="true">{% if auth_result.status == 'official_booster' or auth_result.status == 'official_starter' %}✓{% elif auth_result.status == 'counterfeit' %}⚠{% elif auth_result.needsReview %}⏱{% else %}•{% endif %}</span>
+    <span>{% if auth_result.status == 'official_booster' or auth_result.status == 'official_starter' %}Authentic{% elif auth_result.status == 'counterfeit' %}Suspected counterfeit{% elif auth_result.needsReview %}Needs review{% else %}Unknown{% endif %}</span>
+  </div>
+  <div class="gs-auth-banner-reason">{{ auth_result.reason }}</div>
+  {% if auth_result.confidence is defined %}
+  <div class="gs-auth-banner-confidence">Signal strength: {{ (auth_result.confidence * 100)|round(0) }}%</div>
+  {% endif %}
+</div>
+<div class="gs-auth-banner-modal gs-auth-modal-backdrop gs-hidden" id="gsAuthBannerModal" role="dialog" aria-modal="true" onTouchStart="gsAuthTouchStart(event)" onTouchEnd="gsAuthTouchEnd(event, 'gsAuthBannerModal')">
+  <div class="gs-auth-banner-modal-card gs-auth-modal">
+    <div class="gs-auth-modal-handle" aria-hidden="true"></div>
+    <div class="gs-auth-modal-header">
+      <div class="gs-auth-banner-modal-title">Authenticity snapshot</div>
+      <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsToggleAuthBannerModal()">Close</button>
+    </div>
+    <div class="gs-auth-banner-modal-status" id="gsAuthBannerModalStatus">{{ auth_result.display_status|default(auth_result.status.replace('_', ' ')) }}</div>
+    <p id="gsAuthBannerModalReason">{{ auth_result.reason }}</p>
+    <div class="gs-auth-confidence" id="gsAuthBannerModalConfidence"></div>
+    {% if auth_result.flags %}
+    <div class="gs-auth-banner-modal-flags" id="gsAuthBannerModalFlags">
+      <div class="gs-auth-banner-modal-flags-title">Flags</div>
+      <ul>
+        {% for flag in auth_result.flags %}
+        <li>{{ flag.replace('_', ' ') }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    <div class="gs-auth-actions">
+      <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsShareAuthResult(window.GS_AUTH_RESULT || null)">Share</button>
+      <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsToggleAuthBannerModal()">Close</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div id="auth-result" class="gs-auth-overlay gs-hidden" role="dialog" aria-modal="true" aria-live="polite">
+  <div class="gs-auth-overlay-handle" aria-hidden="true"></div>
+  <button type="button" id="auth-close-btn" class="gs-auth-overlay-close" aria-label="Close authenticity panel">×</button>
+  <div class="gs-auth-overlay-shell">
+    <div class="gs-auth-overlay-header">
+      <div>
+        <div class="gs-auth-overlay-eyebrow">Authenticity scan</div>
+        <div class="gs-auth-overlay-title">Review your result</div>
+      </div>
+      <div id="auth-status-pill" class="gs-auth-status-pill">Checking…</div>
+    </div>
+    <div id="camera-container" class="gs-auth-camera-container">
+      <video id="camera-stream" autoplay playsinline muted></video>
+      <button type="button" id="capture-btn">Capture</button>
+    </div>
+    <div id="scan-toggle" class="gs-auth-toggle">
+      <button type="button" id="scan-front" class="active">Front</button>
+      <button type="button" id="scan-back">Back</button>
+    </div>
+    <div id="manual-back-type" class="gs-auth-back-type">
+      <label for="back-type-select">Back type</label>
+      <select id="back-type-select">
+        <option value="">Select</option>
+        <option value="japanese">Japanese</option>
+        <option value="english-style">English</option>
+      </select>
+    </div>
+    <div id="auth-content" class="gs-auth-overlay-content">
+      <div class="auth-card">
+        <div class="auth-header">
+          <span id="auth-set-name">Unknown set</span>
+          <span id="auth-set-code" class="auth-set-code">-</span>
+        </div>
+        <div class="auth-badge-row">
+          <div id="auth-badge" class="auth-badge">Authentic</div>
+          <div id="auth-loading-spinner" class="auth-loading-spinner" aria-hidden="true">⟳</div>
+        </div>
+        <div id="auth-summary" class="gs-auth-summary">Reviewing the card details…</div>
+        <div id="auth-evidence" class="gs-auth-evidence" aria-live="polite"></div>
+        <div class="auth-body">
+          <div class="auth-row"><span class="label">Region:</span><span id="auth-region">-</span></div>
+          <div class="auth-row"><span class="label">Type:</span><span id="auth-type">-</span></div>
+          <div class="auth-row"><span class="label">Back:</span><span id="auth-back">-</span></div>
+          <div class="auth-row"><span class="label">Confidence:</span><div id="auth-confidence-bar"></div></div>
+          <div class="auth-row"><span class="label">Warnings:</span><div id="auth-warnings">None</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="gs-auth-overlay-actions">
+      <button type="button" id="auth-share-btn" class="gs-auth-overlay-btn">Share</button>
+      <button type="button" id="scan-again-btn">Scan another card</button>
+    </div>
+  </div>
+</div>
+
 {% if error %}
 <div class="mi-flash err" style="margin:8px 16px;">{{ error }}</div>
 {% endif %}
+
+<style>
+.gs-auth-banner { margin: 14px 16px 0; padding: 12px 14px 13px; border-radius: 14px; background: linear-gradient(135deg, rgba(177,77,255,0.22), rgba(0,229,255,0.12)); border: 1px solid rgba(177,77,255,0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: gsAuthPulse 2.6s ease-in-out infinite; cursor:pointer; }
+@keyframes gsAuthPulse { 0%,100% { box-shadow: 0 10px 30px rgba(0,0,0,0.2); } 50% { box-shadow: 0 12px 34px rgba(177,77,255,0.22); } }
+.gs-auth-banner-head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; font-size:0.78rem; font-weight:700; color:#f1d8ff; text-transform:uppercase; letter-spacing:0.04em; }
+.gs-auth-banner-btn { border:0; border-radius:999px; padding:6px 10px; background:rgba(255,255,255,0.14); color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer; transition:transform 0.2s ease, background 0.2s ease; }
+.gs-auth-banner-btn:hover { transform:translateY(-1px); background:rgba(255,255,255,0.22); }
+.gs-auth-banner-status { display:inline-flex; align-items:center; gap:7px; font-size:0.92rem; font-weight:800; margin-bottom:6px; letter-spacing:0.01em; }
+.gs-auth-status-icon { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:999px; background:rgba(255,255,255,0.12); font-size:0.78rem; line-height:1; }
+.gs-auth-banner-status--official_booster, .gs-auth-banner-status--official_starter { color:#00ff88; }
+.gs-auth-banner-status--custom_non_official { color:#ffd700; }
+.gs-auth-banner-status--counterfeit { color:#ff4466; }
+.gs-auth-banner-status--unknown { color:#8f9bb3; }
+.gs-auth-banner-reason { font-size:0.78rem; color:rgba(255,255,255,0.82); line-height:1.45; margin-top:2px; }
+.gs-auth-banner-confidence { font-size:0.72rem; color:rgba(255,255,255,0.6); margin-top:5px; letter-spacing:0.02em; }
+.gs-auth-banner-modal { position:fixed; inset:0; background:rgba(0,0,0,0.74); display:flex; align-items:flex-end; justify-content:center; padding:20px; z-index:99999; }
+.gs-hidden { display:none !important; }
+.gs-auth-banner-modal-card { width:min(480px,100%); background:#111; color:#fff; border-radius:16px 16px 0 0; border:1px solid rgba(255,255,255,0.14); padding:16px; box-shadow:0 16px 44px rgba(0,0,0,0.34); animation:gs-slide-up 200ms ease-out; }
+.gs-auth-modal-header { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; }
+.gs-auth-modal-handle { width:44px; height:4px; border-radius:999px; background:rgba(255,255,255,0.22); margin:2px auto 12px; }
+.gs-auth-banner-modal-title { font-size:0.82rem; font-weight:700; color:#f1d8ff; text-transform:uppercase; letter-spacing:0.04em; }
+.gs-auth-banner-modal-status { font-size:0.82rem; font-weight:700; margin-bottom:8px; color:#00e5ff; }
+.gs-auth-banner-modal-card p { color:rgba(255,255,255,0.78); font-size:0.8rem; line-height:1.45; margin-bottom:10px; }
+.gs-auth-confidence { margin: 8px 0 12px; }
+.gs-auth-confidence-bar { height:6px; border-radius:999px; background:rgba(255,255,255,0.12); overflow:hidden; }
+.gs-auth-confidence-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#b14dff,#00e5ff); }
+.gs-auth-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
+.gs-auth-banner-modal-flags { margin: 10px 0 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
+.gs-auth-banner-modal-flags-title { font-size: 0.74rem; font-weight: 700; color: #ffd700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+.gs-auth-banner-modal-flags ul { margin: 0; padding-left: 16px; color: rgba(255,255,255,0.8); font-size: 0.76rem; line-height: 1.4; }
+@keyframes gs-slide-up { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.gs-auth-overlay { position: fixed; left: 0; right: 0; bottom: 0; z-index: 99999; background: linear-gradient(180deg, rgba(17,17,24,0.98), rgba(10,10,18,0.98)); color: #fff; padding: 12px 16px 22px; border-radius: 18px 18px 0 0; box-shadow: 0 -16px 40px rgba(0,0,0,0.42); transform: translateY(100%); transition: transform 0.28s cubic-bezier(.2,.8,.2,1); touch-action: pan-down; max-height: 88vh; overflow: auto; }
+.gs-auth-overlay.visible { transform: translateY(0); }
+.gs-auth-overlay.gs-hidden { display: none !important; }
+.gs-auth-overlay-handle { width: 44px; height: 4px; border-radius: 999px; background: rgba(255,255,255,0.24); margin: 2px auto 10px; }
+#auth-close-btn { position: absolute; top: 10px; right: 12px; background: transparent; border: 0; color: #fff; font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.gs-auth-overlay-shell { display: flex; flex-direction: column; gap: 10px; }
+.gs-auth-overlay-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
+.gs-auth-overlay-eyebrow { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em; color: #8fe5ff; opacity: 0.9; }
+.gs-auth-overlay-title { font-size: 1rem; font-weight: 800; color: #fff; }
+.gs-auth-status-pill { padding: 6px 10px; border-radius: 999px; background: rgba(0,229,255,0.16); color: #bff7ff; font-size: 0.74rem; font-weight: 700; }
+.gs-auth-camera-container { display: flex; flex-direction: column; gap: 8px; min-height: 120px; border: 1px solid rgba(255,255,255,0.16); border-radius: 12px; padding: 10px; background: rgba(255,255,255,0.05); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
+.gs-auth-camera-container video { width: 100%; min-height: 120px; border-radius: 10px; background: #000; object-fit: cover; display: block; }
+.gs-auth-camera-container button, .gs-auth-toggle button, .gs-auth-back-type select, #scan-again-btn { border: 0; border-radius: 999px; padding: 9px 12px; font-size: 0.9rem; font-weight: 700; background: rgba(255,255,255,0.13); color: #fff; cursor: pointer; transition: transform 0.18s ease, background 0.18s ease; }
+.gs-auth-camera-container button:hover, .gs-auth-toggle button:hover, .gs-auth-back-type select:hover, #scan-again-btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.18); }
+.gs-auth-toggle { display: flex; gap: 8px; }
+.gs-auth-toggle button.active { background: linear-gradient(90deg, #b14dff, #00e5ff); color: #fff; }
+.gs-auth-back-type { display: flex; flex-direction: column; gap: 6px; font-size: 0.8rem; color: rgba(255,255,255,0.8); }
+.gs-auth-back-type select { width: 100%; }
+.gs-auth-overlay-content { padding: 8px 0 4px; font-size: 0.82rem; color: rgba(255,255,255,0.82); line-height: 1.45; }
+.gs-auth-overlay-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.gs-auth-overlay-btn { border: 0; border-radius: 999px; padding: 9px 12px; font-size: 0.9rem; font-weight: 700; background: rgba(255,255,255,0.13); color: #fff; cursor: pointer; transition: transform 0.18s ease, background 0.18s ease; }
+.gs-auth-overlay-btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.18); }
+.auth-card { background: linear-gradient(135deg, rgba(28,28,30,0.98), rgba(24,24,28,0.95)); border-radius: 16px; padding: 16px; color: #fff; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 10px 24px rgba(0,0,0,0.24); }
+.auth-header { display: flex; justify-content: space-between; margin-bottom: 8px; gap: 10px; font-weight: 700; }
+.auth-badge-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.auth-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.02em; background: rgba(255,255,255,0.10); color: #fff; border: 1px solid rgba(255,255,255,0.14); }
+.auth-badge.auth-green { background: rgba(46,204,113,0.16); color: #8ef0b1; border-color: rgba(46,204,113,0.24); }
+.auth-badge.auth-amber { background: rgba(241,196,15,0.16); color: #ffe38f; border-color: rgba(241,196,15,0.24); }
+.auth-badge.auth-red { background: rgba(231,76,60,0.16); color: #ffb8b0; border-color: rgba(231,76,60,0.24); }
+.auth-loading-spinner { display: none; font-size: 0.95rem; animation: gsAuthSpin 0.9s linear infinite; }
+#auth-result.loading { opacity: 0.4; pointer-events: none; }
+#auth-result.loading .auth-loading-spinner { display: block; }
+.gs-auth-summary { font-size: 0.8rem; color: rgba(255,255,255,0.78); margin-bottom: 8px; line-height: 1.45; }
+.gs-auth-evidence { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.gs-auth-evidence-chip { display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
+.gs-auth-evidence-chip--positive { background: rgba(52,199,89,0.14); border-color: rgba(52,199,89,0.22); color: #94f2ab; }
+.gs-auth-evidence-chip--warning { background: rgba(255,204,0,0.14); border-color: rgba(255,204,0,0.22); color: #ffd766; }
+.gs-auth-evidence-chip--neutral { background: rgba(0,229,255,0.12); border-color: rgba(0,229,255,0.22); color: #bff7ff; }
+.auth-set-code { font-size: 12px; opacity: 0.7; }
+.auth-row { display: flex; align-items: center; margin: 4px 0; gap: 8px; }
+.auth-row .label { width: 90px; font-size: 12px; opacity: 0.7; flex-shrink: 0; }
+#auth-confidence-bar { flex: 1; height: 8px; border-radius: 4px; background: #333; overflow: hidden; position: relative; transition: width 0.6s ease, background-color 0.3s ease; }
+#auth-confidence-bar.auth-green { background-color: #2ecc71; }
+#auth-confidence-bar.auth-amber { background-color: #f1c40f; }
+#auth-confidence-bar.auth-red { background-color: #e74c3c; }
+.auth-warning-item { display: inline-flex; align-items: center; margin: 2px; padding: 4px 8px; border-radius: 999px; font-size: 11px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.10); color: #fff; }
+.auth-warning-item.critical { background: rgba(231,76,60,0.16); color: #ffb8b0; border-color: rgba(231,76,60,0.24); }
+.auth-warning-item.caution { background: rgba(241,196,15,0.16); color: #ffe38f; border-color: rgba(241,196,15,0.24); }
+.auth-warning-item.info { background: rgba(0,229,255,0.12); color: #bff7ff; border-color: rgba(0,229,255,0.24); }
+.warning-pill { display: inline-block; padding: 2px 8px; margin: 2px; border-radius: 999px; font-size: 11px; background: #ff3b30; color: #fff; }
+.camera-error { position: fixed; bottom: 10px; left: 10px; right: 10px; background: #ff3b30; color: #fff; padding: 12px; border-radius: 12px; font-size: 13px; z-index: 100000; }
+@keyframes gsAuthSpin { to { transform: rotate(360deg); } }
+.camera-error button { margin-top: 8px; border: 0; border-radius: 999px; padding: 7px 10px; background: #fff; color: #ff3b30; font-weight: 700; }
+</style>
 
 {% if scan_failed %}
 <script>
@@ -55,6 +238,458 @@
 })();
 </script>
 {% endif %}
+
+<script>
+window.GS_AUTH_RESULT = {{ auth_result|tojson|safe if auth_result else 'null' }};
+var gsAuthTouchStartY = 0;
+
+function gsAuthTouchStart(e) {
+  if (e.touches && e.touches[0]) {
+    gsAuthTouchStartY = e.touches[0].clientY;
+  }
+}
+
+function gsAuthTouchEnd(e, modalId) {
+  if (!e.changedTouches || !e.changedTouches[0]) return;
+  var endY = e.changedTouches[0].clientY;
+  var delta = endY - gsAuthTouchStartY;
+  if (Math.abs(delta) < 50) return;
+  var modal = document.getElementById(modalId);
+  if (!modal) return;
+  if (delta < 0) {
+    if (modal.classList.contains('gs-hidden')) {
+      gsRenderAuthModal(window.GS_AUTH_RESULT || null);
+      modal.classList.remove('gs-hidden');
+    }
+  } else if (delta > 0) {
+    modal.classList.add('gs-hidden');
+  }
+}
+
+function gsShareAuthResult(auth) {
+  if (!auth) return;
+  var text = [
+    'GrailSweep Authenticity Result',
+    'Status: ' + (auth.display_status || auth.status || 'Unknown'),
+    auth.reason && ('Reason: ' + auth.reason),
+    typeof auth.confidence === 'number' && ('Confidence: ' + Math.round(auth.confidence * 100) + '%'),
+    Array.isArray(auth.flags) && auth.flags.length ? ('Flags: ' + auth.flags.join(', ')) : null
+  ].filter(Boolean).join('\n');
+  if (navigator.share) {
+    navigator.share({ title: 'GrailSweep Authenticity', text: text }).catch(function() {});
+  } else if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      if (typeof gsShowToast === 'function') {
+        gsShowToast('Authenticity result copied to clipboard', { title: 'Shared', variant: 'success', duration: 2200 });
+      }
+    }).catch(function() {});
+  }
+}
+
+function gsRenderAuthBadge(auth, targetEl) {
+  if (!targetEl) return;
+  if (!auth) {
+    targetEl.textContent = 'Unknown';
+    targetEl.className = 'res-auth-badge';
+    return;
+  }
+  var status = auth.status || 'unknown';
+  var needsReview = !!auth.needsReview;
+  var label = 'Unknown';
+  var cls = 'res-auth-badge';
+  if (status === 'official_booster' || status === 'official_starter') {
+    label = 'Authentic';
+    cls = 'res-auth-badge auth-genuine';
+  } else if (status === 'counterfeit') {
+    label = 'Suspected counterfeit';
+    cls = 'res-auth-badge auth-fake';
+  } else if (needsReview) {
+    label = 'Needs review';
+    cls = 'res-auth-badge auth-uncertain';
+  }
+  targetEl.className = cls;
+  targetEl.textContent = label;
+}
+
+function gsRenderAuthModal(auth) {
+  if (!auth) return;
+  var statusEl = document.getElementById('gsAuthBannerModalStatus');
+  var reasonEl = document.getElementById('gsAuthBannerModalReason');
+  var flagsEl = document.getElementById('gsAuthBannerModalFlags');
+  var confidenceEl = document.getElementById('gsAuthBannerModalConfidence');
+  if (statusEl) {
+    statusEl.textContent = auth.display_status || auth.status || 'Unknown';
+  }
+  if (reasonEl) {
+    reasonEl.textContent = auth.reason || 'No details available.';
+  }
+  if (confidenceEl) {
+    if (typeof auth.confidence === 'number') {
+      var pct = Math.round(auth.confidence * 100);
+      confidenceEl.innerHTML = '<div class="gs-auth-confidence-bar"><div class="gs-auth-confidence-fill" style="width:' + pct + '%"></div></div>';
+    } else {
+      confidenceEl.innerHTML = '';
+    }
+  }
+  if (flagsEl) {
+    var flags = Array.isArray(auth.flags) ? auth.flags : [];
+    if (flags.length) {
+      var list = flags.map(function(flag){ return '<li>' + flag.replace(/_/g, ' ') + '</li>'; }).join('');
+      flagsEl.innerHTML = '<div class="gs-auth-banner-modal-flags-title">Flags</div><ul>' + list + '</ul>';
+      flagsEl.classList.remove('gs-hidden');
+    } else {
+      flagsEl.innerHTML = '';
+      flagsEl.classList.add('gs-hidden');
+    }
+  }
+}
+
+function gsToggleAuthBannerModal() {
+  var modal = document.getElementById('gsAuthBannerModal');
+  var overlay = document.getElementById('auth-result');
+  if (modal) {
+    modal.classList.add('gs-hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+  if (overlay && overlay.classList.contains('visible')) {
+    if (window.hideAuthResult) {
+      window.hideAuthResult();
+    }
+  } else if (window.gsShowAuthOverlay) {
+    window.gsShowAuthOverlay(window.GS_AUTH_RESULT || null);
+  }
+}
+
+function gsOpenAuthBannerModal() {
+  var modal = document.getElementById('gsAuthBannerModal');
+  if (modal) {
+    modal.classList.add('gs-hidden');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+  if (window.gsShowAuthOverlay) {
+    window.gsShowAuthOverlay(window.GS_AUTH_RESULT || null);
+  }
+}
+
+function gsOpenDetailAuthModal() {
+  gsOpenAuthBannerModal();
+}
+
+(function() {
+  var overlay = document.getElementById('auth-result');
+  var content = document.getElementById('auth-content');
+  var captureBtn = document.getElementById('capture-btn');
+  var closeBtn = document.getElementById('auth-close-btn');
+  var shareBtn = document.getElementById('auth-share-btn');
+  var scanAgainBtn = document.getElementById('scan-again-btn');
+  var backTypeSelect = document.getElementById('back-type-select');
+  var frontBtn = document.getElementById('scan-front');
+  var backBtn = document.getElementById('scan-back');
+  var currentScanSide = 'front';
+  var startY = 0;
+
+  if (!overlay || !content || !captureBtn || !closeBtn || !scanAgainBtn || !backTypeSelect || !frontBtn || !backBtn) return;
+
+  function setActiveToggle(id) {
+    frontBtn.classList.toggle('active', id === 'scan-front');
+    backBtn.classList.toggle('active', id === 'scan-back');
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function autoDismiss() {
+    try { window.clearTimeout(window.__gsAuthOverlayTimer); } catch (e) {}
+    window.__gsAuthOverlayTimer = window.setTimeout(function() {
+      hideAuthResult();
+    }, 5000);
+  }
+
+  function hideAuthResult() {
+    overlay.classList.remove('visible');
+    overlay.classList.add('gs-hidden');
+  }
+
+  function updateConfidenceBar(score, auth) {
+    var bar = document.getElementById('auth-confidence-bar');
+    var pill = document.getElementById('auth-status-pill');
+    if (!bar) return;
+    var pct = Math.max(0, Math.min(100, Math.round((Number(score) || 0) * 100)));
+    var status = (auth && auth.status) || 'unknown';
+    var color = pct >= 80 ? '#34c759' : pct >= 50 ? '#ffcc00' : '#ff3b30';
+    var label = pct >= 80 ? 'Strong signal' : pct >= 50 ? 'Moderate' : 'Needs more signal';
+    if (status === 'official_booster' || status === 'official_starter') {
+      color = '#34c759';
+      label = 'Looks official';
+    } else if (status === 'counterfeit') {
+      color = '#ff3b30';
+      label = 'Needs caution';
+    } else if (auth && auth.needsReview) {
+      color = '#ffcc00';
+      label = 'Needs review';
+    }
+    bar.style.setProperty('--confidence-width', pct + '%');
+    bar.style.setProperty('--confidence-color', color);
+    bar.style.background = '#333';
+    if (pill) {
+      pill.textContent = label;
+      pill.style.background = status === 'counterfeit' ? 'rgba(255,59,48,0.16)' : (status === 'official_booster' || status === 'official_starter' ? 'rgba(52,199,89,0.16)' : (auth && auth.needsReview ? 'rgba(255,204,0,0.16)' : 'rgba(0,229,255,0.16)'));
+      pill.style.color = status === 'counterfeit' ? '#ffb4ab' : (status === 'official_booster' || status === 'official_starter' ? '#94f2ab' : (auth && auth.needsReview ? '#ffd766' : '#bff7ff'));
+    }
+  }
+
+  function renderEvidence(payload, auth) {
+    var container = document.getElementById('auth-evidence');
+    if (!container) return;
+    var chips = [];
+    var status = (auth && auth.status) || 'unknown';
+    if (status === 'official_booster' || status === 'official_starter') {
+      chips.push({ text: 'Official set match', tone: 'positive' });
+    } else if (status === 'counterfeit') {
+      chips.push({ text: 'Mismatch detected', tone: 'warning' });
+    } else if (auth && auth.needsReview) {
+      chips.push({ text: 'Needs review', tone: 'warning' });
+    } else {
+      chips.push({ text: 'Review pending', tone: 'neutral' });
+    }
+    if (payload && payload.back) {
+      chips.push({ text: 'Back: ' + (payload.back === 'japanese' ? 'Japanese' : 'English'), tone: payload.back === 'japanese' ? 'neutral' : 'positive' });
+    }
+    if (payload && payload.setCode && payload.setCode !== '-') {
+      chips.push({ text: 'Set: ' + payload.setCode, tone: 'neutral' });
+    }
+    if (payload && payload.warnings && payload.warnings.length) {
+      chips.push({ text: payload.warnings.length + ' caution point' + (payload.warnings.length > 1 ? 's' : ''), tone: 'warning' });
+    } else {
+      chips.push({ text: 'No major issues', tone: 'positive' });
+    }
+    container.innerHTML = chips.map(function(chip) {
+      return '<span class="gs-auth-evidence-chip gs-auth-evidence-chip--' + chip.tone + '">' + escapeHtml(chip.text) + '</span>';
+    }).join('');
+  }
+
+  function renderWarnings(warnings) {
+    var container = document.getElementById('auth-warnings');
+    if (!container) return;
+    container.innerHTML = '';
+    var list = Array.isArray(warnings) ? warnings : [];
+    if (!list.length) {
+      container.textContent = 'None';
+      return;
+    }
+    list.forEach(function(code) {
+      var pill = document.createElement('span');
+      pill.className = 'warning-pill';
+      pill.textContent = mapWarningLabel(code);
+      container.appendChild(pill);
+    });
+  }
+
+  function mapWarningLabel(code) {
+    switch (code) {
+      case 'back_mismatch': return 'Back mismatch';
+      case 'number_out_of_range': return 'Number out of range';
+      case 'product_mismatch': return 'Product mismatch';
+      case 'unknown_set': return 'Unknown set';
+      case 'special_product': return 'Special product';
+      case 'rarity_mismatch': return 'Rarity mismatch';
+      case 'number_mismatch': return 'Number mismatch';
+      default: return String(code || 'Warning');
+    }
+  }
+
+  function raiseAuthCardData(auth) {
+    var base = auth || window.GS_AUTH_RESULT || {};
+    var setInfo = base.setInfo || {
+      name: base.set_name || base.setName || 'Unknown set',
+      setCode: base.setCode || base.set_code || '-',
+      region: base.region || (base.status === 'official_booster' ? 'English' : 'Unknown'),
+      type: base.type || (base.status === 'official_booster' ? 'Booster' : 'Unknown')
+    };
+    var warnings = Array.isArray(base.warnings) ? base.warnings : (Array.isArray(base.flags) ? base.flags : []);
+    var confidenceScore = (typeof base.confidenceScore === 'number' && base.confidenceScore >= 0) ? base.confidenceScore : (typeof base.confidence === 'number' ? base.confidence : 0.5);
+    var backValue = base.card && base.card.back ? base.card.back : (base.backType || (backTypeSelect.value || 'Unknown'));
+    return {
+      setName: setInfo.name || 'Unknown set',
+      setCode: setInfo.setCode || '-',
+      region: setInfo.region || '-',
+      type: setInfo.type || '-',
+      back: backValue || '-',
+      confidence: confidenceScore,
+      warnings: warnings,
+      reason: base.reason || 'No authenticity details available.'
+    };
+  }
+
+  function resetCamera() {
+    var video = document.getElementById('camera-stream');
+    if (video) {
+      if (video.srcObject && video.srcObject.getTracks) {
+        video.srcObject.getTracks().forEach(function(track) { track.stop(); });
+      }
+      video.srcObject = null;
+    }
+    initCamera();
+  }
+
+  function showCameraError(err) {
+    var existing = document.querySelector('.camera-error');
+    if (existing) existing.remove();
+    var msg = document.createElement('div');
+    msg.className = 'camera-error';
+    msg.innerHTML = '<p>Camera access failed.</p><p>' + escapeHtml(err && err.message ? err.message : 'Please check permissions and try again.') + '</p><button id="retry-camera" type="button">Retry</button>';
+    document.body.appendChild(msg);
+    document.getElementById('retry-camera').addEventListener('click', function() {
+      msg.remove();
+      initCamera();
+    });
+  }
+
+  window.initCamera = async function() {
+    var video = document.getElementById('camera-stream');
+    if (!video || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      showCameraError({ message: 'Camera API is unavailable on this browser.' });
+      return;
+    }
+    try {
+      var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = stream;
+      try { await video.play(); } catch (e) {}
+    } catch (err) {
+      showCameraError(err);
+    }
+  };
+
+  async function detectBackTypeFromImage(imageData, side) {
+    if (side !== 'back') return null;
+    return null;
+  }
+
+  async function captureCardImage(side) {
+    return { imageData: {}, autoBackType: await detectBackTypeFromImage({}, side) };
+  }
+
+  function runAuthenticityPipeline(payload) {
+    var base = window.GS_AUTH_RESULT || {};
+    var derived = raiseAuthCardData(base);
+    if (payload && payload.back) {
+      derived.back = payload.back;
+    }
+    if (payload && payload.side) {
+      derived.side = payload.side;
+    }
+    return derived;
+  }
+
+  function showAuthResult(auth) {
+    var payload = raiseAuthCardData(auth || window.GS_AUTH_RESULT || null);
+    if (backTypeSelect && backTypeSelect.value) {
+      payload.back = backTypeSelect.value;
+    }
+    document.getElementById('auth-set-name').textContent = payload.setName;
+    document.getElementById('auth-set-code').textContent = payload.setCode;
+    document.getElementById('auth-region').textContent = payload.region;
+    document.getElementById('auth-type').textContent = payload.type;
+    document.getElementById('auth-back').textContent = payload.back;
+    var summary = document.getElementById('auth-summary');
+    if (summary) {
+      summary.textContent = payload.reason || 'No authenticity details available.';
+    }
+    var statusPill = document.getElementById('auth-status-pill');
+    if (statusPill) {
+      var summaryLabel = payload.reason ? 'Result ready' : 'Checking…';
+      if (auth && auth.status === 'official_booster') {
+        summaryLabel = 'Looks official';
+      } else if (auth && auth.status === 'counterfeit') {
+        summaryLabel = 'Needs caution';
+      } else if (auth && auth.needsReview) {
+        summaryLabel = 'Needs review';
+      }
+      statusPill.textContent = summaryLabel;
+      statusPill.style.background = 'rgba(0,229,255,0.16)';
+      statusPill.style.color = '#bff7ff';
+    }
+    updateConfidenceBar(payload.confidence, auth);
+    renderEvidence(payload, auth);
+    renderWarnings(payload.warnings);
+    overlay.classList.remove('gs-hidden');
+    overlay.classList.add('visible');
+    autoDismiss();
+  }
+
+  frontBtn.addEventListener('click', function() {
+    currentScanSide = 'front';
+    setActiveToggle('scan-front');
+  });
+
+  backBtn.addEventListener('click', function() {
+    currentScanSide = 'back';
+    setActiveToggle('scan-back');
+  });
+
+  captureBtn.addEventListener('click', async function() {
+    var captureInfo = await captureCardImage(currentScanSide);
+    var manualBackType = backTypeSelect.value || null;
+    var backType = manualBackType || captureInfo.autoBackType || null;
+    var auth = runAuthenticityPipeline({ side: currentScanSide, imageData: captureInfo.imageData, back: backType });
+    showAuthResult(auth);
+  });
+
+  if (backTypeSelect) {
+    backTypeSelect.addEventListener('change', function() {
+      if (overlay.classList.contains('visible')) {
+        showAuthResult(window.GS_AUTH_RESULT || null);
+      }
+    });
+  }
+
+  if (shareBtn) {
+    shareBtn.addEventListener('click', function() {
+      gsShareAuthResult(window.GS_AUTH_RESULT || null);
+    });
+  }
+
+  closeBtn.addEventListener('click', function() {
+    hideAuthResult();
+  });
+
+  overlay.addEventListener('touchstart', function(e) {
+    if (e.touches && e.touches[0]) startY = e.touches[0].clientY;
+  });
+
+  overlay.addEventListener('touchmove', function(e) {
+    if (!e.touches || !e.touches[0]) return;
+    var delta = e.touches[0].clientY - startY;
+    if (delta > 60) hideAuthResult();
+  });
+
+  scanAgainBtn.addEventListener('click', function() {
+    hideAuthResult();
+    resetCamera();
+  });
+
+  window.gsShowAuthOverlay = function(auth) {
+    showAuthResult(auth || window.GS_AUTH_RESULT || null);
+  };
+
+  window.hideAuthResult = function() {
+    hideAuthResult();
+  };
+
+  window.addEventListener('load', function() {
+    initCamera();
+    if (window.GS_AUTH_RESULT) {
+      window.gsShowAuthOverlay(window.GS_AUTH_RESULT);
+    }
+  });
+})();
+</script>
 
 <div class="cx-wrap">
 
@@ -443,6 +1078,7 @@
         <div class="res-auth-badge" id="detAuthBadge"></div>
         <p class="res-auth-note" id="detAuthNote"></p>
         <div class="res-auth-flags gs-hidden" id="detAuthFlags"></div>
+        <button type="button" class="detail-auth-btn" onclick="gsOpenDetailAuthModal()" style="margin-top:10px;">Check authenticity</button>
         <p class="res-auth-disclaimer">AI assessment only — not a substitute for physical inspection.</p>
       </div>
     </div>
@@ -1283,6 +1919,7 @@ html.gs-weak-device .cx-upload {
 .res-auth-badge.auth-uncertain { color: #ff9800; }
 .res-auth-badge.auth-fake { color: #f44336; }
 .res-auth-note { font-size: 0.75rem; color: rgba(255,255,255,0.55); margin: 4px 0; }
+.detail-auth-btn { margin-top: 10px; padding: 8px 12px; border: none; border-radius: 999px; background: linear-gradient(135deg, #b14dff, #00e5ff); color: #fff; font-size: 0.76rem; font-weight: 700; cursor: pointer; }
 .auth-flag { font-size: 0.75rem; color: rgba(255,255,255,0.65); margin-top: 3px; }
 .res-auth-disclaimer { font-size: 0.68rem; color: rgba(255,255,255,0.30); margin-top: 8px; font-style: italic; }
 /* Language toggle button — scanner bottom bar */
@@ -2654,6 +3291,25 @@ function openDetail(c){
     if (_ab) { _ab.textContent = ''; _ab.className = 'res-auth-badge'; }
     if (_an) _an.textContent = '';
     if (_af) { _af.innerHTML = ''; _af.classList.add('gs-hidden'); }
+  }
+  if (window.GS_AUTH_RESULT) {
+    var _detailAuth = window.GS_AUTH_RESULT;
+    var _detAuthBadge = document.getElementById('detAuthBadge');
+    var _detAuthNote = document.getElementById('detAuthNote');
+    var _detAuthFlags = document.getElementById('detAuthFlags');
+    var _detAuthWrap = document.getElementById('detGradeAuth');
+    if (_detAuthBadge) { gsRenderAuthBadge(_detailAuth, _detAuthBadge); }
+    if (_detAuthNote) { _detAuthNote.textContent = _detailAuth.reason || ''; }
+    if (_detAuthFlags) {
+      if (_detailAuth.flags && _detailAuth.flags.length) {
+        _detAuthFlags.innerHTML = _detailAuth.flags.map(function(flag){ return '<div class="auth-flag">• ' + flag.replace(/_/g, ' ') + '</div>'; }).join('');
+        _detAuthFlags.classList.remove('gs-hidden');
+      } else {
+        _detAuthFlags.innerHTML = '';
+        _detAuthFlags.classList.add('gs-hidden');
+      }
+    }
+    if (_detAuthWrap) { _detAuthWrap.classList.remove('gs-hidden'); }
   }
   var p=c.profile||{};
   var tags='';

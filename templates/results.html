@@ -22,6 +22,50 @@
     <button type="button" class="res-col-add-btn" id="gsWatchlistBtn" onclick="gsWatchlistToggle()" style="background:rgba(0,229,255,0.08);border-color:rgba(0,229,255,0.3);color:#00e5ff;">☆ Watchlist</button>
   </div>
 
+  {% if auth_result %}
+  <div class="res-auth-card" id="resAuthCard" onclick="gsOpenAuthModal()" role="button" tabindex="0" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); gsOpenAuthModal(); }">
+    <div class="res-auth-head">
+      <div class="res-auth-title">🔐 Authenticity</div>
+      <button type="button" class="res-auth-btn" id="resAuthBtn" onclick="event.stopPropagation(); gsOpenAuthModal()">Details</button>
+    </div>
+    <div class="res-auth-badge res-auth-badge--{{ auth_result.status }}" id="resAuthBadge">
+      <span class="res-auth-status-icon" aria-hidden="true">{% if auth_result.status == 'official_booster' or auth_result.status == 'official_starter' %}✓{% elif auth_result.status == 'counterfeit' %}⚠{% elif auth_result.needsReview %}⏱{% else %}•{% endif %}</span>
+      <span>{% if auth_result.status == 'official_booster' or auth_result.status == 'official_starter' %}Authentic{% elif auth_result.status == 'counterfeit' %}Suspected counterfeit{% elif auth_result.needsReview %}Needs review{% else %}Unknown{% endif %}</span>
+    </div>
+    <div class="res-auth-reason" id="resAuthReason">{{ auth_result.reason }}</div>
+    {% if auth_result.confidence is defined %}
+    <div class="res-auth-confidence">Signal strength: {{ (auth_result.confidence * 100)|round(0) }}%</div>
+    {% endif %}
+  </div>
+
+  <div class="res-auth-modal gs-auth-modal-backdrop gs-hidden" id="resAuthModal" role="dialog" aria-modal="true" onTouchStart="gsAuthTouchStart(event)" onTouchEnd="gsAuthTouchEnd(event, 'resAuthModal')">
+    <div class="res-auth-modal-card gs-auth-modal">
+      <div class="gs-auth-modal-handle" aria-hidden="true"></div>
+      <div class="gs-auth-modal-header">
+        <div class="res-auth-modal-title">Authenticity check</div>
+        <button type="button" class="res-auth-btn" onclick="event.stopPropagation(); gsToggleAuthModal()">Close</button>
+      </div>
+      <div class="res-auth-modal-status">{{ auth_result.display_status|default(auth_result.status.replace('_', ' ')) }}</div>
+      <p>{{ auth_result.reason }}</p>
+      <div class="gs-auth-confidence" id="resAuthConfidence"></div>
+      {% if auth_result.flags %}
+      <div class="res-auth-modal-flags" id="resAuthModalFlags">
+        <div class="res-auth-modal-flags-title">Flags</div>
+        <ul>
+          {% for flag in auth_result.flags %}
+          <li>{{ flag.replace('_', ' ') }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+      <div class="gs-auth-actions">
+        <button type="button" class="res-auth-btn" onclick="event.stopPropagation(); gsShareAuthResult(window.GS_AUTH_RESULT || null)">Share</button>
+        <button type="button" class="res-auth-btn" onclick="event.stopPropagation(); gsToggleAuthModal()">Close</button>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   {# ── Scan status / paywall notification (Task 9c Phase B) ── #}
   {% if paywall_triggered %}
   <div class="mi-flash err res-paywall-banner" style="margin:0 0 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -1015,6 +1059,29 @@
 }
 #resPriceChart { width: 100% !important; }
 
+.res-auth-card { margin: 14px 0 0; padding: 14px 15px 15px; border-radius: 14px; background: linear-gradient(135deg, rgba(177,77,255,0.2), rgba(0,229,255,0.12)); border: 1px solid rgba(177,77,255,0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.18); animation: resAuthPulse 2.8s ease-in-out infinite; cursor:pointer; }
+@keyframes resAuthPulse { 0%,100% { box-shadow: 0 10px 30px rgba(0,0,0,0.18); } 50% { box-shadow: 0 12px 34px rgba(177,77,255,0.24); } }
+.res-auth-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 9px; }
+.res-auth-title { font-size: 0.8rem; font-weight: 700; color: #f1d8ff; letter-spacing: 0.04em; text-transform: uppercase; }
+.res-auth-btn { border: 0; border-radius: 999px; padding: 7px 10px; background: rgba(255,255,255,0.16); color: #fff; font-size: 0.74rem; font-weight: 700; cursor: pointer; transition: transform 0.2s ease, background 0.2s ease; }
+.res-auth-btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.24); }
+.res-auth-badge { display:inline-flex; align-items:center; gap:7px; font-size: 0.82rem; font-weight: 800; margin-bottom: 6px; letter-spacing: 0.01em; }
+.res-auth-status-icon { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:999px; background:rgba(255,255,255,0.12); font-size:0.78rem; line-height:1; }
+.res-auth-badge--official_booster, .res-auth-badge--official_starter { color: #00ff88; }
+.res-auth-badge--custom_non_official { color: #ffd700; }
+.res-auth-badge--counterfeit { color: #ff4466; }
+.res-auth-badge--unknown { color: #8f9bb3; }
+.res-auth-reason { font-size: 0.78rem; color: rgba(255,255,255,0.82); line-height: 1.45; margin-top: 2px; }
+.res-auth-confidence { font-size: 0.72rem; color: rgba(255,255,255,0.6); margin-top: 6px; letter-spacing: 0.02em; }
+.res-auth-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.74); display: flex; align-items: flex-end; justify-content: center; padding: 20px; z-index: 99999; }
+.res-auth-modal-card { width: min(480px, 100%); background: #111; color: #fff; border: 1px solid rgba(255,255,255,0.14); border-radius: 16px 16px 0 0; padding: 16px; box-shadow: 0 16px 44px rgba(0,0,0,0.34); animation: gs-slide-up 200ms ease-out; }
+.res-auth-modal-title { font-size: 0.9rem; font-weight: 700; color: #f1d8ff; text-transform: uppercase; letter-spacing: 0.04em; }
+.res-auth-modal-status { font-size: 0.82rem; font-weight: 700; margin-bottom: 8px; color: #00e5ff; }
+.res-auth-modal-card p { color: rgba(255,255,255,0.78); font-size: 0.8rem; line-height: 1.45; margin-bottom: 10px; }
+.res-auth-modal-flags { margin: 10px 0 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
+.res-auth-modal-flags-title { font-size: 0.74rem; font-weight: 700; color: #ffd700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+.res-auth-modal-flags ul { margin: 0; padding-left: 16px; color: rgba(255,255,255,0.8); font-size: 0.76rem; line-height: 1.4; }
+
 /* ── Condition grade ── */
 .res-grade { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; margin-top: 14px; }
 .res-grade-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
@@ -1086,6 +1153,72 @@ function miOpen(imgEl) {
 function miClose() {
   document.getElementById("miLightImg").src = "";
   document.getElementById("miLight").style.display = "none";
+}
+
+var gsAuthTouchStartY = 0;
+
+function gsAuthTouchStart(e) {
+  if (e.touches && e.touches[0]) {
+    gsAuthTouchStartY = e.touches[0].clientY;
+  }
+}
+
+function gsAuthTouchEnd(e, modalId) {
+  if (!e.changedTouches || !e.changedTouches[0]) return;
+  var endY = e.changedTouches[0].clientY;
+  var delta = endY - gsAuthTouchStartY;
+  if (Math.abs(delta) < 50) return;
+  var modal = document.getElementById(modalId);
+  if (!modal) return;
+  if (delta < 0) {
+    if (modal.classList.contains('gs-hidden')) {
+      modal.classList.remove('gs-hidden');
+    }
+  } else if (delta > 0) {
+    modal.classList.add('gs-hidden');
+  }
+}
+
+function gsShareAuthResult(auth) {
+  if (!auth) return;
+  var text = [
+    'GrailSweep Authenticity Result',
+    'Status: ' + (auth.display_status || auth.status || 'Unknown'),
+    auth.reason && ('Reason: ' + auth.reason),
+    typeof auth.confidence === 'number' && ('Confidence: ' + Math.round(auth.confidence * 100) + '%'),
+    Array.isArray(auth.flags) && auth.flags.length ? ('Flags: ' + auth.flags.join(', ')) : null
+  ].filter(Boolean).join('\n');
+  if (navigator.share) {
+    navigator.share({ title: 'GrailSweep Authenticity', text: text }).catch(function() {});
+  } else if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      if (typeof gsShowToast === 'function') {
+        gsShowToast('Authenticity result copied to clipboard', { title: 'Shared', variant: 'success', duration: 2200 });
+      }
+    }).catch(function() {});
+  }
+}
+
+function gsOpenAuthModal() {
+  var modal = document.getElementById('resAuthModal');
+  if (!modal) return;
+  var confidenceEl = document.getElementById('resAuthConfidence');
+  if (confidenceEl && window.GS_AUTH_RESULT) {
+    var auth = window.GS_AUTH_RESULT;
+    if (typeof auth.confidence === 'number') {
+      var pct = Math.round(auth.confidence * 100);
+      confidenceEl.innerHTML = '<div class="gs-auth-confidence-bar"><div class="gs-auth-confidence-fill" style="width:' + pct + '%"></div></div>';
+    } else {
+      confidenceEl.innerHTML = '';
+    }
+  }
+  modal.classList.remove('gs-hidden');
+}
+
+function gsToggleAuthModal() {
+  var modal = document.getElementById('resAuthModal');
+  if (!modal) return;
+  modal.classList.toggle('gs-hidden');
 }
 
 document.addEventListener("keydown", function(e) {

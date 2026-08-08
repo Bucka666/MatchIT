@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0f0f1a" />
+    <title>GrailSweep Authenticity PWA</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      body { margin:0; background:linear-gradient(135deg,#0f0f1a 0%,#1a1530 100%); color:#fff; min-height:100vh; }
+      .shell { max-width: 920px; margin: 0 auto; padding: 24px 16px 48px; }
+      .card { background: rgba(17,17,24,0.88); border:1px solid rgba(255,255,255,0.12); border-radius: 20px; box-shadow: 0 16px 40px rgba(0,0,0,0.28); padding: 18px; }
+      .hero { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; }
+      .hero h1 { margin:0; font-size:1.1rem; }
+      .hero p { margin:4px 0 0; color:rgba(255,255,255,0.72); font-size:0.9rem; }
+      .pill { display:inline-flex; align-items:center; gap:6px; padding:8px 10px; border-radius:999px; background:rgba(177,77,255,0.18); color:#f1d8ff; font-size:0.8rem; font-weight:700; }
+      .grid { display:grid; gap:14px; } 
+      .panel { border-radius:16px; padding:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); }
+      .panel h2 { margin:0 0 8px; font-size:0.96rem; }
+      .panel p { margin:0; color:rgba(255,255,255,0.75); font-size:0.85rem; line-height:1.45; }
+      .controls { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+      button, select { border:0; border-radius:999px; padding:9px 12px; font-weight:700; font-size:0.9rem; cursor:pointer; }
+      button { background: linear-gradient(90deg,#b14dff,#00e5ff); color:#fff; }
+      select { background:rgba(255,255,255,0.12); color:#fff; }
+      video { width:100%; border-radius:14px; background:#000; min-height:160px; object-fit:cover; }
+      .overlay { margin-top:14px; padding:14px; border-radius:16px; background:linear-gradient(135deg,rgba(28,28,30,0.98),rgba(24,24,28,0.95)); border:1px solid rgba(255,255,255,0.08); }
+      .overlay-header { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; margin-bottom:8px; }
+      .overlay-title { font-weight:800; }
+      .overlay-meta { font-size:0.8rem; color:rgba(255,255,255,0.74); }
+      .summary { margin:8px 0 10px; color:rgba(255,255,255,0.82); font-size:0.86rem; line-height:1.45; }
+      .evidence { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+      .chip { display:inline-flex; padding:6px 8px; border-radius:999px; font-size:0.72rem; font-weight:700; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.12); color:rgba(255,255,255,0.9); }
+      .chip.is-positive { background:rgba(52,199,89,0.14); color:#94f2ab; border-color:rgba(52,199,89,0.2); }
+      .chip.is-warning { background:rgba(255,204,0,0.14); color:#ffd766; border-color:rgba(255,204,0,0.2); }
+      .chip.is-neutral { background:rgba(0,229,255,0.12); color:#bff7ff; border-color:rgba(0,229,255,0.2); }
+      .row { display:flex; justify-content:space-between; gap:10px; font-size:0.82rem; margin:4px 0; color:rgba(255,255,255,0.82); }
+      .bar { height:8px; border-radius:999px; background:#333; overflow:hidden; margin-top:6px; }
+      .bar > span { display:block; height:100%; border-radius:inherit; transition:width .2s ease; }
+      .warning-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+      .warning { display:inline-block; padding:4px 8px; border-radius:999px; font-size:0.72rem; background:#ff3b30; color:#fff; }
+      .overlay-close { position:absolute; top:12px; right:12px; border:0; background:rgba(255,255,255,0.12); color:#fff; width:32px; height:32px; border-radius:999px; cursor:pointer; }
+      .overlay.visible { display:block; }
+      .hidden { display:none; }
+      .auth-card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 12px; margin: 10px 0; }
+      .auth-header { display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:8px; font-weight:700; }
+      .auth-set-code { font-size:0.8rem; opacity:0.7; }
+      .auth-body { display:flex; flex-direction:column; gap:6px; }
+      .auth-row { display:flex; align-items:center; gap:8px; font-size:0.85rem; color:rgba(255,255,255,0.82); }
+      .auth-row .label { width:76px; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.08em; opacity:0.7; }
+      .muted { color:rgba(255,255,255,0.62); }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="card">
+        <div class="hero">
+          <div>
+            <h1>Authenticity review</h1>
+            <p>Modular PWA/TWA shell for the GrailSweep authenticity overlay.</p>
+          </div>
+          <div class="pill">⚡ Module-ready</div>
+        </div>
+
+        <div class="grid">
+          <div class="panel">
+            <h2>Camera</h2>
+            <video id="camera-stream" autoplay playsinline muted></video>
+            <div class="controls">
+              <button id="capture-btn" type="button">Capture review</button>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h2>Back type</h2>
+            <p>Pick the card back style to test the review pipeline.</p>
+            <div class="controls">
+              <select id="back-type-select">
+                <option value="">Select</option>
+                <option value="english-style">English</option>
+                <option value="japanese">Japanese</option>
+              </select>
+              <button id="scan-again-btn" type="button">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <section id="auth-result" class="overlay" aria-live="polite">
+          <button id="auth-close-btn" class="overlay-close" type="button" aria-label="Close authenticity panel">×</button>
+          <div class="overlay-header">
+            <div>
+              <div class="overlay-title" id="auth-set-name">Unknown set</div>
+              <div class="overlay-meta" id="auth-set-code">-</div>
+            </div>
+            <div class="pill" id="auth-status-pill">Checking…</div>
+          </div>
+          <div class="summary" id="auth-summary">Reviewing the card details…</div>
+          <div class="evidence" id="auth-evidence"></div>
+          <div class="row"><span>Region</span><strong id="auth-region">-</strong></div>
+          <div class="row"><span>Type</span><strong id="auth-type">-</strong></div>
+          <div class="row"><span>Back</span><strong id="auth-back">-</strong></div>
+          <div class="row"><span>Confidence</span><strong id="auth-confidence-label">0%</strong></div>
+          <div class="bar"><span id="auth-confidence-bar"></span></div>
+          <div class="warning-list" id="auth-warnings"></div>
+        </section>
+      </section>
+    </main>
+
+    <!-- CAMERA CONTAINER -->
+<div id="camera-container">
+  <video id="camera-stream" autoplay playsinline></video>
+  <button id="capture-btn">Capture</button>
+</div>
+
+<!-- FRONT/BACK TOGGLE -->
+<div id="scan-toggle">
+  <button id="scan-front" class="active">Front</button>
+  <button id="scan-back">Back</button>
+</div>
+
+<!-- MANUAL BACK TYPE INPUT -->
+<div id="manual-back-type">
+  <label>Back Type:</label>
+  <select id="back-type-select">
+    <option value="">Select</option>
+    <option value="japanese">Japanese</option>
+    <option value="english-style">English</option>
+  </select>
+</div>
+
+<!-- AUTHENTICITY RESULT OVERLAY -->
+<div id="auth-result" class="hidden">
+  <button id="auth-close-btn">×</button>
+
+  <div class="auth-card">
+    <div class="auth-header">
+      <span id="auth-set-name"></span>
+      <span id="auth-set-code" class="auth-set-code"></span>
+    </div>
+
+    <div class="auth-body">
+      <div class="auth-row">
+        <span class="label">Region:</span>
+        <span id="auth-region"></span>
+      </div>
+      <div class="auth-row">
+        <span class="label">Type:</span>
+        <span id="auth-type"></span>
+      </div>
+      <div class="auth-row">
+        <span class="label">Back:</span>
+        <span id="auth-back"></span>
+      </div>
+      <div class="auth-row">
+        <span class="label">Confidence:</span>
+        <div id="auth-confidence-bar"></div>
+      </div>
+      <div class="auth-row">
+        <span class="label">Warnings:</span>
+        <div id="auth-warnings"></div>
+      </div>
+    </div>
+  </div>
+
+  <button id="scan-again-btn">Scan Another Card</button>
+</div>
+
+
+    <script type="module" src="/pwa/main.js"></script>
+  </body>
+</html>

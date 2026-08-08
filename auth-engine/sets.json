@@ -1,0 +1,1846 @@
+[
+  {
+    "setCode": "S1H",
+    "name": "Sword",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S1W",
+    "name": "Shield",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S2",
+    "name": "Rebel Clash (JP: VMAX Rising)",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S3",
+    "name": "Infinity Zone",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S3a",
+    "name": "Legendary Heartbeat",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S4",
+    "name": "Amazing Volt Tackle",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S4a",
+    "name": "Shiny Star V",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S5I",
+    "name": "Single Strike Master",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S5R",
+    "name": "Rapid Strike Master",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S6",
+    "name": "Silver Lance",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S6K",
+    "name": "Jet-Black Spirit",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S7D",
+    "name": "Skyscraping Perfection",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S7R",
+    "name": "Blue Sky Stream",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S8",
+    "name": "Fusion Arts",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S8a",
+    "name": "25th Anniversary Collection",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S9",
+    "name": "Star Birth",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S9a",
+    "name": "Battle Region",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S10P",
+    "name": "Space Juggler",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S10D",
+    "name": "Time Gazer",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S11",
+    "name": "Lost Abyss",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese",
+    "allowedRarities": ["C", "U", "R", "RR", "RRR", "SR", "HR", "UR"],
+    "minNumber": 1,
+    "maxNumber": 100
+  },
+  {
+    "setCode": "S11a",
+    "name": "Incandescent Arcana",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S12",
+    "name": "Paradigm Trigger",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S12a",
+    "name": "VSTAR Universe",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "S-P",
+    "name": "Sword & Shield Promo",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV1",
+    "name": "Scarlet ex",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 78
+  },
+  {
+    "setCode": "SV2",
+    "name": "Violet ex",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV3",
+    "name": "Ruler of the Black Flame",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV3a",
+    "name": "Raging Surf subset",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV4",
+    "name": "Paradox Rift (JP)",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV4K",
+    "name": "Future Flash",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV4a",
+    "name": "Shiny Treasure ex",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV5",
+    "name": "Cyber Judge",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV5a",
+    "name": "Mask of Change",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV6",
+    "name": "Wild Force",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV6a",
+    "name": "Night Wanderer",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV7",
+    "name": "Stellar Crown",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV7a",
+    "name": "Stellar Miracle",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "CRI",
+    "name": "Crimson Haze",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SVD",
+    "name": "Deck Build Box ex",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SV-P",
+    "name": "Scarlet & Violet Promo",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "M2a",
+    "name": "Mega Dream ex",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "ST-WATER-2018",
+    "name": "Starter Set Water (GX)",
+    "country": "JP",
+    "productType": "starter",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "EN-SWSH-BASE",
+    "name": "Sword & Shield Base",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH1",
+    "name": "Sword & Shield Base Set",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH2",
+    "name": "Rebel Clash",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH3",
+    "name": "Darkness Ablaze",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH4",
+    "name": "Vivid Voltage",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH5",
+    "name": "Battle Styles",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH6",
+    "name": "Chilling Reign",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH7",
+    "name": "Evolving Skies",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH8",
+    "name": "Fusion Strike",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH9",
+    "name": "Brilliant Stars",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH10",
+    "name": "Astral Radiance",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH11",
+    "name": "Lost Origin",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH12",
+    "name": "Silver Tempest",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BASE",
+    "name": "Base Set",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "JU",
+    "name": "Jungle",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "FO",
+    "name": "Fossil",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "B2",
+    "name": "Base Set 2",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "TR",
+    "name": "Team Rocket",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "GYM1",
+    "name": "Gym Heroes",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "GYM2",
+    "name": "Gym Challenge",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "NEO1",
+    "name": "Neo Genesis",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "NEO2",
+    "name": "Neo Discovery",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "NEO3",
+    "name": "Neo Revelation",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "NEO4",
+    "name": "Neo Destiny",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "LC",
+    "name": "Legendary Collection",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "E1",
+    "name": "Expedition Base Set",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "E2",
+    "name": "Aquapolis",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "E3",
+    "name": "Skyridge",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "RS",
+    "name": "Ruby & Sapphire",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SS",
+    "name": "Sandstorm",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "DR",
+    "name": "Dragon",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "MA",
+    "name": "Magma vs Aqua",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "HL",
+    "name": "Hidden Legends",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "FRLG",
+    "name": "FireRed & LeafGreen",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "TRR",
+    "name": "Team Rocket Returns",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "DX",
+    "name": "Deoxys",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "EM",
+    "name": "Emerald",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "UF",
+    "name": "Unseen Forces",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "DS",
+    "name": "Delta Species",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "LM",
+    "name": "Legend Maker",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "HP",
+    "name": "Holon Phantoms",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "CG",
+    "name": "Crystal Guardians",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "DF",
+    "name": "Dragon Frontiers",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "PK",
+    "name": "Power Keepers",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "DP",
+    "name": "Diamond & Pearl",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "MT",
+    "name": "Mysterious Treasures",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SW",
+    "name": "Secret Wonders",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "GE",
+    "name": "Great Encounters",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "MD",
+    "name": "Majestic Dawn",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "LA",
+    "name": "Legends Awakened",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SF",
+    "name": "Stormfront",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "PL1",
+    "name": "Platinum",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "PL2",
+    "name": "Rising Rivals",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "PL3",
+    "name": "Supreme Victors",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "PL4",
+    "name": "Arceus",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "HGSS",
+    "name": "HeartGold & SoulSilver",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "UL",
+    "name": "Unleashed",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "UD",
+    "name": "Undaunted",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "TM",
+    "name": "Triumphant",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BW1",
+    "name": "Black Collection",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW2",
+    "name": "White Collection",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW3",
+    "name": "Red Collection",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW4",
+    "name": "Dark Rush",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW5",
+    "name": "Dragon Blade",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW5D",
+    "name": "Dragon Blast",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW6",
+    "name": "Freeze Bolt",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW6T",
+    "name": "Cold Flare",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW7",
+    "name": "Plasma Gale",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW8",
+    "name": "Plasma Freeze (JP: Spiral Force)",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW8R",
+    "name": "Thunder Knuckle",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW9",
+    "name": "Plasma Blast (JP: Megalo Cannon)",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW10",
+    "name": "EX Battle Boost",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW-P",
+    "name": "Black & White Promo",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "BW1",
+    "name": "Black & White",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BW2",
+    "name": "Emerging Powers",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BW3",
+    "name": "Noble Victories",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BW4",
+    "name": "Next Destinies",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BW5",
+    "name": "Dark Explorers",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BW6",
+    "name": "Dragons Exalted",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BW7",
+    "name": "Boundaries Crossed",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BW8",
+    "name": "Plasma Storm",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BW9",
+    "name": "Plasma Freeze",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BW10",
+    "name": "Plasma Blast",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY1",
+    "name": "Collection X",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY2",
+    "name": "Collection Y",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY3",
+    "name": "Rising Fist",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY4",
+    "name": "Phantom Gate",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY5",
+    "name": "Gaia Volcano",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY5T",
+    "name": "Tidal Storm",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY6",
+    "name": "Emerald Break",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY7",
+    "name": "Bandit Ring",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY8",
+    "name": "Blue Shock",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY8R",
+    "name": "Red Flash",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY9",
+    "name": "Rage of the Broken Sky",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY10",
+    "name": "Premium Champion Pack",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY11",
+    "name": "Explosive Fighter",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY11B",
+    "name": "Cruel Traitor",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY12",
+    "name": "20th Anniversary CP6",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY-P",
+    "name": "XY Promo",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "XY1",
+    "name": "XY",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY2",
+    "name": "Flashfire",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY3",
+    "name": "Furious Fists",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY4",
+    "name": "Phantom Forces",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY5",
+    "name": "Primal Clash",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY6",
+    "name": "Roaring Skies",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY7",
+    "name": "Ancient Origins",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY8",
+    "name": "BREAKthrough",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY9",
+    "name": "BREAKpoint",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY10",
+    "name": "Fates Collide",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY11",
+    "name": "Steam Siege",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY12",
+    "name": "Evolutions",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "DP1",
+    "name": "Space-Time Creation",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "DP2",
+    "name": "Mystery of the Lakes",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "DP3",
+    "name": "Shining Darkness",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "DP4",
+    "name": "Moonlit Pursuit",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "DP5",
+    "name": "Cry from the Mysterious",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "DPBP#",
+    "name": "Battle Road Promo",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "PT1",
+    "name": "Galactic's Conquest",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "PT2",
+    "name": "Bonds to the End of Time",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "PT3",
+    "name": "Beat of the Frontier",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "HGSS1",
+    "name": "HeartGold Collection",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "HGSS2",
+    "name": "SoulSilver Collection",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "L1",
+    "name": "Reviving Legends",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "L2",
+    "name": "Lost Link",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "CL",
+    "name": "Clash at the Summit",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "P-P",
+    "name": "DP/Platinum/HGSS Promo",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM1",
+    "name": "Sun & Moon",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM2",
+    "name": "Guardians Rising",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM3",
+    "name": "Burning Shadows",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM4",
+    "name": "Crimson Invasion",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM5",
+    "name": "Ultra Prism",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM6",
+    "name": "Forbidden Light",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM7",
+    "name": "Celestial Storm",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM8",
+    "name": "Lost Thunder",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM9",
+    "name": "Team Up",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM10",
+    "name": "Unbroken Bonds",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM11",
+    "name": "Unified Minds",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM12",
+    "name": "Cosmic Eclipse",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM1S",
+    "name": "Collection Sun",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM1M",
+    "name": "Collection Moon",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM2K",
+    "name": "Islands Await You",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM2L",
+    "name": "Alolan Moonlight",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM3H",
+    "name": "To Have Seen the Battle Rainbow",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM3N",
+    "name": "Did You See the Fighting Rainbow?",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM4",
+    "name": "Awakening of the Psychic King",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM5",
+    "name": "Ultra Sun",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM5M",
+    "name": "Ultra Moon",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM6",
+    "name": "Forbidden Light (JP: Dragon Storm)",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM7",
+    "name": "Fairy Rise",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM8",
+    "name": "Explosive Impact",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM9",
+    "name": "Tag Bolt",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM9a",
+    "name": "Night Unison",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM10",
+    "name": "Double Blaze",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM10a",
+    "name": "GG End",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM11",
+    "name": "Miracle Twin",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM11a",
+    "name": "Remix Bout",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM12",
+    "name": "Alter Genesis",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "SM-P",
+    "name": "Sun & Moon Promo",
+    "country": "JP",
+    "productType": "booster",
+    "expectedBack": "japanese"
+  },
+  {
+    "setCode": "DRG",
+    "name": "Dragon Vault",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "DTK",
+    "name": "Detective Pikachu",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "GEN",
+    "name": "Generations",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "LCR",
+    "name": "Legendary Treasures",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "CEL",
+    "name": "Celebrations",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SHF",
+    "name": "Shining Fates",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "HIF",
+    "name": "Hidden Fates",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "CRZ",
+    "name": "Crown Zenith",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SPK",
+    "name": "Special Pikachu Set",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "MCD",
+    "name": "McDonald's Collection",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "WOTC-P",
+    "name": "Wizards Promo",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "NP",
+    "name": "Nintendo Black Star Promo",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "EX-P",
+    "name": "EX Series Promo",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "DP-P",
+    "name": "Diamond & Pearl Promo",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BW-P",
+    "name": "Black & White Promo",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "XY-P",
+    "name": "XY Promo",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SM-P",
+    "name": "Sun & Moon Promo",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH-P",
+    "name": "Sword & Shield Promo",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SVP",
+    "name": "Scarlet & Violet Promo",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "PBL",
+    "name": "Mega Evolution — Pitch Black",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "PO",
+    "name": "Mega Evolution — Perfect Order",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "UP",
+    "name": "Ultra Premium Collection",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "TIN",
+    "name": "Collector Tin Series",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "BX",
+    "name": "Special Edition Box",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "ETB-SP",
+    "name": "Elite Trainer Box Exclusive Series",
+    "country": "EN",
+    "productType": "etb",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "DK",
+    "name": "Battle/Starter Deck Series",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SP-F",
+    "name": "Special Foil Series",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH1",
+    "name": "Sword & Shield Base",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH2",
+    "name": "Rebel Clash",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH3",
+    "name": "Darkness Ablaze",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH4",
+    "name": "Vivid Voltage",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH5",
+    "name": "Battle Styles",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH6",
+    "name": "Chilling Reign",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "SWSH7",
+    "name": "Evolving Skies",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style"
+  },
+  {
+    "setCode": "EN-SV-BASE",
+    "name": "Scarlet & Violet Base",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 198
+  },
+  {
+    "setCode": "EN-PALDEA-EVOLVED",
+    "name": "Paldea Evolved",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 279
+  },
+  {
+    "setCode": "OBF",
+    "name": "Obsidian Flames",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 197
+  },
+  {
+    "setCode": "SVI",
+    "name": "Scarlet & Violet",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 198
+  },
+  {
+    "setCode": "PAL",
+    "name": "Paldea Evolved",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 279
+  },
+  {
+    "setCode": "PAR",
+    "name": "Paradox Rift",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "PAF",
+    "name": "Paldean Fates",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "TEF",
+    "name": "Temporal Forces",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "TWM",
+    "name": "Twilight Masquerade",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "SFA",
+    "name": "Shrouded Fable",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "SCR",
+    "name": "Stellar Crown",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "SSP",
+    "name": "Surging Sparks",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "PRE",
+    "name": "Prismatic Evolutions",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "JTG",
+    "name": "Journey Together",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "DRI",
+    "name": "Destined Rivals",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "SV8",
+    "name": "Surging Sparks",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "SV9",
+    "name": "Journey Together",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "SV10",
+    "name": "Destined Rivals",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "MEW",
+    "name": "151",
+    "country": "EN",
+    "productType": "booster",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R", "RR", "AR", "SAR"],
+    "minNumber": 1,
+    "maxNumber": 300
+  },
+  {
+    "setCode": "CUSTOM-GS-001",
+    "name": "GrailSweep Custom Set",
+    "country": "CUSTOM",
+    "productType": "custom",
+    "expectedBack": "english-style",
+    "allowedRarities": ["C", "U", "R"],
+    "minNumber": 1,
+    "maxNumber": 999
+  }
+]
