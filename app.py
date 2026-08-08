@@ -718,31 +718,6 @@ def marketplace():
                            barcode_info=barcode_info)
 
 
-@app.route("/api/authenticate", methods=["POST"])
-def api_authenticate():
-    try:
-        up1 = request.files.get("image")
-        if not up1:
-            return {"error": "No image provided"}, 400
-
-        query_id = str(uuid.uuid4())
-        query_dir = Path(app.root_path) / "static" / "query"
-        query_dir.mkdir(parents=True, exist_ok=True)
-        query_path = query_dir / f"{query_id}.jpg"
-        up1.save(str(query_path))
-        normalize_uploaded_image(str(query_path))
-
-        image_guess = _classify_auth_images(str(query_path), None)
-        card_payload = _build_auth_card_payload(None, image_guess=image_guess)
-        auth_result = _build_auth_result_for_result(None, card_payload=card_payload)
-
-        return auth_result, 200
-
-    except Exception as e:
-        current_app.logger.exception("api_authenticate failed")
-        return {"error": str(e)}, 500
-
-
 # ============================================================
 # Admin (simple session flag)
 # ============================================================
@@ -9750,6 +9725,103 @@ def _build_auth_result_for_result(result, card_payload=None):
             "flags": ["assessment_error"],
             "needsReview": True,
         }
+
+
+@app.route("/api/authenticity/back-check", methods=["POST"])
+def api_authenticity_back_check():
+    """Standalone authenticity back-image check -- not part of the /match
+    scan pipeline. Takes an already-confirmed sku plus a back-of-card
+    photo, classifies it EN/JP, and cross-checks it against the SKU's
+    own set_id via auth_back_refs.cross_check_back_language().
+
+    No @api_key_required: this is a browser-facing route, on the same
+    footing as /api/ondevice/telemetry and /api/card-profile/<sku> (app.py,
+    no decorator, no /api/v1/ API-key gate) -- covered automatically by
+    the global _enforce_cf_proxy() before_request hook.
+
+    The back image is THROWAWAY: embedded straight from the upload's file
+    stream and never written anywhere. No query-dir file, no
+    match_history row, no R2 copy -- there is nothing to clean up because
+    nothing is ever saved.
+    """
+    sku = (request.form.get("sku") or "").strip()
+    image_file = request.files.get("image")
+
+    if not sku:
+        return jsonify({"error": "sku required"}), 400
+    if not image_file or not getattr(image_file, "filename", ""):
+        return jsonify({"error": "image required"}), 400
+
+    profile = _load_card_profile_for_sku(sku, get_db_root(), get_data_dir())
+    set_id = str((profile or {}).get("set_id") or "").strip()
+    if not set_id:
+        print(f"[AUTH-BACKCHECK] sku={sku} set_id= back_label= "
+              f"status=sku_not_found flag=None", flush=True)
+        return jsonify({
+            "sku": sku,
+            "set_id": "",
+            "back_label": None,
+            "sim_en": None,
+            "sim_jp": None,
+            "gap": None,
+            "status": "sku_not_found",
+            "flags": [],
+            "reason": f"No profile found for SKU {sku}.",
+        }), 200
+
+    from auth_back_refs import BACK_PRESENCE_FLOOR, load_back_style_refs, cross_check_back_language
+
+    try:
+        # embedder.embed_path() is called DIRECTLY on the upload's file
+        # stream here -- deliberately NOT _embed_one_query and NOT
+        # auth_back_refs.embed_back_image(). Both of those wrap their
+        # argument in str(), which turns a file-like object into a
+        # useless repr string ("<FileStorage: ...>" / "<_io.BytesIO
+        # object at 0x...>") and Image.open() rejects it with an OSError
+        # -- confirmed by testing it, not assumed. embed_path() itself
+        # only needs a file-like object (it just does Image.open(path)),
+        # so calling it directly is what makes the "never touches disk"
+        # requirement possible at all. Do NOT "simplify" this back into
+        # either wrapper -- that would either break outright or force an
+        # unwanted disk write to route around the break.
+        embedder = get_embedder()
+        v = embedder.embed_path(
+            image_file.stream, multi_crop=False, suppress_bg=True, max_side=1024,
+        )
+        v = np.asarray(v, dtype=np.float32).reshape(-1)
+        v = v / (float(np.linalg.norm(v) + 1e-12))
+
+        en_ref, jp_ref = load_back_style_refs()
+        sim_en = float(np.dot(v, en_ref))
+        sim_jp = float(np.dot(v, jp_ref))
+        gap = abs(sim_en - sim_jp)
+        # Same two-stage rule as auth_back_refs.classify_back_style() --
+        # duplicated rather than called, since that function's own
+        # embed_back_image() call has the same str()-cast problem this
+        # route exists to avoid. Not modifying classify_back_style itself.
+        passed_stage1 = max(sim_en, sim_jp) >= BACK_PRESENCE_FLOOR
+        back_label = ("english-style" if sim_en >= sim_jp else "japanese") if passed_stage1 else "unknown"
+    except Exception:
+        current_app.logger.exception("api_authenticity_back_check embedding failed")
+        return jsonify({"error": "Could not process the back image. Please try again."}), 500
+
+    xcheck = cross_check_back_language(set_id, back_label)
+
+    print(f"[AUTH-BACKCHECK] sku={sku} set_id={set_id} back_label={back_label} "
+          f"sim_en={sim_en:.4f} sim_jp={sim_jp:.4f} status={xcheck['status']} "
+          f"flag={xcheck['flags'][0] if xcheck['flags'] else None}", flush=True)
+
+    return jsonify({
+        "sku": sku,
+        "set_id": set_id,
+        "back_label": back_label,
+        "sim_en": sim_en,
+        "sim_jp": sim_jp,
+        "gap": gap,
+        "status": xcheck["status"],
+        "flags": xcheck["flags"],
+        "reason": xcheck["reason"],
+    }), 200
 
 
 @app.route("/app/")
