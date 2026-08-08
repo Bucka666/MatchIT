@@ -189,7 +189,10 @@ def _sets_with_printed_total(total):
     return sorted(cands)
 
 # Pokémon SV era: printed set code → pokemontcg.io DB set ID
-_PKM_SETCODE_MAP = {
+# Hand-verified floor — always overlaid on top of the generated map below, so
+# these 22 win on any disagreement and this dict alone is the fail-open target
+# if generation comes back empty.
+_PKM_SETCODE_MAP_STATIC = {
     # Scarlet & Violet era — printed 3-letter codes on card face
     # ptcgoCode (printed on card) → pokemontcg.io DB set ID
     "SVE": "sve",       # Scarlet & Violet Energies
@@ -215,6 +218,98 @@ _PKM_SETCODE_MAP = {
     "PBL": "me5",       # Pitch Black
     "GG": "swsh12pt5gg",  # Crown Zenith Galarian Gallery
 }
+
+
+def _load_set_metadata_for_setcode_map() -> dict:
+    """Standalone set_metadata.json read for the generated set-code map.
+
+    This module is imported BY app.py at app.py's own top level (`import
+    ocr_confirm as _oc` near the top of app.py), before app.py has executed
+    far enough to define _load_set_metadata() (much later in the file). An
+    eager `from app import _load_set_metadata` here would hit a half-built
+    module — see _sets_with_printed_total() above for the same constraint on
+    the same import. So this reads the file directly instead, preferring the
+    live volume copy (freshly written by backfills/scheduler) over the
+    in-image copy (frozen at last deploy) — mirrors app.py's own
+    SET_METADATA_PATH resolution, not _sets_with_printed_total's /app-only
+    fallback, which would silently read stale data here.
+    """
+    candidates = []
+    if os.path.exists("/modal_data"):
+        candidates.append("/modal_data/set_metadata.json")
+    candidates.append(os.path.join(os.path.dirname(__file__), "set_metadata.json"))
+    candidates.append("/app/set_metadata.json")
+    for path in candidates:
+        try:
+            if os.path.exists(path):
+                import json as _json
+                with open(path, "r", encoding="utf-8") as f:
+                    return _json.load(f)
+        except Exception as e:
+            logger.warning(f"[SETCODE-MAP] failed to read {path}: {e}")
+    return {}
+
+
+def _build_pkm_setcode_map_generated_en() -> dict:
+    """Build {ptcgoCode: set_id} from set_metadata.json for EN (non-jpn-)
+    POKEMON entries. A code shared by more than one set is excluded rather
+    than silently assigned to one of them — cards using an excluded code
+    fall through to the existing printed-total denominator fallback
+    (_sets_with_printed_total / SWSH fingerprint), which resolves them
+    correctly whenever the sets' totals differ. The one exception is CEL
+    (cel25 / cel25c), which share printed_total=25 too and so can't be
+    resolved by denominator either — that pair gets an explicit default
+    per product decision, logged every time it fires.
+    """
+    meta = _load_set_metadata_for_setcode_map()
+    by_code: Dict[str, List[str]] = {}
+    for set_id, entry in (meta or {}).items():
+        if not isinstance(entry, dict) or entry.get("game") != "POKEMON":
+            continue
+        if set_id.startswith("jpn-"):
+            continue
+        code = entry.get("ptcgoCode")
+        if code:
+            by_code.setdefault(code, []).append(set_id)
+
+    en_map: Dict[str, str] = {}
+    for code, set_ids in by_code.items():
+        if len(set_ids) == 1:
+            en_map[code] = set_ids[0]
+        elif code == "CEL" and set(set_ids) == {"cel25", "cel25c"}:
+            en_map[code] = "cel25"
+            logger.warning(f"[SETCODE-MAP] CEL ambiguous {set_ids}, defaulting to cel25")
+        else:
+            logger.warning(f"[SETCODE-MAP] {code} ambiguous {set_ids}, excluded — "
+                            f"deferring to denominator fallback")
+    return en_map
+
+
+try:
+    _pkm_generated_en = _build_pkm_setcode_map_generated_en()
+except Exception as _e:
+    logger.warning(f"[SETCODE-MAP] generation failed ({_e}), falling back to static map")
+    _pkm_generated_en = {}
+
+# JP sourcing (TCGdex) is a separate stage — left empty for now.
+_PKM_SETCODE_MAP_GENERATED = {"EN": _pkm_generated_en, "JP": {}}
+
+if _PKM_SETCODE_MAP_GENERATED["EN"]:
+    logger.info(f"[SETCODE-MAP] generated {len(_PKM_SETCODE_MAP_GENERATED['EN'])} codes")
+else:
+    logger.warning(f"[SETCODE-MAP] FALLBACK to static map, {len(_PKM_SETCODE_MAP_STATIC)} codes")
+
+for _code, _gen_id in _PKM_SETCODE_MAP_GENERATED["EN"].items():
+    _static_id = _PKM_SETCODE_MAP_STATIC.get(_code)
+    if _static_id is not None and _static_id != _gen_id:
+        logger.warning(f"[SETCODE-MAP] disagreement on {_code}: "
+                        f"static={_static_id!r} generated={_gen_id!r} — static wins")
+
+# Merge order: generated first, static overlaid on top — any hand-verified
+# entry wins over a generated one. This IS the map all 5 call sites below
+# (and app.py's fuzzy-rescue path) consult; growing it here requires no
+# call-site changes.
+_PKM_SETCODE_MAP = {**_PKM_SETCODE_MAP_GENERATED["EN"], **_PKM_SETCODE_MAP_STATIC}
 
 
 _JP_SETCODE_MAP = {
@@ -2085,6 +2180,10 @@ def parse_pokemon_denominator(texts: list):
 def parse_pokemon_text(texts: list) -> Optional[str]:
     """Parse raw OCR text lines from a Pokémon card.
     Returns '{set_id}-{num}' (e.g. 'sv6-25') or plain num string, or None.
+
+    TODO: no jp_mode signal reaches this function (or its caller,
+    /api/ocr-lookup) — unlike ocr_direct_lookup/ocr_confirm_ranking, an EN
+    _PKM_SETCODE_MAP match here is never rejected for a JP scan.
     """
     all_text = " ".join(texts).upper()
     num = None
