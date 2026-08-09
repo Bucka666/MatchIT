@@ -117,7 +117,13 @@
 // running the (now-removed) inline copy with no on-device gate present
 // in the new file. gs-ondevice.js is also added to PRECACHE below so it's
 // available offline from the same install step as everything else here.
-const CACHE_NAME = 'grailsweep-v136';
+// v137 (2026-08-09) — match.html changed: removed the load-time
+// initCamera() call that leaked a rear-camera stream on every /match
+// page load (Android then handed the live scanner's own camera request
+// the front camera instead, since the rear one was still held). Also
+// added a facingMode verification + retry to scStartCamera. A device
+// with the old cached match.html would keep leaking the stream.
+const CACHE_NAME = 'grailsweep-v137';
 const PRECACHE = [
   '/',
   '/static/style.css',

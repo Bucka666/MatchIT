@@ -683,7 +683,17 @@ function gsOpenDetailAuthModal() {
   };
 
   window.addEventListener('load', function() {
-    initCamera();
+    // initCamera() used to fire here unconditionally on every page load --
+    // acquiring a real camera stream nobody asked for and never releasing
+    // it (hideAuthResult()/autoDismiss() only toggle CSS classes, never
+    // stop the stream's tracks). On Android that leaked rear-camera stream
+    // then made the live scanner's own scStartCamera() request get handed
+    // the front camera instead, because the rear camera was still held.
+    // Removed rather than fixed-in-place: nothing in this overlay ever
+    // reads a frame from the video element -- captureCardImage() (below)
+    // is a stub that ignores the image entirely -- so the camera here was
+    // always decorative. If a real capture flow is ever wired up, start
+    // the camera there, on the user's actual "Capture" tap, not on load.
     if (window.GS_AUTH_RESULT) {
       window.gsShowAuthOverlay(window.GS_AUTH_RESULT);
     }
@@ -2460,11 +2470,48 @@ function scStartCamera(did) {
   if (scStream) scStream.getTracks().forEach(function(t){t.stop();});
   var c = {video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1080}}};
   if (did) c = {video:{deviceId:{exact:did},width:{ideal:1920},height:{ideal:1080}}};
+
+  function acceptStream(s) {
+    scStream=s; scVideo.srcObject=s; scVideo.style.display='block'; scVideo.play();
+    var ov=document.getElementById('scGuideOverlay'); if(ov) ov.style.display='flex';
+    scListCameras();
+  }
+
   navigator.mediaDevices.getUserMedia(c)
     .then(function(s){
-      scStream=s; scVideo.srcObject=s; scVideo.style.display='block'; scVideo.play();
-      var ov=document.getElementById('scGuideOverlay'); if(ov) ov.style.display='flex';
-      scListCameras();
+      // Defensive check (Android): facingMode:'environment' is a
+      // preference, not a guarantee -- if the rear camera hardware is
+      // held by another stream (e.g. the leaked one this was written to
+      // guard against) or another app, the browser can silently hand
+      // back the front camera instead. Verify what we actually got
+      // rather than trusting the request. Only applies when no explicit
+      // deviceId was requested -- an explicit choice (from the settings
+      // modal) is never second-guessed.
+      var track = s.getVideoTracks()[0];
+      var settings = (track && track.getSettings) ? track.getSettings() : {};
+      if (!did && settings.facingMode === 'user') {
+        console.warn('[CAMERA] requested environment, got facingMode=user -- retrying with an explicit rear deviceId');
+        navigator.mediaDevices.enumerateDevices().then(function(devs){
+          var rear = devs.find(function(d){
+            if (d.kind !== 'videoinput') return false;
+            var l = (d.label||'').toLowerCase();
+            return l.indexOf('back')>=0 || l.indexOf('rear')>=0 || l.indexOf('environment')>=0;
+          });
+          s.getTracks().forEach(function(t){t.stop();});
+          if (rear) {
+            console.warn('[CAMERA] retrying with rear deviceId=' + rear.deviceId);
+            scStartCamera(rear.deviceId);
+          } else {
+            console.warn('[CAMERA] no labeled rear device found -- accepting a fresh facingMode=environment stream as-is');
+            navigator.mediaDevices.getUserMedia(c).then(acceptStream).catch(function(){
+              var nc=document.getElementById('scNoCam'); if(nc) nc.style.display='flex';
+              var idle=document.getElementById('scIdle'); if(idle) idle.style.display='none';
+            });
+          }
+        });
+        return;
+      }
+      acceptStream(s);
     })
     .catch(function(){
       var nc=document.getElementById('scNoCam'); if(nc) nc.style.display='flex';
