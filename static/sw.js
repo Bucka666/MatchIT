@@ -111,12 +111,19 @@
 // viewports (<=720px) now get an honest explanation + a link back to
 // /match instead of a title, subtitle, and nothing — the previous cached
 // HTML for this route rendered that dead end.
-const CACHE_NAME = 'grailsweep-v135';
+// v136 (2026-08-09) — match.html changed: the on-device matching + OCR-
+// first code that used to be inline is now static/gs-ondevice.js, loaded
+// via <script src>. A device with the old cached match.html would keep
+// running the (now-removed) inline copy with no on-device gate present
+// in the new file. gs-ondevice.js is also added to PRECACHE below so it's
+// available offline from the same install step as everything else here.
+const CACHE_NAME = 'grailsweep-v136';
 const PRECACHE = [
   '/',
   '/static/style.css',
   '/static/assets/grailsweep_app_icon.png',
   '/static/assets/gs_card_placeholder.png',
+  '/static/gs-ondevice.js',
   '/api/search-index/pokemon',
   '/api/fx_rates'
 ];
