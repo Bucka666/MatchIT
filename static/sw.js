@@ -1,4 +1,8 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
+// v140 (2026-08-09) — 2.3.10 fix: Microsoft Store footer badge had no platform
+// gate and stayed visible in the iOS binary (Apple 1.0/20 rejection screenshot).
+// Footer "Download the App" block (.mi-store-badges) is now hidden entirely in
+// the iOS app via gsIsRunningInIOSApp(), not just the Play badge as before.
 // v126 (2026-08-01) — CLEANUP: diagnostic pills removed from /contact, /terms and
 // /privacy, and the v124 'message' handler removed with them. No functional
 // change: network-first navigation, the response.ok cache guard and the offline
@@ -139,7 +143,7 @@
 // The bump itself also clears out any no-store pages a prior version
 // already cached under the old CACHE_NAME — activate() deletes every
 // cache key that isn't this one, so that stale content goes with it.
-const CACHE_NAME = 'grailsweep-v139';
+const CACHE_NAME = 'grailsweep-v140';
 const PRECACHE = [
   '/',
   '/static/style.css',

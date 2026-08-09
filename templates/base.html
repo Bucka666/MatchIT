@@ -1738,11 +1738,17 @@ function gsIsWatchlisted(sku) {
   // The footer markup appears earlier in the document, so the anchors already
   // exist by the time this runs — no DOMContentLoaded wrapper needed.
   (function() {
-    // Hide Play badge in the iOS app — Apple flags cross-platform references
+    // Hide the whole "Download the App" block in the iOS app, not just the
+    // non-Apple badges. Apple's 2.3.10 rejection (1.0 build 20) showed the
+    // Microsoft Store badge visible in the iOS binary; that badge carried no
+    // class and was never wired into any platform gate at all, so it was
+    // unconditionally visible everywhere. Hiding the container rather than
+    // adding a third per-badge class also removes the now-pointless "Download
+    // the App -> App Store" CTA a user sees while already running the App
+    // Store build of the app.
     if (gsIsRunningInIOSApp()) {
-      document.querySelectorAll('.gs-play-badge-link').forEach(function(el) {
-        el.style.display = 'none';
-      });
+      var storeBadges = document.querySelector('.mi-store-badges');
+      if (storeBadges) storeBadges.style.display = 'none';
     }
     // Hide App Store badge in the Android TWA
     if (gsHasPlayBilling()) {
