@@ -9860,7 +9860,16 @@ NO_MATCH_ERROR = "No confident match found. " + _UPLOAD_ADVICE
 def match():
     if request.method == "GET":
         from flask import make_response
-        resp = make_response(render_template("match.html", auth_result=session.get("last_auth_result")))
+        # pop, not get -- last_auth_result is written by every scan path
+        # (POST /match, /capture_submit) and never otherwise cleared, so a
+        # plain GET here used to keep re-showing the same banner from a
+        # scan minutes or days ago on every future page load. Popping
+        # means this GET consumes it: the very next load after a scan
+        # (wherever that scan's own response didn't already show it) is
+        # the last one that will. Every render of results.html/match.html
+        # elsewhere uses a same-request local variable, not this session
+        # key, so they're unaffected by it being gone afterward.
+        resp = make_response(render_template("match.html", auth_result=session.pop("last_auth_result", None)))
         resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         resp.headers["Pragma"] = "no-cache"
         return resp

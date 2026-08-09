@@ -22,7 +22,10 @@
 <div class="gs-auth-banner" id="gsAuthBanner" style="margin:12px 16px 0;" onclick="gsOpenAuthBannerModal()" role="button" tabindex="0" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); gsOpenAuthBannerModal(); }">
   <div class="gs-auth-banner-head">
     <span>🔐 Authenticity snapshot</span>
-    <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsOpenAuthBannerModal()">Details</button>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsOpenAuthBannerModal()">Details</button>
+      <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsDismissAuthBanner()" aria-label="Dismiss authenticity banner">✕</button>
+    </div>
   </div>
   <div class="gs-auth-banner-status gs-auth-banner-status--{{ auth_result.status }}">
     <span class="gs-auth-status-icon" aria-hidden="true">{% if auth_result.status == 'official_booster' or auth_result.status == 'official_starter' %}✓{% elif auth_result.status == 'official' %}✓{% elif auth_result.status == 'counterfeit' %}⚠{% elif auth_result.needsReview %}⏱{% else %}•{% endif %}</span>
@@ -358,6 +361,11 @@ function gsToggleAuthBannerModal() {
   } else if (window.gsShowAuthOverlay) {
     window.gsShowAuthOverlay(window.GS_AUTH_RESULT || null);
   }
+}
+
+function gsDismissAuthBanner() {
+  var banner = document.getElementById('gsAuthBanner');
+  if (banner) banner.classList.add('gs-hidden');
 }
 
 function gsOpenAuthBannerModal() {

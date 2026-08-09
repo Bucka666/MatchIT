@@ -123,7 +123,14 @@
 // the front camera instead, since the rear one was still held). Also
 // added a facingMode verification + retry to scStartCamera. A device
 // with the old cached match.html would keep leaking the stream.
-const CACHE_NAME = 'grailsweep-v137';
+// v138 (2026-08-09) — match.html changed: #gsAuthBanner now has a close
+// button (gsDismissAuthBanner()). The stale-banner root cause itself was
+// server-side (session["last_auth_result"] never cleared — GET /match
+// now pops it instead of reading it, see app.py), but this route's
+// navigation is only network-first, not cache-exempt, so an old cached
+// copy of match.html would still render the bannerless-close markup
+// missing until this bump lands.
+const CACHE_NAME = 'grailsweep-v138';
 const PRECACHE = [
   '/',
   '/static/style.css',
