@@ -17,14 +17,13 @@
 //   - window.gsDeviceWeak()  (declared in base.html's <head>, already
 //                      window-qualified at the call site)
 //
-// gsGameForStaleness (defined below) is called from match.html's
-// scCapture() as a bare, non-namespaced reference (not
-// window.GSOnDevice.gameForStaleness) — that was already broken before
-// this extraction (a plain function declared inside this IIFE is not
-// reachable from outside it) and throws a ReferenceError there today,
-// silently swallowed by scCapture()'s enclosing try/catch. Extraction
-// does not change this — it was equally unreachable from match.html's
-// other script block before the move. Flagged, not fixed here.
+// gsGameForStaleness is exported as window.GSOnDevice.gameForStaleness
+// (2026-08-09 fix) — match.html's scCapture() used to call it as a bare,
+// non-namespaced reference, which threw a ReferenceError (a plain function
+// declared inside this IIFE is not reachable from outside it), silently
+// swallowed by scCapture()'s enclosing try/catch and falling straight
+// through to the server /match call every time. The staleness gate itself
+// never ran, so on-device accepts never actually completed via this path.
 
 (function () {
   'use strict';
@@ -476,6 +475,7 @@
     warmup:      gsWarmup,
     gate:        gsGateAccept,
     gameFromSku: gsGameFromSku,
+    gameForStaleness: gsGameForStaleness,
     isWarm:      () => _gsWarm,
     staleGames:  () => _gsStaleGames,
     beacon:      gsBeacon,

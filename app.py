@@ -3909,7 +3909,7 @@ def card_profile(sku):
         profile = _load_card_profile_for_sku(sku, db_root, get_data_dir())
         if not profile:
             return jsonify({'status': 'not_found', 'sku': sku}), 404
-        profile = _attach_set_total(profile)
+        profile = _attach_set_total(profile, sku=sku)
         profile = _sanitise_prices_for_response(profile)
         image_id = _image_id_for_sku(sku)
         return jsonify({
@@ -4793,7 +4793,7 @@ def capture_submit():
             if not profile:
                 profile = _load_card_profile_for_sku(sku, db_root, get_data_dir())
 
-            profile = _attach_set_total(profile)
+            profile = _attach_set_total(profile, sku=sku)
             if isinstance(r, dict):
                 r["profile"] = profile
             else:
@@ -7119,14 +7119,24 @@ def _load_set_metadata():
     except Exception:
         return {}
 
-def _attach_set_total(profile):
+def _attach_set_total(profile, sku=None):
     """Adds set_total (sourced from set_metadata.json's printed_total, keyed
     by the profile's set_id) to a match-result profile dict. profile.json
     itself carries no total field, so this is the only correct source —
-    see project memory for why prof.get("set_total") doesn't work."""
+    see project memory for why prof.get("set_total") doesn't work.
+
+    JP profiles store TCGdex's own bare set code in set_id (e.g. "S10a" for
+    jpn-s10a-002), never the "jpn-s10a" key set_metadata.json actually uses
+    -- same namespace mismatch _build_auth_card_payload_from_profile already
+    works around via _derive_jpn_set_id_from_sku. Falls back to the
+    SKU-derived jpn- key when the direct lookup misses and sku is given."""
     if isinstance(profile, dict) and profile.get("set_id"):
-        meta = _load_set_metadata().get(profile["set_id"], {})
-        profile["set_total"] = meta.get("printed_total")
+        meta = _load_set_metadata().get(profile["set_id"])
+        if meta is None and sku:
+            derived = _derive_jpn_set_id_from_sku(sku)
+            if derived:
+                meta = _load_set_metadata().get(derived)
+        profile["set_total"] = (meta or {}).get("printed_total")
     return profile
 
 def _get_set_id_from_sku(sku):
@@ -10005,7 +10015,7 @@ def match():
                         _prof2["crossrefs"] = _xr2["crossrefs"]
                 if not _prof2 and _dbr2:
                     _prof2 = _load_card_profile_for_sku(confirmed_sku, _dbr2, get_data_dir())
-                _confirmed_results[0]["profile"] = _attach_set_total(_prof2)
+                _confirmed_results[0]["profile"] = _attach_set_total(_prof2, sku=confirmed_sku)
             except Exception as _pe:
                 print(f"[CONFIRMED-SKU] profile enrich error: {_pe}", flush=True)
             grade = _safe_grade(str(query_path1))
@@ -10104,7 +10114,7 @@ def match():
                     if not _prof1 and _dbr1:
                         _prof1 = _load_card_profile_for_sku(_ocr_direct_sku, _dbr1, get_data_dir())
                     _prof1 = _sanitise_prices_for_response(_prof1)
-                    _ocr_direct_results[0]["profile"] = _attach_set_total(_prof1)
+                    _ocr_direct_results[0]["profile"] = _attach_set_total(_prof1, sku=_ocr_direct_sku)
                     _ocr_direct_results[0]["best_gbp"] = _extract_gbp_from_profile(
                         _ocr_direct_results[0].get("profile", {}), sku=_ocr_direct_sku
                     )
@@ -10367,7 +10377,7 @@ def match():
                                 _prof2["crossrefs"] = _xr2["crossrefs"]
                         if not _prof2 and _dbr2:
                             _prof2 = _load_card_profile_for_sku(_sku2, _dbr2, get_data_dir())
-                        _prof2 = _attach_set_total(_prof2)
+                        _prof2 = _attach_set_total(_prof2, sku=_sku2)
                         if isinstance(_r2, dict):
                             _r2["profile"] = _prof2
                         else:
@@ -10526,7 +10536,7 @@ def match():
         if not profile:
             profile = _load_card_profile_for_sku(sku, db_root, get_data_dir())
 
-        profile = _attach_set_total(profile)
+        profile = _attach_set_total(profile, sku=sku)
         if isinstance(r, dict):
             r["profile"] = profile
         else:

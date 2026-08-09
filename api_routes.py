@@ -388,7 +388,7 @@ def register_api_routes(app):
                         from app import _attach_set_total as _attach_set_total_ocr
                         from app import _sanitise_prices_for_response as _sanitise_ocr
                         _profile_ocr = _sanitise_ocr(_profile_ocr)
-                        _match_entry_ocr["profile"] = _attach_set_total_ocr(_profile_ocr)
+                        _match_entry_ocr["profile"] = _attach_set_total_ocr(_profile_ocr, sku=_ocr_direct_sku)
                     _image_id_ocr = _image_id_for_sku(_ocr_direct_sku)
                     if _image_id_ocr:
                         _match_entry_ocr["images"] = [{"image_id": _image_id_ocr, "original_filename": ""}]
@@ -732,20 +732,20 @@ def register_api_routes(app):
                         combined["manufacturer"] = xref["manufacturer"]
                     if xref.get("crossrefs"):
                         combined["crossrefs"] = xref["crossrefs"]
-                sku_profile_map[sku] = _attach_set_total(combined)
+                sku_profile_map[sku] = _attach_set_total(combined, sku=sku)
                 continue
 
             # Fallback: per-folder profile.json (cards pattern)
             if db_root:
                 _card_profile = _load_card_profile_for_sku(sku, db_root, _get_data_dir())
                 if _card_profile:
-                    sku_profile_map[sku] = _attach_set_total(_card_profile)
+                    sku_profile_map[sku] = _attach_set_total(_card_profile, sku=sku)
                 else:
                     direct_path = Path(db_root) / sku / "profile.json"
                     if direct_path.exists():
                         try:
                             with open(direct_path, "r", encoding="utf-8") as pf:
-                                sku_profile_map[sku] = _attach_set_total(json.load(pf))
+                                sku_profile_map[sku] = _attach_set_total(json.load(pf), sku=sku)
                         except Exception:
                             pass
 

@@ -3009,7 +3009,7 @@ function scCapture() {
         if (odr && odr.accept) {
           // Staleness gate — if index is stale for this game, route to server
           const _staleSet = window.GSOnDevice && window.GSOnDevice.staleGames && window.GSOnDevice.staleGames();
-          if (_staleSet && _staleSet.has(gsGameForStaleness(odr.sku))) {
+          if (_staleSet && _staleSet.has(window.GSOnDevice.gameForStaleness(odr.sku))) {
             // fall through to server — do not call _acceptOnDevice()
           } else {
             // Conflict check: only suppress on a POSITIVE conflict — denominator read

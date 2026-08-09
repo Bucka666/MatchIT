@@ -1,4 +1,9 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
+// v141 (2026-08-09) — on-device accept path fix: gsGameForStaleness (gs-ondevice.js)
+// was called bare from match.html's scCapture, but was private to the on-device
+// IIFE and threw a ReferenceError before any on-device accept ever completed in
+// production. Now exported on window.GSOnDevice and called correctly. Also fixes
+// _attach_set_total (app.py) mis-keying JP set totals via the bare TCGdex code.
 // v140 (2026-08-09) — 2.3.10 fix: Microsoft Store footer badge had no platform
 // gate and stayed visible in the iOS binary (Apple 1.0/20 rejection screenshot).
 // Footer "Download the App" block (.mi-store-badges) is now hidden entirely in
@@ -143,7 +148,7 @@
 // The bump itself also clears out any no-store pages a prior version
 // already cached under the old CACHE_NAME — activate() deletes every
 // cache key that isn't this one, so that stale content goes with it.
-const CACHE_NAME = 'grailsweep-v140';
+const CACHE_NAME = 'grailsweep-v141';
 const PRECACHE = [
   '/',
   '/static/style.css',
