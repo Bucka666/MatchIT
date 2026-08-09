@@ -103,7 +103,11 @@
 // v133 (2026-08-08) — match.html and results.html both changed again: the
 // auth banner now renders Phase 1b's "official" status (icon + label)
 // instead of falling through to the generic Unknown bucket.
-const CACHE_NAME = 'grailsweep-v133';
+// v134 (2026-08-09) — templates/authenticity.html changed (new page,
+// route added earlier, now has its staged-progress result rendering),
+// and templates/base.html carries its nav link — cached HTML for both is
+// stale for anyone who loaded the site before this deploy.
+const CACHE_NAME = 'grailsweep-v134';
 const PRECACHE = [
   '/',
   '/static/style.css',
