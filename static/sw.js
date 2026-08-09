@@ -130,7 +130,16 @@
 // navigation is only network-first, not cache-exempt, so an old cached
 // copy of match.html would still render the bannerless-close markup
 // missing until this bump lands.
-const CACHE_NAME = 'grailsweep-v138';
+// v139 (2026-08-09) — the navigate branch's cache.put() never checked
+// Cache-Control at all, so SSR pages sending no-store (/match,
+// /static/scanner.html) were being cached anyway — offline-only impact,
+// but a stale cached copy could serve a since-upgraded user's page still
+// gated as free tier, or a stale scan count (GS_SCAN_STATE is injected
+// into every SSR page). Now skipped when the response carries no-store.
+// The bump itself also clears out any no-store pages a prior version
+// already cached under the old CACHE_NAME — activate() deletes every
+// cache key that isn't this one, so that stale content goes with it.
+const CACHE_NAME = 'grailsweep-v139';
 const PRECACHE = [
   '/',
   '/static/style.css',
@@ -230,7 +239,19 @@ self.addEventListener('fetch', event => {
           // navigation, which makes that far likelier than it was under
           // stale-while-revalidate. Mirrors the image branch's status === 200
           // guard. Bad responses still pass through to the app unchanged.
-          if (response.ok) {
+          //
+          // Also skip caching anything sent with Cache-Control: no-store. SSR
+          // pages carrying per-session state (GS_SCAN_STATE's tier/quota,
+          // auth_result) send no-store specifically so a stale snapshot is
+          // never replayed to a since-upgraded user or one whose quota has
+          // since reset — but caches.put() is the Cache Storage API, a
+          // separate mechanism from the browser's HTTP cache, and it does
+          // NOT enforce Cache-Control on its own. It stores whatever it's
+          // handed unless the caller checks first, so that has to happen
+          // here explicitly.
+          var cacheControl = response.headers.get('Cache-Control') || '';
+          var noStore = cacheControl.indexOf('no-store') !== -1;
+          if (response.ok && !noStore) {
             var clone = response.clone();
             caches.open(CACHE_NAME).then(function(cache) { cache.put(event.request, clone); });
           }
