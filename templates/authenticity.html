@@ -10,6 +10,21 @@
 .auth-desktop-only { display: block; }
 @media (max-width: 720px) { .auth-desktop-only { display: none !important; } }
 
+.auth-mobile-only { display: none; }
+@media (max-width: 720px) {
+  .auth-mobile-only {
+    display: block; margin-top: 16px; padding: 16px; border-radius: 10px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  }
+}
+.auth-mobile-only p { font-size: 0.85rem; color: rgba(255,255,255,0.82); line-height: 1.5; margin: 0 0 12px; }
+.auth-mobile-only p:last-of-type { margin-bottom: 0; }
+.auth-mobile-only a {
+  display: inline-block; margin-top: 4px; color: #00e5ff; font-weight: 600;
+  text-decoration: none; font-size: 0.85rem;
+}
+.auth-mobile-only a:hover { text-decoration: underline; }
+
 .auth-slot-row { display: flex; gap: 12px; margin-bottom: 16px; }
 .auth-slot { flex: 1; border: 1px dashed rgba(255,255,255,0.2); border-radius: 10px; padding: 14px; text-align: center; }
 .auth-slot h3 { font-size: 0.8rem; margin: 0 0 8px; color: var(--mi-muted, #aaa); font-weight: 600; }
@@ -84,6 +99,15 @@
 
 <h1>🔍 Authenticity Check</h1>
 <p class="auth-sub">Identify a card from its front, then check the back against the set's own release region.</p>
+
+<!-- Mobile fallback. Camera-based flow (reusing the on-device gate) lands
+     in a later part -- this just replaces the current dead end (title +
+     subtitle, then nothing) with an honest explanation and a way out. -->
+<div class="auth-mobile-only">
+  <p>This check identifies a card from a photo of its front, then compares a photo of its back against that card's own release region — useful for catching a card whose front and back don't match.</p>
+  <p>It currently needs a desktop browser.</p>
+  <a href="/match">← Back to the scanner</a>
+</div>
 
 <!-- Desktop upload panel. Mobile camera panel (reusing the on-device gate) is Part 4. -->
 <div class="auth-desktop-only">

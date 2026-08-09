@@ -107,7 +107,11 @@
 // route added earlier, now has its staged-progress result rendering),
 // and templates/base.html carries its nav link — cached HTML for both is
 // stale for anyone who loaded the site before this deploy.
-const CACHE_NAME = 'grailsweep-v134';
+// v135 (2026-08-09) — templates/authenticity.html changed again: mobile
+// viewports (<=720px) now get an honest explanation + a link back to
+// /match instead of a title, subtitle, and nothing — the previous cached
+// HTML for this route rendered that dead end.
+const CACHE_NAME = 'grailsweep-v135';
 const PRECACHE = [
   '/',
   '/static/style.css',
