@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="mi-card auth-page">
+
+<style>
+.auth-page { max-width: 720px; margin: 0 auto; }
+.auth-page h1 { font-size: 1.1rem; margin: 0 0 6px; }
+.auth-page p.auth-sub { color: var(--mi-muted, #aaa); font-size: 0.85rem; margin: 0 0 20px; }
+
+.auth-desktop-only { display: block; }
+@media (max-width: 720px) { .auth-desktop-only { display: none !important; } }
+
+.auth-slot-row { display: flex; gap: 12px; margin-bottom: 16px; }
+.auth-slot { flex: 1; border: 1px dashed rgba(255,255,255,0.2); border-radius: 10px; padding: 14px; text-align: center; }
+.auth-slot h3 { font-size: 0.8rem; margin: 0 0 8px; color: var(--mi-muted, #aaa); font-weight: 600; }
+.auth-slot img.auth-preview { max-width: 100%; max-height: 140px; border-radius: 6px; display: none; margin-bottom: 8px; }
+.auth-file-btn {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 12px; border-radius: 9px; cursor: pointer; font-size: 0.76rem;
+  font-weight: 600; border: none; color: #fff;
+  background: linear-gradient(135deg,#b14dff,#4d8eff,#00e5ff);
+  transition: opacity 0.2s;
+}
+.auth-file-btn:hover { opacity: 0.88; }
+.auth-file-btn input[type="file"] { display: none; }
+.auth-file-name { font-size: 0.72rem; color: var(--mi-muted, #aaa); margin-top: 6px; word-break: break-all; }
+
+.auth-submit-btn {
+  width: 100%; padding: 13px; border-radius: 10px; border: none; cursor: pointer;
+  font-size: 0.9rem; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg,#b14dff,#4d8eff,#00e5ff);
+  transition: opacity 0.2s;
+}
+.auth-submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.auth-submit-btn:not(:disabled):hover { opacity: 0.9; }
+
+.auth-status { margin-top: 16px; font-size: 0.82rem; line-height: 1.5; }
+.auth-status.auth-status--warn { color: #ffd700; }
+.auth-status.auth-status--error { color: #ff2d6f; }
+.auth-status.auth-status--info { color: var(--mi-muted, #aaa); }
+.auth-result-dump {
+  margin-top: 12px; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.05);
+  font-size: 0.72rem; white-space: pre-wrap; word-break: break-all; max-height: 320px; overflow: auto;
+}
+</style>
+
+<h1>🔍 Authenticity Check</h1>
+<p class="auth-sub">Identify a card from its front, then check the back against the set's own release region.</p>
+
+<!-- Desktop upload panel. Mobile camera panel (reusing the on-device gate) is Part 4. -->
+<div class="auth-desktop-only">
+  <form id="authForm">
+    <div class="auth-slot-row">
+      <div class="auth-slot">
+        <h3>Front</h3>
+        <img class="auth-preview" id="authFrontPreview" alt="">
+        <label class="auth-file-btn">
+          Choose photo
+          <input type="file" accept="image/*" id="authFrontFile">
+        </label>
+        <div class="auth-file-name" id="authFrontName"></div>
+      </div>
+      <div class="auth-slot">
+        <h3>Back</h3>
+        <img class="auth-preview" id="authBackPreview" alt="">
+        <label class="auth-file-btn">
+          Choose photo
+          <input type="file" accept="image/*" id="authBackFile">
+        </label>
+        <div class="auth-file-name" id="authBackName"></div>
+      </div>
+    </div>
+    <button type="submit" class="auth-submit-btn" id="authSubmitBtn" disabled>Check Authenticity</button>
+  </form>
+  <div class="auth-status" id="authStatus"></div>
+  <div class="auth-result-dump" id="authResultDump" style="display:none;"></div>
+</div>
+
+<script>
+(function() {
+  var frontFile = document.getElementById('authFrontFile');
+  var backFile  = document.getElementById('authBackFile');
+  var frontPrev = document.getElementById('authFrontPreview');
+  var backPrev  = document.getElementById('authBackPreview');
+  var frontName = document.getElementById('authFrontName');
+  var backName  = document.getElementById('authBackName');
+  var submitBtn = document.getElementById('authSubmitBtn');
+  var statusEl  = document.getElementById('authStatus');
+  var dumpEl    = document.getElementById('authResultDump');
+  var form      = document.getElementById('authForm');
+  var API_BASE  = window.location.origin + '/api/v1';
+
+  function wireSlot(inputEl, previewEl, nameEl) {
+    inputEl.addEventListener('change', function() {
+      var f = inputEl.files && inputEl.files[0];
+      if (!f) { previewEl.style.display = 'none'; nameEl.textContent = ''; updateSubmitState(); return; }
+      nameEl.textContent = f.name;
+      var reader = new FileReader();
+      reader.onload = function(e) { previewEl.src = e.target.result; previewEl.style.display = 'block'; };
+      reader.readAsDataURL(f);
+      updateSubmitState();
+    });
+  }
+  wireSlot(frontFile, frontPrev, frontName);
+  wireSlot(backFile, backPrev, backName);
+
+  function updateSubmitState() {
+    var hasFront = frontFile.files && frontFile.files.length > 0;
+    var hasBack  = backFile.files && backFile.files.length > 0;
+    submitBtn.disabled = !(hasFront && hasBack);
+  }
+
+  function setStatus(msg, variant) {
+    statusEl.textContent = msg;
+    statusEl.className = 'auth-status' + (variant ? ' auth-status--' + variant : '');
+  }
+
+  function showDump(obj) {
+    dumpEl.style.display = 'block';
+    dumpEl.textContent = JSON.stringify(obj, null, 2);
+  }
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    dumpEl.style.display = 'none';
+    setStatus('Identifying the front of the card…', 'info');
+
+    var apiKey = window.GS_SCANNER_KEY || '';
+    var frontFd = new FormData();
+    frontFd.append('image', frontFile.files[0]);
+    // Authenticity mode is a single deliberate identification, not a live
+    // scan loop — always charge exactly one credit for it regardless of
+    // whether OCR confirms the front (see api_routes.py's always_charge
+    // parameter and the counting recon behind it).
+    frontFd.append('always_charge', '1');
+
+    var matchData;
+    try {
+      var matchResp = await fetch(API_BASE + '/match', {
+        method: 'POST',
+        headers: { 'X-API-Key': apiKey },
+        body: frontFd
+      });
+      if (matchResp.status === 402) {
+        var errJson = {};
+        try { errJson = await matchResp.json(); } catch (_je) {}
+        setStatus(errJson.message || "You've used your included scans — top up to continue.", 'warn');
+        submitBtn.disabled = false;
+        if (typeof gsTopupModalOpen === 'function') gsTopupModalOpen(errJson.reason, errJson.tier);
+        return;
+      }
+      if (!matchResp.ok) {
+        setStatus('Something went wrong identifying the front of the card. Please try again.', 'error');
+        submitBtn.disabled = false;
+        return;
+      }
+      matchData = await matchResp.json();
+    } catch (_fe) {
+      setStatus('Network error — please try again.', 'error');
+      submitBtn.disabled = false;
+      return;
+    }
+
+    if (!matchData.matches || matchData.matches.length === 0) {
+      setStatus("We couldn't identify this card from the front photo. Try a clearer, well-lit shot with the card filling the frame.", 'error');
+      submitBtn.disabled = false;
+      return;
+    }
+
+    var topMatch = matchData.matches[0];
+    var sku = topMatch.sku;
+    var cardName = (topMatch.profile && (topMatch.profile.name || topMatch.profile.title)) || sku;
+
+    if (matchData.low_confidence) {
+      setStatus('Identified as "' + cardName + '" — but this match is uncertain. Checking the back anyway; treat the result with caution.', 'warn');
+    } else {
+      setStatus('Identified as "' + cardName + '". Checking the back…', 'info');
+    }
+
+    var backFd = new FormData();
+    backFd.append('sku', sku);
+    backFd.append('image', backFile.files[0]);
+
+    var backData;
+    try {
+      var backResp = await fetch('/api/authenticity/back-check', {
+        method: 'POST',
+        body: backFd
+      });
+      if (!backResp.ok) {
+        setStatus('Something went wrong checking the back of the card. Please try again.', 'error');
+        submitBtn.disabled = false;
+        return;
+      }
+      backData = await backResp.json();
+    } catch (_be) {
+      setStatus('Network error while checking the back — please try again.', 'error');
+      submitBtn.disabled = false;
+      return;
+    }
+
+    if (backData.status === 'sku_not_found') {
+      // Should be impossible: sku came straight from a real /api/v1/match
+      // result, so back-check failing to find a profile for it means the
+      // two endpoints' card databases have drifted out of sync.
+      console.error('[AUTH-BACKCHECK] sku_not_found for a SKU that /api/v1/match just returned:', sku, backData);
+      setStatus('Identified as "' + cardName + '", but the back check could not find this card in our authenticity database. This is unexpected — please report it.', 'error');
+      showDump({ front_match: { sku: sku, name: cardName, low_confidence: !!matchData.low_confidence }, back_check: backData });
+      submitBtn.disabled = false;
+      return;
+    }
+
+    setStatus('Identified as "' + cardName + '". Back check complete — see raw result below (final result view lands in Part 3).', matchData.low_confidence ? 'warn' : 'info');
+    showDump({ front_match: { sku: sku, name: cardName, low_confidence: !!matchData.low_confidence }, back_check: backData });
+    submitBtn.disabled = false;
+  });
+})();
+</script>
+
+<!-- Result banner (front card + verdict) replaces the raw JSON dump above in Part 3. -->
+
+</div>
+{% endblock %}

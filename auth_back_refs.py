@@ -17,8 +17,8 @@ This reference store is a separate, tiny file with zero coupling to the
 matching engine.
 
 Also holds cross_check_back_language(), which compares the classifier's
-back_label against the confirmed SKU's own set_id (jpn- prefix = Japanese
-release). This is deliberately a separate, gentler check from
+back_label against the confirmed SKU's own jpn- prefix (Japanese release).
+This is deliberately a separate, gentler check from
 _build_auth_result_for_result()'s existing back_type/expectedBack logic in
 app.py: that function's mismatch path terminates in "counterfeit", which
 is wrong here — a front/back language mismatch is just as likely to mean
@@ -159,16 +159,29 @@ def classify_back_style(
     return label, sim_en, sim_jp, gap
 
 
-def cross_check_back_language(set_id: str, back_label: str) -> dict:
-    """Compare the classifier's back_label against the confirmed SKU's own
-    set_id. Standalone -- not called from /match yet.
+def cross_check_back_language(sku: str, back_label: str) -> dict:
+    """Compare the classifier's back_label against the confirmed card's own
+    SKU. Standalone -- not called from /match yet.
 
-    front_language is derived from set_id.startswith("jpn-") alone (see
+    front_language is derived from sku.startswith("jpn-") alone (see
     Phase 2 recon: this is a construction-time label assigned by which
     scraper ingested the set, not a content-inspection heuristic — the
     128 jpn- / 174 non-jpn- split across set_metadata.json's POKEMON
     entries is exact and non-overlapping by definition of the prefix
     check; no evidence found of a set mislabelled either direction).
+
+    Takes the SKU specifically, not the card's profile["set_id"] field --
+    those are NOT the same namespace. For jpn- cards, profile["set_id"]
+    holds TCGdex's own bare set code (e.g. "S10a" for sku "jpn-s10a-001"),
+    never a jpn-prefixed string, so deriving front_language from it made
+    every genuine Japanese card read as English (found via a real JP
+    front + JP back end-to-end test returning needs_review instead of
+    back_consistent -- see _build_auth_card_payload_from_profile's
+    docstring in app.py for the same mismatch, discovered and fixed there
+    first via _derive_jpn_set_id_from_sku()). The SKU itself always
+    carries the jpn- prefix reliably, so callers must pass that, not a
+    profile-sourced set_id -- a parameter literally named sku makes that
+    mistake harder to repeat than one named set_id.
 
     Rules:
         back_label == "unknown"                          -> no_back_signal
@@ -183,8 +196,8 @@ def cross_check_back_language(set_id: str, back_label: str) -> dict:
     _build_auth_result_for_result()'s existing (still-inert) back_type
     mismatch path in app.py, which terminates in "counterfeit".
     """
-    set_id = (set_id or "").strip()
-    is_jpn_front = set_id.startswith("jpn-")
+    sku = (sku or "").strip()
+    is_jpn_front = sku.startswith("jpn-")
     front_language = "japanese" if is_jpn_front else "english-style"
 
     if back_label == "unknown":
@@ -203,7 +216,7 @@ def cross_check_back_language(set_id: str, back_label: str) -> dict:
         back_desc = "Japanese" if back_label == "japanese" else "English"
         reason = f"The set code indicates {front_desc}, but the card back appears to be {back_desc}."
 
-    print(f"[AUTH-XCHECK] set_id={set_id} front_language={front_language} "
+    print(f"[AUTH-XCHECK] sku={sku} front_language={front_language} "
           f"back_label={back_label} status={status} "
           f"flag={flags[0] if flags else None}", flush=True)
 
@@ -211,7 +224,7 @@ def cross_check_back_language(set_id: str, back_label: str) -> dict:
         "status": status,
         "flags": flags,
         "reason": reason,
-        "set_id": set_id,
+        "sku": sku,
         "front_language": front_language,
         "back_label": back_label,
     }

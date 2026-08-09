@@ -602,11 +602,19 @@ def register_api_routes(app):
                 }), 200
             logger.info(f"[LANG-FILTER] EN mode: {_before_lang_filter} → {len(results)} results (JP stripped)")
 
-        # Option B (restored): charge quota only on OCR-confirmed match
+        # Option B (restored): charge quota only on OCR-confirmed match --
+        # UNLESS the caller opts in to always_charge (e.g. the authenticity
+        # mode, which is a single deliberate identification, not a live
+        # loop retrying uncertain frames -- see the counting recon in the
+        # commit message for why "free CLIP-only" is wrong for that case).
+        # Opt-in and default-off so every existing caller (the live camera
+        # scanner's own fallback to this same route) is byte-identical to
+        # before this parameter existed.
+        _always_charge_api = request.form.get("always_charge", "").strip().lower() in ("1", "true", "yes")
         _ocr_status_api = _ocr_info.get("ocr_status", "not_run")
         _ocr_confirmed_api = _ocr_status_api in ("rank1_confirmed", "direct_lookup", "promoted")
         scan_decision = {"allowed": True, "show_transition_toast": False}
-        if _ocr_confirmed_api:
+        if _ocr_confirmed_api or _always_charge_api:
             _sku_for_charge_api = _ocr_info.get("matched_sku") or results[0].get("sku", "")
             scan_decision = _evaluate_scan_decision(request, sku=_sku_for_charge_api)
             if not scan_decision.get("allowed", True):
@@ -780,13 +788,16 @@ def register_api_routes(app):
         t_end = time.time()
         timing_ms = round((t_end - t_start) * 1000)
 
-        # Record price history; only increment stats counter on OCR-confirmed scan
+        # Record price history; only increment stats counter when quota was
+        # actually consumed above (OCR-confirmed, or always_charge) -- keeps
+        # this site-wide stats counter in sync with the real per-user quota
+        # consumption rather than a separate condition that could drift.
         try:
             from app import _record_price, _extract_gbp_from_profile, _increment_scan_counter, _increment_sku_scan_freq
             if matches:
                 _m0 = matches[0]
                 _record_price(_m0.get("sku"), _extract_gbp_from_profile(_m0.get("profile", {}), sku=_m0.get("sku")))
-            if matches and _ocr_confirmed_api:
+            if matches and (_ocr_confirmed_api or _always_charge_api):
                 _increment_scan_counter()
                 # Per-sku popularity counter (guarded; never affects the result).
                 _increment_sku_scan_freq(_m0.get("sku"))

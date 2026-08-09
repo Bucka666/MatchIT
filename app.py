@@ -8662,6 +8662,17 @@ def watchlist_sync_post():
 def watchlist_page():
     return render_template("watchlist.html")
 
+@app.route("/authenticity")
+def authenticity_page():
+    """Dedicated authenticity scan mode: identify a card from its front,
+    then check the back's language against the set's own release region.
+    No tier gate for now -- if one is added later, follow /collection's
+    pattern (app.py ~5030): call _ssr_subscription(), pass ssr_is_premium
+    into the template, and branch the page content on it there rather
+    than blocking the route itself, matching how every other gated page
+    in this app behaves (200 to everyone, content differs by tier)."""
+    return render_template("authenticity.html")
+
 @app.route("/sets")
 def sets_page():
     return render_template("sets.html")
@@ -9732,7 +9743,11 @@ def api_authenticity_back_check():
     """Standalone authenticity back-image check -- not part of the /match
     scan pipeline. Takes an already-confirmed sku plus a back-of-card
     photo, classifies it EN/JP, and cross-checks it against the SKU's
-    own set_id via auth_back_refs.cross_check_back_language().
+    own jpn- prefix via auth_back_refs.cross_check_back_language() --
+    that function takes the sku itself, NOT profile["set_id"] (for jpn-
+    cards that field holds TCGdex's own bare code, e.g. "S10a", never a
+    jpn-prefixed string -- passing set_id there was a real bug, see
+    cross_check_back_language's docstring).
 
     No @api_key_required: this is a browser-facing route, on the same
     footing as /api/ondevice/telemetry and /api/card-profile/<sku> (app.py,
@@ -9805,7 +9820,7 @@ def api_authenticity_back_check():
         current_app.logger.exception("api_authenticity_back_check embedding failed")
         return jsonify({"error": "Could not process the back image. Please try again."}), 500
 
-    xcheck = cross_check_back_language(set_id, back_label)
+    xcheck = cross_check_back_language(sku, back_label)
 
     print(f"[AUTH-BACKCHECK] sku={sku} set_id={set_id} back_label={back_label} "
           f"sim_en={sim_en:.4f} sim_jp={sim_jp:.4f} status={xcheck['status']} "
