@@ -1060,7 +1060,8 @@ def _is_pre_sm_sku(sku: Optional[str]) -> bool:
 
 
 def _extract_pokemon_number_dispatch(image_path: str,
-                                     fallback_allowed: bool = False):
+                                     fallback_allowed: bool = False,
+                                     jp_mode: bool = False):
     """Region path is PRIMARY and unchanged. Full-image runs ONLY as a
     fallback, and only when the flag is on AND the caller allows it.
 
@@ -1079,10 +1080,15 @@ def _extract_pokemon_number_dispatch(image_path: str,
 
     Never worse than the region path: the fallback can only replace a
     result the region path itself could not corroborate.
+
+    jp_mode is passed straight through to the region path (see its own
+    docstring) so the EN set-code map is never consulted for a card already
+    known to be Japanese. Not threaded into the full-image fallback -- out
+    of scope here; that path already word-boundary-guards its EN scan.
     """
     global _last_pkm_denominator, _last_unmapped_jp_setcode, _last_pkm_candidate_sets
 
-    primary = _extract_pokemon_number(image_path)
+    primary = _extract_pokemon_number(image_path, jp_mode=jp_mode)
     if not _full_image_fallback_enabled():
         return primary
 
@@ -1251,11 +1257,18 @@ def _extract_ygo_setcode(image_path: str) -> Optional[str]:
     return None
 
 
-def _extract_pokemon_number(image_path: str) -> Optional[str]:
+def _extract_pokemon_number(image_path: str, jp_mode: bool = False) -> Optional[str]:
     """
     Read the card number and set code from the bottom of a Pokémon card.
     For SV era cards returns e.g. 'sv6-18' for direct DB lookup.
     For older cards returns plain number e.g. '18'.
+
+    jp_mode: when True, _PKM_SETCODE_MAP (EN ptcgoCode) is never consulted --
+    neither in the early-exit pooled-text scan nor the number-line scan.
+    A card already known to be Japanese must resolve via _JP_SETCODE_MAP
+    only; the EN map's substring leniency (deliberately unguarded -- see
+    the number-line scan below) is what let 'PL2' (pl2, EN Platinum:
+    Rising Rivals) match inside pooled OCR noise on a genuine JP S11 card.
     """
     global _last_pkm_denominator, _last_unmapped_jp_setcode, _last_pkm_candidate_sets
     _last_pkm_denominator = None
@@ -1276,13 +1289,15 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
         _t = _crop_and_read(image_path, region)
         if _t:
             all_texts.extend(_t)
-        # Early-exit check on text pooled so far
+        # Early-exit check on text pooled so far. EN map skipped entirely in
+        # jp_mode -- see jp_mode docstring note on _extract_pokemon_number.
         _so_far = " ".join(all_texts).upper()
         _sc = None
-        for _code, _db_id in _PKM_SETCODE_MAP.items():
-            if _code in _so_far:
-                _sc = _db_id
-                break
+        if not jp_mode:
+            for _code, _db_id in _PKM_SETCODE_MAP.items():
+                if _code in _so_far:
+                    _sc = _db_id
+                    break
         if _sc:
             for _txt in all_texts:
                 _m = _CARD_NUMBER_RE.search(_txt)
@@ -1321,6 +1336,8 @@ def _extract_pokemon_number(image_path: str) -> Optional[str]:
     _scan_text = _number_line
     if _scan_text is None:
         logger.info("[OCR-PKM] no number-bearing line — set-code scan skipped")
+    elif jp_mode:
+        logger.info(f"[OCR-PKM] jp_mode — EN setcode scan skipped for: {_scan_text!r}")
     else:
         logger.info(f"[OCR-PKM] setcode scan text: {_scan_text!r}")
         for code, db_id in _PKM_SETCODE_MAP.items():
@@ -1739,7 +1756,7 @@ def ocr_direct_lookup(
         # direct DB lookup with no visual ranking left to disagree with it.
         # Nothing is lost: the post-CLIP call site sees the same image and
         # catches the same cards with a working gate.
-        extracted = _extract_pokemon_number_dispatch(image_path)
+        extracted = _extract_pokemon_number_dispatch(image_path, jp_mode=jp_mode)
     else:
         return None, None
     if not extracted:
@@ -1758,6 +1775,15 @@ def ocr_direct_lookup(
     if jp_mode and db_match and not db_match.startswith("jpn-"):
         logger.warning(f"[OCR-FIRST] rejecting EN match {db_match} in jp_mode")
         db_match = None
+        # extracted_set_id came from the same wrong EN extraction -- clearing
+        # only db_match left this flowing downstream unrejected (the actual
+        # cause of the pl2-30 set-id surviving a jp_mode scan). Only clear it
+        # when it's the same wrong-language value; a correct jpn- id here
+        # (e.g. db_match failed for an unrelated reason, like no DB row) must
+        # survive.
+        if extracted_set_id and not extracted_set_id.startswith("jpn-"):
+            logger.warning(f"[OCR-FIRST] also clearing EN extracted_set_id {extracted_set_id} in jp_mode")
+            extracted_set_id = None
     # extracted resolved to a bare number with no recognized set code (e.g.
     # _extracted_set_id found no '-' to split on) — if we separately saw an
     # unmapped JP-shaped code, use it as a synthetic set id so _is_set_imaged
@@ -1918,8 +1944,11 @@ def ocr_confirm_ranking(
     # from scraped profile data, and fails closed.
     _pkm_fallback_ok = _is_pre_sm_sku(_top_sku)
     from functools import partial as _partial
+    # jp_mode reuses _suppress_swsh_for_jpn -- already the OR of explicit
+    # jpn_mode and CLIP's own jpn- top-1, the exact signal this gate needs.
     _pkm_extract = _partial(_extract_pokemon_number_dispatch,
-                            fallback_allowed=_pkm_fallback_ok)
+                            fallback_allowed=_pkm_fallback_ok,
+                            jp_mode=_suppress_swsh_for_jpn)
     _pkm_extract.__name__ = "_extract_pokemon_number_dispatch"
 
     # Select extractor and matcher

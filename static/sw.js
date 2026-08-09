@@ -1,4 +1,13 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
+// v142 (2026-08-09) — three fixes: (1) ocr_confirm.py's Pokémon set-code OCR now
+// skips the EN ptcgoCode map entirely in jp_mode, so a JP card can no longer
+// resolve to a wrong EN set via substring noise (e.g. pl2 matching on a genuine
+// S11 card) -- also clears extracted_set_id, not just db_match, on JP rejection.
+// (2) match.html: removed the unconditional on-load auto-show of the #auth-result
+// scanner-shaped overlay -- it was popping up after any scan, unprompted, with no
+// camera actually running. Still reachable via the small banner's "Details" tap.
+// (3) match.html: added a colour rule for the bare "official" auth status, which
+// previously had no CSS rule and fell through to inherited colour.
 // v141 (2026-08-09) — on-device accept path fix: gsGameForStaleness (gs-ondevice.js)
 // was called bare from match.html's scCapture, but was private to the on-device
 // IIFE and threw a ReferenceError before any on-device accept ever completed in
@@ -148,7 +157,7 @@
 // The bump itself also clears out any no-store pages a prior version
 // already cached under the old CACHE_NAME — activate() deletes every
 // cache key that isn't this one, so that stale content goes with it.
-const CACHE_NAME = 'grailsweep-v141';
+const CACHE_NAME = 'grailsweep-v142';
 const PRECACHE = [
   '/',
   '/static/style.css',
