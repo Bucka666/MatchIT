@@ -263,7 +263,7 @@
       flex-wrap: wrap;
       width: 100%;
     }
-    .mi-back-btn, .mi-collection-nav, .mi-sets-nav, .mi-watchlist-nav, .mi-upgrade-nav, .nav-benefits-btn {
+    .mi-back-btn, .mi-collection-nav, .mi-sets-nav, .mi-watchlist-nav, .mi-authenticity-nav, .mi-upgrade-nav, .nav-benefits-btn {
       font-size: clamp(0.6rem, 2vw, 0.78rem) !important;
       padding: clamp(4px, 1.5vw, 8px) clamp(6px, 2vw, 12px) !important;
       white-space: nowrap;
@@ -322,6 +322,24 @@
     .mi-watchlist-nav:hover {
       background: rgba(0,229,255,0.15);
       border-color: rgba(0,229,255,0.4);
+    }
+    .mi-authenticity-nav {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(0,255,136,0.2);
+      background: rgba(0,255,136,0.06);
+      color: #00ff88;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s;
+    }
+    .mi-authenticity-nav:hover {
+      background: rgba(0,255,136,0.15);
+      border-color: rgba(0,255,136,0.4);
     }
     .mi-sets-nav {
       display: flex;
