@@ -21,7 +21,7 @@ GrailSweep is an AI-powered visual TCG card matching and valuation platform.
 - set_scheduler.py — weekly new set detection + email notifications
 - ocr_confirm.py — EasyOCR set code confirmation for reprint disambiguation
 - sync_profiles.py — syncs scraped profile.json files into CardsDB (replaces upload_profiles.py)
-- upload_to_modal.py — uploads embeddings/images.db to Modal volume
+- smart_upload.py — uploads embeddings/images.db, images, profiles, thumbnails to Modal volume (state-tracked, incremental)
 - incremental_embed.py — adds new card embeddings without full rebuild
 - vertical_loader.py — multi-vertical config system
 - verticals/cards/vertical.json — cards vertical config
@@ -45,7 +45,8 @@ deployed serve via Function.from_name and hits its *.modal.run URL directly
 (bypasses Cloudflare), so it always warms the GPU serve function, not serve_light.
 
 Upload embeddings/images DB (when new cards scraped)
-modal run upload_to_modal.py
+modal run smart_upload.py --db-and-cache
+(opt-in and guarded — aborts if the local file has fewer rows than the volume's)
 Test email scheduler manually
 modal run matchit_modal.py::scheduled_set_check
 

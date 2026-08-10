@@ -169,3 +169,10 @@ set_metadata_volume_merged.json
 # analysis artifacts, not durable tooling or data.
 diff_report.txt
 set_metadata_postupload_verify.json
+
+# images.db copies pulled down during the 2026-08-10 incident diagnosis/
+# restore (backup diff, post-restore verification). ~550MB each — must
+# never be committed. Kept on disk, not history.
+backup_check.db
+restore_verify.db
+volume_images_check.db
