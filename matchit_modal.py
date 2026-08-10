@@ -622,7 +622,7 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
     If new_skus is provided, only processes those SKUs (delta update).
     If both are None, full rebuild from scratch.
     """
-    import json, os, urllib.request, urllib.error
+    import json, os, urllib.request, urllib.error, urllib.parse
 
     db_root     = "/modal_data/CardsDB"
     sku_map_path = "/modal_data/sku_game_map.json"
@@ -787,6 +787,16 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
         mtg_new  = {s for s in sets_by_game["MTG"]     if s not in new_meta}
         ygo_new  = {s for s in sets_by_game["YUGIOH"]  if s not in new_meta}
 
+    # jpn- sets never have pokemontcg.io data (EN-only API) -- split them out
+    # here so the Pokémon batch-fetch loop below never touches them. Without
+    # this split every new JP set fell through the "not in pokemontcg.io"
+    # branch and got printed_total=None / name=set_id, exactly the failure
+    # build_set_metadata.py had (2026-08-10 recon). Both poke_new and
+    # jpn_new are, by construction, sets not already in new_meta -- neither
+    # loop below can ever overwrite an existing entry.
+    jpn_new = {s for s in poke_new if s.startswith("jpn-")}
+    poke_new = poke_new - jpn_new
+
     def _fetch_json(url, label):
         try:
             req = urllib.request.Request(
@@ -799,6 +809,47 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
         except Exception as e:
             print(f"[REBUILD] {label} fetch failed: {e}", flush=True)
             return None
+
+    def _fetch_tcgdex_set(set_code, max_retries=3):
+        """TCGdex SET-level endpoint for one JP Pokémon set -- never the
+        per-card lookaside. That endpoint 404s for any set whose card-level
+        list is empty on TCGdex even though the set-level cardCount is
+        correct (confirmed for ~30 JP sets, 2026-08-10 recon) -- this was
+        build_set_metadata.py's core bug. Mirrors
+        scrape_pokemon_jpn.py's _fetch_set_with_backoff: exponential
+        backoff (1s, 2s, 4s) on transient failures. A 404 is a genuine
+        not-found, not a transient failure, so it returns None immediately
+        without burning retries. Returns None (never raises) after
+        exhausting retries -- the caller treats that identically to
+        not-found, and jpn_new is new-set-only by construction, so there is
+        never an existing entry at risk here."""
+        import time as _time
+        delay = 1
+        url = f"https://api.tcgdex.net/v2/ja/sets/{urllib.parse.quote(set_code, safe='')}"
+        for attempt in range(max_retries):
+            try:
+                req = urllib.request.Request(
+                    url,
+                    headers={"User-Agent": "GrailSweep/1.0 contact@grailsweep.com",
+                             "Accept": "application/json"},
+                )
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    return json.loads(resp.read())
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    return None
+                if attempt < max_retries - 1:
+                    print(f"[REBUILD] TCGdex fetch failed for {set_code} "
+                          f"(attempt {attempt + 1}/{max_retries}): {e}", flush=True)
+                    _time.sleep(delay)
+                    delay *= 2
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    print(f"[REBUILD] TCGdex fetch failed for {set_code} "
+                          f"(attempt {attempt + 1}/{max_retries}): {e}", flush=True)
+                    _time.sleep(delay)
+                    delay *= 2
+        return None
 
     # Pokémon — single batch call to pokemontcg.io
     poke_needs_ptcgo = {
@@ -854,6 +905,46 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                 entry = api_lookup.get(set_id.lower())
                 new_meta[set_id]["ptcgoCode"] = entry.get("ptcgoCode") if entry else None
                 ptcgo_backfilled = True
+
+    # JP Pokémon — TCGdex, one set-level call per new set (no bulk "all JP
+    # sets" endpoint used here, unlike the EN/MTG/YGO batch calls above).
+    if jpn_new:
+        print(f"[REBUILD] JP Pokémon: {len(jpn_new)} new set(s) to fetch from TCGdex...", flush=True)
+        for set_id in sorted(jpn_new):
+            set_code = set_id[len("jpn-"):]
+            data = _fetch_tcgdex_set(set_code)
+            prior = existing.get(set_id)
+            if data:
+                cc = data.get("cardCount") or {}
+                new_meta[set_id] = {
+                    "name":          data.get("name") or set_id,
+                    "game":          "POKEMON",
+                    "printed_total": cc.get("official"),
+                    "total":         cc.get("total"),
+                    "exclude":       False,
+                    "ptcgoCode":     None,
+                }
+                print(f"[REBUILD]   + JP {set_id}: {data.get('name')}", flush=True)
+                new_sets += 1
+            elif prior is not None:
+                # Defensive only -- jpn_new is new-set-only by construction
+                # (set difference against new_meta above), so this should be
+                # unreachable. If it is ever hit anyway, a failed fetch must
+                # never replace a real prior entry -- new_meta[set_id] is
+                # already `prior` via the dict(existing) copy at the top of
+                # this function, so there is nothing to write; just leave it
+                # alone and don't count it as new.
+                print(f"[REBUILD]   ! JP {set_id}: fetch failed, kept prior entry unchanged", flush=True)
+            else:
+                # Genuinely new set, fetch failed (retries exhausted, or a
+                # real TCGdex 404). Do NOT write a null-total placeholder --
+                # that would freeze this set null forever, since discovery
+                # is `not in new_meta` and a written-but-null entry would
+                # never be reconsidered again. Leaving it unwritten means it
+                # stays undiscovered in CardsDB and is retried the next time
+                # any rebuild run scans this folder.
+                print(f"[REBUILD]   ? JP {set_id}: discovered in CardsDB but not "
+                      f"resolved on TCGdex -- not written, will retry next run", flush=True)
 
     # MTG — single batch call to Scryfall
     if mtg_new:
@@ -920,7 +1011,34 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                 print(f"[REBUILD]   ? YGO {set_id}: not in YGOProDeck", flush=True)
             new_sets += 1
 
-    if new_sets or new_skus is not None or ptcgo_backfilled:
+    # ── Assert: no entry that already existed loses a populated
+    # printed_total, total, or name. Diffs new_meta against `existing`
+    # (loaded before any fetch above ran) and blocks the write entirely if
+    # any of the three fields regresses on a key that was already present —
+    # new keys are exempt (nothing to protect), and ptcgoCode is exempt
+    # (expected to change; that IS the backfill branch's job). This is the
+    # general safety net build_set_metadata.py never had — same
+    # pattern as backfill_ptcgo_codes.py's pre-write assertion.
+    _regressions = []
+    for _sid, _prior in existing.items():
+        _now = new_meta.get(_sid)
+        if not isinstance(_prior, dict) or not isinstance(_now, dict):
+            continue
+        for _field in ("printed_total", "total"):
+            _pv, _nv = _prior.get(_field), _now.get(_field)
+            if _pv is not None and _nv is None:
+                _regressions.append((_sid, _field, f"{_pv!r} -> None"))
+        _pname, _nname = _prior.get("name"), _now.get("name")
+        if _pname is not None and _pname != _sid and _nname == _sid:
+            _regressions.append((_sid, "name", f"{_pname!r} -> {_nname!r} (blanked to set_id)"))
+
+    if _regressions:
+        print(f"[REBUILD] ABORT set_metadata.json write: {len(_regressions)} existing "
+              f"entr{'y' if len(_regressions) == 1 else 'ies'} would lose printed_total, "
+              f"total, or name. Not writing -- volume set_metadata.json left untouched. "
+              f"sku_game_map.json changes (if any) still commit below. "
+              f"Examples: {_regressions[:10]}", flush=True)
+    elif new_sets or new_skus is not None or ptcgo_backfilled:
         _meta_tmp = meta_path + ".tmp"
         with open(_meta_tmp, "w", encoding="utf-8") as f:
             json.dump(new_meta, f)
@@ -928,7 +1046,8 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
 
     vol.commit()
     print(
-        f"[REBUILD] set_metadata.json: {len(new_meta)} sets total ({new_sets} new added)",
+        f"[REBUILD] set_metadata.json: {len(new_meta)} sets total ({new_sets} new added)"
+        + (" -- WRITE ABORTED, see ABORT line above" if _regressions else ""),
         flush=True,
     )
     print(f"[REBUILD] Done ({mode_label}). Volume committed.", flush=True)
