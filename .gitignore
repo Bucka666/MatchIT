@@ -165,3 +165,7 @@ tools/
 # the Modal volume.
 set_metadata_pre_*.json
 set_metadata_volume_merged.json
+# Scratch diff/verification output from the same 2026-08-10 merge — disposable
+# analysis artifacts, not durable tooling or data.
+diff_report.txt
+set_metadata_postupload_verify.json
