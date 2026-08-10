@@ -251,6 +251,7 @@ _LIGHT_ALLOWED_PREFIXES = (
     "/api/pokemon-search",
     "/search",
     "/api/price_history/bulk",
+    "/api/heartbeat",
 )
 
 
@@ -273,7 +274,7 @@ def _light_404(environ, start_response):
         modal.Secret.from_name("r2-credentials"),
     ],
     timeout=300,
-    min_containers=1,
+    min_containers=0,
     scaledown_window=600,
     max_containers=2,
     enable_memory_snapshot=True,
