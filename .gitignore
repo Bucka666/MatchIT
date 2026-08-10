@@ -157,3 +157,11 @@ auth-engine/index.js
 # Kept on disk, out of history — consistent with the _pre_* lesson recorded
 # above.
 tools/
+
+# Point-in-time backups taken before destructive set_metadata.json
+# operations during the 2026-08-10 JP set-metadata merge (already covered
+# by *_pre_* above, listed explicitly for clarity) and the merged-output
+# file staged for upload. Kept on disk, not history — the live copy is on
+# the Modal volume.
+set_metadata_pre_*.json
+set_metadata_volume_merged.json

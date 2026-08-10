@@ -313,10 +313,12 @@ _PKM_SETCODE_MAP = {**_PKM_SETCODE_MAP_GENERATED["EN"], **_PKM_SETCODE_MAP_STATI
 
 
 _JP_SETCODE_MAP = {
-    # sv1a (Triplet Beat)
+    # sv1a (Triplet Beat) — 1→I misread variant, same class as SV1V/SVIV below
     "SV1A": "sv1a",
+    "SVIA": "sv1a",
     # sv1s (Scarlet ex)
     "SV1S": "sv1s",
+    "SVIS": "sv1s",
     # sv1v (Violet ex) — confirmed 1→I misread in logs
     "SV1V": "sv1v",
     "SVIV": "sv1v",
@@ -362,6 +364,7 @@ _JP_SETCODE_MAP = {
     "SV9A": "sv9a",
     # sv10 (Destined Rivals JP)
     "SV10": "sv10",
+    "SVI0": "sv10",
 
     # Mega Evolution JP series
     "M2":   "m2",     # Inferno X (80 cards)
@@ -369,6 +372,8 @@ _JP_SETCODE_MAP = {
     "M5":   "m5",
     "M1L":  "m1l",    # Mega Brave
     "M1S":  "m1s",    # Mega Symphonia
+    "MIS":  "m1s",    # 1→I misread — confirmed live: 'MIS 051/063' on a
+                       # genuine jpn-m1s card (printed_total 63 matches)
 
     # Sword/Shield era s-series
     "S4":   "s4",
@@ -387,11 +392,16 @@ _JP_SETCODE_MAP = {
     "S9":   "s9",
     "S9A":  "s9a",
     "S10A": "s10a",
+    "SI0A": "s10a",   # 1→I misread
     "S10B": "s10b",
+    "SI0B": "s10b",   # 1→I misread
     "S10D": "s10d",
+    "SI0D": "s10d",   # 1→I misread
     "S10P": "s10p",
+    "SI0P": "s10p",   # 1→I misread
     "S11":  "s11",
     "S11A": "s11a",
+    "SIIA": "s11a",   # 1→I misread (both digits)
     "S12":  "s12",
     "S12A": "s12a",
 
