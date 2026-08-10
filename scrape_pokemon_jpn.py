@@ -25,6 +25,7 @@ Usage:
 from __future__ import annotations
 
 import os
+import re
 import sys
 import json
 import time
@@ -47,36 +48,100 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 
-def download_image(url: str, dest: Path, timeout: int = 5) -> bool:
-    """Download image to dest. Retries once on failure. Returns True on success."""
+_TCGDEX_ASSET_BASE = "https://assets.tcgdex.net/ja"
+
+
+def _cdn_fallback_image_url(set_id: str, local_id: str) -> str:
+    """TCGdex's asset CDN follows {series}/{set}/{localId}/high.png, where
+    series is the set id's leading alphabetic run (SV9a -> SV, M2a -> M,
+    S-P -> S) -- matches the pattern already visible in existing profile.json
+    image_url values on the volume (e.g. jpn-s10a's is .../S/S10a/002/high.png).
+
+    Used as a fallback when the API's card list/detail response carries no
+    image field at all, which it does not for any M-series (Mega Evolution)
+    card checked so far. Confirmed directly against the CDN that some of
+    those sets DO have images live despite the API gap (M1S, M4) and others
+    genuinely don't (M1L, M2, M2a, M3, M5) -- this URL is a guess built from
+    convention, not a confirmed source; only an actual request tells them
+    apart, which is why the caller does not persist it into profile.json
+    unless the download actually succeeds."""
+    m = re.match(r"^[A-Za-z]+", set_id)
+    series = m.group(0) if m else set_id
+    return f"{_TCGDEX_ASSET_BASE}/{series}/{set_id}/{local_id}/high.png"
+
+
+def download_image(url: str, dest: Path, timeout: int = 5) -> str:
+    """Download image to dest. Retries once on failure.
+
+    Returns "ok", "not_found" (404 -- a normal, expected outcome for
+    card.image-less cards whose CDN fallback also has nothing; not an
+    error, not retried), or "error" (network/5xx/timeout after retries
+    exhausted)."""
     for attempt in (1, 2):
         try:
             resp = requests.get(url, timeout=timeout)
+            if resp.status_code == 404:
+                return "not_found"
             resp.raise_for_status()
             dest.write_bytes(resp.content)
-            return True
+            return "ok"
         except Exception as e:
             if attempt == 1:
                 log.warning("Image download failed (attempt 1), retrying: %s — %s", url, e)
             else:
                 log.warning("Image download failed (attempt 2), skipping: %s — %s", url, e)
-    return False
+    return "error"
+
+
+def _fetch_set_with_backoff(sdk: TCGdex, set_id: str, max_retries: int = 3):
+    """Mirrors _fetch_card_detail_with_backoff's pattern: exponential backoff
+    (1s, 2s, 4s) instead of scrape_set's original single getSync() call with
+    zero retries, which let one transient TCGdex failure silently drop an
+    entire set (confirmed cause: jpn-m2a missing for ~8 months while jpn-m3,
+    scraped around the same time, succeeded). Raises once retries are
+    exhausted -- scrape_set() below is responsible for reporting that
+    loudly rather than swallowing it into a scroll-by warning."""
+    encoded_id = urllib.parse.quote(set_id, safe='')
+    delay = 1
+    last_exc = None
+    for attempt in range(max_retries):
+        try:
+            return sdk.set.getSync(encoded_id)
+        except Exception as e:
+            last_exc = e
+            if attempt < max_retries - 1:
+                log.warning("Set fetch failed for %s (attempt %d/%d), retrying in %ds: %s",
+                            set_id, attempt + 1, max_retries, delay, e)
+                time.sleep(delay)
+                delay *= 2
+    raise RuntimeError(f"exhausted {max_retries} retries for set {set_id}: {last_exc}")
 
 
 def scrape_set(sdk: TCGdex, set_id: str, db_root: Path,
                resume: bool, dry_run: bool) -> dict:
-    """Scrape all cards from one Japanese set. Returns stats dict."""
-    stats = {"total": 0, "downloaded": 0, "skipped": 0, "failed": 0}
+    """Scrape all cards from one Japanese set. Returns stats dict.
+
+    stats["set_error"] is None on success, or the exhausted-retries error
+    string on total set-fetch failure -- the caller (main()) collects these
+    across the whole run and prints them in a final, unmissable summary
+    rather than letting them scroll by as an easy-to-miss warning line.
+
+    stats["from_card_field"] / ["from_cdn_fallback"] break "downloaded" down
+    by source; stats["unavailable"] counts confirmed-404 cards (expected,
+    not an error) separately from stats["failed"] (a real download error)."""
+    stats = {"total": 0, "downloaded": 0, "skipped": 0, "failed": 0, "set_error": None,
+              "from_card_field": 0, "from_cdn_fallback": 0, "unavailable": 0}
 
     try:
-        encoded_id = urllib.parse.quote(set_id, safe='')
-        card_set = sdk.set.getSync(encoded_id)
+        card_set = _fetch_set_with_backoff(sdk, set_id)
     except Exception as e:
-        log.warning("Failed to fetch set %s: %s", set_id, e)
+        log.error("FAILED to fetch set %s after retries: %s", set_id, e)
+        stats["set_error"] = str(e)
         return stats
 
     if card_set is None:
         log.warning("Set %s not found", set_id)
+        stats["set_error"] = "not found"
         return stats
 
     set_name = card_set.name
@@ -92,11 +157,50 @@ def scrape_set(sdk: TCGdex, set_id: str, db_root: Path,
         sku = f"jpn-{set_id.lower()}-{card.localId}"
         out_dir = db_root / "pokemon" / sku
         image_path = out_dir / "front.png"
-        image_url = (card.image + "/high.png") if card.image else None
 
         if resume and image_path.exists():
             stats["skipped"] += 1
             continue
+
+        from_api_field = bool(card.image)
+        attempt_url = ((card.image + "/high.png") if from_api_field
+                       else _cdn_fallback_image_url(set_id, card.localId))
+
+        if dry_run:
+            source = "card.image" if from_api_field else "CDN fallback (untested)"
+            preview_profile = {
+                "api_id": sku, "name": card.name, "number": card.localId,
+                "card_number": card.localId, "set_id": set_id, "set_name": set_name,
+                "lang": "ja", "category": "POKEMON",
+                "rarity": getattr(card, "rarity", None) or None,
+                "image_url": attempt_url if from_api_field else None,
+            }
+            print(f"  DRY-RUN  {sku}  →  {attempt_url}  [{source}]")
+            print(f"           profile: {json.dumps(preview_profile, ensure_ascii=False)}")
+            continue
+
+        out_dir.mkdir(parents=True, exist_ok=True)
+
+        result = download_image(attempt_url, image_path)
+        if result == "ok":
+            confirmed_url = attempt_url
+            stats["downloaded"] += 1
+            stats["from_card_field" if from_api_field else "from_cdn_fallback"] += 1
+            print(f"  ok  {sku}" + ("" if from_api_field else "  (via CDN fallback)"))
+        elif result == "not_found":
+            # A confirmed 404 is only worth recording as image_url when the
+            # URL came from the API's own card.image field (still true, we
+            # just couldn't fetch it); a fallback guess that 404s was never
+            # confirmed to exist, so it stays unset rather than pointing
+            # profile.json at a dead link.
+            confirmed_url = attempt_url if from_api_field else None
+            stats["unavailable"] += 1
+            log.info("No image available for %s (404 at %s)", sku, attempt_url)
+            print(f"  --  {sku}  (no image available)")
+        else:
+            confirmed_url = attempt_url if from_api_field else None
+            stats["failed"] += 1
+            print(f"  FAIL  {sku}  (profile written, no image)")
 
         profile = {
             "api_id": sku,
@@ -108,30 +212,12 @@ def scrape_set(sdk: TCGdex, set_id: str, db_root: Path,
             "lang": "ja",
             "category": "POKEMON",
             "rarity": getattr(card, "rarity", None) or None,
-            "image_url": image_url,
+            "image_url": confirmed_url,
         }
-
-        if dry_run:
-            print(f"  DRY-RUN  {sku}  →  {image_url or '(no image)'}")
-            print(f"           profile: {json.dumps(profile, ensure_ascii=False)}")
-            continue
-
-        out_dir.mkdir(parents=True, exist_ok=True)
         (out_dir / "profile.json").write_text(
             json.dumps(profile, indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
-
-        if image_url:
-            if download_image(image_url, image_path):
-                stats["downloaded"] += 1
-                print(f"  ok  {sku}")
-            else:
-                stats["failed"] += 1
-                print(f"  FAIL  {sku}  (profile written, no image)")
-        else:
-            log.warning("No image URL for %s", sku)
-            stats["failed"] += 1
 
         time.sleep(0.1)
 
@@ -914,7 +1000,12 @@ def main():
     print(f"[SCRAPER] DB root: {db_root.resolve()}")
     print(f"[SCRAPER] Resume: {args.resume}  Dry-run: {args.dry_run}")
 
-    grand = {"total": 0, "downloaded": 0, "skipped": 0, "failed": 0}
+    grand = {"total": 0, "downloaded": 0, "skipped": 0, "failed": 0,
+              "from_card_field": 0, "from_cdn_fallback": 0, "unavailable": 0}
+    dropped_sets = []  # (set_id, error) for sets that produced ZERO cards --
+    # collected here rather than left as a scroll-by warning, so a dropped
+    # set is guaranteed a place in the final summary no matter how long the
+    # run or how far back it scrolls in the console.
 
     for i, set_id in enumerate(target_ids, 1):
         print(f"\n[{i}/{len(target_ids)}] {set_id}")
@@ -923,19 +1014,39 @@ def main():
         for k in grand:
             grand[k] += stats[k]
 
+        if stats["set_error"]:
+            dropped_sets.append((set_id, stats["set_error"]))
+            print(f"  *** SET DROPPED *** {set_id}: {stats['set_error']}")
+            continue
+
         total = stats["total"]
         dl = stats["downloaded"]
         sk = stats["skipped"]
         fa = stats["failed"]
-        print(f"  Summary — total:{total}  downloaded:{dl}  skipped:{sk}  failed:{fa}")
+        fc = stats["from_card_field"]
+        cf = stats["from_cdn_fallback"]
+        un = stats["unavailable"]
+        print(f"  Summary — total:{total}  downloaded:{dl} (api:{fc} cdn-fallback:{cf})  "
+              f"skipped:{sk}  unavailable:{un}  failed:{fa}")
 
     print(f"\n{'='*60}")
     print(f"  GRAND TOTAL")
-    print(f"  Total cards:   {grand['total']}")
-    print(f"  Downloaded:    {grand['downloaded']}")
-    print(f"  Skipped:       {grand['skipped']}")
-    print(f"  Failed:        {grand['failed']}")
+    print(f"  Total cards:       {grand['total']}")
+    print(f"  Downloaded:        {grand['downloaded']}"
+          f"  (from card.image: {grand['from_card_field']},"
+          f" from CDN fallback: {grand['from_cdn_fallback']})")
+    print(f"  Skipped:           {grand['skipped']}")
+    print(f"  Unavailable (404): {grand['unavailable']}")
+    print(f"  Failed:            {grand['failed']}")
     print(f"{'='*60}")
+
+    if dropped_sets:
+        print(f"\n{'!'*60}")
+        print(f"  {len(dropped_sets)} SET(S) DROPPED ENTIRELY -- ZERO CARDS FETCHED")
+        for sid, err in dropped_sets:
+            print(f"    {sid}: {err}")
+        print(f"  Re-run with --sets {','.join(sid for sid, _ in dropped_sets)} to retry.")
+        print(f"{'!'*60}")
 
 
 if __name__ == "__main__":
