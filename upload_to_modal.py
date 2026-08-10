@@ -1,11 +1,64 @@
+"""
+upload_to_modal.py — One-shot full upload of a vertical's images.db +
+npy_cache + image_db to the Modal volume.
+
+⚠ WARNING — 2026-08-10 ⚠
+This script has the identical unconditional-overwrite shape as the
+smart_upload.py incident from the same night (see the banner at the top of
+that file): it reads the local images.db and calls upload_vertical.remote(),
+which writes it straight over the volume's copy with no check on what's
+already there. This script was not the one run during the incident, but the
+same stale-local-file mistake here would have the same effect. Guarded the
+same way: aborts before uploading if the local row count is lower than the
+volume's current row count. Do not remove this guard to "make a run
+simpler".
+
+NOTE: VOLUME_NAME below is "matchit-data" — as of 2026-08-10 no such volume
+exists (`modal volume list` shows only "matchit-data-v2"). Until this is
+fixed, running this script will error out (or create/write to an unrelated
+empty volume, depending on SDK create-if-missing behaviour) rather than
+touch production data.
+"""
+
 import modal
 import os
+import sqlite3
 
 VOLUME_NAME = "matchit-data"
 LOCAL_BASE = "C:/Users/c_a_b/AppData/Local/MatchITv2_ProductMatch_Data"
 
 vol = modal.Volume.from_name(VOLUME_NAME)
 app = modal.App("matchit-upload")
+
+
+def _local_row_count(db_path):
+    """COUNT(*) FROM images in a local images.db, or None if it can't be
+    read (missing/corrupt/mid-write) -- treated as unknown, not zero, so a
+    read failure can't masquerade as an empty database in the guard below."""
+    if not os.path.exists(db_path):
+        return None
+    try:
+        conn = sqlite3.connect(db_path)
+        try:
+            return conn.execute("SELECT COUNT(*) FROM images").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
+@app.function(volumes={"/data": vol}, timeout=300)
+def remote_get_row_count(vertical_id):
+    """Row count of the volume's CURRENT images.db for vertical_id, or None
+    if it doesn't exist yet (first-ever upload -- nothing to compare against)."""
+    db_path = "/data/MatchITv2_ProductMatch_Data/" + vertical_id + "/images.db"
+    if not os.path.exists(db_path):
+        return None
+    conn = sqlite3.connect(db_path)
+    try:
+        return conn.execute("SELECT COUNT(*) FROM images").fetchone()[0]
+    finally:
+        conn.close()
 
 
 @app.function(volumes={"/data": vol}, timeout=86400)
@@ -78,6 +131,19 @@ def main(vertical: str = "cards", images: bool = False, check: bool = False):
     db_path = os.path.join(vertical_dir, "images.db")
     if not os.path.exists(db_path):
         print("ERROR: images.db not found!")
+        return
+
+    # GUARD, added 2026-08-10: refuse to overwrite the volume's images.db
+    # with a local copy that has fewer rows -- see the warning banner at the
+    # top of this file. Runs before the file is even read into memory.
+    local_count = _local_row_count(db_path)
+    volume_count = remote_get_row_count.remote(vertical)
+    if local_count is not None and volume_count is not None and local_count < volume_count:
+        print("ABORT: local images.db has " + str(local_count) + " rows, volume currently "
+              "has " + str(volume_count) + " rows -- local file looks stale, refusing to "
+              "upload. See the warning banner at the top of this file. If this drop is "
+              "genuinely intended, investigate and confirm before re-running -- do not "
+              "just force past this check.")
         return
 
     print("Reading and uploading images.db...")

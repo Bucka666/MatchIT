@@ -5,11 +5,27 @@ Combines upload_to_modal.py + upload_profiles.py + thumbnail images.
 Tracks what was already uploaded in .upload_state.json so only new/changed
 files are sent on subsequent runs.
 
+⚠ WARNING — 2026-08-10 incident ⚠
+`modal run smart_upload.py --thumbnails` was run as a step in an otherwise
+delta-only ingest sequence. upload_db_and_cache() ran unconditionally (it had
+no flag gate at all) and uploaded a 4-month-stale local images.db (135,743
+rows) over the live production one (140,325 rows) for the "cards" vertical,
+because needs_upload()'s fingerprint check only compares against this
+machine's own last-upload record in .upload_state.json — it has no idea what
+the volume actually currently holds. A production container cold-started on
+the corrupted data before this was caught. Restored from the 2026-08-02
+backup; verified back to 140,361 embeddings.
+Fix: upload_db_and_cache() is now opt-in only (--db-and-cache, default OFF)
+and refuses to upload if the local row count is lower than the volume's
+current row count. Do not remove either safeguard to "make a run simpler" —
+that combination is exactly what tonight's incident was missing.
+
 Usage examples:
-  modal run smart_upload.py                            # DB + profiles (all verticals)
+  modal run smart_upload.py                            # profiles only (all verticals)
   modal run smart_upload.py --images                  # also upload image_db images
   modal run smart_upload.py --thumbnails              # also upload CardsDB thumbnails
-  modal run smart_upload.py --all-data                # everything
+  modal run smart_upload.py --db-and-cache             # upload images.db + npy_cache (opt-in, guarded)
+  modal run smart_upload.py --all-data                # images + thumbnails (NOT db-and-cache)
   modal run smart_upload.py --vertical cards          # one vertical only
   modal run smart_upload.py --dry-run                 # preview without uploading
   modal run smart_upload.py --reset                   # clear state, re-upload everything
@@ -19,6 +35,7 @@ Usage examples:
 import modal
 import os
 import json
+import sqlite3
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -69,7 +86,37 @@ def mark_uploaded(state, state_key, local_path):
     state[state_key] = file_fingerprint(local_path)
 
 
+def _local_row_count(db_path):
+    """COUNT(*) FROM images in a local images.db, or None if it can't be
+    read (missing/corrupt/mid-write) -- treated as unknown, not zero, so a
+    read failure can't masquerade as an empty database in the guard below."""
+    if not os.path.exists(db_path):
+        return None
+    try:
+        conn = sqlite3.connect(db_path)
+        try:
+            return conn.execute("SELECT COUNT(*) FROM images").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
 # ── Remote functions ───────────────────────────────────────────────────────────
+
+@app.function(volumes={"/data": vol}, timeout=300)
+def remote_get_row_count(vertical_id):
+    """Row count of the volume's CURRENT images.db for vertical_id, or None
+    if it doesn't exist yet (first-ever upload -- nothing to compare against)."""
+    db_path = "/data/MatchITv2_ProductMatch_Data/" + vertical_id + "/images.db"
+    if not os.path.exists(db_path):
+        return None
+    conn = sqlite3.connect(db_path)
+    try:
+        return conn.execute("SELECT COUNT(*) FROM images").fetchone()[0]
+    finally:
+        conn.close()
+
 
 @app.function(volumes={"/data": vol}, timeout=86400)
 def remote_upload_db_and_cache(vertical_id, db_bytes, cache_files):
@@ -198,6 +245,25 @@ def upload_db_and_cache(vertical_id, state, dry_run):
     if not db_changed and not cache_files_to_upload:
         print("[" + vertical_id + "] DB + cache: up to date, skipping")
         return
+
+    # GUARD, added 2026-08-10: refuse to overwrite the volume's images.db
+    # with a local copy that has fewer rows -- a row-count drop is the
+    # cheapest available signal that the local file is stale rather than an
+    # update. This alone would have caught the incident described in the
+    # warning banner at the top of this file (135,743 vs 140,325). Runs even
+    # under --dry-run since it's a read-only volume query and dry-run should
+    # preview an abort accurately rather than pretend the upload is safe.
+    if db_changed:
+        local_count = _local_row_count(db_path)
+        volume_count = remote_get_row_count.remote(vertical_id)
+        if local_count is not None and volume_count is not None and local_count < volume_count:
+            print("[" + vertical_id + "] ABORT: local images.db has " + str(local_count) +
+                  " rows, volume currently has " + str(volume_count) + " rows -- local "
+                  "file looks stale, refusing to upload DB or cache for this vertical. "
+                  "See the warning banner at the top of this file. If this drop is "
+                  "genuinely intended, investigate and confirm before re-running -- "
+                  "do not just force past this check.")
+            return
 
     if dry_run:
         if db_changed:
@@ -465,6 +531,9 @@ def main(
     images: bool = False,
     profiles: bool = True,
     thumbnails: bool = False,
+    # Defaults False, opt-in only — see the 2026-08-10 warning banner at the
+    # top of this file. A bare run must never touch images.db or npy_cache.
+    db_and_cache: bool = False,
     # Defaults False — these three are volume-authoritative lookup sidecars.
     # needs_upload() only compares against THIS machine's last-upload state,
     # not the volume's current content, so it can't tell "remote was fixed
@@ -486,10 +555,16 @@ def main(
       --images          also upload image_db files for the vertical(s)
       --profiles        upload profile.json files from CardsDB (default: on)
       --thumbnails      upload thumbnail images from CardsDB (front.png etc.)
+      --db-and-cache    upload images.db + npy_cache for the vertical(s) --
+                        DEFAULT OFF, opt-in only. Replaces the embedding
+                        index; guarded by a row-count check but the flag
+                        itself must be passed on purpose. NOT included in
+                        --all-data. See the warning banner at the top of
+                        this file.
       --set-metadata        upload set_metadata.json to volume root (default: OFF — pass explicitly)
       --sku-game-map        upload sku_game_map.json to volume root (default: OFF — pass explicitly)
       --identifier-lookup   upload identifier_lookup.json to volume root (default: OFF — pass explicitly)
-      --all-data        shorthand for --images --thumbnails
+      --all-data        shorthand for --images --thumbnails (does NOT include --db-and-cache)
       --dry-run         show what would be uploaded without actually uploading
       --reset           clear upload state so everything is re-uploaded from scratch
       --check           inspect volume contents and exit
@@ -504,7 +579,7 @@ def main(
             print("Upload state cleared — all files will be re-uploaded")
         else:
             print("No state file found (nothing to reset)")
-        if not (images or profiles or thumbnails or all_data):
+        if not (images or profiles or thumbnails or db_and_cache or all_data):
             return
 
     if all_data:
@@ -521,12 +596,14 @@ def main(
 
     print("=== MatchIT Smart Upload" + (" [DRY RUN]" if dry_run else "") + " ===")
     print("Verticals: " + ", ".join(verticals))
-    print("DB + cache: yes | Images: " + str(images) + " | Profiles: " + str(profiles) + " | Thumbnails: " + str(thumbnails) + " | set_metadata: " + str(set_metadata))
+    print("DB + cache: " + str(db_and_cache) + " | Images: " + str(images) + " | Profiles: " + str(profiles) + " | Thumbnails: " + str(thumbnails) + " | set_metadata: " + str(set_metadata))
     print()
 
-    # 1. DB + numpy cache for each vertical
-    for v in verticals:
-        upload_db_and_cache(v, state, dry_run)
+    # 1. DB + numpy cache for each vertical (opt-in only, row-count guarded --
+    #    see the 2026-08-10 warning banner at the top of this file)
+    if db_and_cache:
+        for v in verticals:
+            upload_db_and_cache(v, state, dry_run)
 
     # 2. image_db for each vertical (optional)
     if images:
