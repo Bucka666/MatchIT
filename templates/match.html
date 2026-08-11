@@ -135,6 +135,17 @@
 .gs-auth-banner-status--custom_non_official { color:#ffd700; }
 .gs-auth-banner-status--counterfeit { color:#ff4466; }
 .gs-auth-banner-status--unknown { color:#8f9bb3; }
+/* Back-check vocabulary (distinct from the front-engine statuses above) —
+   colors duplicated verbatim from authenticity.html for visual consistency,
+   see recon note: same CSS pattern, not the same JS (different data source/
+   lifecycle — this is a live in-session result, not a page-load banner). */
+.gs-auth-banner-status--back_consistent { color:#00ff88; }
+.gs-auth-banner-status--needs_review { color:#ffd700; }
+.gs-auth-banner-status--no_back_signal { color:#8f9bb3; }
+.gs-auth-banner-status--sku_not_found { color:#ff4466; }
+.cx-auth-offer-btn { margin-top:8px; width:100%; padding:8px; border-radius:8px; border:1px solid rgba(177,77,255,0.3); background:rgba(177,77,255,0.08); color:#f1d8ff; font-size:0.74rem; font-weight:600; cursor:pointer; }
+.cx-auth-offer-btn:hover { background:rgba(177,77,255,0.18); }
+.cx-auth-offer-btn:disabled { opacity:0.5; cursor:default; }
 .gs-auth-banner-reason { font-size:0.78rem; color:rgba(255,255,255,0.82); line-height:1.45; margin-top:2px; }
 .gs-auth-banner-confidence { font-size:0.72rem; color:rgba(255,255,255,0.6); margin-top:5px; letter-spacing:0.02em; }
 .gs-auth-banner-modal { position:fixed; inset:0; background:rgba(0,0,0,0.74); display:flex; align-items:flex-end; justify-content:center; padding:20px; z-index:99999; }
@@ -1025,6 +1036,19 @@ function gsOpenDetailAuthModal() {
         <div class="cx-lm-conf" id="scLmConf">—</div>
       </div>
       <div class="cx-lm-price" id="scLmPrice">—</div>
+    </div>
+
+    <!-- Same-session back-check verdict — see scOfferAuthCheck/scCaptureAuthBack/
+         scRenderAuthResult below. Reuses the existing .gs-auth-banner shell
+         (defined above for the front-engine snapshot) with new status-color
+         modifiers for the back-check's own vocabulary. -->
+    <div class="gs-auth-banner gs-hidden" id="scAuthResult" style="margin:10px 0 0;">
+      <div class="gs-auth-banner-head">Back check</div>
+      <div class="gs-auth-banner-status" id="scAuthResultStatus">
+        <span class="gs-auth-status-icon" id="scAuthResultIcon" aria-hidden="true"></span>
+        <span id="scAuthResultLabel"></span>
+      </div>
+      <div class="gs-auth-banner-reason" id="scAuthResultReason"></div>
     </div>
 
     <div class="cx-session-strip" id="scSession" style="display:none;position:fixed;bottom:60px;left:0;right:0;z-index:9999;top:80px;max-height:none;overflow-y:auto;border-radius:16px 16px 0 0;box-shadow:0 -8px 24px rgba(0,0,0,0.5);background:rgba(15,15,25,0.98);">
@@ -2364,6 +2388,12 @@ if (scCards.length > 0) {
 var scMode      = 'fast';
 var scStream    = null;
 var scAudioCtx  = null;
+// Null when not awaiting a same-session back-capture; holds the pending
+// card's sku once scOfferAuthCheck's trigger has been tapped. Branched on
+// at the top of scCapture()'s toBlob handler so the loop's own next tick
+// becomes the back-photo capture, rather than pausing scScanning/scBusy
+// (which would block the very capture this needs — see scOfferAuthCheck).
+var scAuthPendingSku = null;
 var scStarted   = false;
 
 var scVideo  = document.getElementById('scVideo');
@@ -2850,6 +2880,11 @@ function scCapture() {
 
   scCanvas.toBlob(async function(blob){
     if(!blob){scBusy=false;return;}
+    // Same-session back-capture — routes this tick's frame to the pending
+    // back-check instead of the normal front-match dispatch below. Must be
+    // checked before the OCR/on-device/server paths, since those would
+    // otherwise try (and fail) to identify the card's back as a new front.
+    if (scAuthPendingSku) { scCaptureAuthBack(blob); return; }
     // OCR-first path
     // JP mode: skip the EN-only OCR-first fast path (see photo-upload path).
     var _ocrResult = (_ocrLang === 'jp') ? null : await _tryOcrLookup(blob);
@@ -2915,6 +2950,7 @@ function scCapture() {
         } else {
           console.warn('[Stage3c] OCR-hit beacon skipped: window.GSOnDevice.beacon unavailable — scan NOT recorded server-side');
         }
+        scOfferAuthCheck(_ocrResult.sku);
       }
       return;
     }
@@ -2992,6 +3028,7 @@ function scCapture() {
               scAddCard({name:name, set:set, num:num, total:p.set_total||p.printed_total||'', pct:100, price:odGbp, priceStr:odGbpStr, img:odImgUrl, sku:odr.sku||'', rarity:rar, profile:p, allPrices:allPrices, tcgplayerUrl:p.tcgplayer_url||'', cardmarketUrl:p.cardmarket_url||'', grade:null, gradeSkipped:true});
               if (typeof scanIncrement === 'function') { var _ss = scanIncrement(); _updateScanBadge(_ss); }
               window.GSOnDevice.beacon(odr);
+              scOfferAuthCheck(odr.sku);
               return true;
             }
           }
@@ -3142,6 +3179,7 @@ function scCapture() {
       scFailCount = 0;
       scAddCard({name:name,set:set,num:num,total:p.set_total||p.printed_total||'',pct:pct,price:gbp,priceStr:gbpStr,img:imgUrl,sku:m.sku,rarity:rar,profile:p,allPrices:allPrices,tcgplayerUrl:p.tcgplayer_url||'',cardmarketUrl:p.cardmarket_url||'',grade:_capturedGrade});
       if (typeof scanIncrement === 'function') { var _ss = scanIncrement(); _updateScanBadge(_ss); }
+      scOfferAuthCheck(m.sku);
     })
     .catch(function(){scBusy=false;guide.className='cx-card-guide';if(scScanning){txt.textContent='Error — retrying…';txt.className='cx-guide-text scanning';}});
   },'image/jpeg',0.85);
@@ -3155,6 +3193,108 @@ function scShowLastMatch(name,set,num,pct,price,img){
   document.getElementById('scLmPrice').textContent=price;
   if(img) document.getElementById('scLmThumb').src=img;
   el.style.display='flex';
+}
+
+// ── Same-session authenticity back-check ──────────────────────
+// Offers a follow-up back-capture for the just-confirmed card, reusing the
+// live scanner's own open camera stream rather than a second getUserMedia
+// call. See scAuthPendingSku above and the branch at the top of
+// scCapture()'s toBlob handler for how the next captured frame gets routed
+// here instead of through the normal front-match dispatch.
+function scOfferAuthCheck(sku) {
+  if (!sku) return;
+  var host = document.getElementById('scLastMatch');
+  if (!host) return;
+  var btn = document.getElementById('scAuthOfferBtn');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.type = 'button';
+    btn.id = 'scAuthOfferBtn';
+    btn.className = 'cx-auth-offer-btn';
+    btn.addEventListener('click', function() {
+      var pendingSku = btn.getAttribute('data-sku');
+      if (!pendingSku) return;
+      var resultEl = document.getElementById('scAuthResult');
+      if (resultEl) resultEl.classList.add('gs-hidden');
+      scAuthPendingSku = pendingSku;
+      var guide = document.getElementById('scGuide');
+      var txt   = document.getElementById('scGuideText');
+      if (guide) guide.className = 'cx-card-guide';
+      if (txt) { txt.textContent = 'Flip the card — show the back'; txt.className = 'cx-guide-text scanning'; }
+      btn.disabled = true;
+      btn.textContent = 'Show the back of the card…';
+    });
+    host.appendChild(btn);
+  }
+  btn.setAttribute('data-sku', sku);
+  btn.disabled = false;
+  btn.textContent = '🛡️ Verify authenticity';
+}
+
+// scBusy=true here gates re-entry while the network call is in flight —
+// same semantics scCapture()'s own OCR/on-device/server dispatch already
+// uses around its async work, so the loop's next tick (if it lands before
+// this resolves) just no-ops via the existing `if(!scBusy) scCapture();`
+// check in scLoop() rather than firing a second concurrent back-check.
+function scCaptureAuthBack(blob) {
+  scBusy = true;
+  var pendingSku = scAuthPendingSku;
+  var fd = new FormData();
+  fd.append('sku', pendingSku);
+  fd.append('image', blob, 'back.jpg');
+
+  fetch('/api/authenticity/back-check', { method: 'POST', body: fd })
+    .then(function(r) {
+      if (!r.ok) throw new Error('back-check http ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      scAuthPendingSku = null;
+      scBusy = false;
+      scRenderAuthResult(data);
+    })
+    .catch(function() {
+      scAuthPendingSku = null;
+      scBusy = false;
+      scRenderAuthError();
+    });
+}
+
+// Verdict vocabulary/colors matched to authenticity.html's STATUS_META —
+// see the .gs-auth-banner-status--{back_consistent,needs_review,
+// no_back_signal,sku_not_found} rules added alongside the existing
+// front-engine modifiers above.
+var _SC_AUTH_STATUS_META = {
+  back_consistent: { icon: '✓',  label: 'Front and back agree' },
+  needs_review:    { icon: '🔎', label: 'Needs a closer look' },
+  no_back_signal:  { icon: '📷', label: 'Could not read the card back' },
+  sku_not_found:   { icon: '❗', label: 'Something went wrong' }
+};
+
+function scRenderAuthResult(data) {
+  var el = document.getElementById('scAuthResult');
+  if (!el) return;
+  var meta = _SC_AUTH_STATUS_META[data.status] || _SC_AUTH_STATUS_META.sku_not_found;
+  var statusEl = document.getElementById('scAuthResultStatus');
+  statusEl.className = 'gs-auth-banner-status gs-auth-banner-status--' + data.status;
+  document.getElementById('scAuthResultIcon').textContent = meta.icon;
+  document.getElementById('scAuthResultLabel').textContent = meta.label;
+  document.getElementById('scAuthResultReason').textContent = data.reason || '';
+  el.classList.remove('gs-hidden');
+}
+
+function scRenderAuthError() {
+  var el = document.getElementById('scAuthResult');
+  if (!el) return;
+  var statusEl = document.getElementById('scAuthResultStatus');
+  statusEl.className = 'gs-auth-banner-status gs-auth-banner-status--sku_not_found';
+  document.getElementById('scAuthResultIcon').textContent = '❗';
+  document.getElementById('scAuthResultLabel').textContent = 'Could not check the back';
+  document.getElementById('scAuthResultReason').textContent = 'Network error — tap Verify authenticity to try again.';
+  el.classList.remove('gs-hidden');
+  // Re-arm the trigger so retrying doesn't need a fresh front scan.
+  var btn = document.getElementById('scAuthOfferBtn');
+  if (btn) { btn.disabled = false; btn.textContent = '🛡️ Verify authenticity'; }
 }
 
 function scAddCard(card){

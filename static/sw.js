@@ -157,8 +157,9 @@
 // The bump itself also clears out any no-store pages a prior version
 // already cached under the old CACHE_NAME — activate() deletes every
 // cache key that isn't this one, so that stale content goes with it.
-// v143 — 2026-08-10: authenticity nav pill CSS + .mi-shell svh bounce fix
-const CACHE_NAME = 'grailsweep-v143';
+// v144 — 2026-08-11: match.html same-session back-check (scOfferAuthCheck/
+// scCaptureAuthBack), reusing the live scanner's own camera stream
+const CACHE_NAME = 'grailsweep-v144';
 const PRECACHE = [
   '/',
   '/static/style.css',
