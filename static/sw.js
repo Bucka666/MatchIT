@@ -159,7 +159,11 @@
 // cache key that isn't this one, so that stale content goes with it.
 // v144 — 2026-08-11: match.html same-session back-check (scOfferAuthCheck/
 // scCaptureAuthBack), reusing the live scanner's own camera stream
-const CACHE_NAME = 'grailsweep-v144';
+// v145 — 2026-08-11: removed the dead #auth-result camera-scanner overlay
+// from match.html (video/capture/front-back-toggle, non-functional stub
+// wired to Details/Check authenticity) and repointed those buttons to the
+// plain-text detail sheet instead
+const CACHE_NAME = 'grailsweep-v145';
 const PRECACHE = [
   '/',
   '/static/style.css',
