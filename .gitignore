@@ -176,3 +176,8 @@ set_metadata_postupload_verify.json
 backup_check.db
 restore_verify.db
 volume_images_check.db
+
+# scheduler_log.json snapshot pulled from the volume during the 2026-08-11
+# scheduled-job cadence recon — a point-in-time production data dump, not
+# source. Kept on disk, not history.
+scheduler_log_check.json

@@ -749,6 +749,114 @@ def _process_discovery_notifications(calendar: Dict) -> List[Dict]:
     return notify_worthy
 
 
+# ─────────────────────────────────────────────────────────────
+# Pending-work detector — read-only, no GPU, no writes. Surfaces work
+# that has piled up silently in the manual-track stages of the pipeline
+# (JP detection/upload/registration/embedding have no other notification
+# today when skipped — see the lifecycle audit that motivated this).
+# ─────────────────────────────────────────────────────────────
+
+def _check_pending_work(cardsdb_root: str = None) -> Dict:
+    """Scan for work waiting in the manual track. Every check here is
+    either a local dry-run scan that never writes, a single SQL query, an
+    mtime stat, or one cheap HTTP GET — no GPU, nothing here mutates
+    CardsDB, images.db, or the npy cache. Never raises: each check is
+    independently try/excepted so one failing source (e.g. TCGdex
+    unreachable) doesn't blank out the others."""
+    result = {
+        "jp_unregistered":   0,
+        "mtg_unregistered":  0,
+        "ygo_unregistered":  0,
+        "unembedded_rows":   0,
+        "cache_stale":       None,
+        "jp_untracked_sets": [],
+        "errors": [],
+    }
+
+    localappdata = os.environ.get("LOCALAPPDATA", "/modal_data")
+    if cardsdb_root is None:
+        cardsdb_root = str(Path(localappdata) / "CardsDB")
+
+    # a) + e) — front.png present, no images.db row. register_scraped_cards's
+    # dry_run branch only prints and increments a counter — it never reaches
+    # conn.execute/conn.commit (see backfill_scraped_cards.py), so this is a
+    # pure read even though the function's name is "register".
+    try:
+        from backfill_scraped_cards import register_scraped_cards
+        jp = register_scraped_cards(tcg="pokemon", sets=["jpn-"], dry_run=True, cards_root=cardsdb_root)
+        result["jp_unregistered"] = jp.get("pokemon", {}).get("registered", 0)
+    except Exception as e:
+        result["errors"].append(f"jp_unregistered: {e}")
+
+    try:
+        from backfill_scraped_cards import register_scraped_cards
+        mtg = register_scraped_cards(tcg="mtg", dry_run=True, cards_root=cardsdb_root)
+        result["mtg_unregistered"] = mtg.get("mtg", {}).get("registered", 0)
+    except Exception as e:
+        result["errors"].append(f"mtg_unregistered: {e}")
+
+    try:
+        from backfill_scraped_cards import register_scraped_cards
+        ygo = register_scraped_cards(tcg="yugioh", dry_run=True, cards_root=cardsdb_root)
+        result["ygo_unregistered"] = ygo.get("yugioh", {}).get("registered", 0)
+    except Exception as e:
+        result["errors"].append(f"ygo_unregistered: {e}")
+
+    # b) — images.db rows with no embedding yet (the column incremental_embed.py
+    # itself writes to via UPDATE images SET embedding = ?).
+    db_path = Path(localappdata) / "MatchITv2_ProductMatch_Data" / "cards" / "images.db"
+    try:
+        if db_path.exists():
+            conn = sqlite3.connect(str(db_path))
+            result["unembedded_rows"] = conn.execute(
+                "SELECT COUNT(*) FROM images WHERE embedding IS NULL"
+            ).fetchone()[0]
+            conn.close()
+    except Exception as e:
+        result["errors"].append(f"unembedded_rows: {e}")
+
+    # c) — npy cache older than images.db. Mirrors app.py's own
+    # cache_mtime > db_mtime gate, which decides fast npy-load vs a slower
+    # SQLite rebuild-and-resave at cold start — a positive value here means
+    # the next cold start pays that slower path.
+    try:
+        front_npy = Path(localappdata) / "MatchITv2_ProductMatch_Data" / "cards" / "npy_cache" / "front_matrix.npy"
+        if db_path.exists() and front_npy.exists():
+            db_mtime = db_path.stat().st_mtime
+            cache_mtime = front_npy.stat().st_mtime
+            if db_mtime > cache_mtime:
+                result["cache_stale"] = round(db_mtime - cache_mtime, 0)
+    except Exception as e:
+        result["errors"].append(f"cache_stale: {e}")
+
+    # d) — TCGdex JP sets not yet in set_metadata.json. The one check that
+    # can't be purely local by definition: discovering a set GrailSweep
+    # doesn't know about yet requires asking TCGdex.
+    try:
+        import requests
+        meta_path = Path(localappdata) / "set_metadata.json"
+        with open(meta_path, "r", encoding="utf-8-sig") as f:
+            meta = json.load(f)
+        tracked = {k[len("jpn-"):].lower() for k in meta if k.startswith("jpn-")}
+        resp = requests.get(
+            "https://api.tcgdex.net/v2/ja/sets", timeout=15,
+            headers={"User-Agent": "GrailSweep/1.0"},
+        )
+        resp.raise_for_status()
+        for s in resp.json():
+            sid = (s.get("id") or "").lower()
+            if sid and sid not in tracked:
+                result["jp_untracked_sets"].append({
+                    "id":    s.get("id"),
+                    "name":  s.get("name"),
+                    "total": (s.get("cardCount") or {}).get("total"),
+                })
+    except Exception as e:
+        result["errors"].append(f"jp_untracked_sets: {e}")
+
+    return result
+
+
 def _build_action_section(action_needed: List[Dict]) -> Tuple[str, str]:
     """ACTION NEEDED — manual go-live. Same 4 manual steps every time,
     mirroring how the existing weekly email already instructs the JP
@@ -877,34 +985,118 @@ def _build_discovery_section(notify_worthy: List[Dict]) -> Tuple[str, str]:
     return text, html
 
 
+def _build_pending_work_section(pending: Dict) -> Tuple[str, str]:
+    """PENDING WORK — findings from _check_pending_work(): data that has
+    piled up in a manual-track stage with no other notification (JP
+    detection/upload/registration/embedding — see the lifecycle audit).
+    Each line names the exact command to run. Empty in/out when nothing
+    is pending, same pattern as every other _build_*_section here."""
+    items = []
+
+    untracked = pending.get("jp_untracked_sets") or []
+    if untracked:
+        ids = ", ".join(s["id"] for s in untracked if s.get("id"))
+        items.append((
+            f"{len(untracked)} JP set(s) on TCGdex not in set_metadata.json: {ids}",
+            f"python scrape_pokemon_jpn.py --db-root C:\\CardsDB --sets {ids}",
+        ))
+
+    if pending.get("jp_unregistered"):
+        items.append((
+            f"{pending['jp_unregistered']} JP card(s) have front.png but no images.db row",
+            "modal run backfill_scraped_cards.py --tcg pokemon --sets jpn- --cards-root /modal_data/CardsDB",
+        ))
+
+    if pending.get("mtg_unregistered"):
+        items.append((
+            f"{pending['mtg_unregistered']} MTG card(s) have front.png but no images.db row",
+            "modal run backfill_scraped_cards.py --tcg mtg --cards-root /modal_data/CardsDB",
+        ))
+
+    if pending.get("ygo_unregistered"):
+        items.append((
+            f"{pending['ygo_unregistered']} Yu-Gi-Oh! card(s) have front.png but no images.db row",
+            "modal run backfill_scraped_cards.py --tcg yugioh --cards-root /modal_data/CardsDB",
+        ))
+
+    if pending.get("unembedded_rows"):
+        items.append((
+            f"{pending['unembedded_rows']} images.db row(s) have no embedding yet",
+            "modal run incremental_embed.py",
+        ))
+
+    if pending.get("cache_stale") is not None:
+        items.append((
+            f"npy cache is {int(pending['cache_stale'])}s older than images.db "
+            "— next cold start pays a slower SQLite rebuild",
+            "modal run incremental_embed.py  (resaves the cache; or just redeploy to trigger the self-heal)",
+        ))
+
+    if not items:
+        return "", ""
+
+    text = "PENDING WORK\n" + "=" * 40 + "\n"
+    for desc, cmd in items:
+        text += f"  * {desc}\n    -> {cmd}\n"
+    text += "\n"
+
+    li = "".join(
+        f'<li style="margin-bottom:6px;">{desc}<br>'
+        f'<code style="font-size:0.75rem;color:#00e5ff;">{cmd}</code></li>'
+        for desc, cmd in items
+    )
+    html = (
+        '<div style="background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.3);'
+        'border-radius:8px;padding:12px 16px;margin-bottom:16px;">'
+        '<div style="font-size:0.85rem;color:#ffd700;font-weight:700;margin-bottom:8px;">'
+        '⏳ PENDING WORK</div>'
+        f'<ul style="margin:0;padding-left:18px;font-size:0.82rem;color:#f0ecff;">{li}</ul></div>'
+    )
+    return text, html
+
+
 def _maybe_send_consolidated_email(
     run_summary: Dict,
     transitions: List[Dict],
     notify_worthy: List[Dict],
     is_monday: bool,
+    pending_work: Optional[Dict] = None,
 ) -> bool:
     """Tier 1 Part B — exactly one consolidated email per run, or none.
 
     Monday: ALWAYS sends the existing weekly summary (_build_email,
     UNCHANGED content incl. the JP-manual line) — enriched with this run's
-    ACTION NEEDED / flagged-manual / progress / discovery sections at the top.
+    ACTION NEEDED / flagged-manual / progress / discovery / pending-work
+    sections at the top.
 
     Non-Monday: sends a lightweight event digest if something happened
-    (>=1 transition, >=1 notify-worthy discovery, OR >=1 newly flagged-manual
-    set this run). Otherwise sends nothing — a quiet day produces zero emails.
+    (>=1 transition, >=1 notify-worthy discovery, >=1 newly flagged-manual
+    set, OR >=1 pending-work item this run). Otherwise sends nothing — a
+    quiet day produces zero emails.
 
     Subject priority (B4): ACTION NEEDED always wins (even on Monday,
     overriding the weekly subject) > Monday's own subject > non-Monday
     event-update subject. flagged_manual is its own ACTION NEEDED reason,
     additive to (not replacing) the existing prelive_hold go-live reason —
-    both can fire in the same email."""
+    both can fire in the same email. pending_work is lower priority than
+    both — it's "still true from before", not "something happened today"."""
     action_needed      = [t for t in transitions if t["to"] == "prelive_hold"]
     other_transitions  = [t for t in transitions if t["to"] != "prelive_hold"]
 
     flagged    = run_summary.get("flagged_manual") or {}
     has_flags  = any(flagged.values())
 
-    if not is_monday and not transitions and not notify_worthy and not has_flags:
+    pending_work = pending_work or {}
+    has_pending = any([
+        pending_work.get("jp_unregistered"),
+        pending_work.get("mtg_unregistered"),
+        pending_work.get("ygo_unregistered"),
+        pending_work.get("unembedded_rows"),
+        pending_work.get("cache_stale") is not None,
+        pending_work.get("jp_untracked_sets"),
+    ])
+
+    if not is_monday and not transitions and not notify_worthy and not has_flags and not has_pending:
         logger.info("[SCHED-EMAIL] Quiet non-Monday run — nothing happened, no email sent")
         return False
 
@@ -912,9 +1104,10 @@ def _maybe_send_consolidated_email(
     flagged_text, flagged_html = _build_flagged_manual_section(flagged)
     progress_text, progress_html = _build_progress_section(other_transitions)
     discovery_text, discovery_html = _build_discovery_section(notify_worthy)
+    pending_text, pending_html = _build_pending_work_section(pending_work)
 
-    extra_text = action_text + flagged_text + progress_text + discovery_text
-    extra_html = action_html + flagged_html + progress_html + discovery_html
+    extra_text = action_text + flagged_text + progress_text + discovery_text + pending_text
+    extra_html = action_html + flagged_html + progress_html + discovery_html + pending_html
 
     if is_monday:
         subject, body_html, body_text = _build_email(run_summary, extra_html=extra_html, extra_text=extra_text)
@@ -952,13 +1145,15 @@ def _maybe_send_consolidated_email(
             if n_flagged == 1
             else f"[GrailSweep] ACTION: {n_flagged} new sets detected — manual ingestion needed"
         )
-    elif not is_monday:
+    elif not is_monday and (transitions or notify_worthy):
         if len(transitions) == 1:
             subject = f"[GrailSweep] Set update: {transitions[0]['name']} → {transitions[0]['to']}"
         elif transitions:
             subject = f"[GrailSweep] Set update: {len(transitions)} sets advanced"
         else:
             subject = f"[GrailSweep] Set update: {len(notify_worthy)} new set(s) discovered"
+    elif not is_monday and has_pending:
+        subject = "[GrailSweep] Pending work waiting — nothing new detected today"
 
     return _send_email(subject, body_html, body_text)
 
@@ -2061,6 +2256,14 @@ def run_scheduler(
     # at False rather than removed, in case anything still inspects it.
     run_summary["force_full_reconcile"] = False
 
+    # ── Pending-work detector (read-only, no GPU, no writes) ──
+    try:
+        pending_work = _check_pending_work()
+    except Exception as e:
+        logger.error(f"[PENDING] Unhandled error: {e}")
+        pending_work = {}
+    run_summary["pending_work"] = pending_work
+
     run_summary["elapsed_s"] = round(time.time() - t_start, 1)
 
     # ── Save log ──
@@ -2076,7 +2279,10 @@ def run_scheduler(
     run_summary["calendar"]["transitions"] = transitions
     if not dry_run:
         try:
-            _maybe_send_consolidated_email(run_summary, transitions, notify_worthy_discoveries, is_monday)
+            _maybe_send_consolidated_email(
+                run_summary, transitions, notify_worthy_discoveries, is_monday,
+                pending_work=run_summary.get("pending_work"),
+            )
         except Exception as e:
             logger.error(f"[SCHED-EMAIL] Unhandled error: {e}")
     else:
