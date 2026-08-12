@@ -948,7 +948,7 @@ def _extract_pokemon_number_fullimage(image_path: str):
     # hit inside unrelated words and emitted sv8pt5-* across four eras.
     set_code = None
     scan_text = line["text"].upper()
-    for code, db_id in _PKM_SETCODE_MAP.items():
+    for code, db_id in sorted(_PKM_SETCODE_MAP.items(), key=lambda x: len(x[0]), reverse=True):
         if re.search(r"(?<![A-Z0-9])" + re.escape(code) + r"(?![A-Z0-9])", scan_text):
             set_code = db_id
             break
@@ -1350,7 +1350,7 @@ def _extract_pokemon_number(image_path: str, jp_mode: bool = False) -> Optional[
         logger.info(f"[OCR-PKM] jp_mode — EN setcode scan skipped for: {_scan_text!r}")
     else:
         logger.info(f"[OCR-PKM] setcode scan text: {_scan_text!r}")
-        for code, db_id in _PKM_SETCODE_MAP.items():
+        for code, db_id in sorted(_PKM_SETCODE_MAP.items(), key=lambda x: len(x[0]), reverse=True):
             if code in _scan_text:
                 set_code = db_id
                 break
@@ -2232,7 +2232,7 @@ def parse_pokemon_text(texts: list) -> Optional[str]:
 
     # Word-boundary match — bare substring matching false-positives on
     # flavour/attack text (PARALYZED→PAR, MEWTWO→MEW, PRESENT→PRE)
-    for code, db_id in _PKM_SETCODE_MAP.items():
+    for code, db_id in sorted(_PKM_SETCODE_MAP.items(), key=lambda x: len(x[0]), reverse=True):
         if re.search(r'\b[A-Z]?' + re.escape(code) + r'[A-Z]?\b', all_text):
             set_code = db_id
             break
