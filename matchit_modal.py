@@ -252,6 +252,7 @@ _LIGHT_ALLOWED_PREFIXES = (
     "/search",
     "/api/price_history/bulk",
     "/api/heartbeat",
+    "/api/stats",
 )
 
 

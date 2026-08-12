@@ -163,7 +163,10 @@
 // from match.html (video/capture/front-back-toggle, non-functional stub
 // wired to Details/Check authenticity) and repointed those buttons to the
 // plain-text detail sheet instead
-const CACHE_NAME = 'grailsweep-v145';
+// v146 — 2026-08-12: no client-facing change (cloudflare_worker.js +
+// matchit_modal.py routing sync for /api/heartbeat and /api/stats onto the
+// CPU twin) — bump requested as part of this commit's reference point
+const CACHE_NAME = 'grailsweep-v146';
 const PRECACHE = [
   '/',
   '/static/style.css',
