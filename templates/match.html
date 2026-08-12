@@ -2793,6 +2793,7 @@ function scOfferAuthCheck(sku) {
       btn.textContent = 'Show the back of the card…';
     });
     host.prepend(btn);
+    host.scrollIntoView({behavior: 'smooth', block: 'nearest'});
   }
   btn.setAttribute('data-sku', sku);
   btn.disabled = false;
