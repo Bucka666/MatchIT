@@ -610,7 +610,7 @@ function gsOpenDetailAuthModal() {
          scRenderAuthResult below. Reuses the existing .gs-auth-banner shell
          (defined above for the front-engine snapshot) with new status-color
          modifiers for the back-check's own vocabulary. -->
-    <div class="gs-auth-banner gs-hidden" id="scAuthResult" style="margin:10px 0 0;">
+    <div class="gs-auth-banner gs-hidden" id="scAuthResult" style="position:fixed;bottom:70px;left:16px;right:16px;z-index:401;margin:0;">
       <div class="gs-auth-banner-head">Back check</div>
       <div class="gs-auth-banner-status" id="scAuthResultStatus">
         <span class="gs-auth-status-icon" id="scAuthResultIcon" aria-hidden="true"></span>
@@ -2779,7 +2779,8 @@ function scOfferAuthCheck(sku) {
     btn.type = 'button';
     btn.id = 'scAuthOfferBtn';
     btn.className = 'cx-auth-offer-btn';
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function(event) {
+      event.stopPropagation();
       var pendingSku = btn.getAttribute('data-sku');
       if (!pendingSku) return;
       var resultEl = document.getElementById('scAuthResult');
@@ -2788,7 +2789,7 @@ function scOfferAuthCheck(sku) {
       var guide = document.getElementById('scGuide');
       var txt   = document.getElementById('scGuideText');
       if (guide) guide.className = 'cx-card-guide';
-      if (txt) { txt.textContent = 'Flip the card — show the back'; txt.className = 'cx-guide-text scanning'; }
+      if (txt) { txt.textContent = '👉 Flip card over — show the BACK'; txt.style.cssText = 'font-size:1.1rem;font-weight:700;color:#fff;background:rgba(177,77,255,0.85);padding:8px 16px;border-radius:8px;text-align:center;'; txt.className = 'cx-guide-text scanning'; }
       btn.disabled = true;
       btn.textContent = 'Show the back of the card…';
     });
