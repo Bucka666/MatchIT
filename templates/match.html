@@ -610,8 +610,11 @@ function gsOpenDetailAuthModal() {
          scRenderAuthResult below. Reuses the existing .gs-auth-banner shell
          (defined above for the front-engine snapshot) with new status-color
          modifiers for the back-check's own vocabulary. -->
-    <div class="gs-auth-banner gs-hidden" id="scAuthResult" style="position:fixed;bottom:70px;left:16px;right:16px;z-index:401;margin:0;">
-      <div class="gs-auth-banner-head">Back check</div>
+    <div class="gs-auth-banner gs-hidden" id="scAuthResult" style="position:fixed;bottom:130px;left:16px;right:16px;z-index:401;margin:0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="gs-auth-banner-head">Back check</div>
+        <button onclick="this.closest('#scAuthResult').classList.add('gs-hidden');" style="background:none;border:none;color:#f1d8ff;font-size:1.2rem;cursor:pointer;padding:0 4px;">✕</button>
+      </div>
       <div class="gs-auth-banner-status" id="scAuthResultStatus">
         <span class="gs-auth-status-icon" id="scAuthResultIcon" aria-hidden="true"></span>
         <span id="scAuthResultLabel"></span>
