@@ -2792,7 +2792,7 @@ function scOfferAuthCheck(sku) {
       btn.disabled = true;
       btn.textContent = 'Show the back of the card…';
     });
-    host.appendChild(btn);
+    host.prepend(btn);
   }
   btn.setAttribute('data-sku', sku);
   btn.disabled = false;
