@@ -2823,11 +2823,17 @@ function scCaptureAuthBack(blob) {
     })
     .then(function(data) {
       scAuthPendingSku = null;
+      // Reset guide text to normal
+      var txt = document.querySelector('.cx-guide-text');
+      if (txt) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; }
       scBusy = false;
       scRenderAuthResult(data);
     })
     .catch(function() {
       scAuthPendingSku = null;
+      // Reset guide text to normal
+      var txt = document.querySelector('.cx-guide-text');
+      if (txt) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; }
       scBusy = false;
       scRenderAuthError();
     });
