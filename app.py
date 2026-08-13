@@ -10418,7 +10418,6 @@ def match():
                 )
 
     if not results:
-        session["last_auth_result"] = {"status": "unknown", "reason": "No match found for authenticity check"}
         return render_template(
             "match.html",
             error="Embedding cache not loaded or empty. Try Admin -> Refresh cache, or restart the server.",
@@ -10426,7 +10425,6 @@ def match():
 
     # Score gate: only charge on confident match (Option B)
     if results[0].get('score', 0) < 0.65:
-        session["last_auth_result"] = {"status": "unknown", "reason": "Low-confidence match so authenticity could not be assessed"}
         return render_template("match.html", error=NO_MATCH_ERROR, scan_failed=True)
 
     # Honest no-match: OCR read nothing at all AND DINOv2 (which only ever
@@ -10441,7 +10439,6 @@ def match():
     if (_ocr_status_lowconf == "no_text_found"
             and _dino_diag.get("fired") is True
             and _dino_diag.get("dino_gap", 1.0) < CFG.get("dinov2_swap_margin", 0.05)):
-        session["last_auth_result"] = {"status": "unknown", "reason": "Low-confidence match so authenticity could not be assessed"}
         return render_template(
             "match.html",
             error="We couldn't confidently match this card. Try a clearer photo, or check the lighting.",

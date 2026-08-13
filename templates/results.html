@@ -2132,7 +2132,8 @@ function resUploadBack() {
     .then(function(data){
       var el = document.getElementById('resAuthBackResult');
       el.style.display = 'block';
-      el.innerHTML = '<strong>Back check:</strong> ' + (data.status||'unknown') + '<br><small>' + (data.reason||'') + '</small>';
+      var colour = data.status === 'back_consistent' ? '#4caf50' : data.status === 'needs_review' ? '#ff9800' : '#f44336';
+      el.innerHTML = '<strong style="color:' + colour + '">● ' + (data.status||'unknown').replace(/_/g,' ') + '</strong><br><small style="color:#ccc;">' + (data.reason||'') + '</small>';
     }).catch(function(){
       var el = document.getElementById('resAuthBackResult');
       el.style.display = 'block';
@@ -2158,7 +2159,8 @@ function resCaptureBack() {
       .then(function(data){
         var el = document.getElementById('resAuthBackResult');
         el.style.display = 'block';
-        el.innerHTML = '<strong>Back check:</strong> ' + (data.status||'unknown') + '<br><small>' + (data.reason||'') + '</small>';
+        var colour = data.status === 'back_consistent' ? '#4caf50' : data.status === 'needs_review' ? '#ff9800' : '#f44336';
+      el.innerHTML = '<strong style="color:' + colour + '">● ' + (data.status||'unknown').replace(/_/g,' ') + '</strong><br><small style="color:#ccc;">' + (data.reason||'') + '</small>';
       }).catch(function(){
         var el = document.getElementById('resAuthBackResult');
         el.style.display = 'block';
