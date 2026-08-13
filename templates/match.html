@@ -2788,7 +2788,7 @@ function scOfferAuthCheck(sku) {
       if (!pendingSku) return;
       var resultEl = document.getElementById('scAuthResult');
       if (resultEl) resultEl.classList.add('gs-hidden');
-      scAuthPendingSku = pendingSku;
+      setTimeout(function(){ scAuthPendingSku = pendingSku; }, 2500);
       var guide = document.getElementById('scGuide');
       var txt   = document.getElementById('scGuideText');
       if (guide) guide.className = 'cx-card-guide';
