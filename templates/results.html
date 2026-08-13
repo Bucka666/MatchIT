@@ -2099,8 +2099,34 @@ function resStartBackCheck(sku) {
         captureBtn.textContent = 'Capture';
       }, 2000);
     }).catch(function(){
-      sheet.style.display = 'none';
-      alert('Camera not available');
+      // No camera — show file upload fallback instead
+      if (document.getElementById('resBackFallback')) return;
+      document.getElementById('resBackVideo').style.display = 'none';
+      document.getElementById('resCaptureBtn').style.display = 'none';
+      var fallback = document.createElement('div');
+      fallback.id = 'resBackFallback';
+      fallback.innerHTML = '<p style="color:#f1d8ff;margin:8px 0;">No camera available — upload a photo of the card back instead:</p><input type="file" accept="image/*" id="resBackFileInput" style="color:#f1d8ff;margin:8px 0;"><button onclick="resUploadBack()" style="margin-top:8px;width:100%;padding:10px;background:rgba(177,77,255,0.5);border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">Upload & Check</button>';
+      sheet.appendChild(fallback);
+    });
+}
+
+function resUploadBack() {
+  var input = document.getElementById('resBackFileInput');
+  if (!input || !input.files[0]) return;
+  var fd = new FormData();
+  fd.append('image', input.files[0]);
+  fd.append('sku', _resBackSku);
+  resCloseBackSheet();
+  fetch('/api/authenticity/back-check', {method:'POST', body:fd})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var el = document.getElementById('resAuthBackResult');
+      el.style.display = 'block';
+      el.innerHTML = '<strong>Back check:</strong> ' + (data.status||'unknown') + '<br><small>' + (data.reason||'') + '</small>';
+    }).catch(function(){
+      var el = document.getElementById('resAuthBackResult');
+      el.style.display = 'block';
+      el.innerHTML = '<span style="color:#ff6b6b;">Back check failed</span>';
     });
 }
 function resCloseBackSheet() {
