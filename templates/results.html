@@ -36,6 +36,10 @@
     {% if auth_result.confidence is defined %}
     <div class="res-auth-confidence">Signal strength: {{ (auth_result.confidence * 100)|round(0) }}%</div>
     {% endif %}
+    {% if ocr_sku and r1 and r1.profile and r1.profile.category == 'POKEMON' %}
+    <button class="res-auth-back-btn" onclick="resStartBackCheck('{{ ocr_sku }}')">🛡️ Verify back of card</button>
+    <div id="resAuthBackResult"></div>
+    {% endif %}
   </div>
 
   <div class="res-auth-modal gs-auth-modal-backdrop gs-hidden" id="resAuthModal" role="dialog" aria-modal="true" onTouchStart="gsAuthTouchStart(event)" onTouchEnd="gsAuthTouchEnd(event, 'resAuthModal')">
@@ -2062,5 +2066,63 @@ async function submitPriceAlert() {
 })();
 </script>
 {% endif %}
+
+<style>
+.res-auth-back-btn{margin-top:10px;width:100%;padding:8px;border-radius:8px;border:1px solid rgba(177,77,255,0.3);background:rgba(177,77,255,0.08);color:#f1d8ff;font-size:0.8rem;font-weight:600;cursor:pointer;}
+#resAuthBackResult{margin-top:8px;padding:8px;border-radius:8px;background:rgba(255,255,255,0.05);color:#f1d8ff;display:none;}
+#resBackSheet{position:fixed;bottom:70px;left:16px;right:16px;z-index:401;background:#1a1a2e;border-radius:12px;padding:16px;border:1px solid rgba(177,77,255,0.3);display:none;}
+</style>
+<div id="resBackSheet">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <span style="color:#f1d8ff;font-weight:700;">👉 Flip card — show the BACK</span>
+    <button onclick="resCloseBackSheet()" style="background:none;border:none;color:#f1d8ff;font-size:1.2rem;cursor:pointer;">✕</button>
+  </div>
+  <video id="resBackVideo" autoplay playsinline style="width:100%;border-radius:8px;"></video>
+  <button onclick="resCaptureBack()" style="margin-top:10px;width:100%;padding:10px;background:rgba(177,77,255,0.5);border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">Capture</button>
+</div>
+<script>
+var _resBackSku = null;
+var _resBackStream = null;
+function resStartBackCheck(sku) {
+  _resBackSku = sku;
+  var sheet = document.getElementById('resBackSheet');
+  sheet.style.display = 'block';
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    .then(function(stream){
+      _resBackStream = stream;
+      document.getElementById('resBackVideo').srcObject = stream;
+    }).catch(function(){
+      sheet.style.display = 'none';
+      alert('Camera not available');
+    });
+}
+function resCloseBackSheet() {
+  if (_resBackStream) { _resBackStream.getTracks().forEach(function(t){t.stop();}); _resBackStream = null; }
+  document.getElementById('resBackSheet').style.display = 'none';
+}
+function resCaptureBack() {
+  var video = document.getElementById('resBackVideo');
+  var canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  resCloseBackSheet();
+  canvas.toBlob(function(blob){
+    var fd = new FormData();
+    fd.append('image', blob, 'back.jpg');
+    fd.append('sku', _resBackSku);
+    fetch('/api/authenticity/back-check', {method:'POST', body:fd})
+      .then(function(r){return r.json();})
+      .then(function(data){
+        var el = document.getElementById('resAuthBackResult');
+        el.style.display = 'block';
+        el.innerHTML = '<strong>Back check:</strong> ' + (data.status||'unknown') + '<br><small>' + (data.reason||'') + '</small>';
+      }).catch(function(){
+        var el = document.getElementById('resAuthBackResult');
+        el.style.display = 'block';
+        el.innerHTML = '<span style="color:#ff6b6b;">Back check failed</span>';
+      });
+  }, 'image/jpeg', 0.85);
+}
+</script>
 
 {% endblock %}
