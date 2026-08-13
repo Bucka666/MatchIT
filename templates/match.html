@@ -19,11 +19,10 @@
 </div>
 
 {% if auth_result %}
-<div class="gs-auth-banner" id="gsAuthBanner" style="margin:12px 16px 0;" onclick="gsOpenAuthBannerModal()" role="button" tabindex="0" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); gsOpenAuthBannerModal(); }">
+<div class="gs-auth-banner" id="gsAuthBanner" style="margin:12px 16px 0;">
   <div class="gs-auth-banner-head">
     <span>🔐 Authenticity snapshot</span>
     <div style="display:flex;gap:6px;align-items:center;">
-      <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsOpenAuthBannerModal()">Details</button>
       <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsDismissAuthBanner()" aria-label="Dismiss authenticity banner">✕</button>
     </div>
   </div>
@@ -35,32 +34,6 @@
   {% if auth_result.confidence is defined %}
   <div class="gs-auth-banner-confidence">Signal strength: {{ (auth_result.confidence * 100)|round(0) }}%</div>
   {% endif %}
-</div>
-<div class="gs-auth-banner-modal gs-auth-modal-backdrop gs-hidden" id="gsAuthBannerModal" role="dialog" aria-modal="true" onTouchStart="gsAuthTouchStart(event)" onTouchEnd="gsAuthTouchEnd(event, 'gsAuthBannerModal')">
-  <div class="gs-auth-banner-modal-card gs-auth-modal">
-    <div class="gs-auth-modal-handle" aria-hidden="true"></div>
-    <div class="gs-auth-modal-header">
-      <div class="gs-auth-banner-modal-title">Authenticity snapshot</div>
-      <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsToggleAuthBannerModal()">Close</button>
-    </div>
-    <div class="gs-auth-banner-modal-status" id="gsAuthBannerModalStatus">{{ auth_result.display_status|default(auth_result.status.replace('_', ' ')) }}</div>
-    <p id="gsAuthBannerModalReason">{{ auth_result.reason }}</p>
-    <div class="gs-auth-confidence" id="gsAuthBannerModalConfidence"></div>
-    {% if auth_result.flags %}
-    <div class="gs-auth-banner-modal-flags" id="gsAuthBannerModalFlags">
-      <div class="gs-auth-banner-modal-flags-title">Flags</div>
-      <ul>
-        {% for flag in auth_result.flags %}
-        <li>{{ flag.replace('_', ' ') }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% endif %}
-    <div class="gs-auth-actions">
-      <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsShareAuthResult(window.GS_AUTH_RESULT || null)">Share</button>
-      <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsToggleAuthBannerModal()">Close</button>
-    </div>
-  </div>
 </div>
 {% endif %}
 
@@ -151,31 +124,6 @@
 
 <script>
 window.GS_AUTH_RESULT = {{ auth_result|tojson|safe if auth_result else 'null' }};
-var gsAuthTouchStartY = 0;
-
-function gsAuthTouchStart(e) {
-  if (e.touches && e.touches[0]) {
-    gsAuthTouchStartY = e.touches[0].clientY;
-  }
-}
-
-function gsAuthTouchEnd(e, modalId) {
-  if (!e.changedTouches || !e.changedTouches[0]) return;
-  var endY = e.changedTouches[0].clientY;
-  var delta = endY - gsAuthTouchStartY;
-  if (Math.abs(delta) < 50) return;
-  var modal = document.getElementById(modalId);
-  if (!modal) return;
-  if (delta < 0) {
-    if (modal.classList.contains('gs-hidden')) {
-      gsRenderAuthModal(window.GS_AUTH_RESULT || null);
-      modal.classList.remove('gs-hidden');
-    }
-  } else if (delta > 0) {
-    modal.classList.add('gs-hidden');
-  }
-}
-
 function gsShareAuthResult(auth) {
   if (!auth) return;
   var text = [
@@ -221,62 +169,9 @@ function gsRenderAuthBadge(auth, targetEl) {
   targetEl.textContent = label;
 }
 
-function gsRenderAuthModal(auth) {
-  if (!auth) return;
-  var statusEl = document.getElementById('gsAuthBannerModalStatus');
-  var reasonEl = document.getElementById('gsAuthBannerModalReason');
-  var flagsEl = document.getElementById('gsAuthBannerModalFlags');
-  var confidenceEl = document.getElementById('gsAuthBannerModalConfidence');
-  if (statusEl) {
-    statusEl.textContent = auth.display_status || auth.status || 'Unknown';
-  }
-  if (reasonEl) {
-    reasonEl.textContent = auth.reason || 'No details available.';
-  }
-  if (confidenceEl) {
-    if (typeof auth.confidence === 'number') {
-      var pct = Math.round(auth.confidence * 100);
-      confidenceEl.innerHTML = '<div class="gs-auth-confidence-bar"><div class="gs-auth-confidence-fill" style="width:' + pct + '%"></div></div>';
-    } else {
-      confidenceEl.innerHTML = '';
-    }
-  }
-  if (flagsEl) {
-    var flags = Array.isArray(auth.flags) ? auth.flags : [];
-    if (flags.length) {
-      var list = flags.map(function(flag){ return '<li>' + flag.replace(/_/g, ' ') + '</li>'; }).join('');
-      flagsEl.innerHTML = '<div class="gs-auth-banner-modal-flags-title">Flags</div><ul>' + list + '</ul>';
-      flagsEl.classList.remove('gs-hidden');
-    } else {
-      flagsEl.innerHTML = '';
-      flagsEl.classList.add('gs-hidden');
-    }
-  }
-}
-
-function gsToggleAuthBannerModal() {
-  var modal = document.getElementById('gsAuthBannerModal');
-  if (modal) {
-    modal.classList.add('gs-hidden');
-    modal.setAttribute('aria-hidden', 'true');
-  }
-}
-
 function gsDismissAuthBanner() {
   var banner = document.getElementById('gsAuthBanner');
   if (banner) banner.classList.add('gs-hidden');
-}
-
-function gsOpenAuthBannerModal() {
-  var modal = document.getElementById('gsAuthBannerModal');
-  if (modal) {
-    modal.classList.remove('gs-hidden');
-    modal.setAttribute('aria-hidden', 'false');
-  }
-}
-
-function gsOpenDetailAuthModal() {
-  gsOpenAuthBannerModal();
 }
 
 </script>
@@ -684,7 +579,6 @@ function gsOpenDetailAuthModal() {
         <div class="res-auth-badge" id="detAuthBadge"></div>
         <p class="res-auth-note" id="detAuthNote"></p>
         <div class="res-auth-flags gs-hidden" id="detAuthFlags"></div>
-        <button type="button" class="detail-auth-btn" onclick="gsOpenDetailAuthModal()" style="margin-top:10px;">Check authenticity</button>
         <p class="res-auth-disclaimer">AI assessment only — not a substitute for physical inspection.</p>
       </div>
     </div>
@@ -1693,6 +1587,7 @@ var soundEnabled = true;
       if (!file) return;
       var dt = new DataTransfer(); dt.items.add(file); fileEl.files = dt.files; refresh();
     });
+    drop.addEventListener('click', function() { fileEl.click(); });
   }
 
   if (form) {
