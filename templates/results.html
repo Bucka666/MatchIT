@@ -2078,7 +2078,7 @@ async function submitPriceAlert() {
     <button onclick="resCloseBackSheet()" style="background:none;border:none;color:#f1d8ff;font-size:1.2rem;cursor:pointer;">✕</button>
   </div>
   <video id="resBackVideo" autoplay playsinline style="width:100%;border-radius:8px;"></video>
-  <button onclick="resCaptureBack()" style="margin-top:10px;width:100%;padding:10px;background:rgba(177,77,255,0.5);border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">Capture</button>
+  <button id="resCaptureBtn" onclick="resCaptureBack()" style="margin-top:10px;width:100%;padding:10px;background:rgba(177,77,255,0.5);border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">Capture</button>
 </div>
 <script>
 var _resBackSku = null;
@@ -2091,6 +2091,13 @@ function resStartBackCheck(sku) {
     .then(function(stream){
       _resBackStream = stream;
       document.getElementById('resBackVideo').srcObject = stream;
+      var captureBtn = document.getElementById('resCaptureBtn');
+      captureBtn.disabled = true;
+      captureBtn.textContent = 'Camera stabilising…';
+      setTimeout(function(){
+        captureBtn.disabled = false;
+        captureBtn.textContent = 'Capture';
+      }, 2000);
     }).catch(function(){
       sheet.style.display = 'none';
       alert('Camera not available');
