@@ -2087,6 +2087,12 @@ function resStartBackCheck(sku) {
   _resBackSku = sku;
   var sheet = document.getElementById('resBackSheet');
   sheet.style.display = 'block';
+  var isMobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  if (!isMobile) {
+    // Desktop — skip camera, go straight to file upload
+    resShowFileFallback(sheet);
+    return;
+  }
   navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
     .then(function(stream){
       _resBackStream = stream;
@@ -2100,14 +2106,18 @@ function resStartBackCheck(sku) {
       }, 2000);
     }).catch(function(){
       // No camera — show file upload fallback instead
-      if (document.getElementById('resBackFallback')) return;
-      document.getElementById('resBackVideo').style.display = 'none';
-      document.getElementById('resCaptureBtn').style.display = 'none';
-      var fallback = document.createElement('div');
-      fallback.id = 'resBackFallback';
-      fallback.innerHTML = '<p style="color:#f1d8ff;margin:8px 0;">No camera available — upload a photo of the card back instead:</p><input type="file" accept="image/*" id="resBackFileInput" style="color:#f1d8ff;margin:8px 0;"><button onclick="resUploadBack()" style="margin-top:8px;width:100%;padding:10px;background:rgba(177,77,255,0.5);border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">Upload & Check</button>';
-      sheet.appendChild(fallback);
+      resShowFileFallback(sheet);
     });
+}
+
+function resShowFileFallback(sheet) {
+  if (document.getElementById('resBackFallback')) return;
+  document.getElementById('resBackVideo').style.display = 'none';
+  document.getElementById('resCaptureBtn').style.display = 'none';
+  var fallback = document.createElement('div');
+  fallback.id = 'resBackFallback';
+  fallback.innerHTML = '<p style="color:#f1d8ff;margin:8px 0;">No camera available — upload a photo of the card back instead:</p><input type="file" accept="image/*" id="resBackFileInput" style="color:#f1d8ff;margin:8px 0;"><button onclick="resUploadBack()" style="margin-top:8px;width:100%;padding:10px;background:rgba(177,77,255,0.5);border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">Upload & Check</button>';
+  sheet.appendChild(fallback);
 }
 
 function resUploadBack() {

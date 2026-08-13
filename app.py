@@ -4714,7 +4714,7 @@ def capture_submit():
             return render_template(
                 "match.html",
                 error="No SKU results found (cache may be empty).",
-                auth_result=session.get("last_auth_result"),
+                auth_result=session.pop("last_auth_result", None),
             )
 
         # Option B: only charge scan on confident match (score >= 0.65)
@@ -4724,7 +4724,7 @@ def capture_submit():
             return render_template(
                 "match.html",
                 error="No confident match found.",
-                auth_result=session.get("last_auth_result"),
+                auth_result=session.pop("last_auth_result", None),
             )
         _sku_for_charge_cs = results[0].get("sku", "") if isinstance(results[0], dict) else getattr(results[0], "sku", "")
         scan_decision = _evaluate_scan_decision(request, sku=_sku_for_charge_cs)
@@ -4824,7 +4824,7 @@ def capture_submit():
         return render_template(
             "match.html",
             error=f"Capture failed: {e}",
-            auth_result=session.get("last_auth_result"),
+            auth_result=session.pop("last_auth_result", None),
         )
 
 
@@ -9910,7 +9910,7 @@ def match():
         return render_template(
             "match.html",
             error="No file uploaded.",
-            auth_result=session.get("last_auth_result"),
+            auth_result=session.pop("last_auth_result", None),
         )
 
     def _pick_first_file(key: str):
@@ -9930,7 +9930,7 @@ def match():
         return render_template(
             "match.html",
             error="No file selected.",
-            auth_result=session.get("last_auth_result"),
+            auth_result=session.pop("last_auth_result", None),
         )
 
     query_id = str(uuid.uuid4())
@@ -9953,7 +9953,7 @@ def match():
         return render_template(
             "match.html",
             error=f"Failed to save query image: {e}",
-            auth_result=session.get("last_auth_result"),
+            auth_result=session.pop("last_auth_result", None),
         )
 
     import base64
@@ -10163,7 +10163,7 @@ def match():
                 return render_template(
                     "match.html",
                     error="This set isn't in our database yet — we're regularly adding new sets, so check back soon!",
-                    auth_result=session.get("last_auth_result"),
+                    auth_result=session.pop("last_auth_result", None),
                 )
         except Exception as _e:
             print(f"[OCR-FIRST] error, falling through to CLIP: {_e}", flush=True)
@@ -10187,14 +10187,14 @@ def match():
         return render_template(
             "match.html",
             error="Embedder not available.",
-            auth_result=session.get("last_auth_result"),
+            auth_result=session.pop("last_auth_result", None),
         )
 
     if emb is None or not hasattr(emb, "embed_path"):
         return render_template(
             "match.html",
             error="Embedder not available.",
-            auth_result=session.get("last_auth_result"),
+            auth_result=session.pop("last_auth_result", None),
         )
 
     from vertical_loader import get_vertical as _gv
@@ -10256,7 +10256,7 @@ def match():
         return render_template(
             "match.html",
             error=f"Embedder failed: {e}",
-            auth_result=session.get("last_auth_result"),
+            auth_result=session.pop("last_auth_result", None),
         )
 
     # DINOv2 tie-breaker on top 2 if scores are close
