@@ -2811,10 +2811,19 @@ function scOfferAuthCheck(sku) {
 // check in scLoop() rather than firing a second concurrent back-check.
 function scCaptureAuthBack(blob) {
   scBusy = true;
-  var pendingSku = scAuthPendingSku;
-  var fd = new FormData();
-  fd.append('sku', pendingSku);
-  fd.append('image', blob, 'back.jpg');
+  try {
+    var pendingSku = scAuthPendingSku;
+    var fd = new FormData();
+    fd.append('sku', pendingSku);
+    fd.append('image', blob, 'back.jpg');
+  } catch (e) {
+    scAuthPendingSku = null;
+    var txt = document.querySelector('.cx-guide-text');
+    if (txt) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; }
+    scBusy = false;
+    scRenderAuthError();
+    return;
+  }
 
   fetch('/api/authenticity/back-check', { method: 'POST', body: fd })
     .then(function(r) {
@@ -2823,6 +2832,8 @@ function scCaptureAuthBack(blob) {
     })
     .then(function(data) {
       scAuthPendingSku = null;
+      var offerBtn = document.getElementById('scAuthOfferBtn');
+      if (offerBtn) { offerBtn.style.display = 'none'; offerBtn.removeAttribute('data-sku'); }
       // Reset guide text to normal
       var txt = document.querySelector('.cx-guide-text');
       if (txt) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; }
@@ -2831,6 +2842,8 @@ function scCaptureAuthBack(blob) {
     })
     .catch(function() {
       scAuthPendingSku = null;
+      var offerBtn = document.getElementById('scAuthOfferBtn');
+      if (offerBtn) { offerBtn.style.display = 'none'; offerBtn.removeAttribute('data-sku'); }
       // Reset guide text to normal
       var txt = document.querySelector('.cx-guide-text');
       if (txt) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; }
