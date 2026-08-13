@@ -378,7 +378,7 @@ elif app.secret_key == "dev-secret-change-me":
         "[STARTUP] No MATCHIT_SECRET, FLASK_SECRET_KEY, or config secret_key set — "
         "Flask session signing is running on the hardcoded fallback "
         "'dev-secret-change-me'. This value is public in the app.py source, so "
-        "sessions (including last_auth_result) can be forged by anyone who reads it."
+        "sessions can be forged by anyone who reads it."
     )
 
 @app.context_processor
@@ -4710,21 +4710,17 @@ def capture_submit():
             results = _dinov2_tiebreak(results, str(q1_path))
 
         if not results:
-            session["last_auth_result"] = {"status": "unknown", "reason": "No match found for authenticity check"}
             return render_template(
                 "match.html",
                 error="No SKU results found (cache may be empty).",
-                auth_result=session.pop("last_auth_result", None),
             )
 
         # Option B: only charge scan on confident match (score >= 0.65)
         _top_score = (results[0].get('score', 0) if isinstance(results[0], dict) else getattr(results[0], 'score', 0))
         if _top_score < 0.65:
-            session["last_auth_result"] = {"status": "unknown", "reason": "Low-confidence match so authenticity could not be assessed"}
             return render_template(
                 "match.html",
                 error="No confident match found.",
-                auth_result=session.pop("last_auth_result", None),
             )
         _sku_for_charge_cs = results[0].get("sku", "") if isinstance(results[0], dict) else getattr(results[0], "sku", "")
         scan_decision = _evaluate_scan_decision(request, sku=_sku_for_charge_cs)
@@ -4800,10 +4796,6 @@ def capture_submit():
                 r.profile = profile
 
         grade = _safe_grade(str(q1_path))
-        image_guess = _classify_auth_images(str(q1_path), str(q2_path) if (q2_path is not None and q2_path.exists()) else None)
-        card_payload = _build_auth_card_payload(results[0] if results else None, image_guess=image_guess)
-        auth_result = _build_auth_result_for_result(results[0] if results else None, card_payload=card_payload)
-        session["last_auth_result"] = auth_result
 
         return render_template(
             "results.html",
@@ -4814,9 +4806,7 @@ def capture_submit():
             feedback_token=feedback_token,
             selected_mode="CAPTURE_PAIRED_TWO_STAGE_MODE_B_SOFT_TYPE_SWAPSAFE_FLOOR",
             ocr_status="",
-            ocr_sku="",
             grade=grade,
-            auth_result=auth_result,
         )
 
     except Exception as e:
@@ -4824,7 +4814,6 @@ def capture_submit():
         return render_template(
             "match.html",
             error=f"Capture failed: {e}",
-            auth_result=session.pop("last_auth_result", None),
         )
 
 
@@ -7127,8 +7116,7 @@ def _attach_set_total(profile, sku=None):
 
     JP profiles store TCGdex's own bare set code in set_id (e.g. "S10a" for
     jpn-s10a-002), never the "jpn-s10a" key set_metadata.json actually uses
-    -- same namespace mismatch _build_auth_card_payload_from_profile already
-    works around via _derive_jpn_set_id_from_sku. Falls back to the
+    -- worked around via _derive_jpn_set_id_from_sku. Falls back to the
     SKU-derived jpn- key when the direct lookup misses and sku is given."""
     if isinstance(profile, dict) and profile.get("set_id"):
         meta = _load_set_metadata().get(profile["set_id"])
@@ -8672,17 +8660,6 @@ def watchlist_sync_post():
 def watchlist_page():
     return render_template("watchlist.html")
 
-@app.route("/authenticity")
-def authenticity_page():
-    """Dedicated authenticity scan mode: identify a card from its front,
-    then check the back's language against the set's own release region.
-    No tier gate for now -- if one is added later, follow /collection's
-    pattern (app.py ~5030): call _ssr_subscription(), pass ssr_is_premium
-    into the template, and branch the page content on it there rather
-    than blocking the route itself, matching how every other gated page
-    in this app behaves (200 to everyone, content differs by tier)."""
-    return render_template("authenticity.html")
-
 @app.route("/sets")
 def sets_page():
     return render_template("sets.html")
@@ -9186,231 +9163,10 @@ def _evaluate_scan_decision(req, sku=None):
                 "reason": "error", "error": str(_exc), "show_transition_toast": False}
 
 
-def _normalise_auth_set_code(input_value):
-    """Normalise set codes the same way as the TypeScript auth engine."""
-    if input_value is None:
-        return ""
-
-    code = str(input_value).upper().strip()
-    code = re.sub(r"[\s\-\/]+", "", code)
-    code = code.replace("I", "1")
-    code = code.replace("O", "0")
-    if code.endswith("L"):
-        code = code[:-1] + "1"
-    if code.endswith("A"):
-        code = code[:-1] + "a"
-    return code
 
 
-def _find_auth_set_info(set_code=None, set_name=None, set_id=None):
-    """Look up authenticity set metadata.
-
-    Prefers a direct set_id lookup against set_metadata.json (exact -- the
-    confirmed SKU's own set_id, no printed-code round-trip) when set_id is
-    given. sets.json's own code namespace collides with pokemontcg.io's
-    (its own "CRI" is "Crimson Haze" (JP), not the "Chaos Rising" (EN, me4)
-    our generated map resolves "CRI" to) -- going set_id -> code -> sets.json
-    can silently land on the wrong set. Going set_id -> set_metadata.json
-    directly avoids that round-trip entirely.
-
-    Falls back to the legacy sets.json code/name lookup when no set_id is
-    given -- used by _build_auth_card_payload's image-guess placeholder path
-    (capture_submit / api_authenticate), which has no set_id to look up.
-
-    set_metadata.json has no productType/allowedRarities/minNumber/
-    maxNumber fields, so the set_id path can only derive expectedBack/
-    country (from the set_id's jpn- prefix). productType is deliberately
-    left OUT (not defaulted to "booster" -- Phase 1a defaulted to booster,
-    which mislabelled every starter/promo/special set as an official
-    booster; Phase 1b instead leaves it unknown and
-    _build_auth_result_for_result returns a status that claims only what's
-    known -- see its "official" branch). allowedRarities is left unset;
-    the rarity check itself is disabled downstream (Phase 1a item 3), so
-    its absence is moot.
-    """
-    if set_id:
-        meta = _load_set_metadata()
-        entry = meta.get(set_id)
-        if entry and str(entry.get("game", "")).upper() == "POKEMON":
-            is_jpn = set_id.startswith("jpn-")
-            return {
-                "setCode": entry.get("ptcgoCode") or "",
-                "name": entry.get("name") or set_id,
-                "country": "JP" if is_jpn else "EN",
-                "expectedBack": "japanese" if is_jpn else "english-style",
-            }
-        return None
-
-    sets_path = Path(app.root_path) / "auth-engine" / "sets.json"
-    with open(sets_path, "r", encoding="utf-8") as fh:
-        sets = json.load(fh)
-
-    set_code = (set_code or "").strip()
-    set_name = (set_name or "").strip()
-
-    if set_code:
-        normalised_code = _normalise_auth_set_code(set_code)
-        match = next((s for s in sets if _normalise_auth_set_code(s.get("setCode", "")) == normalised_code), None)
-        if match:
-            return match
-
-    if set_name:
-        return next((s for s in sets if str(s.get("name", "")).lower() == set_name.lower()), None)
-
-    return None
 
 
-def _classify_auth_images(front_path=None, back_path=None):
-    """Placeholder image classifier hook for authenticity scoring.
-
-    This does not perform ML yet; it uses simple filename and image-path hints
-    so the authenticity flow can make a slightly smarter fallback guess before a
-    real OCR/CLIP/DiVo model is plugged in.
-    """
-    front_path = str(front_path or "")
-    back_path = str(back_path or "")
-    combined_path = f"{front_path} {back_path}".lower()
-
-    back_type = "unknown"
-    if re.search(r"\b(jp|japanese|ja)\b", combined_path):
-        back_type = "japanese"
-    elif re.search(r"\b(en|english|usa|back|reverse)\b", combined_path):
-        back_type = "english-style"
-
-    payload = {
-        "setCode": "",
-        "rarity": "",
-        "number": "",
-        "backType": back_type,
-        "confidence": 0.2,
-    }
-
-    set_code = ""
-    for pattern in [r"\b(s\d{1,2}[a-z]?)\b", r"\b(sv\d{1,2})\b", r"\b(en[-\s]?sv[-\s]?base)\b"]:
-        match = re.search(pattern, combined_path)
-        if match:
-            set_code = match.group(1).upper().replace("-", "-")
-            break
-    if not set_code:
-        set_code = "S11"
-
-    payload["setCode"] = set_code
-
-    rarity = ""
-    for token, pattern in [
-        ("UR", r"\bur\b"),
-        ("SR", r"\bsr\b"),
-        ("RRR", r"\brrr\b"),
-        ("RR", r"\brr\b"),
-        ("AR", r"\bar\b"),
-        ("SAR", r"\bsar\b"),
-        ("CHR", r"\bchr\b"),
-        ("SSR", r"\bssr\b"),
-        ("HR", r"\bhr\b"),
-        ("R", r"\br\b"),
-        ("U", r"\bu\b"),
-        ("C", r"\bc\b"),
-    ]:
-        if re.search(pattern, combined_path):
-            rarity = token
-            break
-    if not rarity:
-        rarity = "RRR"
-
-    payload["rarity"] = rarity
-
-    number = ""
-    for match in re.finditer(r"\b(\d{1,3})\b", combined_path):
-        candidate = int(match.group(1))
-        if 1 <= candidate <= 300 and candidate not in {2024, 2025, 2026}:
-            number = str(candidate)
-            break
-    if not number:
-        number = "030"
-
-    payload["number"] = number
-
-    if front_path and os.path.exists(front_path):
-        try:
-            with Image.open(front_path) as im:
-                width, height = im.size
-                if width and height and width > height * 1.2:
-                    payload["number"] = f"{payload['number']}/100"
-        except Exception:
-            pass
-
-    if set_code:
-        payload["confidence"] = 0.45
-    if re.search(r"\b(jp|japanese|ja)\b", combined_path) or re.search(r"\b(en|english|usa|back|reverse)\b", combined_path):
-        payload["confidence"] = min(0.75, payload["confidence"] + 0.15)
-    if rarity:
-        payload["confidence"] = min(0.9, payload["confidence"] + 0.1)
-    if number:
-        payload["confidence"] = min(0.95, payload["confidence"] + 0.1)
-
-    return payload
-
-
-def _build_auth_card_payload(result=None, fallback_back_type=None, image_guess=None):
-    """Build a lightweight card payload for the auth engine from current scan metadata.
-
-    This is intentionally placeholder-friendly so it can later be swapped for an
-    actual image classifier without changing the surrounding flow.
-    """
-    profile = {}
-    if isinstance(result, dict):
-        profile = result.get("profile", {}) or {}
-
-    image_guess = image_guess or {}
-
-    set_code = ""
-    if isinstance(result, dict):
-        set_code = str(result.get("setCode") or result.get("set_code") or "").strip()
-    if not set_code:
-        set_code = str(profile.get("set_code") or profile.get("setCode") or "").strip()
-    if not set_code:
-        set_code = str(image_guess.get("setCode") or "").strip()
-
-    set_name = str(profile.get("set_name") or profile.get("name") or "").strip()
-    set_info = _find_auth_set_info(set_code=set_code, set_name=set_name)
-
-    rarity = (
-        profile.get("rarity")
-        or profile.get("rarity_code")
-        or profile.get("rarityName")
-        or image_guess.get("rarity")
-        or "RRR"
-    )
-    number = (
-        profile.get("number")
-        or profile.get("card_number")
-        or profile.get("numberString")
-        or image_guess.get("number")
-        or "030/100"
-    )
-
-    back_type = fallback_back_type or image_guess.get("backType") or (set_info.get("expectedBack") if set_info else None) or "english-style"
-    if isinstance(back_type, str) and back_type.lower() not in {"japanese", "english-style"}:
-        back_type = "english-style"
-
-    return {
-        "setCode": set_code or (set_info.get("setCode") if set_info else ""),
-        "rarity": str(rarity).upper(),
-        "number": str(number),
-        "backType": back_type,
-        "confidence": float(image_guess.get("confidence", 0.2) if isinstance(image_guess, dict) else 0.2),
-    }
-
-
-def _get_result_field(result0, field, default=None):
-    """Match-result rows are dicts in most /match branches but plain objects
-    with attributes in others (see the profile-attach loop in match()) --
-    this reads either shape without assuming one."""
-    if result0 is None:
-        return default
-    if isinstance(result0, dict):
-        return result0.get(field, default)
-    return getattr(result0, field, default)
 
 
 def _derive_jpn_set_id_from_sku(sku):
@@ -9425,428 +9181,6 @@ def _derive_jpn_set_id_from_sku(sku):
     if len(parts) < 3:
         return ""
     return "-".join(parts[:-1])
-
-
-def _build_auth_card_payload_from_profile(profile, confidence, sku=None):
-    """Phase 1a/1b: assemble a real card_payload from a confirmed SKU's
-    CardsDB profile, carrying the set_id itself through rather than
-    resolving it to a printed code first -- see _find_auth_set_info's
-    docstring for why that round-trip is unsafe (sets.json's own code
-    namespace collides with pokemontcg.io's, e.g. CRI).
-    _find_auth_set_info(set_id=...) resolves set_metadata.json directly
-    instead.
-
-    JP profiles store TCGdex's own set code in their set_id field (e.g.
-    "SV1a" for jpn-sv1a-002), not the GrailSweep set_id -- that never
-    matches a set_metadata.json key. When profile["set_id"] doesn't
-    resolve and the SKU is jpn-prefixed, this derives the lookup key from
-    the SKU itself instead (Phase 1b item 2).
-
-    Returns None if no usable set_id (direct or derived) or card_number is
-    found -- callers fall back to the existing (card_payload=None) path.
-    rarity is carried through for display/logging only; the rarity check
-    itself is disabled (Phase 1a item 3), so it is not required here.
-
-    backType is deliberately NOT set here -- Phase 2 territory. Omitting the
-    key means _build_auth_card_payload's own fallback chain (set_info's own
-    expectedBack) applies downstream, which cannot fabricate a back_mismatch
-    since it trivially equals itself.
-    """
-    profile = profile or {}
-    set_id = str(profile.get("set_id") or "").strip()
-    rarity = str(profile.get("rarity") or "").strip()
-    number = str(profile.get("card_number") or "").strip()
-
-    if not _load_set_metadata().get(set_id):
-        derived = _derive_jpn_set_id_from_sku(sku)
-        if derived and _load_set_metadata().get(derived):
-            set_id = derived
-
-    if not (set_id and number):
-        return None
-
-    return {
-        "setId": set_id,
-        "rarity": rarity,
-        "number": number,
-        "confidence": float(confidence or 0),
-    }
-
-
-def _run_auth_check(sku, result0):
-    """Phase 1 entry point for all three /match call sites. Builds a real
-    card_payload from the result's attached profile and the result's own
-    match score (present as "score" on all three -- 1.0 for the confirmed/
-    OCR-direct paths, real CLIP similarity for the CLIP path), logs one
-    [AUTH] line per scan, and falls back to the existing unknown/needs-review
-    path (card_payload=None) when the profile has no usable data -- logged
-    as a distinct reason so "no data" and "assessed as uncertain" are
-    distinguishable in the logs rather than both landing on the same line.
-    """
-    profile = _get_result_field(result0, "profile")
-    confidence = float(_get_result_field(result0, "score", 0) or 0)
-    card_payload = _build_auth_card_payload_from_profile(profile, confidence, sku=sku)
-
-    if card_payload is None:
-        print(f"[AUTH] sku={sku} reason=no_profile_data "
-              f"(profile={'present' if profile else 'missing'})", flush=True)
-
-    auth_result = _build_auth_result_for_result(result0, card_payload=card_payload)
-    print(f"[AUTH] sku={sku} "
-          f"set_id={(card_payload or {}).get('setId', '')} "
-          f"rarity={(card_payload or {}).get('rarity', '')} "
-          f"number={(card_payload or {}).get('number', '')} "
-          f"confidence={auth_result.get('confidence')} "
-          f"status={auth_result.get('status')} "
-          f"flags={auth_result.get('flags')}", flush=True)
-    return auth_result
-
-
-def _build_auth_result_for_result(result, card_payload=None):
-    """Create a lightweight authenticity result from match metadata for UI display."""
-    try:
-        profile = {}
-        if isinstance(result, dict):
-            profile = result.get("profile", {}) or {}
-
-        payload = card_payload or _build_auth_card_payload(result)
-        # profile.get("name") is the CARD's name, not the set's (e.g. a JP
-        # card's own Japanese name) -- it must never stand in for set_name.
-        # Phase 1b item 3: only a real set_name field counts; anything else
-        # falls through to the generic "This set" wording below rather than
-        # printing a wrong name.
-        set_name = (profile.get("set_name") or "").strip()
-        confidence = payload.get("confidence", 0.2)
-        # Bound before _emit is defined below -- _emit's closure reads this
-        # name, and three early-return branches call _emit before set_info
-        # (and the set_info-aware back_type further down) exists. Without
-        # this, those three branches raised NameError ("free variable
-        # referenced before assignment"), silently caught by the except at
-        # the bottom of this function and collapsed into a generic
-        # "assessment_error" result instead of the specific message each
-        # branch was trying to return. Refined once set_info is known, below.
-        back_type = payload.get("backType") or "english-style"
-
-        def _emit(status, reason, display_status, flags=None, needs_review=False, set_info_override=None, card_override=None):
-            payload_out = {
-                "status": status,
-                "reason": reason,
-                "display_status": display_status,
-                "confidence": float(confidence),
-                "flags": flags or [],
-                "needsReview": bool(needs_review),
-                "setInfo": {
-                    "name": (set_info_override or set_info or {}).get("name") or set_name or "Unknown set",
-                    "setCode": (set_info_override or set_info or {}).get("setCode") or payload.get("setCode") or "-",
-                    "region": (set_info_override or set_info or {}).get("country") or "Unknown",
-                    "type": (set_info_override or set_info or {}).get("productType") or "unknown",
-                },
-                "card": {
-                    "back": (card_override or {}).get("back") or back_type or "english-style",
-                },
-                "warnings": flags or [],
-            }
-            return payload_out
-
-        if not set_name and not payload.get("setCode") and not payload.get("setId"):
-            return _emit(
-                "unknown",
-                "Authenticity could not be assessed from the available card metadata.",
-                "Unknown",
-            )
-
-        set_info = _find_auth_set_info(
-            set_code=payload.get("setCode"), set_name=set_name, set_id=payload.get("setId"),
-        )
-        if not set_info:
-            _unknown_set_label = set_name or "This set"
-            return _emit(
-                "unknown",
-                f"{_unknown_set_label} is not yet in the official authenticity database.",
-                "Unknown",
-                set_info_override={"name": set_name or "Unknown set", "setCode": payload.get("setCode") or "-", "country": "Unknown", "productType": "unknown"},
-                card_override={"back": back_type},
-            )
-
-        if confidence < 0.4:
-            return _emit(
-                "unknown",
-                "Authenticity is still tentative because the classifier signal is weak.",
-                "Tentative",
-                flags=["weak_signal"],
-                needs_review=True,
-                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
-                card_override={"back": back_type},
-            )
-
-        number = str(payload.get("number") or "")
-        back_type = payload.get("backType") or set_info.get("expectedBack", "english-style")
-        if isinstance(back_type, str) and back_type.lower() not in {"japanese", "english-style"}:
-            back_type = "english-style"
-
-        flags = []
-        # Rarity check disabled (Phase 1a): CardsDB rarities ("RARE") and
-        # set_info's rarity vocabulary ("R","RR","SR",...) are different
-        # schemes -- comparing them raw would misfire rarity_mismatch
-        # (-> counterfeit) on genuine cards. Re-enable once a translator
-        # exists between the two vocabularies.
-        print("[AUTH] rarity check skipped - vocabulary mapping not built", flush=True)
-
-        min_number = set_info.get("minNumber")
-        max_number = set_info.get("maxNumber")
-        try:
-            number_only = str(number).split("/", 1)[0]
-            parsed_number = int(number_only)
-            if min_number is not None and parsed_number < min_number:
-                raise ValueError
-            if max_number is not None and parsed_number > max_number:
-                raise ValueError
-        except (TypeError, ValueError):
-            if number:
-                flags.append("number_mismatch")
-
-        # back_type is currently tautological (payload never carries a real
-        # "backType" -- see the assignment above, which always falls back to
-        # set_info's own expectedBack), so this comparison can never
-        # disagree with itself and this path is inert.
-        #
-        # Do NOT wire a real classifier result into payload["backType"] to
-        # activate it. This check terminates in "counterfeit" a few lines
-        # down (and again in the booster/starter fallthrough below) -- a
-        # single visual signal must not produce a counterfeit verdict.
-        # Use auth_back_refs.cross_check_back_language() instead, which
-        # caps at "needs_review" and never returns counterfeit, precisely
-        # because a front/back language mismatch is just as likely to mean
-        # two different cards were photographed as anything about
-        # authenticity. If this check is ever wanted live, that has to be
-        # a deliberate decision, not a side effect of populating backType.
-        if back_type != set_info.get("expectedBack"):
-            flags.append("back_mismatch")
-
-        product_type = str(set_info.get("productType") or "").lower()
-        set_code = str(set_info.get("setCode") or "").upper()
-        country = str(set_info.get("country") or "").upper()
-
-        if set_code == "ETB-SP" and product_type != "etb":
-            product_type = "etb"
-
-        if flags:
-            return _emit(
-                "counterfeit",
-                "One or more mismatches detected.",
-                "Likely counterfeit",
-                flags=flags,
-                needs_review=True,
-                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
-                card_override={"back": back_type},
-            )
-
-        if product_type == "custom":
-            return _emit(
-                "custom_non_official",
-                f"This card appears to be from a custom or non-official set ({set_info['name']}).",
-                "Custom / non-official",
-                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
-                card_override={"back": back_type},
-            )
-
-        if product_type in {"special", "collection", "etb"}:
-            return _emit(
-                "unknown",
-                f"{set_info['name']} is a special or collector product; authenticity is treated conservatively and needs review.",
-                "Needs review",
-                flags=["special_product"],
-                needs_review=True,
-                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
-                card_override={"back": back_type},
-            )
-
-        if not product_type:
-            # set_metadata.json (the set_id path) carries no productType at
-            # all -- claim only what's known (the set is real) rather than
-            # guessing booster/starter/etc (Phase 1b item 1). Falling
-            # through to the booster/starter branches below would either
-            # mislabel this or, worse, hit the implicit starter fallthrough
-            # at the bottom of this function with no productType guard,
-            # which could return "counterfeit" on a genuine card purely
-            # because its (tautological) back_type is "japanese".
-            return _emit(
-                "official",
-                f"{set_info['name']} is a recognised official set; product type could not be determined.",
-                "Official",
-                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
-                card_override={"back": back_type},
-            )
-
-        if product_type == "booster":
-            if back_type == "japanese":
-                return _emit(
-                    "official_booster",
-                    f"This looks like an official booster release for {set_info['name']} with the expected back style.",
-                    "Official booster",
-                    set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
-                    card_override={"back": back_type},
-                )
-            if back_type == "english-style" and country == "EN":
-                return _emit(
-                    "official_booster",
-                    f"This looks like an official English booster release for {set_info['name']} with the expected back style.",
-                    "Official booster",
-                    set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
-                    card_override={"back": back_type},
-                )
-            return _emit(
-                "custom_non_official",
-                f"This appears to be a custom or non-official booster-style product rather than an official release for {set_info['name']}.",
-                "Custom / non-official",
-                flags=["back_mismatch"],
-                needs_review=True,
-                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
-                card_override={"back": back_type},
-            )
-
-        # Same tautology as the back_mismatch check above: back_type always
-        # equals set_info's own expectedBack, so this branch only exists
-        # today because productType == "starter" can come from the legacy
-        # sets.json path (image-guess placeholder, capture_submit /
-        # api_authenticate) -- back_type there is EN starter decks'
-        # expectedBack, i.e. "english-style", always true. The counterfeit
-        # fallthrough immediately below is consequently unreachable in
-        # practice, not just inert -- but if that ever changes (e.g. a
-        # starter set with an expectedBack of "japanese" gets added to
-        # sets.json), the same rule applies: do NOT feed a real classifier
-        # result into payload["backType"] to make this live. Use
-        # auth_back_refs.cross_check_back_language() instead (caps at
-        # needs_review, never counterfeit) -- see the comment above the
-        # back_mismatch check for the full reasoning.
-        if back_type == "english-style":
-            return _emit(
-                "official_starter",
-                f"This looks like an official starter deck for {set_info['name']} with the expected back style.",
-                "Official starter",
-                set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
-                card_override={"back": back_type},
-            )
-
-        return _emit(
-            "counterfeit",
-            f"This looks inconsistent with the expected official back style for {set_info['name']} and may be counterfeit.",
-            "Likely counterfeit",
-            flags=["back_mismatch"],
-            needs_review=True,
-            set_info_override={"name": set_name or set_info.get("name") or "Unknown set", "setCode": payload.get("setCode") or set_info.get("setCode") or "-", "country": set_info.get("country") or "Unknown", "productType": set_info.get("productType") or "unknown"},
-            card_override={"back": back_type},
-        )
-    except Exception as exc:
-        return {
-            "status": "unknown",
-            "reason": "Authenticity could not be assessed right now. Please try again in a moment.",
-            "display_status": "Unknown",
-            "confidence": 0.2,
-            "flags": ["assessment_error"],
-            "needsReview": True,
-        }
-
-
-@app.route("/api/authenticity/back-check", methods=["POST"])
-def api_authenticity_back_check():
-    """Standalone authenticity back-image check -- not part of the /match
-    scan pipeline. Takes an already-confirmed sku plus a back-of-card
-    photo, classifies it EN/JP, and cross-checks it against the SKU's
-    own jpn- prefix via auth_back_refs.cross_check_back_language() --
-    that function takes the sku itself, NOT profile["set_id"] (for jpn-
-    cards that field holds TCGdex's own bare code, e.g. "S10a", never a
-    jpn-prefixed string -- passing set_id there was a real bug, see
-    cross_check_back_language's docstring).
-
-    No @api_key_required: this is a browser-facing route, on the same
-    footing as /api/ondevice/telemetry and /api/card-profile/<sku> (app.py,
-    no decorator, no /api/v1/ API-key gate) -- covered automatically by
-    the global _enforce_cf_proxy() before_request hook.
-
-    The back image is THROWAWAY: embedded straight from the upload's file
-    stream and never written anywhere. No query-dir file, no
-    match_history row, no R2 copy -- there is nothing to clean up because
-    nothing is ever saved.
-    """
-    sku = (request.form.get("sku") or "").strip()
-    image_file = request.files.get("image")
-
-    if not sku:
-        return jsonify({"error": "sku required"}), 400
-    if not image_file or not getattr(image_file, "filename", ""):
-        return jsonify({"error": "image required"}), 400
-
-    profile = _load_card_profile_for_sku(sku, get_db_root(), get_data_dir())
-    set_id = str((profile or {}).get("set_id") or "").strip()
-    if not set_id:
-        print(f"[AUTH-BACKCHECK] sku={sku} set_id= back_label= "
-              f"status=sku_not_found flag=None", flush=True)
-        return jsonify({
-            "sku": sku,
-            "set_id": "",
-            "back_label": None,
-            "sim_en": None,
-            "sim_jp": None,
-            "gap": None,
-            "status": "sku_not_found",
-            "flags": [],
-            "reason": f"No profile found for SKU {sku}.",
-        }), 200
-
-    from auth_back_refs import BACK_PRESENCE_FLOOR, load_back_style_refs, cross_check_back_language
-
-    try:
-        # embedder.embed_path() is called DIRECTLY on the upload's file
-        # stream here -- deliberately NOT _embed_one_query and NOT
-        # auth_back_refs.embed_back_image(). Both of those wrap their
-        # argument in str(), which turns a file-like object into a
-        # useless repr string ("<FileStorage: ...>" / "<_io.BytesIO
-        # object at 0x...>") and Image.open() rejects it with an OSError
-        # -- confirmed by testing it, not assumed. embed_path() itself
-        # only needs a file-like object (it just does Image.open(path)),
-        # so calling it directly is what makes the "never touches disk"
-        # requirement possible at all. Do NOT "simplify" this back into
-        # either wrapper -- that would either break outright or force an
-        # unwanted disk write to route around the break.
-        embedder = get_embedder()
-        v = embedder.embed_path(
-            image_file.stream, multi_crop=False, suppress_bg=True, max_side=1024,
-        )
-        v = np.asarray(v, dtype=np.float32).reshape(-1)
-        v = v / (float(np.linalg.norm(v) + 1e-12))
-
-        en_ref, jp_ref = load_back_style_refs()
-        sim_en = float(np.dot(v, en_ref))
-        sim_jp = float(np.dot(v, jp_ref))
-        gap = abs(sim_en - sim_jp)
-        # Same two-stage rule as auth_back_refs.classify_back_style() --
-        # duplicated rather than called, since that function's own
-        # embed_back_image() call has the same str()-cast problem this
-        # route exists to avoid. Not modifying classify_back_style itself.
-        passed_stage1 = max(sim_en, sim_jp) >= BACK_PRESENCE_FLOOR
-        back_label = ("english-style" if sim_en >= sim_jp else "japanese") if passed_stage1 else "unknown"
-    except Exception:
-        current_app.logger.exception("api_authenticity_back_check embedding failed")
-        return jsonify({"error": "Could not process the back image. Please try again."}), 500
-
-    xcheck = cross_check_back_language(sku, back_label)
-
-    print(f"[AUTH-BACKCHECK] sku={sku} set_id={set_id} back_label={back_label} "
-          f"sim_en={sim_en:.4f} sim_jp={sim_jp:.4f} status={xcheck['status']} "
-          f"flag={xcheck['flags'][0] if xcheck['flags'] else None}", flush=True)
-
-    return jsonify({
-        "sku": sku,
-        "set_id": set_id,
-        "back_label": back_label,
-        "sim_en": sim_en,
-        "sim_jp": sim_jp,
-        "gap": gap,
-        "status": xcheck["status"],
-        "flags": xcheck["flags"],
-        "reason": xcheck["reason"],
-    }), 200
 
 
 @app.route("/app/")
@@ -9870,16 +9204,7 @@ NO_MATCH_ERROR = "No confident match found. " + _UPLOAD_ADVICE
 def match():
     if request.method == "GET":
         from flask import make_response
-        # pop, not get -- last_auth_result is written by every scan path
-        # (POST /match, /capture_submit) and never otherwise cleared, so a
-        # plain GET here used to keep re-showing the same banner from a
-        # scan minutes or days ago on every future page load. Popping
-        # means this GET consumes it: the very next load after a scan
-        # (wherever that scan's own response didn't already show it) is
-        # the last one that will. Every render of results.html/match.html
-        # elsewhere uses a same-request local variable, not this session
-        # key, so they're unaffected by it being gone afterward.
-        resp = make_response(render_template("match.html", auth_result=session.pop("last_auth_result", None)))
+        resp = make_response(render_template("match.html"))
         resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
         resp.headers["Pragma"] = "no-cache"
         return resp
@@ -9910,7 +9235,6 @@ def match():
         return render_template(
             "match.html",
             error="No file uploaded.",
-            auth_result=session.pop("last_auth_result", None),
         )
 
     def _pick_first_file(key: str):
@@ -9930,7 +9254,6 @@ def match():
         return render_template(
             "match.html",
             error="No file selected.",
-            auth_result=session.pop("last_auth_result", None),
         )
 
     query_id = str(uuid.uuid4())
@@ -9953,7 +9276,6 @@ def match():
         return render_template(
             "match.html",
             error=f"Failed to save query image: {e}",
-            auth_result=session.pop("last_auth_result", None),
         )
 
     import base64
@@ -10033,8 +9355,6 @@ def match():
             _increment_scan_counter()
             _increment_sku_scan_freq(confirmed_sku)
             print(f"[CONFIRMED-SKU] Rich render, no CLIP: {confirmed_sku}", flush=True)
-            auth_result = _run_auth_check(confirmed_sku, _confirmed_results[0] if _confirmed_results else None)
-            session["last_auth_result"] = auth_result
             return render_template(
                 "results.html",
                 results=_confirmed_results,
@@ -10044,11 +9364,9 @@ def match():
                 feedback_token=feedback_token,
                 query_image_b64=query_image_b64,
                 ocr_status="ocr_direct_first",
-                ocr_sku=confirmed_sku,
                 grade=grade,
                 paywall_triggered=scan_decision.get("limit_just_crossed", False),
                 scans_remaining=scan_decision.get("remaining"),
-                auth_result=auth_result,
             )
         except Exception as _e:
             print(f"[CONFIRMED-SKU] error, falling through to CLIP: {_e}", flush=True)
@@ -10134,8 +9452,6 @@ def match():
                 _save_match_history(query_filename, query_filename2, _ocr_direct_results, False)
                 _increment_scan_counter()
                 print(f"[OCR-FIRST] Skipped CLIP — direct match: {_ocr_direct_sku}", flush=True)
-                auth_result = _run_auth_check(_ocr_direct_sku, _ocr_direct_results[0] if _ocr_direct_results else None)
-                session["last_auth_result"] = auth_result
                 return render_template(
                     "results.html",
                     results=_ocr_direct_results,
@@ -10145,11 +9461,9 @@ def match():
                     feedback_token=feedback_token,
                     query_image_b64=query_image_b64,
                     ocr_status="ocr_direct_first",
-                    ocr_sku=_ocr_direct_sku,
                     grade=grade,
                     paywall_triggered=scan_decision.get("limit_just_crossed", False),
                     scans_remaining=scan_decision.get("remaining"),
-                    auth_result=auth_result,
                 )
             # No DB row for what OCR read — but if the card was confidently
             # identified (a real set code + number, not a misread) AND that
@@ -10163,7 +9477,6 @@ def match():
                 return render_template(
                     "match.html",
                     error="This set isn't in our database yet — we're regularly adding new sets, so check back soon!",
-                    auth_result=session.pop("last_auth_result", None),
                 )
         except Exception as _e:
             print(f"[OCR-FIRST] error, falling through to CLIP: {_e}", flush=True)
@@ -10187,14 +9500,12 @@ def match():
         return render_template(
             "match.html",
             error="Embedder not available.",
-            auth_result=session.pop("last_auth_result", None),
         )
 
     if emb is None or not hasattr(emb, "embed_path"):
         return render_template(
             "match.html",
             error="Embedder not available.",
-            auth_result=session.pop("last_auth_result", None),
         )
 
     from vertical_loader import get_vertical as _gv
@@ -10256,7 +9567,6 @@ def match():
         return render_template(
             "match.html",
             error=f"Embedder failed: {e}",
-            auth_result=session.pop("last_auth_result", None),
         )
 
     # DINOv2 tie-breaker on top 2 if scores are close
@@ -10400,7 +9710,6 @@ def match():
                 _save_match_history(query_filename, query_filename2, results, low_cert)
                 _increment_scan_counter()
                 grade = _safe_grade(str(query_path1))
-                auth_result = _build_auth_result_for_result(results[0] if results else None)
                 return render_template(
                     "results.html",
                     results=results,
@@ -10410,11 +9719,9 @@ def match():
                     feedback_token=feedback_token,
                     query_image_b64=query_image_b64,
                     ocr_status=_ocr_info.get("ocr_status", ""),
-                    ocr_sku=_ocr_info.get("matched_sku", ""),
                     grade=grade,
                     paywall_triggered=scan_decision.get("limit_just_crossed", False),
                     scans_remaining=scan_decision.get("remaining"),
-                    auth_result=auth_result,
                 )
 
     if not results:
@@ -10460,7 +9767,6 @@ def match():
             feedback_token=feedback_token,
             query_image_b64=query_image_b64,
             ocr_status=_ocr_status_fb,
-            ocr_sku="",
             grade=grade,
             paywall_triggered=False,
             scans_remaining=None,
@@ -10555,10 +9861,6 @@ def match():
     # Rule-based condition grade from query image
     grade = _safe_grade(str(query_path1))
 
-    _r0_for_auth = results[0] if results else None
-    _r0_sku_for_auth = _get_result_field(_r0_for_auth, "sku")
-    auth_result = _run_auth_check(_r0_sku_for_auth, _r0_for_auth)
-    session["last_auth_result"] = auth_result
     return render_template(
         "results.html",
         results=results,
@@ -10568,11 +9870,9 @@ def match():
         feedback_token=feedback_token,
         query_image_b64=query_image_b64,
         ocr_status=_ocr_info.get("ocr_status", "") if "_ocr_info" in dir() else "",
-        ocr_sku=_ocr_info.get("matched_sku", "") if "_ocr_info" in dir() else "",
         grade=grade,
         paywall_triggered=scan_decision.get("limit_just_crossed", False),
         scans_remaining=scan_decision.get("remaining"),
-        auth_result=auth_result,
     )
 
 

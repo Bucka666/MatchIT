@@ -18,74 +18,12 @@
   </div>
 </div>
 
-{% if auth_result %}
-<div class="gs-auth-banner" id="gsAuthBanner" style="margin:12px 16px 0;">
-  <div class="gs-auth-banner-head">
-    <span>🔐 Authenticity snapshot</span>
-    <div style="display:flex;gap:6px;align-items:center;">
-      <button type="button" class="gs-auth-banner-btn" onclick="event.stopPropagation(); gsDismissAuthBanner()" aria-label="Dismiss authenticity banner">✕</button>
-    </div>
-  </div>
-  <div class="gs-auth-banner-status gs-auth-banner-status--{{ auth_result.status }}">
-    <span class="gs-auth-status-icon" aria-hidden="true">{% if auth_result.status == 'official_booster' or auth_result.status == 'official_starter' %}✓{% elif auth_result.status == 'official' %}✓{% elif auth_result.status == 'counterfeit' %}⚠{% elif auth_result.needsReview %}⏱{% else %}•{% endif %}</span>
-    <span>{% if auth_result.status == 'official_booster' or auth_result.status == 'official_starter' %}Authentic{% elif auth_result.status == 'official' %}Official set{% elif auth_result.status == 'counterfeit' %}Suspected counterfeit{% elif auth_result.needsReview %}Needs review{% else %}Unknown{% endif %}</span>
-  </div>
-  <div class="gs-auth-banner-reason">{{ auth_result.reason }}</div>
-  {% if auth_result.confidence is defined %}
-  <div class="gs-auth-banner-confidence">Signal strength: {{ (auth_result.confidence * 100)|round(0) }}%</div>
-  {% endif %}
-</div>
-{% endif %}
-
 {% if error %}
 <div class="mi-flash err" style="margin:8px 16px;">{{ error }}</div>
 {% endif %}
 
 <style>
-.gs-auth-banner { margin: 14px 16px 0; padding: 12px 14px 13px; border-radius: 14px; background: linear-gradient(135deg, rgba(177,77,255,0.22), rgba(0,229,255,0.12)); border: 1px solid rgba(177,77,255,0.4); box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: gsAuthPulse 2.6s ease-in-out infinite; cursor:pointer; }
-@keyframes gsAuthPulse { 0%,100% { box-shadow: 0 10px 30px rgba(0,0,0,0.2); } 50% { box-shadow: 0 12px 34px rgba(177,77,255,0.22); } }
-.gs-auth-banner-head { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; font-size:0.78rem; font-weight:700; color:#f1d8ff; text-transform:uppercase; letter-spacing:0.04em; }
-.gs-auth-banner-btn { border:0; border-radius:999px; padding:6px 10px; background:rgba(255,255,255,0.14); color:#fff; font-size:0.72rem; font-weight:700; cursor:pointer; transition:transform 0.2s ease, background 0.2s ease; }
-.gs-auth-banner-btn:hover { transform:translateY(-1px); background:rgba(255,255,255,0.22); }
-.gs-auth-banner-status { display:inline-flex; align-items:center; gap:7px; font-size:0.92rem; font-weight:800; margin-bottom:6px; letter-spacing:0.01em; }
-.gs-auth-status-icon { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:999px; background:rgba(255,255,255,0.12); font-size:0.78rem; line-height:1; }
-.gs-auth-banner-status--official, .gs-auth-banner-status--official_booster, .gs-auth-banner-status--official_starter { color:#00ff88; }
-.gs-auth-banner-status--custom_non_official { color:#ffd700; }
-.gs-auth-banner-status--counterfeit { color:#ff4466; }
-.gs-auth-banner-status--unknown { color:#8f9bb3; }
-/* Back-check vocabulary (distinct from the front-engine statuses above) —
-   colors duplicated verbatim from authenticity.html for visual consistency,
-   see recon note: same CSS pattern, not the same JS (different data source/
-   lifecycle — this is a live in-session result, not a page-load banner). */
-.gs-auth-banner-status--back_consistent { color:#00ff88; }
-.gs-auth-banner-status--needs_review { color:#ffd700; }
-.gs-auth-banner-status--no_back_signal { color:#8f9bb3; }
-.gs-auth-banner-status--sku_not_found { color:#ff4466; }
-.cx-auth-offer-btn { padding:8px 20px; border-radius:8px; border:1px solid rgba(177,77,255,0.3); background:rgba(177,77,255,0.08); color:#f1d8ff; font-size:0.74rem; font-weight:600; cursor:pointer; position:fixed; bottom:70px; left:50%; transform:translateX(-50%); z-index:400; width:auto; max-width:280px; white-space:nowrap; }
-.cx-auth-offer-btn:hover { background:rgba(177,77,255,0.18); }
-.cx-auth-offer-btn:disabled { opacity:0.5; cursor:default; }
-.gs-auth-banner-reason { font-size:0.78rem; color:rgba(255,255,255,0.82); line-height:1.45; margin-top:2px; }
-.gs-auth-banner-confidence { font-size:0.72rem; color:rgba(255,255,255,0.6); margin-top:5px; letter-spacing:0.02em; }
-.gs-auth-banner-modal { position:fixed; inset:0; background:rgba(0,0,0,0.74); display:flex; align-items:flex-end; justify-content:center; padding:20px; z-index:99999; }
 .gs-hidden { display:none !important; }
-.gs-auth-banner-modal-card { width:min(480px,100%); background:#111; color:#fff; border-radius:16px 16px 0 0; border:1px solid rgba(255,255,255,0.14); padding:16px; box-shadow:0 16px 44px rgba(0,0,0,0.34); animation:gs-slide-up 200ms ease-out; }
-.gs-auth-modal-header { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; }
-.gs-auth-modal-handle { width:44px; height:4px; border-radius:999px; background:rgba(255,255,255,0.22); margin:2px auto 12px; }
-.gs-auth-banner-modal-title { font-size:0.82rem; font-weight:700; color:#f1d8ff; text-transform:uppercase; letter-spacing:0.04em; }
-.gs-auth-banner-modal-status { font-size:0.82rem; font-weight:700; margin-bottom:8px; color:#00e5ff; }
-.gs-auth-banner-modal-card p { color:rgba(255,255,255,0.78); font-size:0.8rem; line-height:1.45; margin-bottom:10px; }
-.gs-auth-confidence { margin: 8px 0 12px; }
-.gs-auth-confidence-bar { height:6px; border-radius:999px; background:rgba(255,255,255,0.12); overflow:hidden; }
-.gs-auth-confidence-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#b14dff,#00e5ff); }
-.gs-auth-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
-.gs-auth-banner-modal-flags { margin: 10px 0 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); }
-.gs-auth-banner-modal-flags-title { font-size: 0.74rem; font-weight: 700; color: #ffd700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
-.gs-auth-banner-modal-flags ul { margin: 0; padding-left: 16px; color: rgba(255,255,255,0.8); font-size: 0.76rem; line-height: 1.4; }
-@keyframes gs-slide-up { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-.auth-warning-item { display: inline-flex; align-items: center; margin: 2px; padding: 4px 8px; border-radius: 999px; font-size: 11px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.10); color: #fff; }
-.auth-warning-item.critical { background: rgba(231,76,60,0.16); color: #ffb8b0; border-color: rgba(231,76,60,0.24); }
-.auth-warning-item.caution { background: rgba(241,196,15,0.16); color: #ffe38f; border-color: rgba(241,196,15,0.24); }
-.auth-warning-item.info { background: rgba(0,229,255,0.12); color: #bff7ff; border-color: rgba(0,229,255,0.24); }
 </style>
 
 {% if scan_failed %}
@@ -121,60 +59,6 @@
 })();
 </script>
 {% endif %}
-
-<script>
-window.GS_AUTH_RESULT = {{ auth_result|tojson|safe if auth_result else 'null' }};
-function gsShareAuthResult(auth) {
-  if (!auth) return;
-  var text = [
-    'GrailSweep Authenticity Result',
-    'Status: ' + (auth.display_status || auth.status || 'Unknown'),
-    auth.reason && ('Reason: ' + auth.reason),
-    typeof auth.confidence === 'number' && ('Confidence: ' + Math.round(auth.confidence * 100) + '%'),
-    Array.isArray(auth.flags) && auth.flags.length ? ('Flags: ' + auth.flags.join(', ')) : null
-  ].filter(Boolean).join('\n');
-  if (navigator.share) {
-    navigator.share({ title: 'GrailSweep Authenticity', text: text }).catch(function() {});
-  } else if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(function() {
-      if (typeof gsShowToast === 'function') {
-        gsShowToast('Authenticity result copied to clipboard', { title: 'Shared', variant: 'success', duration: 2200 });
-      }
-    }).catch(function() {});
-  }
-}
-
-function gsRenderAuthBadge(auth, targetEl) {
-  if (!targetEl) return;
-  if (!auth) {
-    targetEl.textContent = 'Unknown';
-    targetEl.className = 'res-auth-badge';
-    return;
-  }
-  var status = auth.status || 'unknown';
-  var needsReview = !!auth.needsReview;
-  var label = 'Unknown';
-  var cls = 'res-auth-badge';
-  if (status === 'official_booster' || status === 'official_starter') {
-    label = 'Authentic';
-    cls = 'res-auth-badge auth-genuine';
-  } else if (status === 'counterfeit') {
-    label = 'Suspected counterfeit';
-    cls = 'res-auth-badge auth-fake';
-  } else if (needsReview) {
-    label = 'Needs review';
-    cls = 'res-auth-badge auth-uncertain';
-  }
-  targetEl.className = cls;
-  targetEl.textContent = label;
-}
-
-function gsDismissAuthBanner() {
-  var banner = document.getElementById('gsAuthBanner');
-  if (banner) banner.classList.add('gs-hidden');
-}
-
-</script>
 
 <div class="cx-wrap">
 
@@ -499,22 +383,6 @@ function gsDismissAuthBanner() {
         <div class="cx-lm-conf" id="scLmConf">—</div>
       </div>
       <div class="cx-lm-price" id="scLmPrice">—</div>
-    </div>
-
-    <!-- Same-session back-check verdict — see scOfferAuthCheck/scCaptureAuthBack/
-         scRenderAuthResult below. Reuses the existing .gs-auth-banner shell
-         (defined above for the front-engine snapshot) with new status-color
-         modifiers for the back-check's own vocabulary. -->
-    <div class="gs-auth-banner gs-hidden" id="scAuthResult" style="position:fixed;bottom:130px;left:16px;right:16px;z-index:401;margin:0;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div class="gs-auth-banner-head">Back check</div>
-        <button onclick="this.closest('#scAuthResult').classList.add('gs-hidden');" style="background:none;border:none;color:#f1d8ff;font-size:1.2rem;cursor:pointer;padding:0 4px;">✕</button>
-      </div>
-      <div class="gs-auth-banner-status" id="scAuthResultStatus">
-        <span class="gs-auth-status-icon" id="scAuthResultIcon" aria-hidden="true"></span>
-        <span id="scAuthResultLabel"></span>
-      </div>
-      <div class="gs-auth-banner-reason" id="scAuthResultReason"></div>
     </div>
 
     <div class="cx-session-strip" id="scSession" style="display:none;position:fixed;bottom:60px;left:0;right:0;z-index:9999;top:80px;max-height:none;overflow-y:auto;border-radius:16px 16px 0 0;box-shadow:0 -8px 24px rgba(0,0,0,0.5);background:rgba(15,15,25,0.98);">
@@ -1419,7 +1287,6 @@ html.gs-weak-device .cx-upload {
 .res-auth-badge.auth-uncertain { color: #ff9800; }
 .res-auth-badge.auth-fake { color: #f44336; }
 .res-auth-note { font-size: 0.75rem; color: rgba(255,255,255,0.55); margin: 4px 0; }
-.detail-auth-btn { margin-top: 10px; padding: 8px 12px; border: none; border-radius: 999px; background: linear-gradient(135deg, #b14dff, #00e5ff); color: #fff; font-size: 0.76rem; font-weight: 700; cursor: pointer; }
 .auth-flag { font-size: 0.75rem; color: rgba(255,255,255,0.65); margin-top: 3px; }
 .res-auth-disclaimer { font-size: 0.68rem; color: rgba(255,255,255,0.30); margin-top: 8px; font-style: italic; }
 /* Language toggle button — scanner bottom bar */
@@ -1854,12 +1721,6 @@ if (scCards.length > 0) {
 var scMode      = 'fast';
 var scStream    = null;
 var scAudioCtx  = null;
-// Null when not awaiting a same-session back-capture; holds the pending
-// card's sku once scOfferAuthCheck's trigger has been tapped. Branched on
-// at the top of scCapture()'s toBlob handler so the loop's own next tick
-// becomes the back-photo capture, rather than pausing scScanning/scBusy
-// (which would block the very capture this needs — see scOfferAuthCheck).
-var scAuthPendingSku = null;
 var scStarted   = false;
 
 var scVideo  = document.getElementById('scVideo');
@@ -2346,11 +2207,6 @@ function scCapture() {
 
   scCanvas.toBlob(async function(blob){
     if(!blob){scBusy=false;return;}
-    // Same-session back-capture — routes this tick's frame to the pending
-    // back-check instead of the normal front-match dispatch below. Must be
-    // checked before the OCR/on-device/server paths, since those would
-    // otherwise try (and fail) to identify the card's back as a new front.
-    if (scAuthPendingSku) { scCaptureAuthBack(blob); return; }
     // OCR-first path
     // JP mode: skip the EN-only OCR-first fast path (see photo-upload path).
     var _ocrResult = (_ocrLang === 'jp') ? null : await _tryOcrLookup(blob);
@@ -2416,7 +2272,6 @@ function scCapture() {
         } else {
           console.warn('[Stage3c] OCR-hit beacon skipped: window.GSOnDevice.beacon unavailable — scan NOT recorded server-side');
         }
-        scOfferAuthCheck(_ocrResult.sku);
       }
       return;
     }
@@ -2494,7 +2349,6 @@ function scCapture() {
               scAddCard({name:name, set:set, num:num, total:p.set_total||p.printed_total||'', pct:100, price:odGbp, priceStr:odGbpStr, img:odImgUrl, sku:odr.sku||'', rarity:rar, profile:p, allPrices:allPrices, tcgplayerUrl:p.tcgplayer_url||'', cardmarketUrl:p.cardmarket_url||'', grade:null, gradeSkipped:true});
               if (typeof scanIncrement === 'function') { var _ss = scanIncrement(); _updateScanBadge(_ss); }
               window.GSOnDevice.beacon(odr);
-              scOfferAuthCheck(odr.sku);
               return true;
             }
           }
@@ -2645,7 +2499,6 @@ function scCapture() {
       scFailCount = 0;
       scAddCard({name:name,set:set,num:num,total:p.set_total||p.printed_total||'',pct:pct,price:gbp,priceStr:gbpStr,img:imgUrl,sku:m.sku,rarity:rar,profile:p,allPrices:allPrices,tcgplayerUrl:p.tcgplayer_url||'',cardmarketUrl:p.cardmarket_url||'',grade:_capturedGrade});
       if (typeof scanIncrement === 'function') { var _ss = scanIncrement(); _updateScanBadge(_ss); }
-      scOfferAuthCheck(m.sku);
     })
     .catch(function(){scBusy=false;guide.className='cx-card-guide';if(scScanning){txt.textContent='Error — retrying…';txt.className='cx-guide-text scanning';}});
   },'image/jpeg',0.85);
@@ -2659,126 +2512,6 @@ function scShowLastMatch(name,set,num,pct,price,img){
   document.getElementById('scLmPrice').textContent=price;
   if(img) document.getElementById('scLmThumb').src=img;
   el.style.display='flex';
-}
-
-// ── Same-session authenticity back-check ──────────────────────
-// Offers a follow-up back-capture for the just-confirmed card, reusing the
-// live scanner's own open camera stream rather than a second getUserMedia
-// call. See scAuthPendingSku above and the branch at the top of
-// scCapture()'s toBlob handler for how the next captured frame gets routed
-// here instead of through the normal front-match dispatch.
-function scOfferAuthCheck(sku) {
-  if (!sku) return;
-  var host = document.getElementById('scLastMatch');
-  if (!host) return;
-  var btn = document.getElementById('scAuthOfferBtn');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.type = 'button';
-    btn.id = 'scAuthOfferBtn';
-    btn.className = 'cx-auth-offer-btn';
-    btn.addEventListener('click', function(event) {
-      event.stopPropagation();
-      var pendingSku = btn.getAttribute('data-sku');
-      if (!pendingSku) return;
-      var resultEl = document.getElementById('scAuthResult');
-      if (resultEl) resultEl.classList.add('gs-hidden');
-      setTimeout(function(){ scAuthPendingSku = pendingSku; }, 2500);
-      var guide = document.getElementById('scGuide');
-      var txt   = document.getElementById('scGuideText');
-      if (guide) guide.className = 'cx-card-guide';
-      if (txt) { txt.textContent = '👉 Flip card over — show the BACK'; txt.style.cssText = 'font-size:1.1rem;font-weight:700;color:#fff;background:rgba(177,77,255,0.85);padding:8px 16px;border-radius:8px;text-align:center;'; txt.className = 'cx-guide-text scanning'; }
-      btn.disabled = true;
-      btn.textContent = 'Show the back of the card…';
-    });
-    host.prepend(btn);
-    host.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-  }
-  btn.setAttribute('data-sku', sku);
-  btn.disabled = false;
-  btn.textContent = '🛡️ Verify authenticity';
-}
-
-// scBusy=true here gates re-entry while the network call is in flight —
-// same semantics scCapture()'s own OCR/on-device/server dispatch already
-// uses around its async work, so the loop's next tick (if it lands before
-// this resolves) just no-ops via the existing `if(!scBusy) scCapture();`
-// check in scLoop() rather than firing a second concurrent back-check.
-function scCaptureAuthBack(blob) {
-  scBusy = true;
-  try {
-    var pendingSku = scAuthPendingSku;
-    var fd = new FormData();
-    fd.append('sku', pendingSku);
-    fd.append('image', blob, 'back.jpg');
-  } catch (e) {
-    scAuthPendingSku = null;
-    var txt = document.querySelector('.cx-guide-text');
-    if (txt) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; }
-    scBusy = false;
-    scRenderAuthError();
-    return;
-  }
-
-  fetch('/api/authenticity/back-check', { method: 'POST', body: fd })
-    .then(function(r) {
-      if (!r.ok) throw new Error('back-check http ' + r.status);
-      return r.json();
-    })
-    .then(function(data) {
-      scAuthPendingSku = null;
-      var offerBtn = document.getElementById('scAuthOfferBtn');
-      if (offerBtn) { offerBtn.removeAttribute('data-sku'); offerBtn.disabled = true; offerBtn.textContent = '✓ Back checked'; }
-      // Reset guide text to normal
-      var txt = document.querySelector('.cx-guide-text');
-      if (txt) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; }
-      scBusy = false;
-      scRenderAuthResult(data);
-    })
-    .catch(function() {
-      scAuthPendingSku = null;
-      var offerBtn = document.getElementById('scAuthOfferBtn');
-      if (offerBtn) { offerBtn.removeAttribute('data-sku'); offerBtn.disabled = true; offerBtn.textContent = '✓ Back checked'; }
-      // Reset guide text to normal
-      var txt = document.querySelector('.cx-guide-text');
-      if (txt) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; }
-      scBusy = false;
-      scRenderAuthError();
-    });
-}
-
-// Verdict vocabulary/colors matched to authenticity.html's STATUS_META —
-// see the .gs-auth-banner-status--{back_consistent,needs_review,
-// no_back_signal,sku_not_found} rules added alongside the existing
-// front-engine modifiers above.
-var _SC_AUTH_STATUS_META = {
-  back_consistent: { icon: '✓',  label: 'Front and back agree' },
-  needs_review:    { icon: '🔎', label: 'Needs a closer look' },
-  no_back_signal:  { icon: '📷', label: 'Could not read the card back' },
-  sku_not_found:   { icon: '❗', label: 'Something went wrong' }
-};
-
-function scRenderAuthResult(data) {
-  var el = document.getElementById('scAuthResult');
-  if (!el) return;
-  var meta = _SC_AUTH_STATUS_META[data.status] || _SC_AUTH_STATUS_META.sku_not_found;
-  var statusEl = document.getElementById('scAuthResultStatus');
-  statusEl.className = 'gs-auth-banner-status gs-auth-banner-status--' + data.status;
-  document.getElementById('scAuthResultIcon').textContent = meta.icon;
-  document.getElementById('scAuthResultLabel').textContent = meta.label;
-  document.getElementById('scAuthResultReason').textContent = data.reason || '';
-  el.classList.remove('gs-hidden');
-}
-
-function scRenderAuthError() {
-  var el = document.getElementById('scAuthResult');
-  if (!el) return;
-  var statusEl = document.getElementById('scAuthResultStatus');
-  statusEl.className = 'gs-auth-banner-status gs-auth-banner-status--sku_not_found';
-  document.getElementById('scAuthResultIcon').textContent = '❗';
-  document.getElementById('scAuthResultLabel').textContent = 'Could not check the back';
-  document.getElementById('scAuthResultReason').textContent = 'Network error — tap Verify authenticity to try again.';
-  el.classList.remove('gs-hidden');
 }
 
 function scAddCard(card){
@@ -2963,25 +2696,6 @@ function openDetail(c){
     if (_ab) { _ab.textContent = ''; _ab.className = 'res-auth-badge'; }
     if (_an) _an.textContent = '';
     if (_af) { _af.innerHTML = ''; _af.classList.add('gs-hidden'); }
-  }
-  if (window.GS_AUTH_RESULT) {
-    var _detailAuth = window.GS_AUTH_RESULT;
-    var _detAuthBadge = document.getElementById('detAuthBadge');
-    var _detAuthNote = document.getElementById('detAuthNote');
-    var _detAuthFlags = document.getElementById('detAuthFlags');
-    var _detAuthWrap = document.getElementById('detGradeAuth');
-    if (_detAuthBadge) { gsRenderAuthBadge(_detailAuth, _detAuthBadge); }
-    if (_detAuthNote) { _detAuthNote.textContent = _detailAuth.reason || ''; }
-    if (_detAuthFlags) {
-      if (_detailAuth.flags && _detailAuth.flags.length) {
-        _detAuthFlags.innerHTML = _detailAuth.flags.map(function(flag){ return '<div class="auth-flag">• ' + flag.replace(/_/g, ' ') + '</div>'; }).join('');
-        _detAuthFlags.classList.remove('gs-hidden');
-      } else {
-        _detAuthFlags.innerHTML = '';
-        _detAuthFlags.classList.add('gs-hidden');
-      }
-    }
-    if (_detAuthWrap) { _detAuthWrap.classList.remove('gs-hidden'); }
   }
   var p=c.profile||{};
   var tags='';
