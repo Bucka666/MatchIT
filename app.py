@@ -9085,6 +9085,8 @@ def _ensure_tier_period_backfilled(code: str, sub: dict) -> bool:
     sub_id = sub.get("stripe_subscription_id")
     if not sub_id:
         return False
+    if sub.get("source") in ("revenuecat_ios", "google_play", "revenuecat"):
+        return False
     try:
         import stripe as _stripe
         _stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "") or CFG.get("stripe_secret_key", "")
