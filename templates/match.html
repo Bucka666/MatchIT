@@ -2833,7 +2833,7 @@ function scCaptureAuthBack(blob) {
     .then(function(data) {
       scAuthPendingSku = null;
       var offerBtn = document.getElementById('scAuthOfferBtn');
-      if (offerBtn) { offerBtn.style.display = 'none'; offerBtn.removeAttribute('data-sku'); }
+      if (offerBtn) { offerBtn.removeAttribute('data-sku'); offerBtn.disabled = true; offerBtn.textContent = '✓ Back checked'; }
       // Reset guide text to normal
       var txt = document.querySelector('.cx-guide-text');
       if (txt) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; }
@@ -2843,7 +2843,7 @@ function scCaptureAuthBack(blob) {
     .catch(function() {
       scAuthPendingSku = null;
       var offerBtn = document.getElementById('scAuthOfferBtn');
-      if (offerBtn) { offerBtn.style.display = 'none'; offerBtn.removeAttribute('data-sku'); }
+      if (offerBtn) { offerBtn.removeAttribute('data-sku'); offerBtn.disabled = true; offerBtn.textContent = '✓ Back checked'; }
       // Reset guide text to normal
       var txt = document.querySelector('.cx-guide-text');
       if (txt) { txt.textContent = 'Scanning…'; txt.className = 'cx-guide-text scanning'; }
@@ -2884,9 +2884,6 @@ function scRenderAuthError() {
   document.getElementById('scAuthResultLabel').textContent = 'Could not check the back';
   document.getElementById('scAuthResultReason').textContent = 'Network error — tap Verify authenticity to try again.';
   el.classList.remove('gs-hidden');
-  // Re-arm the trigger so retrying doesn't need a fresh front scan.
-  var btn = document.getElementById('scAuthOfferBtn');
-  if (btn) { btn.disabled = false; btn.textContent = '🛡️ Verify authenticity'; }
 }
 
 function scAddCard(card){
