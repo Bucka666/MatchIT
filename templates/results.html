@@ -36,7 +36,7 @@
     {% if auth_result.confidence is defined %}
     <div class="res-auth-confidence">Signal strength: {{ (auth_result.confidence * 100)|round(0) }}%</div>
     {% endif %}
-    {% if ocr_sku and r1 and r1.profile and r1.profile.category == 'POKEMON' %}
+    {% if ocr_sku and results and results[0].profile and results[0].profile.category == 'POKEMON' %}
     <button class="res-auth-back-btn" onclick="resStartBackCheck('{{ ocr_sku }}')">🛡️ Verify back of card</button>
     <div id="resAuthBackResult"></div>
     {% endif %}
