@@ -2346,6 +2346,8 @@ def _run_match_paired_two_stage(
     per_sku_count: Dict[str, int] = {}
 
     _jp_pre_excluded = 0
+    _game_pre_excluded = 0
+    _restrict_game = query_category if query_category in _IMAGED_SETS_BY_GAME else ""
 
     # FRONT images
     for idx, (image_id, sku, orig_name, desc) in enumerate(FRONT_INFO):
@@ -2354,6 +2356,9 @@ def _run_match_paired_two_stage(
             continue
         if exclude_jpn and sku.startswith('jpn-'):
             _jp_pre_excluded += 1
+            continue
+        if _restrict_game and _get_sku_game(sku) != _restrict_game:
+            _game_pre_excluded += 1
             continue
         if allowed_jpn_sets is not None and sku.startswith('jpn-'):
             parts = sku.split('-')
@@ -2383,6 +2388,9 @@ def _run_match_paired_two_stage(
         if exclude_jpn and sku.startswith('jpn-'):
             _jp_pre_excluded += 1
             continue
+        if _restrict_game and _get_sku_game(sku) != _restrict_game:
+            _game_pre_excluded += 1
+            continue
         if allowed_jpn_sets is not None and sku.startswith('jpn-'):
             parts = sku.split('-')
             set_key = "jpn-" + "-".join(parts[1:-1])
@@ -2406,6 +2414,9 @@ def _run_match_paired_two_stage(
 
     if exclude_jpn and _jp_pre_excluded > 0:
         app.logger.info(f"[JP-PRE-FILTER] excluded {_jp_pre_excluded} jpn- SKUs from candidate pool before CLIP ranking")
+
+    if _restrict_game and _game_pre_excluded > 0:
+        app.logger.info(f"[GAME-PRE-FILTER] restricted to {_restrict_game}, excluded {_game_pre_excluded} SKUs from candidate pool before CLIP ranking")
 
     if not by_sku_front_qf:
         return [], False, {"error": "no_front_comparables", "query_type": query_type}
@@ -7643,36 +7654,38 @@ def _build_set_card_list(set_id, game=None, meta=None):
             cards = list(seen_names.values())
 
     else:
-        # YUGIOH: query images.db by SKU prefix (fast path)
-        YGO_LIMIT = 200
-        ygo_pattern = "ygo-" + set_id + "-%"
+        # YUGIOH / ONEPIECE: query images.db by SKU prefix (fast path) —
+        # both are always self-prefixed (ygo-/op-), no bare-sku ambiguity.
+        PREFIX_LIMIT = 200
+        prefix = "ygo-" if game == "YUGIOH" else "op-"
+        prefix_pattern = prefix + set_id + "-%"
         try:
             conn = sqlite3.connect(db_path)
             conn.row_factory = sqlite3.Row
             try:
                 total_in_db = conn.execute(
-                    "SELECT COUNT(*) FROM images WHERE sku LIKE ?", (ygo_pattern,)
+                    "SELECT COUNT(*) FROM images WHERE sku LIKE ?", (prefix_pattern,)
                 ).fetchone()[0]
-                ygo_rows = conn.execute(
+                prefix_rows = conn.execute(
                     "SELECT image_id, sku FROM images WHERE sku LIKE ? LIMIT ?",
-                    (ygo_pattern, YGO_LIMIT)
+                    (prefix_pattern, PREFIX_LIMIT)
                 ).fetchall()
             finally:
                 conn.close()
         except Exception:
-            ygo_rows = []
-        truncated = total_in_db > YGO_LIMIT
+            prefix_rows = []
+        truncated = total_in_db > PREFIX_LIMIT
 
         profiles = {}
-        if ygo_rows:
+        if prefix_rows:
             with ThreadPoolExecutor(max_workers=32) as pool:
                 for sku, prof in pool.map(
                     lambda r: (r["sku"], _load_card_profile_for_sku(r["sku"], db_root, data_dir)),
-                    ygo_rows,
+                    prefix_rows,
                 ):
                     profiles[sku] = prof
 
-        for row in ygo_rows:
+        for row in prefix_rows:
             sku = row["sku"]
             image_id = row["image_id"]
             prof = profiles.get(sku) or {}
@@ -7787,6 +7800,8 @@ def _get_sku_game(sku):
         result = "YUGIOH"
     elif sku.startswith("mtg-"):
         result = "MTG"
+    elif sku.startswith("op-"):
+        result = "ONEPIECE"
     else:
         try:
             profile = _load_card_profile_for_sku(sku, get_db_root(), get_data_dir())
@@ -7796,6 +7811,8 @@ def _get_sku_game(sku):
                     result = "YUGIOH"
                 elif cat == "MTG":
                     result = "MTG"
+                elif cat == "ONEPIECE":
+                    result = "ONEPIECE"
                 else:
                     result = "POKEMON"
             else:
