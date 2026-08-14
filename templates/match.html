@@ -308,11 +308,16 @@
         <span class="cx-tcg-btn-icon">🔮</span>
         <span class="cx-tcg-btn-label">MTG</span>
       </button>
+      <button class="cx-tcg-btn cx-tcg-btn--op" id="tcgBtnOp" onclick="scSetTcg('ONEPIECE',this)">
+        <span class="cx-tcg-btn-icon">🏴‍☠️</span>
+        <span class="cx-tcg-btn-label">One Piece</span>
+      </button>
       <select id="scTcgLock" style="display:none;">
         <option value="">All TCGs</option>
         <option value="POKEMON">Pokémon</option>
         <option value="MTG">MTG</option>
         <option value="YUGIOH">Yu-Gi-Oh</option>
+        <option value="ONEPIECE">One Piece</option>
       </select>
     </div>
 
@@ -782,6 +787,8 @@ body             { overflow: visible !important; }
 .cx-tcg-btn--ygo.active .cx-tcg-btn-label { color:#b14dff; }
 .cx-tcg-btn--mtg.active { border-color:#00e5ff;background:rgba(0,229,255,0.15); }
 .cx-tcg-btn--mtg.active .cx-tcg-btn-label { color:#00e5ff; }
+.cx-tcg-btn--op.active { border-color:#00ff88;background:rgba(0,255,136,0.15); }
+.cx-tcg-btn--op.active .cx-tcg-btn-label { color:#00ff88; }
 .cx-mode-btn { font-size:0.46rem;font-weight:700;padding:3px 7px;border-radius:4px;cursor:pointer;border:1px solid;background:none;transition:all 0.2s; }
 .cx-mode-btn.fast    { color:var(--cx-emerald);border-color:rgba(0,255,136,0.2); }
 .cx-mode-btn.precise { color:var(--cx-gold);border-color:rgba(255,215,0,0.2); }
@@ -1757,7 +1764,7 @@ function scSaveSettings() {
 function _scUpdateGameLockBanner(val) {
   var banner = document.getElementById('scGameLockBanner');
   if (!banner) return;
-  var LABELS = { POKEMON: '🃏 POKÉMON ONLY', MTG: '🃏 MTG ONLY', YUGIOH: '🃏 YU-GI-OH ONLY' };
+  var LABELS = { POKEMON: '🃏 POKÉMON ONLY', MTG: '🃏 MTG ONLY', YUGIOH: '🃏 YU-GI-OH ONLY', ONEPIECE: '🃏 ONE PIECE ONLY' };
   if (val && LABELS[val]) {
     banner.textContent = LABELS[val];
     banner.style.display = 'flex';
@@ -1783,6 +1790,8 @@ function scAutoDetectTcg(sku) {
     val = 'YUGIOH'; btnId = 'tcgBtnYgo';
   } else if(sku.startsWith('mtg')) {
     val = 'MTG'; btnId = 'tcgBtnMtg';
+  } else if(sku.startsWith('op-')) {
+    val = 'ONEPIECE'; btnId = 'tcgBtnOp';
   }
   if(val && document.getElementById('scTcgLock').value === '') {
     scSetTcg(val, document.getElementById(btnId));

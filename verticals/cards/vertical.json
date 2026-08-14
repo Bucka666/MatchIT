@@ -48,6 +48,10 @@
   "YUGIOH": {
     "label": "Yu-Gi-Oh!",
     "show": []
+  },
+  "ONEPIECE": {
+    "label": "One Piece TCG",
+    "show": []
   }
 },
 

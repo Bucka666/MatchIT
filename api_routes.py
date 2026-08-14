@@ -521,6 +521,8 @@ def register_api_routes(app):
                     _effective_tcg = "YUGIOH"
                 elif _top_sku.startswith("mtg-"):
                     _effective_tcg = "MTG"
+                elif _top_sku.startswith("op-"):
+                    _effective_tcg = "ONEPIECE"
                 else:
                     _effective_tcg = "POKEMON"
                 print(f"[OCR] Auto-detected TCG from CLIP top match: {_effective_tcg} (sku={_top_sku})", flush=True)

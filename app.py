@@ -1222,12 +1222,12 @@ def _rebuild_imaged_jp_sets():
 # elsewhere). Used by the pre-CLIP missing-set check (_is_set_imaged) to
 # tell a confidently-OCR'd set with zero images apart from one CLIP just
 # hasn't been asked about yet.
-_IMAGED_SETS_BY_GAME = {"POKEMON": frozenset(), "MTG": frozenset(), "YUGIOH": frozenset()}
+_IMAGED_SETS_BY_GAME = {"POKEMON": frozenset(), "MTG": frozenset(), "YUGIOH": frozenset(), "ONEPIECE": frozenset()}
 
 
 def _rebuild_imaged_sets_by_game():
     global _IMAGED_SETS_BY_GAME
-    _by_game = {"POKEMON": set(), "MTG": set(), "YUGIOH": set()}
+    _by_game = {"POKEMON": set(), "MTG": set(), "YUGIOH": set(), "ONEPIECE": set()}
     for _, sku, _, _ in FRONT_INFO:
         if not sku or sku.startswith('jpn-'):
             continue
@@ -1235,6 +1235,8 @@ def _rebuild_imaged_sets_by_game():
             game = 'YUGIOH'
         elif sku.startswith('mtg-'):
             game = 'MTG'
+        elif sku.startswith('op-'):
+            game = 'ONEPIECE'
         else:
             game = 'POKEMON'
         set_id = _get_set_id_from_sku(sku)
@@ -1245,7 +1247,8 @@ def _rebuild_imaged_sets_by_game():
         "[IMAGED-SETS] Built per-game imaged set index: "
         f"POKEMON={len(_IMAGED_SETS_BY_GAME['POKEMON'])} "
         f"MTG={len(_IMAGED_SETS_BY_GAME['MTG'])} "
-        f"YUGIOH={len(_IMAGED_SETS_BY_GAME['YUGIOH'])}",
+        f"YUGIOH={len(_IMAGED_SETS_BY_GAME['YUGIOH'])} "
+        f"ONEPIECE={len(_IMAGED_SETS_BY_GAME['ONEPIECE'])}",
         flush=True,
     )
 
@@ -7139,6 +7142,10 @@ def _get_set_id_from_sku(sku):
     if sku.startswith("mtg-"):
         parts = sku.split("-")
         return parts[1] if len(parts) >= 2 else None
+    if sku.startswith("op-"):
+        parts = sku.split("-")
+        return parts[1] if len(parts) >= 2 else None
+        # e.g. 'op-op07-091_p1' → 'op07', 'op-st01-001' → 'st01'
     # Pokémon: sv1-85 → sv1
     return sku.rsplit("-", 1)[0] if "-" in sku else None
 
@@ -9618,6 +9625,8 @@ def match():
                     _effective_tcg = "YUGIOH"
                 elif _top_sku.startswith("mtg-"):
                     _effective_tcg = "MTG"
+                elif _top_sku.startswith("op-"):
+                    _effective_tcg = "ONEPIECE"
                 else:
                     _effective_tcg = "POKEMON"
                 print(f"[OCR] Auto-detected TCG from CLIP top match: {_effective_tcg} (sku={_top_sku})", flush=True)
