@@ -54,16 +54,18 @@ MTG_EXCLUDE_TYPES = {"memorabilia", "token", "minigame"}
 
 def scan_cardsdb(root: Path) -> Dict[str, Set[str]]:
     """
-    Walk CardsDB/pokemon|mtg|yugioh/ directories and extract unique set_ids
-    by parsing folder names — much faster than reading 135k profile.json files.
+    Walk CardsDB/pokemon|mtg|yugioh|onepiece/ directories and extract unique
+    set_ids by parsing folder names — much faster than reading 135k profile.json
+    files.
 
     Folder name conventions:
       pokemon:  {set_id}-{card_number}     e.g. sv1-85, base1-1, swshp-BW001
       mtg:      mtg-{set_code}-{num}       e.g. mtg-hob-110, mtg-10e-1
       yugioh:   ygo-{set_code}-{card_code}-{api_id}  e.g. ygo-LOB-EN005-12345
+      onepiece: op-{set_id}-{num}          e.g. op-op07-091_p1, op-st01-001
     """
-    sets: Dict[str, Set[str]] = {"POKEMON": set(), "MTG": set(), "YUGIOH": set()}
-    game_map = {"pokemon": "POKEMON", "mtg": "MTG", "yugioh": "YUGIOH"}
+    sets: Dict[str, Set[str]] = {"POKEMON": set(), "MTG": set(), "YUGIOH": set(), "ONEPIECE": set()}
+    game_map = {"pokemon": "POKEMON", "mtg": "MTG", "yugioh": "YUGIOH", "onepiece": "ONEPIECE"}
 
     for game_dir in root.iterdir():
         if not game_dir.is_dir():
@@ -91,30 +93,50 @@ def scan_cardsdb(root: Path) -> Dict[str, Set[str]]:
                 parts = n.split("-")
                 if len(parts) >= 3 and parts[0] == "ygo":
                     sets["YUGIOH"].add(parts[1])
+            elif game == "ONEPIECE":
+                # op-{set_id}-{num}, set_id always parts[1]
+                parts = n.split("-")
+                if len(parts) >= 3 and parts[0] == "op":
+                    sets["ONEPIECE"].add(parts[1])
 
     return sets
 
 
 # ── API helpers ────────────────────────────────────────────────────────────
 
-def _fetch_json(url: str, label: str):
-    """Fetch JSON from a URL. Returns parsed object or None on failure."""
-    try:
-        req = urllib.request.Request(
-            url,
-            headers={
-                "User-Agent": "GrailSweep/1.0 contact@grailsweep.com",
-                "Accept":     "application/json",
-            }
-        )
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read())
-    except urllib.error.HTTPError as e:
-        print(f"  [ERROR] {label}: HTTP {e.code}")
-        return None
-    except Exception as e:
-        print(f"  [ERROR] {label}: {e}")
-        return None
+def _fetch_json(url: str, label: str, retries: int = 3):
+    """Fetch JSON from a URL. Returns parsed object or None on failure.
+
+    Retries on transient errors (HTTP 5xx, timeouts, connection resets) with
+    short backoff — these set-list endpoints are fetched once per game and
+    populate the whole lookup, so a single blip previously failed every set
+    for that game at once (seen live: two identical requests to
+    api.pokemontcg.io/v2/sets a second apart, first succeeded, second 500'd).
+    Does NOT retry HTTP 4xx (client errors won't fix themselves).
+    """
+    for attempt in range(1, retries + 1):
+        try:
+            req = urllib.request.Request(
+                url,
+                headers={
+                    "User-Agent": "GrailSweep/1.0 contact@grailsweep.com",
+                    "Accept":     "application/json",
+                }
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                return json.loads(resp.read())
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or attempt == retries:
+                print(f"  [ERROR] {label}: HTTP {e.code}")
+                return None
+            print(f"  [RETRY {attempt}/{retries}] {label}: HTTP {e.code}")
+            time.sleep(attempt)
+        except Exception as e:
+            if attempt == retries:
+                print(f"  [ERROR] {label}: {e}")
+                return None
+            print(f"  [RETRY {attempt}/{retries}] {label}: {e}")
+            time.sleep(attempt)
 
 
 # ── Pokémon ────────────────────────────────────────────────────────────────
@@ -274,6 +296,57 @@ def build_ygo_metadata(set_ids: Set[str]) -> Dict[str, dict]:
     return result
 
 
+# ── One Piece ──────────────────────────────────────────────────────────────
+
+def build_onepiece_metadata(root: Path, set_ids: Set[str]) -> Dict[str, dict]:
+    """No public sets API for the One Piece TCG — name and totals are derived
+    directly from the CardsDB profiles build_one_piece_data.py already wrote
+    (sourced from the official onepiece-cardgame.com card list), by re-scanning
+    CardsDB/onepiece rather than fetching anything external."""
+    print(f"[ONEPIECE] Deriving set data from CardsDB profiles ({len(set_ids)} sets to match)...")
+    onepiece_dir = root / "onepiece"
+    names: Dict[str, str] = {}
+    counts: Dict[str, int] = {}
+
+    if onepiece_dir.is_dir():
+        for card_dir in onepiece_dir.iterdir():
+            if not card_dir.is_dir():
+                continue
+            parts = card_dir.name.split("-")
+            if len(parts) < 3 or parts[0] != "op":
+                continue
+            set_id = parts[1]
+            counts[set_id] = counts.get(set_id, 0) + 1
+            if set_id not in names:
+                profile_path = card_dir / "profile.json"
+                if profile_path.is_file():
+                    try:
+                        profile = json.loads(profile_path.read_text(encoding="utf-8"))
+                        names[set_id] = profile.get("set_name", set_id)
+                    except Exception:
+                        pass
+
+    result: Dict[str, dict] = {}
+    missing = 0
+    for set_id in sorted(set_ids):
+        count = counts.get(set_id)
+        name = names.get(set_id, set_id.upper())
+        if count is None:
+            print(f"  [WARN] '{set_id}' not found while re-scanning CardsDB/onepiece")
+            missing += 1
+
+        result[set_id] = {
+            "name":          name,
+            "game":          "ONEPIECE",
+            "printed_total": count,
+            "total":         count,
+            "exclude":       False,
+        }
+
+    print(f"  Matched {len(result) - missing}/{len(result)}, warnings: {missing}")
+    return result
+
+
 # ── Main ────────────────────────────────────────────────────────────────────
 
 def main():
@@ -300,6 +373,8 @@ def main():
     mtg_meta     = build_mtg_metadata(sets_by_game["MTG"])
     print()
     ygo_meta     = build_ygo_metadata(sets_by_game["YUGIOH"])
+    print()
+    onepiece_meta = build_onepiece_metadata(CARDSDB_ROOT, sets_by_game["ONEPIECE"])
 
     metadata: Dict[str, dict] = {}
     metadata.update(pokemon_meta)
@@ -317,6 +392,13 @@ def main():
         if k not in metadata:
             metadata[k] = v
     metadata.update(ygo_meta)
+    onepiece_collisions = sorted(set(onepiece_meta) & set(metadata))
+    if onepiece_collisions:
+        print(f"  [COLLISION] {len(onepiece_collisions)} set_id(s) in both One Piece and "
+              f"an existing game — keeping existing entry: {onepiece_collisions}")
+    for k, v in onepiece_meta.items():
+        if k not in metadata:
+            metadata[k] = v
 
     # ── 3. Write output ───────────────────────────────────────────────────
     print(f"\nWriting {len(metadata)} entries to {OUTPUT_PATH}...")
@@ -330,20 +412,23 @@ def main():
     excluded       = sum(1 for v in metadata.values() if v.get("exclude"))
     failed_pkm     = sum(1 for v in pokemon_meta.values() if v.get("total") is None)
     failed_ygo     = sum(1 for v in ygo_meta.values()     if v.get("total") is None)
-    failed_total   = failed_pkm + failed_ygo  # MTG null total is expected
+    failed_op      = sum(1 for v in onepiece_meta.values() if v.get("total") is None)
+    failed_total   = failed_pkm + failed_ygo + failed_op  # MTG null total is expected
 
     pkm_excl       = sum(1 for v in pokemon_meta.values() if v.get("exclude"))
     mtg_excl       = sum(1 for v in mtg_meta.values()     if v.get("exclude"))
 
     print(f"\n=== Summary ===")
     print(f"Total sets in metadata : {len(metadata)}")
-    print(f"  Pokémon : {len(pokemon_meta):>4}  (excluded as promos : {pkm_excl})")
-    print(f"  MTG     : {len(mtg_meta):>4}  (excluded non-playable: {mtg_excl})")
-    print(f"  YGO     : {len(ygo_meta):>4}  (excluded: 0)")
+    print(f"  Pokémon   : {len(pokemon_meta):>4}  (excluded as promos : {pkm_excl})")
+    print(f"  MTG       : {len(mtg_meta):>4}  (excluded non-playable: {mtg_excl})")
+    print(f"  YGO       : {len(ygo_meta):>4}  (excluded: 0)")
+    print(f"  ONEPIECE  : {len(onepiece_meta):>4}  (excluded: 0)")
     print(f"Total excluded         : {excluded}")
     print(f"API failures (null total, excl. MTG): {failed_total}")
-    print(f"  Pokémon failures : {failed_pkm}")
-    print(f"  YGO failures     : {failed_ygo}")
+    print(f"  Pokémon failures  : {failed_pkm}")
+    print(f"  YGO failures      : {failed_ygo}")
+    print(f"  ONEPIECE failures : {failed_op}")
     print(f"File size : {file_kb:.1f} KB")
     print(f"Elapsed   : {elapsed}s")
 
@@ -353,6 +438,7 @@ def main():
         ("POKEMON", pokemon_meta),
         ("MTG",     mtg_meta),
         ("YUGIOH",  ygo_meta),
+        ("ONEPIECE", onepiece_meta),
     ]:
         candidates = sorted(
             [(k, v) for k, v in meta_dict.items() if not v.get("exclude")]

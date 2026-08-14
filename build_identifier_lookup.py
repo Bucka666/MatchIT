@@ -3,9 +3,10 @@ build_identifier_lookup.py — build identifier->SKU lookup for OCR-first matchi
 
 Scans all CardsDB profile.json files and builds a nested dict keyed by game:
   {
-    "pokemon": { "sv6-25": "sv6-25", ... },
-    "mtg":     { "me1-1": "mtg-me1-1", "mom-263": "mtg-mom-263", ... },
-    "ygo":     { "SDBT-EN011": "ygo-SDBT-EN011-...", "89631139": "...", ... }
+    "pokemon":  { "sv6-25": "sv6-25", ... },
+    "mtg":      { "me1-1": "mtg-me1-1", "mom-263": "mtg-mom-263", ... },
+    "ygo":      { "SDBT-EN011": "ygo-SDBT-EN011-...", "89631139": "...", ... }
+    "onepiece": { "op07-091_p1": "op-op07-091_p1", ... }
   }
 
 Output: C:\\MatchIT\\identifier_lookup.json
@@ -17,10 +18,10 @@ import re
 CARDSDB = r"C:\CardsDB"
 OUTPUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "identifier_lookup.json")
 
-lookup = {"pokemon": {}, "mtg": {}, "ygo": {}}
-collisions = {"pokemon": 0, "mtg": 0, "ygo": 0}
-counts = {"pokemon": 0, "mtg": 0, "ygo_setcode": 0, "ygo_passcode": 0}
-skipped = {"pokemon": 0, "mtg": 0, "ygo": 0}
+lookup = {"pokemon": {}, "mtg": {}, "ygo": {}, "onepiece": {}}
+collisions = {"pokemon": 0, "mtg": 0, "ygo": 0, "onepiece": 0}
+counts = {"pokemon": 0, "mtg": 0, "ygo_setcode": 0, "ygo_passcode": 0, "onepiece": 0}
+skipped = {"pokemon": 0, "mtg": 0, "ygo": 0, "onepiece": 0}
 
 
 def add_key(game, key, sku, bucket):
@@ -36,7 +37,7 @@ def add_key(game, key, sku, bucket):
     counts[bucket] += 1
 
 
-for game_dir in ["pokemon", "mtg", "yugioh"]:
+for game_dir in ["pokemon", "mtg", "yugioh", "onepiece"]:
     game_path = os.path.join(CARDSDB, game_dir)
     if not os.path.isdir(game_path):
         print(f"[SKIP] {game_path} not found")
@@ -90,6 +91,13 @@ for game_dir in ["pokemon", "mtg", "yugioh"]:
             if not added_any:
                 skipped["ygo"] += 1
 
+        elif category == "ONEPIECE":
+            if not card_number or not set_id:
+                skipped["onepiece"] += 1
+                continue
+            key = f"{set_id}-{card_number}".lower()
+            add_key("onepiece", key, sku, "onepiece")
+
     print(f"[{game_dir}] scanned {total_in_dir} card folders")
 
 total_keys = sum(len(v) for v in lookup.values())
@@ -101,8 +109,9 @@ print(f"  Pokemon          : {counts['pokemon']:,}  (collisions: {collisions['po
 print(f"  MTG              : {counts['mtg']:,}  (collisions: {collisions['mtg']})")
 print(f"  YGO set codes    : {counts['ygo_setcode']:,}  (collisions: {collisions['ygo']})")
 print(f"  YGO passcodes    : {counts['ygo_passcode']:,}")
+print(f"  One Piece        : {counts['onepiece']:,}  (collisions: {collisions['onepiece']})")
 print(f"Total collisions   : {total_collisions}")
-print(f"Skipped (no key)   : pokemon={skipped['pokemon']} mtg={skipped['mtg']} ygo={skipped['ygo']}")
+print(f"Skipped (no key)   : pokemon={skipped['pokemon']} mtg={skipped['mtg']} ygo={skipped['ygo']} onepiece={skipped['onepiece']}")
 
 with open(OUTPUT, "w", encoding="utf-8") as f:
     json.dump(lookup, f, ensure_ascii=False, separators=(",", ":"))
