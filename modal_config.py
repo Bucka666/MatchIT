@@ -110,6 +110,14 @@ image = (
             "*_pre_*",
             "*_preocr*",
             "*.bak*",
+            # Scratch/diagnostic copies of images.db pulled down for incident
+            # investigation (~550-600MB each, e.g. backup_check.db,
+            # images_temp.db, restore_verify.db, volume_images_check.db,
+            # images_volume_corrupt.db) — recon-confirmed (2026-08-14) no
+            # legitimate small .db file exists anywhere in the repo, so this
+            # is safe as a blanket pattern. Production reads images.db from
+            # the Modal volume, never from the deployed image.
+            "*.db",
         ],
     )
 )
