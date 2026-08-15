@@ -675,7 +675,7 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
     db_root     = "/modal_data/CardsDB"
     sku_map_path = "/modal_data/sku_game_map.json"
     meta_path   = "/modal_data/set_metadata.json"
-    CATEGORY_MAP = {"POKEMON": "POKEMON", "MTG": "MTG", "YUGIOH": "YUGIOH"}
+    CATEGORY_MAP = {"POKEMON": "POKEMON", "MTG": "MTG", "YUGIOH": "YUGIOH", "ONEPIECE": "ONEPIECE"}
 
     # Canary ground truth: auto-discover known jpn- set_ids from CardsDB folder
     # names (jpn-{setcode}-{cardnum}, where setcode may itself contain hyphens,
@@ -692,7 +692,7 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
     if new_set_ids is not None and new_skus is None:
         target_ids = set(s.lower() for s in new_set_ids)
         collected = []
-        for game_folder in ("pokemon", "mtg", "yugioh"):
+        for game_folder in ("pokemon", "mtg", "yugioh", "onepiece"):
             game_dir = os.path.join(db_root, game_folder)
             if not os.path.isdir(game_dir):
                 continue
@@ -706,7 +706,7 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                         print(f"[REBUILD] CANARY: {name!r} resolved to unknown jpn set_id {poke_set_id!r} (not in auto-discovered jpn- set list)", flush=True)
                     if poke_set_id in target_ids:
                         collected.append(name)
-                elif game_folder in ("mtg", "yugioh") and len(parts) >= 3 and parts[1].lower() in target_ids:
+                elif game_folder in ("mtg", "yugioh", "onepiece") and len(parts) >= 3 and parts[1].lower() in target_ids:
                     collected.append(name)
         new_skus = collected
         print(
@@ -727,9 +727,9 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
             sku_game_map = {}
         added_skus = 0
         for sku in new_skus:
-            if sku.startswith("_") or sku.startswith("mtg-") or sku.startswith("ygo-"):
+            if sku.startswith("_") or sku.startswith("mtg-") or sku.startswith("ygo-") or sku.startswith("op-"):
                 continue
-            for game_folder in ("pokemon", "mtg", "yugioh"):
+            for game_folder in ("pokemon", "mtg", "yugioh", "onepiece"):
                 profile_path = os.path.join(db_root, game_folder, sku, "profile.json")
                 if os.path.isfile(profile_path):
                     try:
@@ -750,13 +750,13 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
     else:
         # Full: scan every game folder
         sku_game_map = {}
-        counts = {"POKEMON": 0, "MTG": 0, "YUGIOH": 0, "unknown": 0}
-        for game_folder in ("pokemon", "mtg", "yugioh"):
+        counts = {"POKEMON": 0, "MTG": 0, "YUGIOH": 0, "ONEPIECE": 0, "unknown": 0}
+        for game_folder in ("pokemon", "mtg", "yugioh", "onepiece"):
             game_dir = os.path.join(db_root, game_folder)
             if not os.path.isdir(game_dir):
                 continue
             for sku in os.listdir(game_dir):
-                if sku.startswith("_") or sku.startswith("mtg-") or sku.startswith("ygo-"):
+                if sku.startswith("_") or sku.startswith("mtg-") or sku.startswith("ygo-") or sku.startswith("op-"):
                     continue
                 profile_path = os.path.join(game_dir, sku, "profile.json")
                 if not os.path.isfile(profile_path):
@@ -778,7 +778,7 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
         os.replace(_sku_map_tmp, sku_map_path)
         print(
             f"[REBUILD] sku_game_map.json: {len(sku_game_map)} entries "
-            f"(P={counts['POKEMON']} M={counts['MTG']} Y={counts['YUGIOH']} ?={counts['unknown']})",
+            f"(P={counts['POKEMON']} M={counts['MTG']} Y={counts['YUGIOH']} O={counts['ONEPIECE']} ?={counts['unknown']})",
             flush=True,
         )
 
@@ -793,7 +793,7 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
 
     if new_skus is not None:
         # Delta: extract set_ids from the new SKU names, skip already-known ones
-        poke_new, mtg_new, ygo_new = set(), set(), set()
+        poke_new, mtg_new, ygo_new, op_new = set(), set(), set(), set()
         for sku in new_skus:
             parts = sku.split("-")
             if sku.startswith("ygo-") and len(parts) >= 3:
@@ -804,6 +804,10 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                 set_id = parts[1]
                 if set_id not in new_meta:
                     mtg_new.add(set_id)
+            elif sku.startswith("op-") and len(parts) >= 3:
+                set_id = parts[1]
+                if set_id not in new_meta:
+                    op_new.add(set_id)
             elif "-" in sku and not sku.startswith("_"):
                 set_id = ("jpn-" + "-".join(parts[1:-1])) if (parts[0] == "jpn" and len(parts) >= 2) else parts[0]
                 if set_id.startswith("jpn-") and set_id.lower() not in _jpn_known_set_ids:
@@ -812,8 +816,8 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                     poke_new.add(set_id)
     else:
         # Full: discover all set_ids from folder names (no profile.json reads)
-        sets_by_game = {"POKEMON": set(), "MTG": set(), "YUGIOH": set()}
-        game_label = {"pokemon": "POKEMON", "mtg": "MTG", "yugioh": "YUGIOH"}
+        sets_by_game = {"POKEMON": set(), "MTG": set(), "YUGIOH": set(), "ONEPIECE": set()}
+        game_label = {"pokemon": "POKEMON", "mtg": "MTG", "yugioh": "YUGIOH", "onepiece": "ONEPIECE"}
         for game_folder, game in game_label.items():
             game_dir = os.path.join(db_root, game_folder)
             if not os.path.isdir(game_dir):
@@ -831,9 +835,12 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                     sets_by_game["MTG"].add(parts[1])
                 elif game == "YUGIOH" and len(parts) >= 3 and parts[0] == "ygo":
                     sets_by_game["YUGIOH"].add(parts[1])
+                elif game == "ONEPIECE" and len(parts) >= 3 and parts[0] == "op":
+                    sets_by_game["ONEPIECE"].add(parts[1])
         poke_new = {s for s in sets_by_game["POKEMON"] if s not in new_meta}
         mtg_new  = {s for s in sets_by_game["MTG"]     if s not in new_meta}
         ygo_new  = {s for s in sets_by_game["YUGIOH"]  if s not in new_meta}
+        op_new   = {s for s in sets_by_game["ONEPIECE"] if s not in new_meta}
 
     # jpn- sets never have pokemontcg.io data (EN-only API) -- split them out
     # here so the Pokémon batch-fetch loop below never touches them. Without
@@ -1057,6 +1064,44 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                     "printed_total": None, "total": None, "exclude": False,
                 }
                 print(f"[REBUILD]   ? YGO {set_id}: not in YGOProDeck", flush=True)
+            new_sets += 1
+
+    # One Piece — no public sets API; derive name + card count directly from
+    # CardsDB/onepiece profiles instead of an external fetch, same approach
+    # as build_set_metadata.py's build_onepiece_metadata().
+    if op_new:
+        print(f"[REBUILD] One Piece: {len(op_new)} new sets to derive from CardsDB...", flush=True)
+        op_dir = os.path.join(db_root, "onepiece")
+        op_names = {}
+        op_counts = {}
+        if os.path.isdir(op_dir):
+            for name in os.listdir(op_dir):
+                parts = name.split("-")
+                if len(parts) < 3 or parts[0] != "op":
+                    continue
+                set_id = parts[1]
+                op_counts[set_id] = op_counts.get(set_id, 0) + 1
+                if set_id not in op_names:
+                    profile_path = os.path.join(op_dir, name, "profile.json")
+                    if os.path.isfile(profile_path):
+                        try:
+                            with open(profile_path, "r", encoding="utf-8") as f:
+                                op_names[set_id] = json.load(f).get("set_name", set_id)
+                        except Exception:
+                            pass
+        for set_id in sorted(op_new):
+            count = op_counts.get(set_id)
+            new_meta[set_id] = {
+                "name":          op_names.get(set_id, set_id.upper()),
+                "game":          "ONEPIECE",
+                "printed_total": count,
+                "total":         count,
+                "exclude":       False,
+            }
+            if count is None:
+                print(f"[REBUILD]   ? One Piece {set_id}: not found while re-scanning CardsDB/onepiece", flush=True)
+            else:
+                print(f"[REBUILD]   + One Piece {set_id}: {new_meta[set_id]['name']} ({count} cards)", flush=True)
             new_sets += 1
 
     # ── Assert: no entry that already existed loses a populated
