@@ -9324,8 +9324,19 @@ def match():
             query_path2 = None
 
     # ── Confirmed-SKU short-circuit — client OCR already identified the card ──
-    # Fires on the confirmed_sku form field for ALL games, independent of key_type.
+    # Fires on the confirmed_sku form field for ALL games, independent of key_type,
+    # EXCEPT when the user has a specific game selected and the client-confirmed
+    # SKU is actually from a different game -- reject and fall through to CLIP
+    # rather than trust a cross-game on-device mismatch. Must run before the
+    # `if confirmed_sku:` gate below, not inside it: clearing confirmed_sku
+    # after that gate already evaluated True wouldn't skip the block.
     confirmed_sku = request.form.get("confirmed_sku", "").strip()
+    if confirmed_sku and query_category and query_category in _IMAGED_SETS_BY_GAME:
+        _cs_game = _get_sku_game(confirmed_sku)
+        if _cs_game != query_category:
+            print(f"[CONFIRMED-SKU] game mismatch: sku={confirmed_sku} sku_game={_cs_game} "
+                  f"query_category={query_category} -- rejecting, falling through to CLIP", flush=True)
+            confirmed_sku = ""
     if confirmed_sku:
         try:
             import uuid as _uuid
