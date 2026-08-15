@@ -115,7 +115,7 @@
       <div class="res-ia-badge">✅ IDENTIFIED</div>
       <div class="res-ia-name">{{ r1.profile.name if r1.profile else r1.sku }}</div>
       {% if r1.profile and r1.profile.set_name %}
-      <div class="res-ia-set">{{ r1.profile.set_name }}{% if r1.profile.number %} · #{{ r1.profile.number }}{% endif %}</div>
+      <div class="res-ia-set">{{ r1.profile.set_name }}{% if r1.profile.card_number %} · #{{ r1.profile.card_number }}{% endif %}</div>
       {% endif %}
       {% if r1.profile and r1.profile.prices %}
       {% set _tcg = r1.profile.prices.tcgplayer if r1.profile.prices.tcgplayer else {} %}

@@ -5355,7 +5355,7 @@
   "eb04": {
     "exclude": false,
     "game": "ONEPIECE",
-    "name": "EB04",
+    "name": "EGGHEAD CRISIS",
     "printed_total": 85,
     "total": 85
   },
@@ -7661,14 +7661,14 @@
   "op14": {
     "exclude": false,
     "game": "ONEPIECE",
-    "name": "OP14",
+    "name": "THE AZURE SEA'S SEVEN",
     "printed_total": 166,
     "total": 166
   },
   "op15": {
     "exclude": false,
     "game": "ONEPIECE",
-    "name": "OP15",
+    "name": "ADVENTURE ON KAMI'S ISLAND",
     "printed_total": 149,
     "total": 149
   },
@@ -7706,7 +7706,7 @@
   "p": {
     "exclude": false,
     "game": "ONEPIECE",
-    "name": "P",
+    "name": "Promo",
     "printed_total": 231,
     "total": 231
   },
