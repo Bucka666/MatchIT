@@ -500,6 +500,52 @@ def scheduled_set_check():
 @app.function(
     image=image,
     volumes={"/modal_data": vol},
+    secrets=[modal.Secret.from_name("justtcg-credentials")],
+    schedule=modal.Cron("30 1 * * *"),  # 1:30am UTC — between set_check (1am)
+    # and fx_refresh (2am). Deliberately BEFORE the 3am JP / 4am EN Pokemon
+    # JustTCG refreshes: if the shared JustTCG quota runs out on a given day
+    # (confirmed live 2026-08-15: free-tier key returns 401 after ~1,460
+    # cards in one run, consistent with a daily cap), it's the already-
+    # established Pokemon pricing that goes briefly stale, not the newer
+    # One Piece pricing that has no fallback data source yet.
+    timeout=3600,
+)
+def scheduled_onepiece_price_refresh():
+    """Daily refresh of TCGPlayer (USD) pricing for One Piece cards via
+    JustTCG (see refresh_onepiece_prices.py). Re-fetches cards whose price
+    is missing or >24h stale, not just cards with no price at all -- this
+    runs every day, prices should stay current.
+
+    No gpu= here — pure HTTP fetch + JSON write, CPU-only, same pattern as
+    scheduled_fx_refresh/scheduled_jp_price_refresh below.
+
+    Lazy-imports refresh_onepiece_prices inside the function body, matching
+    scheduled_jp_price_refresh's own convention for scrape_pokemon_jpn."""
+    print(f"[OP-PRICE-CRON] Starting run at {datetime.utcnow().isoformat()}Z", flush=True)
+    import os, sys
+    os.chdir("/app")
+    sys.path.insert(0, "/app")
+    os.environ["LOCALAPPDATA"] = "/modal_data"
+    vol.reload()
+    from pathlib import Path
+    justtcg_key = os.environ.get("JUSTTCG_API_KEY", "").strip()
+    if not justtcg_key:
+        print("[OP-PRICE-CRON] No JUSTTCG_API_KEY found, skipping", flush=True)
+        return
+    from refresh_onepiece_prices import refresh_onepiece_prices
+    try:
+        result = refresh_onepiece_prices(
+            Path("/modal_data/CardsDB"), api_key=justtcg_key, dry_run=False,
+        )
+        vol.commit()
+        print(f"[OP-PRICE-CRON] {result}", flush=True)
+    except Exception as e:
+        print(f"[OP-PRICE-CRON] FAILED: {e}", flush=True)
+
+
+@app.function(
+    image=image,
+    volumes={"/modal_data": vol},
     schedule=modal.Cron("0 2 * * *"),  # Every day at 2am UTC
     timeout=300,
 )
