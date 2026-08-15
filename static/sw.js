@@ -166,7 +166,7 @@
 // v146 — 2026-08-12: no client-facing change (cloudflare_worker.js +
 // matchit_modal.py routing sync for /api/heartbeat and /api/stats onto the
 // CPU twin) — bump requested as part of this commit's reference point
-const CACHE_NAME = 'grailsweep-v150'; // 2026-08-15 sync cxKeyType from scTcgLock
+const CACHE_NAME = 'grailsweep-v151'; // 2026-08-15 One Piece full surface fixes
 const PRECACHE = [
   '/',
   '/static/style.css',
