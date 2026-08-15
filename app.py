@@ -3772,7 +3772,7 @@ def _fuzzy_pokemon_identifier(raw_text, num, setcode_map, lookup):
 @app.route('/api/ocr-lookup', methods=['POST'])
 def ocr_lookup():
     try:
-        from ocr_confirm import parse_pokemon_text, parse_pokemon_denominator, parse_mtg_text, parse_ygo_text
+        from ocr_confirm import parse_pokemon_text, parse_pokemon_denominator, parse_mtg_text, parse_ygo_text, parse_onepiece_text
         data = request.get_json(force=True)
         raw_text = (data.get('raw_text') or '').strip()
         game = (data.get('game') or 'pokemon').lower()
@@ -3805,6 +3805,9 @@ def ocr_lookup():
 
         elif game == 'mtg':
             identifier = parse_mtg_text(text_lines)
+
+        elif game == 'onepiece':
+            identifier = parse_onepiece_text(text_lines)
 
         elif game == 'ygo':
             ygo_lookup = _identifier_lookup.get('ygo', {})

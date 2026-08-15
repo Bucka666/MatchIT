@@ -1502,6 +1502,19 @@ def _extract_mtg_collector(image_path: str) -> Optional[str]:
     return None
 
 
+def _extract_onepiece_setcode(image_path: str) -> Optional[str]:
+    """
+    Read the set code from the bottom-right badge of a One Piece card.
+    Returns combined e.g. 'op01-001' for direct DB lookup, or None.
+    """
+    texts = _crop_and_read(image_path, (0.45, 0.85, 1.00, 1.00))
+    logger.info(f"[OCR-ONEPIECE] raw texts: {texts}")
+    result = parse_onepiece_text(texts)
+    if result:
+        logger.info(f"[OCR-ONEPIECE] extracted: {result}")
+    return result
+
+
 # ─────────────────────────────────────────────────────────────
 # SKU matching per TCG
 # ─────────────────────────────────────────────────────────────
@@ -1549,6 +1562,18 @@ def _mtg_matches(sku: str, extracted: str) -> bool:
         # Combined format e.g. snc-149 — check containment in SKU
         return extracted in sku
     return sku.endswith(f"-{extracted}")
+
+
+def _onepiece_matches(sku: str, extracted: str) -> bool:
+    """
+    One Piece SKU format: op-op01-001, op-st07-003
+    extracted: 'op01-001' (set+number) — always hyphenated, parse_onepiece_text
+    has no bare-number fallback since the badge always prints both together.
+    Parallels/alt-arts (op-eb01-061_p1 etc.) share the same printed code as
+    their base card, so containment naturally matches any of them —
+    ocr_confirm_ranking takes whichever's already in the top-10 CLIP results.
+    """
+    return extracted in sku
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1969,6 +1994,8 @@ def ocr_confirm_ranking(
         extractors = [(_pkm_extract, _pokemon_matches)]
     elif tcg_upper == "MTG":
         extractors = [(_extract_mtg_collector, _mtg_matches)]
+    elif tcg_upper == "ONEPIECE":
+        extractors = [(_extract_onepiece_setcode, _onepiece_matches)]
     else:
         # No TCG specified — try extractors
         if allow_pokemon_promote:
@@ -1976,11 +2003,13 @@ def ocr_confirm_ranking(
                 (_extract_ygo_setcode,    _ygo_matches),
                 (_pkm_extract, _pokemon_matches),
                 (_extract_mtg_collector,  _mtg_matches),
+                (_extract_onepiece_setcode, _onepiece_matches),
             ]
         else:
             extractors = [
                 (_extract_ygo_setcode,   _ygo_matches),
                 (_extract_mtg_collector, _mtg_matches),
+                (_extract_onepiece_setcode, _onepiece_matches),
             ]
 
     # Try each extractor until one works
@@ -2303,6 +2332,22 @@ def parse_mtg_text(texts: list) -> Optional[str]:
         return f"{set_code}-{num}"
     elif num:
         return num
+    return None
+
+
+def parse_onepiece_text(texts: list) -> Optional[str]:
+    """Parse raw OCR text lines from a One Piece card.
+    The set code badge (bottom-right) contains text like 'OP01-001',
+    'ST07-003', or 'P-001' for standalone promos (no digits before the
+    hyphen — \\d{0,2} allows zero so these still match).
+    Returns '{set_code}-{num}' e.g. 'op01-001', or None.
+    """
+    for text in texts:
+        m = re.search(r'\b([A-Z]{1,4}\d{0,2})-(\d{3})\b', text.upper())
+        if m:
+            set_part = m.group(1).lower()
+            num_part = m.group(2)
+            return f"{set_part}-{num_part}"
     return None
 
 
