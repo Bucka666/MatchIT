@@ -20,6 +20,7 @@
 .sets-filter-btn--poke.sets-filter-btn--active { background: rgba(255,203,5,0.12);  border-color: rgba(255,203,5,0.4);  color: #ffcb05; }
 .sets-filter-btn--mtg.sets-filter-btn--active  { background: rgba(0,229,255,0.12);  border-color: rgba(0,229,255,0.4);  color: #00e5ff; }
 .sets-filter-btn--ygo.sets-filter-btn--active  { background: rgba(177,77,255,0.12); border-color: rgba(177,77,255,0.4); color: #b14dff; }
+.sets-filter-btn--op.sets-filter-btn--active   { background: rgba(0,255,136,0.12);  border-color: rgba(0,255,136,0.4);  color: #00ff88; }
 
 /* Set grid */
 .sets-grid {
@@ -41,9 +42,10 @@
   text-transform: uppercase; letter-spacing: 0.05em;
   padding: 2px 7px; border-radius: 4px;
 }
-.sets-tcg-badge--pokemon { background: rgba(255,203,5,0.15); color: #ffcb05; }
-.sets-tcg-badge--mtg     { background: rgba(0,229,255,0.15);  color: #00e5ff; }
-.sets-tcg-badge--ygo     { background: rgba(177,77,255,0.15); color: #b14dff; }
+.sets-tcg-badge--pokemon  { background: rgba(255,203,5,0.15); color: #ffcb05; }
+.sets-tcg-badge--mtg      { background: rgba(0,229,255,0.15);  color: #00e5ff; }
+.sets-tcg-badge--ygo      { background: rgba(177,77,255,0.15); color: #b14dff; }
+.sets-tcg-badge--onepiece { background: rgba(0,255,136,0.15);  color: #00ff88; }
 .sets-badge-complete {
   display: inline-block; font-size: 0.58rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.04em;
@@ -202,6 +204,7 @@
     <button class="sets-filter-btn sets-filter-btn--poke" data-filter="POKEMON"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.15em" role="img" aria-label="Pokémon"><rect x="4.5" y="2.5" width="15" height="19" rx="2.4" fill="#ffcb05" stroke="#a87908" stroke-width="1.1"/><rect x="6.6" y="4.6" width="10.8" height="2.5" rx="0.7" fill="#fff2bf"/><rect x="6.6" y="8" width="10.8" height="7" rx="0.8" fill="#ffdb55" stroke="#a87908" stroke-width="0.55"/><path d="M12 9.1l1.13 2.29 2.52.37-1.82 1.78.43 2.51L12 17.04l-2.26 1.18.43-2.51-1.82-1.78 2.52-.37z" fill="#a87908"/><rect x="7.4" y="16.3" width="9.2" height="1.4" rx="0.5" fill="#fff2bf"/></svg> Pokémon</button>
     <button class="sets-filter-btn sets-filter-btn--mtg"  data-filter="MTG">🔮 MTG</button>
     <button class="sets-filter-btn sets-filter-btn--ygo"  data-filter="YUGIOH">⚔️ Yu-Gi-Oh</button>
+    <button class="sets-filter-btn sets-filter-btn--op"   data-filter="ONEPIECE">🏴‍☠️ One Piece</button>
     <button class="sets-filter-btn sets-filter-btn--active" data-filter="all">All</button>
   </div>
 
@@ -264,13 +267,15 @@
   function hide(id) { document.getElementById(id).classList.add('gs-hidden'); }
 
   function tcgBadgeClass(game) {
-    if (game === 'POKEMON') return 'sets-tcg-badge--pokemon';
-    if (game === 'MTG')     return 'sets-tcg-badge--mtg';
+    if (game === 'POKEMON')  return 'sets-tcg-badge--pokemon';
+    if (game === 'MTG')      return 'sets-tcg-badge--mtg';
+    if (game === 'ONEPIECE') return 'sets-tcg-badge--onepiece';
     return 'sets-tcg-badge--ygo';
   }
   function tcgLabel(game) {
-    if (game === 'POKEMON') return 'Pokémon';
-    if (game === 'MTG')     return 'MTG';
+    if (game === 'POKEMON')  return 'Pokémon';
+    if (game === 'MTG')      return 'MTG';
+    if (game === 'ONEPIECE') return 'One Piece';
     return 'Yu-Gi-Oh';
   }
 
@@ -518,7 +523,9 @@
            if (item.name) ownedNames.add(item.name.toLowerCase().trim());
          });
     } else {
-      var skuPrefix = game === 'YUGIOH' ? 'ygo-' + setId + '-' : setId + '-';
+      var skuPrefix = game === 'YUGIOH' ? 'ygo-' + setId + '-' :
+                       game === 'ONEPIECE' ? 'op-' + setId + '-' :
+                       setId + '-';
       col.filter(function(item) { return item.sku && item.sku.startsWith(skuPrefix); })
          .forEach(function(item) { if (item.sku) ownedSkus.add(item.sku); });
     }

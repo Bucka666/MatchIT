@@ -8,7 +8,7 @@
   "operatingSystem": "Web, iOS, Android",
   "applicationCategory": "UtilitiesApplication",
   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "GBP"},
-  "description": "UK's first AI trading card scanner. Identify Pokémon, MTG and Yu-Gi-Oh cards instantly with live GBP pricing.",
+  "description": "UK's first AI trading card scanner. Identify Pokémon, MTG, Yu-Gi-Oh and One Piece cards instantly with live GBP pricing.",
   "url": "https://grailsweep.com",
   "screenshot": "https://grailsweep.com/static/assets/grailsweep_og.png",
   "featureList": "AI card identification, Live GBP pricing, Condition grading, Collection tracking, Set completion tracking, Collection analytics",
@@ -83,6 +83,7 @@
       <span class="gs-tcg-pill gs-pill-pok"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.15em" role="img" aria-label="Pokémon"><rect x="4.5" y="2.5" width="15" height="19" rx="2.4" fill="#ffcb05" stroke="#a87908" stroke-width="1.1"/><rect x="6.6" y="4.6" width="10.8" height="2.5" rx="0.7" fill="#fff2bf"/><rect x="6.6" y="8" width="10.8" height="7" rx="0.8" fill="#ffdb55" stroke="#a87908" stroke-width="0.55"/><path d="M12 9.1l1.13 2.29 2.52.37-1.82 1.78.43 2.51L12 17.04l-2.26 1.18.43-2.51-1.82-1.78 2.52-.37z" fill="#a87908"/><rect x="7.4" y="16.3" width="9.2" height="1.4" rx="0.5" fill="#fff2bf"/></svg> Pokémon</span>
       <span class="gs-tcg-pill gs-pill-ygo">⚔️ Yu-Gi-Oh</span>
       <span class="gs-tcg-pill gs-pill-mtg">🔮 Magic: The Gathering</span>
+      <span class="gs-tcg-pill gs-pill-op">🏴‍☠️ One Piece</span>
     </div>
     <div class="gs-hero-ctas">
       <a href="/match" class="gs-btn gs-btn-primary"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.15em" role="img" aria-label="Scan" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5V6.5A2.5 2.5 0 0 1 6.5 4H8.5"/><path d="M15.5 4H17.5A2.5 2.5 0 0 1 20 6.5V8.5"/><path d="M20 15.5V17.5A2.5 2.5 0 0 1 17.5 20H15.5"/><path d="M8.5 20H6.5A2.5 2.5 0 0 1 4 17.5V15.5"/><line x1="4" y1="12" x2="20" y2="12"/></svg> Start Scanning Free →</a>
@@ -138,7 +139,7 @@
         <div class="gs-step-num">02</div>
         <div class="gs-step-icon">🤖</div>
         <h3 class="gs-step-title">AI Identifies</h3>
-        <p class="gs-step-desc">Our AI engine matches your card against 160,000+ cards — Pokémon, Yu-Gi-Oh and MTG — using visual recognition and text reading.</p>
+        <p class="gs-step-desc">Our AI engine matches your card against 165,000+ cards — Pokémon, Yu-Gi-Oh, MTG and One Piece — using visual recognition and text reading.</p>
       </div>
       <div class="gs-step-arrow">→</div>
       <div class="gs-step">
@@ -170,8 +171,8 @@
 
       <div class="gs-feature">
         <div class="gs-feature-icon">🃏</div>
-        <h3 class="gs-feature-title">All 3 Major TCGs</h3>
-        <p class="gs-feature-desc">Pokémon, Yu-Gi-Oh and Magic: The Gathering in one app. 160,000+ cards across all three catalogues.</p>
+        <h3 class="gs-feature-title">All 4 Major TCGs</h3>
+        <p class="gs-feature-desc">Pokémon, Yu-Gi-Oh, Magic: The Gathering and One Piece in one app. 165,000+ cards across all four catalogues.</p>
       </div>
 
       <div class="gs-feature">
@@ -261,7 +262,7 @@
         <div class="gs-price-period">forever</div>
         <ul class="gs-price-features">
           <li>✓ 150 card scans per month</li>
-          <li>✓ All 3 TCGs (Pokémon, Yu-Gi-Oh, MTG)</li>
+          <li>✓ All 4 TCGs (Pokémon, Yu-Gi-Oh, MTG, One Piece)</li>
           <li>✓ Live GBP price reference</li>
           <li>✓ AI card identification</li>
           <li>✓ Auto condition grade</li>
@@ -563,6 +564,7 @@
 .gs-pill-pok { background: rgba(255,203,5,0.1); border: 1px solid rgba(255,203,5,0.3); color: #ffcb05; }
 .gs-pill-ygo { background: rgba(177,77,255,0.1);  border: 1px solid rgba(177,77,255,0.3); color: #b14dff; }
 .gs-pill-mtg { background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.3); color: #00e5ff; }
+.gs-pill-op  { background: rgba(0,255,136,0.08); border: 1px solid rgba(0,255,136,0.3); color: #00ff88; }
 .gs-hero-ctas {
   display: flex; gap: 16px;
   justify-content: center; flex-wrap: wrap;
@@ -1172,7 +1174,7 @@ async function lpUpgrade(tier) {
   var messages = [
     { at: 0,     text: 'Loading GrailSweep...' },
     { at: 1500,  text: 'Setting up the scanner...' },
-    { at: 5000,  text: 'Loading 160,000+ card database...' },
+    { at: 5000,  text: 'Loading 165,000+ card database...' },
     { at: 12000, text: 'Almost there — first launch is slower...' },
     { at: 25000, text: 'Final preparations...' }
   ];

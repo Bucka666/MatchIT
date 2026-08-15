@@ -21,7 +21,7 @@
     <!-- Benefits list -->
     <div style="text-align:left;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:16px;margin-bottom:24px;">
       <div class="prem-benefit">⭐ Save unlimited cards to your collection</div>
-      <div class="prem-benefit">📊 Track total value across all 3 TCGs</div>
+      <div class="prem-benefit">📊 Track total value across all 4 TCGs</div>
       <div class="prem-benefit">📥 Export to Excel with full breakdown</div>
       <div class="prem-benefit">🔔 Price alerts (Pro feature)</div>
       <div class="prem-benefit">🃏 Collection history & stats</div>
@@ -180,6 +180,7 @@
     <button class="col-filter-btn col-filter-btn--pokemon" onclick="colFilter('pokemon', this)"><svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.15em" role="img" aria-label="Pokémon"><rect x="4.5" y="2.5" width="15" height="19" rx="2.4" fill="#ffcb05" stroke="#a87908" stroke-width="1.1"/><rect x="6.6" y="4.6" width="10.8" height="2.5" rx="0.7" fill="#fff2bf"/><rect x="6.6" y="8" width="10.8" height="7" rx="0.8" fill="#ffdb55" stroke="#a87908" stroke-width="0.55"/><path d="M12 9.1l1.13 2.29 2.52.37-1.82 1.78.43 2.51L12 17.04l-2.26 1.18.43-2.51-1.82-1.78 2.52-.37z" fill="#a87908"/><rect x="7.4" y="16.3" width="9.2" height="1.4" rx="0.5" fill="#fff2bf"/></svg> Pokémon</button>
     <button class="col-filter-btn col-filter-btn--ygo" onclick="colFilter('ygo', this)">⚔️ Yu-Gi-Oh</button>
     <button class="col-filter-btn col-filter-btn--mtg" onclick="colFilter('mtg', this)">🔮 MTG</button>
+    <button class="col-filter-btn col-filter-btn--onepiece" onclick="colFilter('onepiece', this)">🏴‍☠️ One Piece</button>
   </div>
   <div class="col-set-filters" id="colSetFilters" style="display:none;flex-wrap:wrap;gap:6px;margin-top:8px;margin-bottom:12px;"></div>
 
@@ -216,11 +217,12 @@
 .col-stat--highlight .col-stat-val { background:linear-gradient(90deg,#00ff88,#00e5ff); -webkit-background-clip:text; background-clip:text; }
 .col-stat-label { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--mi-muted,#aaa); margin-top:4px; }
 
-.col-tcg-breakdown { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+.col-tcg-breakdown { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:20px; }
 .col-tcg-card { border-radius:12px; padding:14px 16px; border:1px solid; display:flex; align-items:center; gap:12px; cursor:pointer; }
-.col-tcg-card--pokemon { background:rgba(255,203,5,0.06); border-color:rgba(255,203,5,0.2); }
-.col-tcg-card--ygo     { background:rgba(177,77,255,0.06); border-color:rgba(177,77,255,0.2); }
-.col-tcg-card--mtg     { background:rgba(0,229,255,0.06);  border-color:rgba(0,229,255,0.2); }
+.col-tcg-card--pokemon  { background:rgba(255,203,5,0.06); border-color:rgba(255,203,5,0.2); }
+.col-tcg-card--ygo      { background:rgba(177,77,255,0.06); border-color:rgba(177,77,255,0.2); }
+.col-tcg-card--mtg      { background:rgba(0,229,255,0.06);  border-color:rgba(0,229,255,0.2); }
+.col-tcg-card--onepiece { background:rgba(0,255,136,0.06);  border-color:rgba(0,255,136,0.2); }
 .col-tcg-icon { font-size:1.6rem; }
 .col-tcg-info { flex:1; min-width:0; }
 .col-tcg-name { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--mi-muted,#aaa); }
@@ -233,9 +235,10 @@
 .col-set-pill--active { border-color:var(--cx-violet);background:rgba(177,77,255,0.15);color:#fff; }
 .col-set-pill:hover { background:rgba(177,77,255,0.1);color:#fff; }
 .col-filter-btn--active,.col-filter-btn:hover { background:rgba(177,77,255,0.15); border-color:rgba(177,77,255,0.4); color:#b14dff; }
-.col-filter-btn--pokemon.col-filter-btn--active { background:rgba(255,203,5,0.15); border-color:rgba(255,203,5,0.4); color:#ffcb05; }
-.col-filter-btn--ygo.col-filter-btn--active     { background:rgba(177,77,255,0.15); border-color:rgba(177,77,255,0.4); color:#b14dff; }
-.col-filter-btn--mtg.col-filter-btn--active     { background:rgba(0,229,255,0.15);  border-color:rgba(0,229,255,0.4);  color:#00e5ff; }
+.col-filter-btn--pokemon.col-filter-btn--active  { background:rgba(255,203,5,0.15); border-color:rgba(255,203,5,0.4); color:#ffcb05; }
+.col-filter-btn--ygo.col-filter-btn--active      { background:rgba(177,77,255,0.15); border-color:rgba(177,77,255,0.4); color:#b14dff; }
+.col-filter-btn--mtg.col-filter-btn--active      { background:rgba(0,229,255,0.15);  border-color:rgba(0,229,255,0.4);  color:#00e5ff; }
+.col-filter-btn--onepiece.col-filter-btn--active { background:rgba(0,255,136,0.15);  border-color:rgba(0,255,136,0.4);  color:#00ff88; }
 
 .col-list { display:flex; flex-direction:column; gap:8px; }
 
@@ -261,9 +264,10 @@
 .col-item-set  { font-size:0.75rem; color:#00e5ff; margin-top:2px; }
 .col-item-sku  { font-size:0.65rem; color:var(--mi-muted,#aaa); margin-top:2px; }
 .col-item-tcg-badge { display:inline-block; font-size:0.6rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; padding:1px 6px; border-radius:4px; margin-top:3px; }
-.badge-pokemon { background:rgba(255,203,5,0.15); color:#ffcb05; }
-.badge-ygo     { background:rgba(177,77,255,0.15); color:#b14dff; }
-.badge-mtg     { background:rgba(0,229,255,0.15);  color:#00e5ff; }
+.badge-pokemon  { background:rgba(255,203,5,0.15); color:#ffcb05; }
+.badge-ygo      { background:rgba(177,77,255,0.15); color:#b14dff; }
+.badge-mtg      { background:rgba(0,229,255,0.15);  color:#00e5ff; }
+.badge-onepiece { background:rgba(0,255,136,0.15);  color:#00ff88; }
 .col-item-actions { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
 .col-item-price { font-weight:700; color:#00ff88; font-size:0.95rem; font-family:'Orbitron',monospace; }
 .col-item-date  { font-size:0.65rem; color:var(--mi-muted,#aaa); }
@@ -732,6 +736,7 @@ function _getTcg(sku) {
     const s = sku.toLowerCase();
     if (s.startsWith('ygo-')) return 'ygo';
     if (s.startsWith('mtg-')) return 'mtg';
+    if (s.startsWith('op-'))  return 'onepiece';
     return 'pokemon';
 }
 
@@ -769,12 +774,13 @@ function colRender() {
     document.getElementById('colSets').textContent = sets.size;
 
     // TCG breakdown
-    const tcgs = { pokemon:{cards:0,value:0}, ygo:{cards:0,value:0}, mtg:{cards:0,value:0} };
+    const tcgs = { pokemon:{cards:0,value:0}, ygo:{cards:0,value:0}, mtg:{cards:0,value:0}, onepiece:{cards:0,value:0} };
     items.forEach(i => { const t=_getTcg(i.sku); if(tcgs[t]){tcgs[t].cards++;tcgs[t].value+=parseFloat(i.gbp)||0;} });
     const defs = [
         {key:'pokemon',icon:'<svg viewBox="0 0 24 24" width="1em" height="1em" style="vertical-align:-0.15em" role="img" aria-label="Pokémon"><rect x="4.5" y="2.5" width="15" height="19" rx="2.4" fill="#ffcb05" stroke="#a87908" stroke-width="1.1"/><rect x="6.6" y="4.6" width="10.8" height="2.5" rx="0.7" fill="#fff2bf"/><rect x="6.6" y="8" width="10.8" height="7" rx="0.8" fill="#ffdb55" stroke="#a87908" stroke-width="0.55"/><path d="M12 9.1l1.13 2.29 2.52.37-1.82 1.78.43 2.51L12 17.04l-2.26 1.18.43-2.51-1.82-1.78 2.52-.37z" fill="#a87908"/><rect x="7.4" y="16.3" width="9.2" height="1.4" rx="0.5" fill="#fff2bf"/></svg>',name:'Pokémon TCG', cls:'col-tcg-card--pokemon'},
         {key:'ygo',    icon:'⚔️',name:'Yu-Gi-Oh',    cls:'col-tcg-card--ygo'},
         {key:'mtg',    icon:'🔮',name:'Magic: The Gathering',   cls:'col-tcg-card--mtg'},
+        {key:'onepiece',icon:'🏴‍☠️',name:'One Piece TCG', cls:'col-tcg-card--onepiece'},
     ];
     bd.innerHTML = defs.map(d=>`
         <div class="col-tcg-card ${d.cls}" style="${tcgs[d.key].cards===0?'opacity:0.4':''}" onclick="document.querySelector('.col-filter-btn--${d.key}')?.click()">
@@ -811,8 +817,8 @@ function colRender() {
 
     const existingAlerts = JSON.parse(localStorage.getItem('col_alerts_v1') || '[]');
 
-    const badges = {pokemon:'badge-pokemon',ygo:'badge-ygo',mtg:'badge-mtg'};
-    const labels = {pokemon:'Pokémon',ygo:'Yu-Gi-Oh',mtg:'MTG'};
+    const badges = {pokemon:'badge-pokemon',ygo:'badge-ygo',mtg:'badge-mtg',onepiece:'badge-onepiece'};
+    const labels = {pokemon:'Pokémon',ygo:'Yu-Gi-Oh',mtg:'MTG',onepiece:'One Piece'};
     list.innerHTML = sorted.map(function(item) {
         const realIdx = items.indexOf(item);
         const tcg     = _getTcg(item.sku);
@@ -930,7 +936,7 @@ async function colExportCSV() {
     }
     const items = colLoad();
     if (!items.length) { alert('No cards to export.'); return; }
-    const labels = {pokemon:'Pokémon TCG', ygo:'Yu-Gi-Oh', mtg:'Magic: The Gathering'};
+    const labels = {pokemon:'Pokémon TCG', ygo:'Yu-Gi-Oh', mtg:'Magic: The Gathering', onepiece:'One Piece TCG'};
 
     // Build data rows
     const rows = [['Name', 'Set', 'Number', 'SKU', 'TCG', 'Value (GBP)', 'Grade Score', 'Grade Label', 'Grade Method', 'Condition', 'Notes', 'Added', 'Current Price (£)', 'Change (£)']];
@@ -998,9 +1004,10 @@ async function colExportCSV() {
 
     // TCG breakdown sheets
     const tcgDefs = [
-        { key: 'pokemon', name: 'Pokémon TCG',        label: 'Pokémon TCG' },
-        { key: 'ygo',     name: 'Yu-Gi-Oh',           label: 'Yu-Gi-Oh' },
-        { key: 'mtg',     name: 'Magic The Gathering', label: 'MTG' },
+        { key: 'pokemon',  name: 'Pokémon TCG',        label: 'Pokémon TCG' },
+        { key: 'ygo',      name: 'Yu-Gi-Oh',           label: 'Yu-Gi-Oh' },
+        { key: 'mtg',      name: 'Magic The Gathering', label: 'MTG' },
+        { key: 'onepiece', name: 'One Piece TCG',       label: 'One Piece TCG' },
     ];
 
     tcgDefs.forEach(def => {
@@ -1434,7 +1441,7 @@ function gsColShareRef() {
   var shareData = {
     title: 'GrailSweep \u2014 AI Card Scanner',
     text: 'Use my referral code ' + code +
-      ' to get your first month for \u00a33.39! Scan any Pok\u00e9mon, MTG or Yu-Gi-Oh card instantly.',
+      ' to get your first month for \u00a33.39! Scan any Pok\u00e9mon, MTG, Yu-Gi-Oh or One Piece card instantly.',
     url: 'https://grailsweep.com'
   };
   if (navigator.share) {
