@@ -1773,12 +1773,44 @@ function _scUpdateGameLockBanner(val) {
   }
 }
 
+// Keeps the "browse card catalogue" links (fail-gate + floating pill) in
+// sync with the selected game. /search now serves both Pokémon and One
+// Piece via its own game selector (added alongside search.html's
+// generalization — see build_onepiece_search_index.py), so these can
+// deep-link with ?game= instead of staying hardcoded to Pokémon. MTG/YGO
+// have no /search support yet, so they fall back to the same Pokémon
+// default as "All TCGs" — matches today's existing behavior for those
+// games, not a new promise. Hooked into scSetTcg() itself (not a separate
+// call site) since every write to #scTcgLock already goes through there —
+// same reasoning as _scUpdateGameLockBanner above.
+function _scUpdateSearchPillLink(val) {
+  var CATALOGUE = {
+    ONEPIECE: { href: '/search?game=onepiece', label: 'One Piece Card Catalogue', aria: 'Browse One Piece Card Catalogue' }
+  };
+  var c = CATALOGUE[val] || { href: '/search', label: 'Pokémon Card Catalogue', aria: 'Browse Pokémon Card Catalogue' };
+
+  var pill = document.getElementById('gsSearchPill');
+  if (pill) {
+    pill.href = c.href;
+    pill.setAttribute('aria-label', c.aria);
+    var pillLabel = document.getElementById('gsSearchPillLabel');
+    if (pillLabel) pillLabel.textContent = c.label;
+  }
+
+  var failLink = document.getElementById('scFailGateSearchLink');
+  if (failLink) {
+    failLink.href = c.href;
+    failLink.textContent = c.label + ' →';
+  }
+}
+
 function scSetTcg(val, btn) {
   try { var _ac = scGetAudio(); if (_ac.state === 'suspended') _ac.resume(); } catch(e) {}
   document.getElementById('scTcgLock').value = val;
   document.querySelectorAll('.cx-tcg-btn').forEach(function(b){ b.classList.remove('active'); });
   if(btn) btn.classList.add('active');
   _scUpdateGameLockBanner(val);
+  _scUpdateSearchPillLink(val);
 }
 
 function scAutoDetectTcg(sku) {
@@ -3250,7 +3282,7 @@ document.getElementById('matchYear') &&
   <p style="margin:16px 0 8px;font-size:13px;color:#aaa;">
     Looking for a specific card?
   </p>
-  <a href="/search"
+  <a href="/search" id="scFailGateSearchLink"
      style="font-size:14px;color:#b14dff;text-decoration:none;
             font-weight:600;">
     Pokémon Card Catalogue →
@@ -3944,7 +3976,7 @@ async function _jpDenomCheck(ocrText) {
     <circle cx="11" cy="11" r="8"/>
     <path d="m21 21-4.35-4.35"/>
   </svg>
-  Pokémon Card Catalogue
+  <span id="gsSearchPillLabel">Pokémon Card Catalogue</span>
 </a>
 
 {% endblock %}
