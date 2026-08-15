@@ -12,4 +12,4 @@ constant by build_ondevice_index.py) and re-downloads on mismatch — see
 GS_ONDEVICE_BASE / gsEnsureBundle in templates/match.html.
 """
 
-ONDEVICE_INDEX_VERSION = "gs-ondevice-v1"
+ONDEVICE_INDEX_VERSION = "gs-ondevice-v2"

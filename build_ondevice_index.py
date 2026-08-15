@@ -79,7 +79,14 @@ def select_skus():
             continue
         if (meta.get("set_type") or "") in KEEP_MTG:
             skus.append(("mtg", x.name)); kept_mtg += 1
-    return skus, kept_mtg
+    # One Piece: all
+    op = os.path.join(CARDSDB, "onepiece")
+    kept_op = 0
+    if os.path.isdir(op):
+        for x in os.scandir(op):
+            if x.is_dir():
+                skus.append(("onepiece", x.name)); kept_op += 1
+    return skus, kept_mtg, kept_op
 
 
 def front_path(game, sku):
@@ -89,9 +96,9 @@ def front_path(game, sku):
 
 def main():
     t0 = time.time()
-    skus, kept_mtg = select_skus()
+    skus, kept_mtg, kept_op = select_skus()
     pk_n = sum(1 for g, _ in skus if g == "pokemon")
-    print(f"[select] pokemon(all)={pk_n}  mtg(kept)={kept_mtg}  total={len(skus)}", flush=True)
+    print(f"[select] pokemon(all)={pk_n}  mtg(kept)={kept_mtg}  onepiece(all)={kept_op}  total={len(skus)}", flush=True)
 
     # resolve front.png, count missing
     resolved = []
