@@ -2265,7 +2265,7 @@ function scCapture() {
       ('sc-' + Date.now() + '-' + Math.random().toString(36).slice(2));
     // OCR-first path
     // JP mode: skip the EN-only OCR-first fast path (see photo-upload path).
-    var _ocrResult = (_ocrLang === 'jp') ? null : await _tryOcrLookup(blob);
+    var _ocrResult = (_ocrLang === 'jp') ? null : await _tryOcrLookup(blob, _scanCycleId);
     if (_ocrResult && !_ocrResult.miss) {
       scBusy = false;
       var p = _ocrResult.profile || {};

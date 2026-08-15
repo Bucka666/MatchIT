@@ -544,7 +544,7 @@ async function _tryMlKitLocal(imageBlob) {
   }
 }
 
-async function _tryOcrLookup(imageFile) {
+async function _tryOcrLookup(imageFile, scanCycleId) {
   try {
     var game = _detectGame();
     var ocrSource = 'unknown';
@@ -562,7 +562,8 @@ async function _tryOcrLookup(imageFile) {
         raw_text: text,
         game: game,
         lang: _ocrLang,
-        ocr_source: ocrSource
+        ocr_source: ocrSource,
+        scan_cycle_id: scanCycleId
       })
     });
     var data = await resp.json();

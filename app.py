@@ -3779,7 +3779,9 @@ def ocr_lookup():
         raw_text = (data.get('raw_text') or '').strip()
         game = (data.get('game') or 'pokemon').lower()
         ocr_source = data.get('ocr_source', 'unknown')
-        print(f"[OCR-LOOKUP] raw_text from {ocr_source}: {repr(raw_text)}", flush=True)
+        scan_cycle_id = (data.get('scan_cycle_id') or '').strip()
+        print(f"[OCR-LOOKUP] raw_text from {ocr_source}: {repr(raw_text)} "
+              f"scan_cycle_id={scan_cycle_id!r}", flush=True)
 
         if not raw_text:
             return jsonify({'status': 'error', 'message': 'No text provided'}), 400
