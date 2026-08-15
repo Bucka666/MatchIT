@@ -65,6 +65,7 @@ images_temp.db
 fp16_drift_run/
 ondevice_index_v1/
 ondevice_index_v1_test/
+ondevice_index_v1_backup_*/
 regression_queries/
 test_queries/
 web_spike/
