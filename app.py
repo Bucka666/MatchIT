@@ -3995,11 +3995,12 @@ def _best_price_hint(prices, cm_updated=None, tcp_updated=None, sku=None):
     return None, None
 
 
-@app.route("/api/pokemon-search")
-def pokemon_search():
-    raw = request.args.get("q", "").strip()
-    lang = request.args.get("lang", "en").lower()
-
+def _search_index_entries(game, raw, lang):
+    """Prefix-match search over a single game's in-memory search index.
+    Shared by /api/card-search and the legacy /api/pokemon-search alias —
+    identical logic to the original Pokemon-only route, just parameterized
+    on which index to scan."""
+    index = _search_indexes.get(game, [])
     matches = []
     if "/" in raw:
         # "number/total" → match card_number prefix AND exact set_total.
@@ -4013,8 +4014,8 @@ def pokemon_search():
         if total_part.isdigit():
             total_part = str(int(total_part))
         if not num_part:
-            return jsonify({"results": [], "count": 0})
-        for entry in _pokemon_search_index:
+            return matches
+        for entry in index:
             if entry.get("lang", "en") != lang:
                 continue
             num_match = entry["number"].startswith(num_part)
@@ -4026,8 +4027,8 @@ def pokemon_search():
     else:
         q = raw.lower()
         if len(q) < 2:
-            return jsonify({"results": [], "count": 0})
-        for entry in _pokemon_search_index:
+            return matches
+        for entry in index:
             if entry.get("lang", "en") != lang:
                 continue
             if lang == "ja":
@@ -4039,7 +4040,10 @@ def pokemon_search():
                     matches.append(entry)
             if len(matches) >= 12:
                 break
+    return matches
 
+
+def _enrich_search_matches(matches):
     db_root = get_db_root()
     data_dir = get_data_dir()
     enriched = []
@@ -4060,8 +4064,8 @@ def pokemon_search():
             image_id = None
         if image_id:
             image_url = f"https://images.grailsweep.com/{image_id}.jpg"
-        elif profile and profile.get("image_url_small"):
-            image_url = profile.get("image_url_small")
+        elif profile and (profile.get("image_url_small") or profile.get("img_url")):
+            image_url = profile.get("image_url_small") or profile.get("img_url")
         else:
             image_url = ""
         enriched.append({
@@ -4076,17 +4080,39 @@ def pokemon_search():
             "best_price":     best_val,
             "best_currency":  best_ccy,
         })
+    return enriched
 
-    return jsonify({"results": enriched, "count": len(enriched)})
+
+@app.route("/api/card-search")
+def card_search():
+    game = request.args.get("game", "pokemon").strip().lower()
+    if game not in _search_indexes:
+        game = "pokemon"
+    raw = request.args.get("q", "").strip()
+    lang = request.args.get("lang", "en").lower()
+    matches = _search_index_entries(game, raw, lang)
+    return jsonify({"results": _enrich_search_matches(matches), "count": len(matches)})
 
 
-@app.route('/api/search-index/pokemon')
-def serve_pokemon_search_index():
+@app.route("/api/pokemon-search")
+def pokemon_search():
+    # Legacy alias for /api/card-search?game=pokemon — kept so cached/
+    # deployed clients (service worker, PWA, bookmarked URLs) that still
+    # call this literal path keep working. New callers should use
+    # /api/card-search?game=....
+    raw = request.args.get("q", "").strip()
+    lang = request.args.get("lang", "en").lower()
+    matches = _search_index_entries("pokemon", raw, lang)
+    return jsonify({"results": _enrich_search_matches(matches), "count": len(matches)})
+
+
+@app.route('/api/search-index/<game>')
+def serve_search_index(game):
+    game = game.strip().lower()
+    idx_path = _SEARCH_INDEX_PATHS.get(game)
+    if not idx_path:
+        return jsonify({"error": "unknown game"}), 404
     try:
-        idx_path = os.path.join(
-            '/modal_data',
-            'pokemon_search_index.json'
-        )
         with open(idx_path, 'r', encoding='utf-8') as f:
             data = f.read()
         resp = make_response(data)
@@ -4096,7 +4122,7 @@ def serve_pokemon_search_index():
             'public, max-age=86400'
         return resp
     except Exception as e:
-        app.logger.error(f"[SEARCH-INDEX] Failed to serve: {e}")
+        app.logger.error(f"[SEARCH-INDEX] Failed to serve {game}: {e}")
         return jsonify({"error": "index unavailable"}), 500
 
 
@@ -6956,20 +6982,23 @@ _preload_identifier_lookup()
 
 
 POKEMON_SEARCH_INDEX_PATH = "/modal_data/pokemon_search_index.json" if _os.path.exists("/modal_data") else "pokemon_search_index.json"
-_pokemon_search_index = []  # list of {sku,name,number,set_id,set_name}
+ONEPIECE_SEARCH_INDEX_PATH = "/modal_data/onepiece_search_index.json" if _os.path.exists("/modal_data") else "onepiece_search_index.json"
+_SEARCH_INDEX_PATHS = {"pokemon": POKEMON_SEARCH_INDEX_PATH, "onepiece": ONEPIECE_SEARCH_INDEX_PATH}
+_search_indexes = {"pokemon": [], "onepiece": []}  # each: list of {sku,name,number,set_id,set_name,...}
 
 
-def _preload_pokemon_search_index():
-    global _pokemon_search_index
-    try:
-        with open(POKEMON_SEARCH_INDEX_PATH, "r", encoding="utf-8") as f:
-            _pokemon_search_index = json.load(f)
-        print(f"[SEARCH] Loaded {len(_pokemon_search_index)} Pokémon entries", flush=True)
-    except Exception as e:
-        print(f"[SEARCH] No pokemon_search_index.json loaded — search unavailable: {e}", flush=True)
+def _preload_search_indexes():
+    global _search_indexes
+    for _game, _path in _SEARCH_INDEX_PATHS.items():
+        try:
+            with open(_path, "r", encoding="utf-8") as f:
+                _search_indexes[_game] = json.load(f)
+            print(f"[SEARCH] Loaded {len(_search_indexes[_game])} {_game} entries", flush=True)
+        except Exception as e:
+            print(f"[SEARCH] No {os.path.basename(_path)} loaded for {_game} — search unavailable: {e}", flush=True)
 
 
-_preload_pokemon_search_index()
+_preload_search_indexes()
 
 
 # ── Startup integrity check for the volume-backed preloads ────────────
@@ -7048,7 +7077,8 @@ def _check_preload_integrity():
                       ("sku_game_map", SKU_GAME_MAP_PATH),
                       ("identifier_lookup", IDENTIFIER_LOOKUP_PATH),
                       ("mtg_set_totals", MTG_SET_TOTALS_PATH),
-                      ("pokemon_search_index", POKEMON_SEARCH_INDEX_PATH)):
+                      ("pokemon_search_index", POKEMON_SEARCH_INDEX_PATH),
+                      ("onepiece_search_index", ONEPIECE_SEARCH_INDEX_PATH)):
         _src = "volume" if str(_p).startswith("/modal_data") else "IN-IMAGE"
         print(f"[PRELOAD-PATH] {_name:<21} -> {_p}  ({_src})", flush=True)
 
@@ -7057,7 +7087,7 @@ def _check_preload_integrity():
         "sku_game_map": len(_sku_game_cache),
         "identifier_lookup": sum(len(v) for v in _identifier_lookup.values()
                                  if isinstance(v, dict)),
-        "pokemon_search_index": len(_pokemon_search_index),
+        "pokemon_search_index": len(_search_indexes.get("pokemon", [])),
     }
     failures = []
     for _name, (_floor, _healthy, _stale) in _PRELOAD_FLOORS.items():
@@ -7106,7 +7136,8 @@ def _check_preload_integrity():
     else:
         print(f"[PRELOAD-OK] sku_game_map={counts['sku_game_map']} "
               f"identifier_lookup={counts['identifier_lookup']} "
-              f"pokemon_search_index={counts['pokemon_search_index']}", flush=True)
+              f"pokemon_search_index={counts['pokemon_search_index']} "
+              f"onepiece_search_index={len(_search_indexes.get('onepiece', []))}", flush=True)
 
 
 _check_preload_integrity()

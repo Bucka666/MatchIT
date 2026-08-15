@@ -87,6 +87,18 @@
   </header>
 
   <main class="gs-wrap">
+    <div id="gsGameToggle" style="display:flex;gap:8px;margin:0 0 12px;">
+      <button class="gs-game-btn gs-game-btn--active" data-game="pokemon"
+              style="flex:1;padding:8px 12px;border-radius:20px;border:1px solid #00e5ff;
+                     background:#00e5ff;color:#0a0816;font-size:0.85rem;font-weight:600;cursor:pointer;">
+        Pokémon
+      </button>
+      <button class="gs-game-btn" data-game="onepiece"
+              style="flex:1;padding:8px 12px;border-radius:20px;border:1px solid #00e5ff;
+                     background:transparent;color:#00e5ff;font-size:0.85rem;font-weight:600;cursor:pointer;">
+        One Piece
+      </button>
+    </div>
     <div id="gsLangToggle" style="display:flex;gap:8px;margin:0 0 12px;">
       <button class="gs-lang-btn gs-lang-btn--active" data-lang="en"
               style="flex:1;padding:8px 12px;border-radius:20px;border:1px solid #b14dff;
@@ -204,7 +216,7 @@
     var emptyState = document.getElementById('gsEmptyState');
     var noResults = document.getElementById('gsNoResults');
     var debTimer = null, lastQuery = '';
-    var _gsLocalIndex = null;
+    var _gsLocalIndexCache = {};  // per-game: {pokemon: [...], onepiece: [...]}
     var _gsOfflineMode = false;
 
     // Normalize the query. For "number/total" keep BOTH parts (server filters on
@@ -243,11 +255,11 @@
     }
 
     function _gsLoadLocalIndex(cb) {
-      if (_gsLocalIndex) { cb(_gsLocalIndex); return; }
-      fetch('/api/search-index/pokemon')
+      if (_gsLocalIndexCache[currentGame]) { cb(_gsLocalIndexCache[currentGame]); return; }
+      fetch('/api/search-index/' + currentGame)
         .then(function(r){ return r.json(); })
         .then(function(data){
-          _gsLocalIndex = data;
+          _gsLocalIndexCache[currentGame] = data;
           cb(data);
         })
         .catch(function(){ cb(null); });
@@ -312,6 +324,7 @@
     };
 
     function gsStartOfflineDownload() {
+      if (currentGame !== 'pokemon') return; // Card Show Mode is Pokémon-only (set-era based)
       var era = document.getElementById('gsOfflineEraSelect').value;
       if (!era) {
         alert('Please select an era to download.');
@@ -448,6 +461,87 @@
     }
 
     var currentLang = 'en';
+    var currentGame = 'pokemon';
+    (function() {
+      var g = new URLSearchParams(window.location.search).get('game');
+      if (g === 'onepiece') currentGame = 'onepiece';
+    })();
+
+    // Per-game/lang placeholder + hint text. One Piece has no JP split
+    // (all cards EN-only), unlike Pokémon.
+    var GS_GAME_LABELS = {
+      pokemon: {
+        en: { placeholder: 'Card name or number, e.g. Charizard or 032/165',
+              hint: 'English Pokémon cards. Type a name or collector number.' },
+        ja: { placeholder: 'Collector number, e.g. 001 or 001/165',
+              hint: 'Japanese Pokémon cards. Search by collector number.' }
+      },
+      onepiece: {
+        en: { placeholder: 'Card name or number, e.g. Luffy or OP04-014',
+              hint: 'One Piece cards. Type a name or card number.' }
+      }
+    };
+
+    // Shared by both the game toggle and the lang toggle so placeholder/hint/
+    // Card Show Mode visibility can never drift between the two switches.
+    function _gsRefreshUiForGameAndLang() {
+      var input = document.getElementById('gsSearchInput');
+      var hint  = document.getElementById('gsSearchHint');
+      var langToggle = document.getElementById('gsLangToggle');
+      var offlineKit = document.getElementById('gsOfflineKit');
+      var gameLabels = GS_GAME_LABELS[currentGame] || GS_GAME_LABELS.pokemon;
+      var labels = gameLabels[currentLang] || gameLabels.en;
+
+      input.placeholder = labels.placeholder;
+      hint.textContent = labels.hint;
+
+      if (currentGame === 'pokemon') {
+        if (langToggle) langToggle.style.display = 'flex';
+        // Restore only for Pro, and never for JP — same gate as the block's
+        // initial reveal below, so switching games/langs can't expose Card
+        // Show Mode to a free user or to a mode it doesn't support.
+        if (offlineKit) {
+          var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
+          offlineKit.style.display = (isPro && currentLang !== 'ja') ? 'block' : 'none';
+        }
+      } else {
+        // Non-Pokémon games: EN-only (no lang toggle), no Card Show Mode
+        // (Pokémon set-era specific).
+        if (langToggle) langToggle.style.display = 'none';
+        if (offlineKit) offlineKit.style.display = 'none';
+      }
+    }
+
+    document.querySelectorAll('.gs-game-btn').forEach(function(b) {
+      var active = b.dataset.game === currentGame;
+      b.style.background = active ? '#00e5ff' : 'transparent';
+      b.style.color = active ? '#0a0816' : '#00e5ff';
+    });
+    _gsRefreshUiForGameAndLang();
+
+    document.querySelectorAll('.gs-game-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        currentGame = btn.dataset.game;
+        if (currentGame !== 'pokemon') currentLang = 'en';
+        document.querySelectorAll('.gs-game-btn').forEach(function(b) {
+          var active = b.dataset.game === currentGame;
+          b.style.background = active ? '#00e5ff' : 'transparent';
+          b.style.color = active ? '#0a0816' : '#00e5ff';
+        });
+        document.querySelectorAll('.gs-lang-btn').forEach(function(b) {
+          var active = b.dataset.lang === currentLang;
+          b.style.background = active ? '#b14dff' : 'transparent';
+          b.style.color = active ? '#fff' : '#b14dff';
+        });
+        _gsRefreshUiForGameAndLang();
+        var input = document.getElementById('gsSearchInput');
+        input.value = '';
+        grid.innerHTML = '';
+        noResults.classList.add('hidden');
+        emptyState.classList.remove('hidden');
+        input.focus();
+      });
+    });
 
     document.querySelectorAll('.gs-lang-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
@@ -457,25 +551,9 @@
           b.style.background = active ? '#b14dff' : 'transparent';
           b.style.color = active ? '#fff' : '#b14dff';
         });
-        var input = document.getElementById('gsSearchInput');
-        var hint  = document.getElementById('gsSearchHint');
-        var offlineKit = document.getElementById('gsOfflineKit');
-        if (currentLang === 'ja') {
-          input.placeholder = 'Collector number, e.g. 001 or 001/165';
-          hint.textContent  = 'Japanese Pokémon cards. Search by collector number.';
-          // Hide Card Show Mode — not available for JP
-          if (offlineKit) offlineKit.style.display = 'none';
-        } else {
-          input.placeholder = 'Card name or number, e.g. Charizard or 032/165';
-          hint.textContent  = 'English Pokémon cards. Type a name or collector number.';
-          // Restore only for Pro — same gate as the block's initial reveal below,
-          // so toggling JP→EN can't expose Card Show Mode to a free user.
-          if (offlineKit) {
-            var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
-            offlineKit.style.display = isPro ? 'block' : 'none';
-          }
-        }
+        _gsRefreshUiForGameAndLang();
         // Clear results and re-run current query in new language
+        var input = document.getElementById('gsSearchInput');
         input.value = '';
         var resultsBox = document.getElementById('gsResults');
         if (resultsBox) resultsBox.innerHTML = '';
@@ -497,7 +575,7 @@
       box.classList.add('loading');
       var thisQuery = q;
       lastQuery = q;
-      fetch('/api/pokemon-search?q=' + encodeURIComponent(q) + '&lang=' + currentLang)
+      fetch('/api/card-search?game=' + currentGame + '&q=' + encodeURIComponent(q) + '&lang=' + currentLang)
         .then(function(r){ return r.json(); })
         .then(function(d){
           if (thisQuery !== lastQuery) return; // stale response, ignore
@@ -557,19 +635,6 @@
     setTimeout(function(){
       _gsLoadLocalIndex(function(){});
     }, 2000);
-
-    // Show Card Show Mode block for Pro users only.
-    // NOTE: uses the same client-side check as every other Pro gate in the
-    // app (colAddCard, gsAddToCollection, etc.) — search.html's /search
-    // route passes no server-side premium context, and adding one is out
-    // of scope here (app.py not touched this pass).
-    (function() {
-      var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
-      if (isPro) {
-        var kit = document.getElementById('gsOfflineKit');
-        if (kit) kit.style.display = 'block';
-      }
-    })();
   </script>
 </body>
 </html>
