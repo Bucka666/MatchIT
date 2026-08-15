@@ -1811,6 +1811,15 @@ function scSetTcg(val, btn) {
   if(btn) btn.classList.add('active');
   _scUpdateGameLockBanner(val);
   _scUpdateSearchPillLink(val);
+  // Photo Match's own "Card game" dropdown (#cxKeyType) drives query_category
+  // for the /match upload + confirmed-SKU path (app.py reads key_type, not
+  // category — a separate field from the Live Scanner's /api/v1/match POST).
+  // Without this sync a user who only sets the game via these top buttons
+  // and then uses Photo Match gets query_category="" there, which silently
+  // skips the confirmed-SKU game-mismatch guard entirely. One selection
+  // should govern both scan paths.
+  var _keyTypeSel = document.getElementById('cxKeyType');
+  if (_keyTypeSel) _keyTypeSel.value = val;
 }
 
 function scAutoDetectTcg(sku) {
