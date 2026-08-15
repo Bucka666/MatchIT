@@ -7281,11 +7281,11 @@
   },
   "me4": {
     "exclude": false,
-    "game": "MTG",
-    "name": "Masters Edition IV",
-    "printed_total": null,
-    "scryfall_id": "d38a13b7-6615-4c89-be7d-3b4eaacf1875",
-    "total": null
+    "game": "POKEMON",
+    "name": "Chaos Rising",
+    "printed_total": 86,
+    "ptcgoCode": "CRI",
+    "total": 122
   },
   "me5": {
     "exclude": false,
