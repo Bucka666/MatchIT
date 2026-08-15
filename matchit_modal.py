@@ -1013,6 +1013,23 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                     api_lookup[code.lower()] = s
         MTG_EXCLUDE_TYPES = {"memorabilia", "token", "minigame"}
         for set_id in sorted(mtg_new):
+            # Collision guard: some set_ids exist in both CardsDB/pokemon and
+            # CardsDB/mtg (e.g. me1-me4 -- Pokémon "Mega Evolution" etc. vs
+            # MTG "Masters Edition" I-IV). mtg_new is computed against the
+            # pre-run new_meta snapshot, so if Pokémon's block above already
+            # claimed this set_id earlier in this same run, writing here
+            # would silently clobber it with null-total MTG data. Mirrors
+            # build_set_metadata.py's own fix for this collision class --
+            # Pokémon wins, MTG's entry is skipped (its printed_total/total
+            # are always None anyway; nothing MTG-specific depends on this
+            # key existing). Confirmed live 2026-08-15: me4 (Chaos Rising,
+            # Pokémon) had been silently clobbered by me4 (Masters Edition
+            # IV, MTG) exactly this way, breaking OCR set-code confirmation
+            # for every Chaos Rising card.
+            if set_id in new_meta:
+                print(f"[REBUILD]   ! MTG {set_id}: collides with an existing "
+                      f"non-MTG entry -- keeping existing, skipping MTG write", flush=True)
+                continue
             entry = api_lookup.get(set_id.lower())
             if entry:
                 new_meta[set_id] = {
@@ -1090,6 +1107,13 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
                         except Exception:
                             pass
         for set_id in sorted(op_new):
+            # Same collision guard as the MTG block above -- if another
+            # game's block already claimed this set_id earlier in this same
+            # run, don't clobber it.
+            if set_id in new_meta:
+                print(f"[REBUILD]   ! One Piece {set_id}: collides with an existing "
+                      f"non-ONEPIECE entry -- keeping existing, skipping One Piece write", flush=True)
+                continue
             count = op_counts.get(set_id)
             new_meta[set_id] = {
                 "name":          op_names.get(set_id, set_id.upper()),
