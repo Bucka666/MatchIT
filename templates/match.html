@@ -2257,6 +2257,12 @@ function scCapture() {
 
   scCanvas.toBlob(async function(blob){
     if(!blob){scBusy=false;return;}
+    // One ID per capture, threaded through every path this blob can take
+    // (OCR-first beacon, on-device beacon, server /api/v1/match) so
+    // server-side logs can be correlated back to a single scan attempt --
+    // added purely for log analysis, never read by any client logic.
+    var _scanCycleId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() :
+      ('sc-' + Date.now() + '-' + Math.random().toString(36).slice(2));
     // OCR-first path
     // JP mode: skip the EN-only OCR-first fast path (see photo-upload path).
     var _ocrResult = (_ocrLang === 'jp') ? null : await _tryOcrLookup(blob);
@@ -2317,7 +2323,8 @@ function scCapture() {
             sku:      _ocrResult.sku,
             game:     (typeof _detectGame === 'function') ? _detectGame() : null,
             top1_sim: null,
-            gap:      null
+            gap:      null,
+            scan_cycle_id: _scanCycleId
           });
         } else {
           console.warn('[Stage3c] OCR-hit beacon skipped: window.GSOnDevice.beacon unavailable — scan NOT recorded server-side');
@@ -2398,6 +2405,7 @@ function scCapture() {
               scFailCount = 0;
               scAddCard({name:name, set:set, num:num, total:p.set_total||p.printed_total||'', pct:100, price:odGbp, priceStr:odGbpStr, img:odImgUrl, sku:odr.sku||'', rarity:rar, profile:p, allPrices:allPrices, tcgplayerUrl:p.tcgplayer_url||'', cardmarketUrl:p.cardmarket_url||'', grade:null, gradeSkipped:true});
               if (typeof scanIncrement === 'function') { var _ss = scanIncrement(); _updateScanBadge(_ss); }
+              odr.scan_cycle_id = _scanCycleId;
               window.GSOnDevice.beacon(odr);
               return true;
             }
@@ -2451,6 +2459,7 @@ function scCapture() {
     var fd=new FormData();
     fd.append('image',blob,'scan.jpg'); fd.append('top_k','3');
     fd.append('include_diagnostics','true'); fd.append('mode',scMode);
+    fd.append('scan_cycle_id', _scanCycleId);
     var tcg=document.getElementById('scTcgLock').value;
     if(tcg) fd.append('category',tcg);
     fd.append('jp_mode', _ocrLang);

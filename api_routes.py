@@ -260,6 +260,7 @@ def register_api_routes(app):
         # ── Parse parameters ──
         top_k = min(int(request.form.get("top_k", 5)), 20)
         query_category = request.form.get("category", "").strip().upper()
+        scan_cycle_id = request.form.get("scan_cycle_id", "").strip()
         # Needed early for the pre-CLIP OCR-first block below (jp_mode is
         # read again later, closer to the match call, for the CLIP-side
         # JP filter — that later read is unaffected by this one).
@@ -495,7 +496,8 @@ def register_api_routes(app):
         except Exception as e:
             return jsonify({"error": f"Matching failed: {e}"}), 500
         
-        print(f"[SCAN] Top match: {results[0]['sku']} score={results[0]['score']:.4f}", flush=True)
+        print(f"[SCAN] Top match: {results[0]['sku']} score={results[0]['score']:.4f} "
+              f"scan_cycle_id={scan_cycle_id!r}", flush=True)
         if results[0]['score'] < 0.65:
             return jsonify({"matches": [], "low_confidence": True, "reason": "score_too_low", "show_transition_toast": False}), 200
 

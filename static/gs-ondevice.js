@@ -456,7 +456,8 @@
           sku: result.sku,
           game: result.game,
           top1_sim: result.top1_sim,
-          gap: result.gap
+          gap: result.gap,
+          scan_cycle_id: result.scan_cycle_id
         })
       }).catch(function(){});
     } catch (e) { /* never block the scan */ }

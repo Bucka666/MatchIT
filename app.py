@@ -3680,10 +3680,12 @@ def ondevice_telemetry():
     game           = (data.get("game") or "").strip()
     version_tuple  = (data.get("version_tuple") or "").strip()
     error          = data.get("error")
+    scan_cycle_id  = (data.get("scan_cycle_id") or "").strip()
     print(
         f"[ONDEVICE-TELEMETRY] event={event!r} gate={gate_decision!r} "
         f"decline_reason={decline_reason!r} top1_sim={top1_sim} gap={gap} "
-        f"game={game!r} version={version_tuple!r} sku={sku!r} error={error!r}",
+        f"game={game!r} version={version_tuple!r} sku={sku!r} error={error!r} "
+        f"scan_cycle_id={scan_cycle_id!r}",
         flush=True,
     )
     # Derive identity server-side — security boundary.
