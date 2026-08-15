@@ -1206,7 +1206,7 @@ def rebuild_identifier_lookup_delta(set_ids: str = ""):
 
     with open(lookup_path, encoding="utf-8") as f:
         lookup = json.load(f)
-    before = {g: len(lookup.get(g, {})) for g in ("pokemon", "mtg", "ygo")}
+    before = {g: len(lookup.get(g, {})) for g in ("pokemon", "mtg", "ygo", "onepiece")}
 
     added = 0
     collisions = 0
@@ -1225,7 +1225,7 @@ def rebuild_identifier_lookup_delta(set_ids: str = ""):
         sub[key] = sku
         added += 1
 
-    for game_dir in ("pokemon", "mtg", "yugioh"):
+    for game_dir in ("pokemon", "mtg", "yugioh", "onepiece"):
         game_path = os.path.join(cards_root, game_dir)
         if not os.path.isdir(game_path):
             continue
@@ -1264,6 +1264,10 @@ def rebuild_identifier_lookup_delta(set_ids: str = ""):
                 ygoprodeck_id = str(p.get("ygoprodeck_id") or "").strip()
                 if ygoprodeck_id and re.match(r"^\d{5,8}$", ygoprodeck_id):
                     add_key("ygo", ygoprodeck_id, sku)
+            elif category == "ONEPIECE":
+                if not card_number or not set_id:
+                    continue
+                add_key("onepiece", f"{set_id}-{card_number}".lower(), sku)
 
     tmp = lookup_path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -1271,7 +1275,7 @@ def rebuild_identifier_lookup_delta(set_ids: str = ""):
     os.replace(tmp, lookup_path)
     vol.commit()
 
-    after = {g: len(lookup.get(g, {})) for g in ("pokemon", "mtg", "ygo")}
+    after = {g: len(lookup.get(g, {})) for g in ("pokemon", "mtg", "ygo", "onepiece")}
     result = (f"added {added} entries for sets {wanted} "
               f"(profiles scanned={scanned}, collisions={collisions}, "
               f"before={before}, after={after})")
