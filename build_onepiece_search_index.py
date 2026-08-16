@@ -100,16 +100,29 @@ def build_onepiece_search_index(data_root="."):
         if not name or not number or not set_id:
             return None
 
-        # Flat shape: profile["prices"]["tcgplayer"] = {"market": price}
+        # Flat shape: profile["prices"]["cardmarket"] = {"avg_sell": price} and/or
+        # profile["prices"]["tcgplayer"] = {"market": price}. Cardmarket (EUR)
+        # preferred for UK/EU pricing, same as every other game in this app —
+        # only became available for One Piece once the dotgg.gg price source
+        # was added (JustTCG never provided Cardmarket data at all).
         price_val = None
         price_currency = None
-        tcp = (p.get("prices") or {}).get("tcgplayer") or {}
-        if tcp.get("market"):
+        prices = p.get("prices") or {}
+        cm = prices.get("cardmarket") or {}
+        if cm.get("avg_sell"):
             try:
-                price_val = float(tcp["market"])
-                price_currency = "USD"
+                price_val = float(cm["avg_sell"])
+                price_currency = "EUR"
             except (TypeError, ValueError):
                 pass
+        if price_val is None:
+            tcp = prices.get("tcgplayer") or {}
+            if tcp.get("market"):
+                try:
+                    price_val = float(tcp["market"])
+                    price_currency = "USD"
+                except (TypeError, ValueError):
+                    pass
 
         return {
             "sku":       sku_dir,

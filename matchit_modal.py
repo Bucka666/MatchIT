@@ -500,27 +500,33 @@ def scheduled_set_check():
 @app.function(
     image=image,
     volumes={"/modal_data": vol},
-    secrets=[modal.Secret.from_name("justtcg-credentials")],
     schedule=modal.Cron("30 1 * * *"),  # 1:30am UTC — between set_check (1am)
-    # and fx_refresh (2am). Deliberately BEFORE the 3am JP / 4am EN Pokemon
-    # JustTCG refreshes: if the shared JustTCG quota runs out on a given day
-    # (confirmed live 2026-08-15: free-tier key returns 401 after ~1,460
-    # cards in one run, consistent with a daily cap), it's the already-
-    # established Pokemon pricing that goes briefly stale, not the newer
-    # One Piece pricing that has no fallback data source yet.
-    timeout=3600,
+    # and fx_refresh (2am). No longer contends with the 3am JP / 4am EN
+    # Pokemon JustTCG refreshes for a shared quota (dotgg.gg needs no API
+    # key at all) — this scheduling note is kept for history, not because
+    # it still matters.
+    timeout=600,
 )
 def scheduled_onepiece_price_refresh():
-    """Daily refresh of TCGPlayer (USD) pricing for One Piece cards via
-    JustTCG (see refresh_onepiece_prices.py). Re-fetches cards whose price
-    is missing or >24h stale, not just cards with no price at all -- this
-    runs every day, prices should stay current.
+    """Daily refresh of TCGPlayer (USD) and Cardmarket (EUR) pricing for
+    One Piece cards via dotgg.gg (see refresh_onepiece_dotgg_prices.py).
+    Replaces the JustTCG-based version: JustTCG's free-tier key returned
+    401 INVALID_API_KEY account-wide starting 2026-08-15/16 (confirmed
+    live, affecting even its already-working JP Pokemon usage), and even
+    before that only ever priced 7 of 4,672 One Piece cards in a full run.
+    dotgg.gg needs no API key and covers ~83% of our catalog in one
+    unauthenticated request (confirmed live 2026-08-16).
+
+    Re-fetches cards whose price is missing or >24h stale, not just cards
+    with no price at all -- this runs every day, prices should stay
+    current.
 
     No gpu= here — pure HTTP fetch + JSON write, CPU-only, same pattern as
     scheduled_fx_refresh/scheduled_jp_price_refresh below.
 
-    Lazy-imports refresh_onepiece_prices inside the function body, matching
-    scheduled_jp_price_refresh's own convention for scrape_pokemon_jpn."""
+    Lazy-imports refresh_onepiece_dotgg_prices inside the function body,
+    matching scheduled_jp_price_refresh's own convention for
+    scrape_pokemon_jpn."""
     print(f"[OP-PRICE-CRON] Starting run at {datetime.utcnow().isoformat()}Z", flush=True)
     import os, sys
     os.chdir("/app")
@@ -528,14 +534,10 @@ def scheduled_onepiece_price_refresh():
     os.environ["LOCALAPPDATA"] = "/modal_data"
     vol.reload()
     from pathlib import Path
-    justtcg_key = os.environ.get("JUSTTCG_API_KEY", "").strip()
-    if not justtcg_key:
-        print("[OP-PRICE-CRON] No JUSTTCG_API_KEY found, skipping", flush=True)
-        return
-    from refresh_onepiece_prices import refresh_onepiece_prices
+    from refresh_onepiece_dotgg_prices import refresh_onepiece_dotgg_prices
     try:
-        result = refresh_onepiece_prices(
-            Path("/modal_data/CardsDB"), api_key=justtcg_key, dry_run=False,
+        result = refresh_onepiece_dotgg_prices(
+            Path("/modal_data/CardsDB"), dry_run=False,
         )
         vol.commit()
         print(f"[OP-PRICE-CRON] {result}", flush=True)
