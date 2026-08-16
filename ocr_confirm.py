@@ -215,6 +215,9 @@ _PKM_SETCODE_MAP_STATIC = {
     "ASC": "me2pt5",    # Ascended Heroes
     "MEG": "me1",       # Mega Evolution 1 (printed on card face)
     "POR": "me3",       # Perfect Order (EN printed set code)
+    "SLKIE":  "me4",    # MLKit garbles J CRI EN → SLKIE on me4 (Chaos Rising) cards
+    "SLKIEN": "me4",    # variant with trailing N
+    "JICKIE": "me4",    # variant with J prefix retained
     "PBL": "me5",       # Pitch Black
     "GG": "swsh12pt5gg",  # Crown Zenith Galarian Gallery
 }

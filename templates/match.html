@@ -1734,6 +1734,16 @@ var scVideo  = document.getElementById('scVideo');
 var scCanvas = document.getElementById('scCanvas');
 var scCtx    = scCanvas ? scCanvas.getContext('2d') : null;
 
+// Frame-diff guard — created once, reused every capture. Skips near-duplicate
+// frames (camera held on the same card between scan cycles) before any cost
+// is paid: no scBusy, no network call. _scLastThumb is only set at the three
+// accept/commit points in scCapture() (OCR-hit, on-device, server), never on
+// a miss/low-confidence result, so a still-unmatched card keeps retrying.
+var _scThumbCanvas = document.createElement('canvas');
+_scThumbCanvas.width = 16; _scThumbCanvas.height = 16;
+var _scThumbCtx = _scThumbCanvas.getContext('2d');
+var _scLastThumb = null;
+
 function scGetInterval() { return scMode === 'fast' ? 4000 : 8000; }
 
 function scLoadSettings() {
@@ -2117,6 +2127,31 @@ function scCapture() {
   if(!scVideo.videoWidth){
     return;
   }
+
+  // Cheap early frame-diff — 16x16 downscale drawn straight from scVideo,
+  // before scBusy/network cost. Declared as a var (not const/let) so it
+  // stays in scope for the toBlob() closure below, where the three
+  // accept/commit points store it into _scLastThumb.
+  var _scCapturedThumb = null;
+  try {
+    _scThumbCtx.drawImage(scVideo, 0, 0, 16, 16);
+    _scCapturedThumb = _scThumbCtx.getImageData(0, 0, 16, 16).data;
+    if (_scLastThumb) {
+      var _scThumbDiff = 0;
+      for (var _ti = 0; _ti < _scCapturedThumb.length; _ti += 4) {
+        _scThumbDiff += Math.abs(_scCapturedThumb[_ti]   - _scLastThumb[_ti]) +
+                         Math.abs(_scCapturedThumb[_ti+1] - _scLastThumb[_ti+1]) +
+                         Math.abs(_scCapturedThumb[_ti+2] - _scLastThumb[_ti+2]);
+      }
+      var _scThumbAvgDiff = _scThumbDiff / (16 * 16 * 3); // 0-255 scale, per-channel average
+      if (_scThumbAvgDiff < 8) {
+        return; // near-identical to last accepted frame — skip, no scBusy, no network
+      }
+    }
+  } catch (e) {
+    // thumbnail diff failed (e.g. video not ready) -> fail-open, capture normally
+  }
+
   scBusy=true;
   var guide=document.getElementById('scGuide');
   var txt=document.getElementById('scGuideText');
@@ -2330,6 +2365,7 @@ function scCapture() {
           console.warn('[Stage3c] OCR-hit beacon skipped: window.GSOnDevice.beacon unavailable — scan NOT recorded server-side');
         }
       }
+      _scLastThumb = _scCapturedThumb;
       return;
     }
     // --- on-device gate (camera) ---
@@ -2407,6 +2443,7 @@ function scCapture() {
               if (typeof scanIncrement === 'function') { var _ss = scanIncrement(); _updateScanBadge(_ss); }
               odr.scan_cycle_id = _scanCycleId;
               window.GSOnDevice.beacon(odr);
+              _scLastThumb = _scCapturedThumb;
               return true;
             }
           }
@@ -2558,6 +2595,7 @@ function scCapture() {
       scFailCount = 0;
       scAddCard({name:name,set:set,num:num,total:p.set_total||p.printed_total||'',pct:pct,price:gbp,priceStr:gbpStr,img:imgUrl,sku:m.sku,rarity:rar,profile:p,allPrices:allPrices,tcgplayerUrl:p.tcgplayer_url||'',cardmarketUrl:p.cardmarket_url||'',grade:_capturedGrade});
       if (typeof scanIncrement === 'function') { var _ss = scanIncrement(); _updateScanBadge(_ss); }
+      _scLastThumb = _scCapturedThumb;
     })
     .catch(function(){scBusy=false;guide.className='cx-card-guide';if(scScanning){txt.textContent='Error — retrying…';txt.className='cx-guide-text scanning';}});
   },'image/jpeg',0.85);
