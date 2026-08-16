@@ -88,7 +88,13 @@ def _fetch_dotgg_prices() -> dict:
 @app.function(
     image=image,
     volumes={"/modal_data": vol},
-    timeout=300,
+    timeout=1800,  # ceiling, not a target — dotgg's own fetch is a single
+    # fast request, but reading+conditionally writing 4,672 profile.json
+    # files over the Modal network volume is what actually takes time.
+    # 300s wasn't enough (confirmed live 2026-08-16, FunctionTimeoutError
+    # partway through); the old JustTCG version used 7200s for the same
+    # per-profile I/O pattern, sized for its own rate-limit backoffs which
+    # don't apply here, so 1800s is a generous middle ground.
 )
 def backfill_onepiece_dotgg_prices(dry_run: bool = False, resume: bool = True) -> dict:
     vol.reload()

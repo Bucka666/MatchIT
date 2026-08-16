@@ -505,7 +505,11 @@ def scheduled_set_check():
     # Pokemon JustTCG refreshes for a shared quota (dotgg.gg needs no API
     # key at all) — this scheduling note is kept for history, not because
     # it still matters.
-    timeout=600,
+    timeout=1800,  # ceiling, not a target — see backfill_onepiece_dotgg_prices.py's
+    # identical note: dotgg's own fetch is fast, but reading+writing 4,672
+    # profile.json files over the network volume is what takes time. 600s
+    # was too tight (same FunctionTimeoutError class as the one confirmed
+    # live 2026-08-16 in the standalone backfill's original 300s ceiling).
 )
 def scheduled_onepiece_price_refresh():
     """Daily refresh of TCGPlayer (USD) and Cardmarket (EUR) pricing for
