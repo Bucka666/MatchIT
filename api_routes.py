@@ -305,7 +305,7 @@ def register_api_routes(app):
         # instead of letting CLIP guess at an unrelated card. Anchored to
         # the OCR-extracted identity, never to a CLIP result — CLIP
         # hasn't run yet at this point in the request.
-        if query_category in ("YUGIOH", "MTG", "POKEMON"):
+        if query_category in ("YUGIOH", "MTG", "POKEMON", "ONEPIECE"):
             try:
                 _ocr_direct_sku, _ocr_extracted_set_id = ocr_direct_lookup(
                     str(query_path1), query_category, jp_mode=(_early_jp_mode == 'jp')

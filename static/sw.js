@@ -166,7 +166,7 @@
 // v146 — 2026-08-12: no client-facing change (cloudflare_worker.js +
 // matchit_modal.py routing sync for /api/heartbeat and /api/stats onto the
 // CPU twin) — bump requested as part of this commit's reference point
-const CACHE_NAME = 'grailsweep-v154'; // 2026-08-16 frame-diff guard + me4 OCR alias fix
+const CACHE_NAME = 'grailsweep-v157'; // 2026-08-17 OP gate bypass + OP OCR direct-lookup
 const PRECACHE = [
   '/',
   '/static/style.css',

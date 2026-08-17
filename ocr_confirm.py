@@ -1507,15 +1507,38 @@ def _extract_mtg_collector(image_path: str) -> Optional[str]:
 
 def _extract_onepiece_setcode(image_path: str) -> Optional[str]:
     """
-    Read the set code from the bottom-right badge of a One Piece card.
-    Returns combined e.g. 'op01-001' for direct DB lookup, or None.
+    Read the set code badge from a One Piece card.
+    Badge format: {code}-{number} {rarity} {cost}
+    e.g. 'OP10-101 C 3' or 'ST07-003 UC 2'.
+    Scans a wide bottom strip rather than fixed coordinates —
+    fixed coords fail on scanner captures where card-snap padding
+    shifts the badge position unpredictably. (Aug 2026)
     """
-    texts = _crop_and_read(image_path, (0.45, 0.85, 1.00, 1.00))
+    # Wide bottom strip — captures badge regardless of snap padding.
+    # Right boundary at 0.93 excludes the vertical copyright strip.
+    texts = _crop_and_read(image_path, (0.0, 0.72, 0.93, 1.0))
     logger.info(f"[OCR-ONEPIECE] raw texts: {texts}")
-    result = parse_onepiece_text(texts)
-    if result:
-        logger.info(f"[OCR-ONEPIECE] extracted: {result}")
-    return result
+
+    # Strip known copyright/attribution noise before parsing
+    _NOISE = ('BANDAI', 'CEO', 'CE.O', 'MADE IN JAPAN', 'T.A.',
+              'C.E.O', 'HDMI', 'MULTIMEDIA', 'DEFINITION')
+    texts = [t for t in texts
+             if not any(n in t.upper() for n in _NOISE)]
+
+    for text in texts:
+        # No trailing anchor — \d{3} stops at 3 digits regardless
+        # of what follows (rarity letter or cost digit). (Aug 2026)
+        m = re.search(
+            r'\b([A-Z]{1,4}\d{0,2})-(\d{3})',
+            text.upper()
+        )
+        if m:
+            set_part = m.group(1).lower()
+            num_part = m.group(2)
+            result = f"{set_part}-{num_part}"
+            logger.info(f"[OCR-ONEPIECE] extracted: {result}")
+            return result
+    return None
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1724,6 +1747,17 @@ def _lookup_sku_by_setcode(extracted: str, tcg: str) -> Optional[str]:
                 conn.close()
                 return row[0] if row else None
             return None
+        elif tcg == "ONEPIECE":
+            # extracted = op06-024, SKU = op-op06-024
+            if '-' in extracted:
+                pattern = f"op-{extracted}"
+                row = conn.execute(
+                    "SELECT sku FROM images WHERE sku = ?",
+                    (pattern,)
+                ).fetchone()
+                conn.close()
+                return row[0] if row else None
+            return None
         else:
             return None
         row = conn.execute(
@@ -1795,6 +1829,8 @@ def ocr_direct_lookup(
         # Nothing is lost: the post-CLIP call site sees the same image and
         # catches the same cards with a working gate.
         extracted = _extract_pokemon_number_dispatch(image_path, jp_mode=jp_mode)
+    elif tcg_upper == "ONEPIECE":
+        extracted = _extract_onepiece_setcode(image_path)
     else:
         return None, None
     if not extracted:
@@ -2340,13 +2376,25 @@ def parse_mtg_text(texts: list) -> Optional[str]:
 
 def parse_onepiece_text(texts: list) -> Optional[str]:
     """Parse raw OCR text lines from a One Piece card.
-    The set code badge (bottom-right) contains text like 'OP01-001',
-    'ST07-003', or 'P-001' for standalone promos (no digits before the
-    hyphen — \\d{0,2} allows zero so these still match).
-    Returns '{set_code}-{num}' e.g. 'op01-001', or None.
+    The set code badge (bottom-right) prints: {code} {rarity} {cost}
+    e.g. 'OP10-101 C 3' (Common, cost 3) or 'OP15-076 UC' (Uncommon).
+    Rarity codes: C, UC, R, SR, L, SEC. Cost is a single digit.
+    We extract the card code only; rarity/cost are suffix noise for now.
+    Returns '{set_code}-{num}' e.g. 'op10-101', or None.
     """
+    # Strip known copyright/attribution lines before parsing
+    _NOISE = ('BANDAI', 'CEO', 'CE.O', 'MADE IN JAPAN', 'T.A.',
+              'C.E.O', 'HDMI', 'MULTIMEDIA', 'DEFINITION')
+    texts = [t for t in texts
+             if not any(n in t.upper() for n in _NOISE)]
     for text in texts:
-        m = re.search(r'\b([A-Z]{1,4}\d{0,2})-(\d{3})\b', text.upper())
+        # No trailing anchor — \d{3} grabs exactly the first 3 digits
+        # after the dash and stops. Handles both rarity-letter-glued
+        # ('OP10-101C') and cost-digit-glued ('OP15-0294') cases. (Aug 2026)
+        m = re.search(
+            r'\b([A-Z]{1,4}\d{0,2})-(\d{3})',
+            text.upper()
+        )
         if m:
             set_part = m.group(1).lower()
             num_part = m.group(2)

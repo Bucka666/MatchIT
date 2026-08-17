@@ -420,7 +420,10 @@
   // 0.005 let through confidently-wrong high-sim confusable pairs — see
   // web_spike/gate_validate.py runs) --------------------------------------
   function gsGateAccept(r) {
-    const _accept = r.game !== 'YGO' && r.gap >= 0.02 && r.top1_sim >= 0.80;
+    // ONEPIECE scores structurally lower than Pokémon/MTG —
+    // calibrated from 16 Aug 2026 scan run (correct matches 0.70-0.80)
+    var _threshold = r.game === 'ONEPIECE' ? 0.70 : 0.80;
+    const _accept = r.game !== 'YGO' && r.gap >= 0.02 && r.top1_sim >= _threshold;
     return _accept;
   }
 

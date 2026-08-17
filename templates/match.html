@@ -1710,6 +1710,8 @@ window.cxRedeemTopupInline = function() {
 var scScanning  = false;
 var scTimer     = null;
 var scBusy      = false;
+var scViewportSettling = false;
+var scViewportSettleTimer = null;
 var scFailCount = 0;
 var scLastSku   = '';
 var scLastTime  = 0;
@@ -1891,6 +1893,19 @@ function scStartCamera(did) {
 
   function acceptStream(s) {
     scStream=s; scVideo.srcObject=s; scVideo.style.display='block'; scVideo.play();
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function() {
+        scViewportSettling = true;
+        if (scViewportSettleTimer) clearTimeout(scViewportSettleTimer);
+        // 600ms settle window — browser chrome hide/show shifts the
+        // overlay position; block captures until geometry is stable.
+        scViewportSettleTimer = setTimeout(function() {
+          scViewportSettling = false;
+        }, 600);
+      });
+    }
+
     var ov=document.getElementById('scGuideOverlay'); if(ov) ov.style.display='flex';
     scListCameras();
   }
@@ -2127,6 +2142,7 @@ function scCapture() {
   if(!scVideo.videoWidth){
     return;
   }
+  if (scViewportSettling) { return; }
 
   // Cheap early frame-diff — 16x16 downscale drawn straight from scVideo,
   // before scBusy/network cost. Declared as a var (not const/let) so it
@@ -2552,7 +2568,7 @@ function scCapture() {
         }
       }
       scBusy=false;
-      if(!data.matches||data.matches.length===0||data.match===null||data.low_confidence){guide.className='cx-card-guide';if(scScanning){txt.textContent='No confident match — keep scanning…';txt.className='cx-guide-text scanning';}scFailCount++;if(scFailCount===3){if(typeof gsShowToast==='function'){gsShowToast("Try holding the camera steady and make sure the card fills the frame. Avoid glare and shadows.",{title:"Having trouble?",variant:'info',duration:6000});}}if(scFailCount>=5){var fg=document.getElementById('scFailGate');if(fg){fg.style.display='flex';scScanning=false;}}return;}
+      if(!data.matches||data.matches.length===0||data.match===null){guide.className='cx-card-guide';if(scScanning){txt.textContent='No confident match — keep scanning…';txt.className='cx-guide-text scanning';}scFailCount++;if(scFailCount===3){if(typeof gsShowToast==='function'){gsShowToast("Try holding the camera steady and make sure the card fills the frame. Avoid glare and shadows.",{title:"Having trouble?",variant:'info',duration:6000});}}if(scFailCount>=5){var fg=document.getElementById('scFailGate');if(fg){fg.style.display='flex';scScanning=false;}}return;}
       // Extract grade explicitly with diagnostic
       var _capturedGrade = null;
       if (data && data.grade && typeof data.grade === 'object') {
@@ -2563,9 +2579,13 @@ function scCapture() {
         _gradeToast('Grade not available for this card.');
       }
       var m=data.matches[0];
+      // One Piece CLIP scores are structurally lower than other TCGs —
+      // bypass both confidence gates for OP and let CLIP result through.
+      var _isOp=m.sku&&(m.sku.indexOf('op-op')===0||m.sku.indexOf('op-st')===0||m.sku.indexOf('op-eb')===0||m.sku.indexOf('op-p-')===0);
+      if(data.low_confidence&&!_isOp){guide.className='cx-card-guide';if(scScanning){txt.textContent='No confident match — keep scanning…';txt.className='cx-guide-text scanning';}scFailCount++;return;}
       var raw=m.score||m.similarity||0;
       var pct=Math.min(100,Math.max(0,Math.round(((raw-0.65)/0.30)*100)));
-      if(pct<10){guide.className='cx-card-guide';if(scScanning){txt.textContent='Low confidence — scanning…';txt.className='cx-guide-text scanning';}return;}
+      if(pct<10&&!data.ocr_confirmed&&!_isOp){guide.className='cx-card-guide';if(scScanning){txt.textContent='Low confidence — scanning…';txt.className='cx-guide-text scanning';}return;}
       var now=Date.now();
       if(scRecentSkus[m.sku]&&(now-scRecentSkus[m.sku])<8000){guide.className='cx-card-guide matched';txt.textContent='Same card — next';txt.className='cx-guide-text success';scRecentSkus[m.sku]=now;return;}
       scLastSku=m.sku; scLastTime=now; scRecentSkus[m.sku]=now;
