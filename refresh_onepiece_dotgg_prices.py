@@ -91,7 +91,7 @@ def refresh_onepiece_dotgg_prices(db_root: Path, dry_run: bool = False) -> dict:
 
     stats = {
         "cards_checked": 0, "priced": 0,
-        "skipped_fresh": 0, "no_match": 0, "errors": 0,
+        "skipped_fresh": 0, "skipped_no_change": 0, "no_match": 0, "errors": 0,
     }
 
     all_prices = _fetch_dotgg_prices()
@@ -120,12 +120,23 @@ def refresh_onepiece_dotgg_prices(db_root: Path, dry_run: bool = False) -> dict:
             continue
 
         if not dry_run:
-            prices = profile.setdefault("prices", {})
+            # Build updated prices by merging into existing
+            existing = dict(profile.get("prices", {}))
+            new_prices = dict(existing)  # start from current
             if entry["usd"] is not None:
-                prices["tcgplayer"] = {"market": entry["usd"]}
+                new_prices["tcgplayer"] = {"market": entry["usd"]}
             if entry["eur"] is not None:
-                prices["cardmarket"] = {"avg_sell": entry["eur"]}
-            profile["prices_updated"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+                new_prices["cardmarket"] = {"avg_sell": entry["eur"]}
+
+            # Skip write if nothing changed
+            if new_prices == existing:
+                stats["skipped_no_change"] += 1
+                continue
+
+            profile["prices"] = new_prices
+            profile["prices_updated"] = datetime.utcnow().strftime(
+                "%Y-%m-%dT%H:%M:%SZ"
+            )
             with open(profile_path, "w", encoding="utf-8") as f:
                 json.dump(profile, f, indent=2, ensure_ascii=False)
 
