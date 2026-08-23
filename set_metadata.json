@@ -6157,7 +6157,8 @@
     "name": "jpn-s10a",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 148,
+    "jp_image_scrape_count": 148
   },
   "jpn-s10b": {
     "exclude": false,
@@ -6165,7 +6166,8 @@
     "name": "jpn-s10b",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 101,
+    "jp_image_scrape_count": 101
   },
   "jpn-s10d": {
     "exclude": false,
@@ -6173,7 +6175,8 @@
     "name": "jpn-s10d",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 88,
+    "jp_image_scrape_count": 88
   },
   "jpn-s10p": {
     "exclude": false,
@@ -6181,7 +6184,8 @@
     "name": "jpn-s10p",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 88,
+    "jp_image_scrape_count": 88
   },
   "jpn-s11": {
     "exclude": false,
@@ -6189,7 +6193,8 @@
     "name": "jpn-s11",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 127,
+    "jp_image_scrape_count": 127
   },
   "jpn-s11a": {
     "exclude": false,
@@ -6197,7 +6202,8 @@
     "name": "jpn-s11a",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 140,
+    "jp_image_scrape_count": 140
   },
   "jpn-s12": {
     "exclude": false,
@@ -6205,7 +6211,8 @@
     "name": "パラダイムトリガー",
     "printed_total": 98,
     "ptcgoCode": null,
-    "total": 125
+    "total": 125,
+    "jp_image_scrape_count": 125
   },
   "jpn-s12a": {
     "exclude": false,
@@ -6213,7 +6220,8 @@
     "name": "VSTARユニバース",
     "printed_total": 172,
     "ptcgoCode": null,
-    "total": 254
+    "total": 254,
+    "jp_image_scrape_count": 351
   },
   "jpn-s4": {
     "exclude": false,
@@ -6221,7 +6229,8 @@
     "name": "jpn-s4",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 111,
+    "jp_image_scrape_count": 111
   },
   "jpn-s4a": {
     "exclude": false,
@@ -6229,7 +6238,8 @@
     "name": "jpn-s4a",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 326,
+    "jp_image_scrape_count": 326
   },
   "jpn-s5a": {
     "exclude": false,
@@ -6237,7 +6247,8 @@
     "name": "jpn-s5a",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 84,
+    "jp_image_scrape_count": 84
   },
   "jpn-s5i": {
     "exclude": false,
@@ -6245,7 +6256,8 @@
     "name": "jpn-s5i",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 81,
+    "jp_image_scrape_count": 81
   },
   "jpn-s5r": {
     "exclude": false,
@@ -6253,7 +6265,8 @@
     "name": "jpn-s5r",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 81,
+    "jp_image_scrape_count": 81
   },
   "jpn-s6a": {
     "exclude": false,
@@ -6261,7 +6274,8 @@
     "name": "jpn-s6a",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 87,
+    "jp_image_scrape_count": 87
   },
   "jpn-s6h": {
     "exclude": false,
@@ -6269,7 +6283,8 @@
     "name": "jpn-s6h",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 83,
+    "jp_image_scrape_count": 83
   },
   "jpn-s6k": {
     "exclude": false,
@@ -6277,7 +6292,8 @@
     "name": "jpn-s6k",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 83,
+    "jp_image_scrape_count": 83
   },
   "jpn-s7d": {
     "exclude": false,
@@ -6285,7 +6301,8 @@
     "name": "jpn-s7d",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 79,
+    "jp_image_scrape_count": 79
   },
   "jpn-s7r": {
     "exclude": false,
@@ -6293,7 +6310,8 @@
     "name": "jpn-s7r",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 79,
+    "jp_image_scrape_count": 79
   },
   "jpn-s8": {
     "exclude": false,
@@ -6301,7 +6319,8 @@
     "name": "jpn-s8",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 115,
+    "jp_image_scrape_count": 115
   },
   "jpn-s8a": {
     "exclude": false,
@@ -6309,7 +6328,8 @@
     "name": "jpn-s8a",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 34,
+    "jp_image_scrape_count": 34
   },
   "jpn-s8b": {
     "exclude": false,
@@ -6317,7 +6337,8 @@
     "name": "jpn-s8b",
     "printed_total": null,
     "ptcgoCode": null,
-    "total": null
+    "total": 279,
+    "jp_image_scrape_count": 279
   },
   "jpn-s9": {
     "exclude": false,
@@ -6325,7 +6346,8 @@
     "name": "スターバース",
     "printed_total": 100,
     "ptcgoCode": null,
-    "total": 127
+    "total": 127,
+    "jp_image_scrape_count": 127
   },
   "jpn-s9a": {
     "exclude": false,
@@ -6333,7 +6355,8 @@
     "name": "バトルリージョン",
     "printed_total": 67,
     "ptcgoCode": null,
-    "total": 93
+    "total": 93,
+    "jp_image_scrape_count": 138
   },
   "jpn-sc1a": {
     "exclude": false,
@@ -9335,5 +9358,68 @@
     "printed_total": 86,
     "ptcgoCode": "BLK",
     "total": 172
+  },
+  "jpn-s1a": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "s1a",
+    "printed_total": 78,
+    "ptcgoCode": null,
+    "total": 78,
+    "jp_image_scrape_count": 78
+  },
+  "jpn-s1w": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "s1w",
+    "printed_total": 67,
+    "ptcgoCode": null,
+    "total": 68,
+    "jp_image_scrape_count": 68
+  },
+  "jpn-s1h": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "s1h",
+    "printed_total": 68,
+    "ptcgoCode": null,
+    "total": 68,
+    "jp_image_scrape_count": 68
+  },
+  "jpn-s2": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "s2",
+    "printed_total": 105,
+    "ptcgoCode": null,
+    "total": 106,
+    "jp_image_scrape_count": 106
+  },
+  "jpn-s2a": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "s2a",
+    "printed_total": 78,
+    "ptcgoCode": null,
+    "total": 78,
+    "jp_image_scrape_count": 78
+  },
+  "jpn-s3": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "s3",
+    "printed_total": 110,
+    "ptcgoCode": null,
+    "total": 110,
+    "jp_image_scrape_count": 110
+  },
+  "jpn-s3a": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "s3a",
+    "printed_total": 85,
+    "ptcgoCode": null,
+    "total": 85,
+    "jp_image_scrape_count": 85
   }
 }
