@@ -183,3 +183,17 @@ images_volume_corrupt.db
 # scheduled-job cadence recon — a point-in-time production data dump, not
 # source. Kept on disk, not history.
 scheduler_log_check.json
+
+# JP SWSH SKU-link output (2026-08-23) — regenerable from the committed
+# jp_cardid_maps/ + identifier_lookup.json via `python link_jp_skus.py`.
+# jp_sku_links.json's content also depends on which --sets filter was last
+# passed (a full run overwrites it with every set, not just these 7), so a
+# committed copy would misrepresent itself as a definitive, complete link
+# set. Kept on disk, not history.
+jp_sku_links.json
+jp_sku_links_report.txt
+
+# One-off image_id list built for a single scoped upload_new_images_by_id.py
+# run (2026-08-23 JP SWSH ingest) — regenerable via a one-line SQL query
+# against images.db, not source data. Kept on disk, not history.
+jp_swsh_7sets_image_ids.json
