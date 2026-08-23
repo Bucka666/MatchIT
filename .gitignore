@@ -198,6 +198,11 @@ jp_sku_links_report.txt
 # against images.db, not source data. Kept on disk, not history.
 jp_swsh_7sets_image_ids.json
 
+# Same pattern, same day: one-off image_id list for the JP M-series/SM-era
+# upload_new_images_by_id.py run. Regenerable via a one-line SQL query
+# against images.db, not source data. Kept on disk, not history.
+new_jp_image_ids.json
+
 # scratch/ — debug crops, OCR spot-checks, and one-off investigation scripts
 # accumulated across sessions while building the JP SWSH OCR pipeline. Not
 # referenced at runtime; disposable by the same convention as tools/ above
