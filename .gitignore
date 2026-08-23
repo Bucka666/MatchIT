@@ -197,3 +197,9 @@ jp_sku_links_report.txt
 # run (2026-08-23 JP SWSH ingest) — regenerable via a one-line SQL query
 # against images.db, not source data. Kept on disk, not history.
 jp_swsh_7sets_image_ids.json
+
+# scratch/ — debug crops, OCR spot-checks, and one-off investigation scripts
+# accumulated across sessions while building the JP SWSH OCR pipeline. Not
+# referenced at runtime; disposable by the same convention as tools/ above
+# (reusable pieces get promoted out, e.g. check_row_count.py on 2026-08-23).
+scratch/
