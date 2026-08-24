@@ -208,3 +208,4 @@ new_jp_image_ids.json
 # referenced at runtime; disposable by the same convention as tools/ above
 # (reusable pieces get promoted out, e.g. check_row_count.py on 2026-08-23).
 scratch/
+jp_manual_link_log.jsonl
