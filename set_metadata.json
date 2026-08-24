@@ -6161,7 +6161,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "jpn-s10a",
-    "printed_total": null,
+    "printed_total": 93,
     "ptcgoCode": null,
     "total": 148,
     "jp_image_scrape_count": 148
@@ -6170,7 +6170,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "jpn-s10b",
-    "printed_total": null,
+    "printed_total": 77,
     "ptcgoCode": null,
     "total": 101,
     "jp_image_scrape_count": 101
@@ -6197,7 +6197,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "jpn-s11",
-    "printed_total": null,
+    "printed_total": 126,
     "ptcgoCode": null,
     "total": 127,
     "jp_image_scrape_count": 127
@@ -6206,7 +6206,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "jpn-s11a",
-    "printed_total": null,
+    "printed_total": 81,
     "ptcgoCode": null,
     "total": 140,
     "jp_image_scrape_count": 140
@@ -6233,7 +6233,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "jpn-s4",
-    "printed_total": null,
+    "printed_total": 110,
     "ptcgoCode": null,
     "total": 111,
     "jp_image_scrape_count": 111
@@ -6242,7 +6242,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "jpn-s4a",
-    "printed_total": null,
+    "printed_total": 312,
     "ptcgoCode": null,
     "total": 326,
     "jp_image_scrape_count": 326
@@ -6251,7 +6251,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "jpn-s5a",
-    "printed_total": null,
+    "printed_total": 78,
     "ptcgoCode": null,
     "total": 84,
     "jp_image_scrape_count": 84
@@ -6260,7 +6260,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "jpn-s5i",
-    "printed_total": null,
+    "printed_total": 76,
     "ptcgoCode": null,
     "total": 81,
     "jp_image_scrape_count": 81
@@ -6269,7 +6269,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "jpn-s5r",
-    "printed_total": null,
+    "printed_total": 81,
     "ptcgoCode": null,
     "total": 81,
     "jp_image_scrape_count": 81
@@ -6296,7 +6296,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "jpn-s6k",
-    "printed_total": null,
+    "printed_total": 77,
     "ptcgoCode": null,
     "total": 83,
     "jp_image_scrape_count": 83
@@ -6323,7 +6323,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "jpn-s8",
-    "printed_total": null,
+    "printed_total": 112,
     "ptcgoCode": null,
     "total": 115,
     "jp_image_scrape_count": 115
@@ -9378,7 +9378,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "s1w",
-    "printed_total": 67,
+    "printed_total": 68,
     "ptcgoCode": null,
     "total": 68,
     "jp_image_scrape_count": 68
@@ -9396,7 +9396,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "s2",
-    "printed_total": 105,
+    "printed_total": 106,
     "ptcgoCode": null,
     "total": 106,
     "jp_image_scrape_count": 106
@@ -9450,7 +9450,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "sm1s",
-    "printed_total": 64,
+    "printed_total": 66,
     "ptcgoCode": null,
     "total": 66,
     "jp_image_scrape_count": 66
@@ -9459,7 +9459,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "sm2k",
-    "printed_total": 54,
+    "printed_total": 55,
     "ptcgoCode": null,
     "total": 55,
     "jp_image_scrape_count": 55
@@ -9486,7 +9486,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "sm4s",
-    "printed_total": 54,
+    "printed_total": 55,
     "ptcgoCode": null,
     "total": 55,
     "jp_image_scrape_count": 55
@@ -9513,7 +9513,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "sm6",
-    "printed_total": 101,
+    "printed_total": 102,
     "ptcgoCode": null,
     "total": 102,
     "jp_image_scrape_count": 102
@@ -9603,7 +9603,7 @@
     "exclude": false,
     "game": "POKEMON",
     "name": "sm10b",
-    "printed_total": 61,
+    "printed_total": 62,
     "ptcgoCode": null,
     "total": 62,
     "jp_image_scrape_count": 62
