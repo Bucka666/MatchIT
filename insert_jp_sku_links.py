@@ -36,6 +36,49 @@ from r2_util import upload_to_r2
 LINKS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jp_sku_links.json")
 
 
+def link_one(sku: str, src_path: str, conn: sqlite3.Connection, img_dir: str) -> dict:
+    """
+    Register one confirmed sku -> image link into images.db (embedding left
+    NULL). Copies src_path into img_dir under a fresh image_id, normalizes it,
+    attempts a non-fatal R2 upload, and INSERTs the row via conn.
+
+    Caller owns the transaction (commit/rollback) and is responsible for
+    checking whether `sku` already has a row first — this always inserts a
+    new row and never checks for an existing one.
+
+    Returns {"status": "inserted", "sku", "image_id", "image_db_path", "r2_ok"}
+    or {"status": "failed", "sku", "error"} on any exception.
+    """
+    try:
+        image_id = str(uuid.uuid4())
+        dst_path = os.path.join(img_dir, f"{image_id}.jpg")
+
+        shutil.copy2(src_path, dst_path)
+        normalize_uploaded_image(dst_path)
+        r2_ok = upload_to_r2(image_id, dst_path)
+
+        # original_filename carries an explicit _FRONT marker so
+        # _infer_view_from_orig() (app.py) classifies this row as FRONT via
+        # its normal path rather than depending on the "no marker -> FRONT"
+        # default -- see project_front_matrix_view_bug memory. The raw JP
+        # scrape filename (e.g. "041099.jpg") has no natural FRONT/BACK
+        # signal of its own, so this is added explicitly at insert time.
+        stem, ext = os.path.splitext(os.path.basename(src_path))
+        orig_filename = f"{stem}_FRONT{ext}"
+
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO images
+                (image_id, sku, description, original_filename, path, added_at, embedding)
+            VALUES (?, ?, ?, ?, ?, ?, NULL)
+            """,
+            (image_id, sku, "", orig_filename, dst_path, datetime.utcnow().isoformat()),
+        )
+        return {"status": "inserted", "sku": sku, "image_id": image_id, "image_db_path": dst_path, "r2_ok": r2_ok}
+    except Exception as e:
+        return {"status": "failed", "sku": sku, "error": str(e)}
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="preview only, no writes")
@@ -88,32 +131,18 @@ def main():
     failed = []
 
     for sku, src_path in to_process:
-        try:
-            image_id = str(uuid.uuid4())
-            dst_path = os.path.join(img_dir, f"{image_id}.jpg")
-
-            shutil.copy2(src_path, dst_path)
-            normalize_uploaded_image(dst_path)
-            r2_ok = upload_to_r2(image_id, dst_path)
-            if not r2_ok:
+        result = link_one(sku, src_path, conn, img_dir)
+        if result["status"] == "inserted":
+            if not result["r2_ok"]:
                 r2_failed.append(sku)
-
-            conn.execute(
-                """
-                INSERT OR REPLACE INTO images
-                    (image_id, sku, description, original_filename, path, added_at, embedding)
-                VALUES (?, ?, ?, ?, ?, ?, NULL)
-                """,
-                (image_id, sku, "", os.path.basename(src_path), dst_path, datetime.utcnow().isoformat()),
-            )
             existing_skus.add(sku)
             inserted += 1
             if inserted % 100 == 0:
                 conn.commit()
                 print(f"  ... {inserted}/{len(to_process)}")
-        except Exception as e:
-            failed.append(f"{sku}: {e}")
-            print(f"  [FAIL] {sku} ({src_path}): {e}")
+        else:
+            failed.append(f"{sku}: {result['error']}")
+            print(f"  [FAIL] {sku} ({src_path}): {result['error']}")
 
     conn.commit()
     conn.close()

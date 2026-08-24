@@ -34,6 +34,14 @@ def load_identifier_lookup():
     return data.get("pokemon", {})
 
 
+def make_sku(setcode: str, number) -> str:
+    return f"jpn-{setcode}-{str(number).zfill(3)}"
+
+
+def sku_exists(setcode: str, number, pokemon_lookup: dict) -> bool:
+    return make_sku(setcode, number) in pokemon_lookup
+
+
 def link_set(setcode, pokemon_lookup):
     map_path = os.path.join(MAPS_DIR, f"{setcode}_map.json")
     with open(map_path, encoding="utf-8") as f:
@@ -60,10 +68,9 @@ def link_set(setcode, pokemon_lookup):
             stats["skipped"] += 1
             continue
 
-        padded = str(number).zfill(3)
-        sku = f"jpn-{setcode}-{padded}"
+        sku = make_sku(setcode, number)
 
-        if sku in pokemon_lookup:
+        if sku_exists(setcode, number, pokemon_lookup):
             if sku in linked:
                 stats["collisions"] += 1
                 continue
