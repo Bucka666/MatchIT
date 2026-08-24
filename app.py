@@ -961,7 +961,15 @@ def _infer_view_from_orig(orig_name: str, sku: str = "") -> str:
         if f"{sku_u}_SIDE_C" in up_full:
             return "SIDE_C"
 
-    return ""
+    # No explicit FRONT/BACK/SIDE_C marker in the filename -- this is the
+    # case for every image inserted via insert_jp_sku_links.py (raw scrape
+    # filenames like "041099.jpg", no view suffix). Confirmed via a live
+    # images.db scan (2026-08-24) that zero rows in this unmarked bucket are
+    # backs (no "_BACK"/"back"/"SIDE_C" token anywhere in their
+    # original_filename), so defaulting to FRONT cannot misclassify a back --
+    # it only recovers rows that were previously silently dropped from
+    # FRONT_MATRIX by the SQLite-path loader in load_embedding_cache().
+    return "FRONT"
 
 
 def _abs_image_path_from_db_path(p: str) -> Optional[str]:
@@ -1461,28 +1469,54 @@ def load_embedding_cache(force: bool = False):
           f"(FRONT={len(_front_mat_vecs)}, BACK={len(_back_mat_vecs)})", flush=True)
 
     # ── Save numpy fast cache for next startup ──
+    # GUARD: a degraded rebuild (e.g. this SQLite fallback path classifying
+    # fewer rows as FRONT than the existing on-disk cache already has) must
+    # never overwrite a better cache -- that's exactly how a transient
+    # misclassification became a persistent one (2026-08-24 incident: 4,077
+    # jpn- rows dropped by _infer_view_from_orig's old "" fallthrough got
+    # baked into the volume's fast cache this way). Compare against what's
+    # already on disk before writing; skip the save (but keep serving the
+    # rebuilt matrices in-memory for this container) if it would regress.
     try:
         os.makedirs(_cache_dir, exist_ok=True)
 
-        if FRONT_MATRIX is not None:
-            np.save(_cache_front_path, FRONT_MATRIX)
-        if BACK_MATRIX is not None:
-            np.save(_cache_back_path, BACK_MATRIX)
+        new_front_count = len(FRONT_INFO)
+        existing_front_count = None
+        if os.path.exists(_cache_data_path):
+            try:
+                _existing_data = json.loads(Path(_cache_data_path).read_text(encoding="utf-8"))
+                existing_front_count = len(_existing_data.get("front_info", []))
+            except Exception:
+                existing_front_count = None
 
-        cache_data = {
-            "front_info": [list(x) for x in FRONT_INFO],
-            "back_info": [list(x) for x in BACK_INFO],
-            "desc_by_id": DESC_BY_IMAGE_ID,
-            "orig_by_id": ORIG_BY_IMAGE_ID,
-            "view_by_id": VIEW_BY_IMAGE_ID,
-            "path_by_id": PATH_BY_IMAGE_ID,
-        }
-        Path(_cache_data_path).write_text(json.dumps(cache_data), encoding="utf-8")
+        if existing_front_count is not None and new_front_count < existing_front_count:
+            print(
+                f"[CACHE] Refusing to overwrite fast cache: rebuilt FRONT={new_front_count} "
+                f"< existing on-disk FRONT={existing_front_count}. Serving the rebuilt matrices "
+                f"in-memory for this container only -- NOT persisting, so a good on-volume cache "
+                f"can't be clobbered by a degraded rebuild.",
+                flush=True,
+            )
+        else:
+            if FRONT_MATRIX is not None:
+                np.save(_cache_front_path, FRONT_MATRIX)
+            if BACK_MATRIX is not None:
+                np.save(_cache_back_path, BACK_MATRIX)
 
-        cache_meta = {"loaded_at": _CACHE_LOADED_AT, "count": len(rows_out)}
-        Path(_cache_meta_path).write_text(json.dumps(cache_meta), encoding="utf-8")
+            cache_data = {
+                "front_info": [list(x) for x in FRONT_INFO],
+                "back_info": [list(x) for x in BACK_INFO],
+                "desc_by_id": DESC_BY_IMAGE_ID,
+                "orig_by_id": ORIG_BY_IMAGE_ID,
+                "view_by_id": VIEW_BY_IMAGE_ID,
+                "path_by_id": PATH_BY_IMAGE_ID,
+            }
+            Path(_cache_data_path).write_text(json.dumps(cache_data), encoding="utf-8")
 
-        print(f"[CACHE] Numpy fast cache saved to {_cache_dir}", flush=True)
+            cache_meta = {"loaded_at": _CACHE_LOADED_AT, "count": len(rows_out)}
+            Path(_cache_meta_path).write_text(json.dumps(cache_meta), encoding="utf-8")
+
+            print(f"[CACHE] Numpy fast cache saved to {_cache_dir}", flush=True)
     except Exception as e:
         print(f"[CACHE] Failed to save numpy cache: {e}", flush=True)
 
