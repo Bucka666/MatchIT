@@ -2568,7 +2568,30 @@ function scCapture() {
         }
       }
       scBusy=false;
-      if(!data.matches||data.matches.length===0||data.match===null){guide.className='cx-card-guide';if(scScanning){txt.textContent='No confident match — keep scanning…';txt.className='cx-guide-text scanning';}scFailCount++;if(scFailCount===3){if(typeof gsShowToast==='function'){gsShowToast("Try holding the camera steady and make sure the card fills the frame. Avoid glare and shadows.",{title:"Having trouble?",variant:'info',duration:6000});}}if(scFailCount>=5){var fg=document.getElementById('scFailGate');if(fg){fg.style.display='flex';scScanning=false;}}return;}
+      var _noMatch = !data.matches||data.matches.length===0||data.match===null;
+      var m = null, _isOp = false, _lowConf = false;
+      if (!_noMatch) {
+        m = data.matches[0];
+        // One Piece CLIP scores are structurally lower than other TCGs —
+        // bypass both confidence gates for OP and let CLIP result through.
+        _isOp = m.sku&&(m.sku.indexOf('op-op')===0||m.sku.indexOf('op-st')===0||m.sku.indexOf('op-eb')===0||m.sku.indexOf('op-p-')===0);
+        _lowConf = data.low_confidence && !_isOp;
+      }
+      // Unified fail-gate — covers both "no matches at all" (_noMatch) and
+      // "matches came back but CLIP/OCR weren't confident" (_lowConf), the
+      // common case for a card the scanner doesn't recognise. These used to
+      // be one branch; 0b57d23 split _lowConf out for the OP bypass but left
+      // the scFailCount>=5 stop-gate only on the _noMatch side, so a run of
+      // low-confidence frames never tripped it and the scan loop never
+      // stopped (see the 2026-08-24 recon for the full analysis).
+      if (_noMatch || _lowConf) {
+        guide.className='cx-card-guide';
+        if(scScanning){txt.textContent='No confident match — keep scanning…';txt.className='cx-guide-text scanning';}
+        scFailCount++;
+        if(scFailCount===3){if(typeof gsShowToast==='function'){gsShowToast("Try holding the camera steady and make sure the card fills the frame. Avoid glare and shadows.",{title:"Having trouble?",variant:'info',duration:6000});}}
+        if(scFailCount>=5){var fg=document.getElementById('scFailGate');if(fg){fg.style.display='flex';scScanning=false;}}
+        return;
+      }
       // Extract grade explicitly with diagnostic
       var _capturedGrade = null;
       if (data && data.grade && typeof data.grade === 'object') {
@@ -2578,16 +2601,11 @@ function scCapture() {
         console.warn('[GRADE-DIAG] data.grade missing or invalid:', data && data.grade);
         _gradeToast('Grade not available for this card.');
       }
-      var m=data.matches[0];
-      // One Piece CLIP scores are structurally lower than other TCGs —
-      // bypass both confidence gates for OP and let CLIP result through.
-      var _isOp=m.sku&&(m.sku.indexOf('op-op')===0||m.sku.indexOf('op-st')===0||m.sku.indexOf('op-eb')===0||m.sku.indexOf('op-p-')===0);
-      if(data.low_confidence&&!_isOp){guide.className='cx-card-guide';if(scScanning){txt.textContent='No confident match — keep scanning…';txt.className='cx-guide-text scanning';}scFailCount++;return;}
       var raw=m.score||m.similarity||0;
       var pct=Math.min(100,Math.max(0,Math.round(((raw-0.65)/0.30)*100)));
       if(pct<10&&!data.ocr_confirmed&&!_isOp){guide.className='cx-card-guide';if(scScanning){txt.textContent='Low confidence — scanning…';txt.className='cx-guide-text scanning';}return;}
       var now=Date.now();
-      if(scRecentSkus[m.sku]&&(now-scRecentSkus[m.sku])<8000){guide.className='cx-card-guide matched';txt.textContent='Same card — next';txt.className='cx-guide-text success';scRecentSkus[m.sku]=now;return;}
+      if(scRecentSkus[m.sku]&&(now-scRecentSkus[m.sku])<8000){guide.className='cx-card-guide matched';txt.textContent='Same card — next';txt.className='cx-guide-text success';scRecentSkus[m.sku]=now;_scLastThumb=_scCapturedThumb;return;}
       scLastSku=m.sku; scLastTime=now; scRecentSkus[m.sku]=now;
       scAutoDetectTcg(m.sku);
       var p=m.profile||{};
