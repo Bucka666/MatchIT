@@ -18,6 +18,38 @@
   </div>
 </div>
 
+<style>
+/* Quick Add / Offline pill -- deliberately one notch below .cx-start-cam-btn
+   (the scan hero): solid single accent, not the violet->cyan gradient, and
+   no cxSubmitGlow pulse -- both are reserved for the scan CTA so this stays
+   a clear second, not a competitor. */
+#gsSearchPill:hover { transform:translateY(-2px); }
+</style>
+<div style="display:flex;justify-content:center;padding:10px 20px 2px;">
+<a href="/search" id="gsSearchPill"
+   style="
+     display:flex;
+     align-items:center;
+     gap:9px;
+     padding:12px 28px;
+     border-radius:999px;
+     background:var(--cx-violet);
+     border:none;
+     color:#fff;
+     font-size:0.88rem;
+     font-family:'DM Sans',sans-serif;
+     font-weight:700;
+     letter-spacing:0.01em;
+     text-decoration:none;
+     box-shadow:0 4px 18px rgba(177,77,255,0.4);
+     transition:transform 0.2s;
+   "
+   aria-label="Search Pokémon cards">
+  <span style="font-size:1.05rem;line-height:1;" aria-hidden="true">⚡</span>
+  <span id="gsSearchPillLabel">Quick Add / Offline</span>
+</a>
+</div>
+
 {% if error %}
 <div class="mi-flash err" style="margin:8px 16px;">{{ error }}</div>
 {% endif %}
@@ -1707,6 +1739,11 @@ window.cxRedeemTopupInline = function() {
 };
 
 // ── SCANNER ───────────────────────────────────────────────
+// scScanning/scBusy are also read by base.html's _gsWireAutoUpdate (SW
+// auto-update mid-scan guard) via a typeof check, since match.html extends
+// base.html and shares its global scope -- keep in sync, renaming either
+// var breaks the mid-scan reload guard silently (it just fails open to
+// "not scanning" and the guard checks the wrong game entirely).
 var scScanning  = false;
 var scTimer     = null;
 var scBusy      = false;
@@ -1786,33 +1823,48 @@ function _scUpdateGameLockBanner(val) {
 }
 
 // Keeps the "browse card catalogue" links (fail-gate + floating pill) in
-// sync with the selected game. /search now serves both Pokémon and One
-// Piece via its own game selector (added alongside search.html's
-// generalization — see build_onepiece_search_index.py), so these can
-// deep-link with ?game= instead of staying hardcoded to Pokémon. MTG/YGO
-// have no /search support yet, so they fall back to the same Pokémon
-// default as "All TCGs" — matches today's existing behavior for those
-// games, not a new promise. Hooked into scSetTcg() itself (not a separate
-// call site) since every write to #scTcgLock already goes through there —
-// same reasoning as _scUpdateGameLockBanner above.
+// sync with the selected game. /search now serves all four games via its
+// own game selector (?game=onepiece/mtg/ygo — see the 2026-08-25 MTG/YGO
+// Card Show Mode build, templates/search.html), so every game deep-links
+// correctly instead of the three non-Pokémon games falling back to the
+// Pokémon default (MTG/YGO previously had no /search support at all,
+// which was the whole reason for that fallback -- now stale). Each link's
+// visible label is a single, game-agnostic string (not per-game, so a
+// future game added here can't repeat the old "shows the wrong game name"
+// bug) -- see PILL_LABEL/FAILGATE_LABEL below for what each one says and
+// why they differ; only aria-label stays per-game for accessibility, since
+// the href already carries the actual game-specific behavior. Hooked into
+// scSetTcg() itself (not a separate call site) since every write to
+// #scTcgLock already goes through there — same reasoning as
+// _scUpdateGameLockBanner above.
 function _scUpdateSearchPillLink(val) {
   var CATALOGUE = {
-    ONEPIECE: { href: '/search?game=onepiece', label: 'One Piece Card Catalogue', aria: 'Browse One Piece Card Catalogue' }
+    POKEMON:  { href: '/search',            aria: 'Search Pokémon cards' },
+    ONEPIECE: { href: '/search?game=onepiece', aria: 'Search One Piece cards' },
+    MTG:      { href: '/search?game=mtg',      aria: 'Search Magic: The Gathering cards' },
+    YUGIOH:   { href: '/search?game=ygo',       aria: 'Search Yu-Gi-Oh! cards' }
   };
-  var c = CATALOGUE[val] || { href: '/search', label: 'Pokémon Card Catalogue', aria: 'Browse Pokémon Card Catalogue' };
+  // Two different labels on purpose: the top pill is now the promoted
+  // entry point to Card Show Mode's per-game offline download (2026-08-26),
+  // so it reads "Quick Add / Offline"; the fail-gate link is a plain
+  // "couldn't scan it, go find it manually" link and keeps the catalogue-
+  // search framing from the previous pass.
+  var PILL_LABEL = 'Quick Add / Offline';
+  var FAILGATE_LABEL = 'Card Quick Search';
+  var c = CATALOGUE[val] || CATALOGUE.POKEMON;
 
   var pill = document.getElementById('gsSearchPill');
   if (pill) {
     pill.href = c.href;
     pill.setAttribute('aria-label', c.aria);
     var pillLabel = document.getElementById('gsSearchPillLabel');
-    if (pillLabel) pillLabel.textContent = c.label;
+    if (pillLabel) pillLabel.textContent = PILL_LABEL;
   }
 
   var failLink = document.getElementById('scFailGateSearchLink');
   if (failLink) {
     failLink.href = c.href;
-    failLink.textContent = c.label + ' →';
+    failLink.textContent = FAILGATE_LABEL + ' →';
   }
 }
 
@@ -3379,7 +3431,7 @@ document.getElementById('matchYear') &&
   <a href="/search" id="scFailGateSearchLink"
      style="font-size:14px;color:#b14dff;text-decoration:none;
             font-weight:600;">
-    Pokémon Card Catalogue →
+    Card Quick Search →
   </a>
 </div>
 
@@ -4042,35 +4094,5 @@ async function _jpDenomCheck(ocrText) {
 
 // ── End OCR-first scanning ─────────────────────────
 </script>
-
-<a href="/search" id="gsSearchPill"
-   style="
-     position:fixed;
-     bottom:24px;
-     right:20px;
-     z-index:900;
-     display:flex;
-     align-items:center;
-     gap:8px;
-     padding:10px 18px;
-     border-radius:999px;
-     background:#1a1a2e;
-     border:1px solid #b14dff;
-     color:#b14dff;
-     font-size:13px;
-     font-family:'DM Sans',sans-serif;
-     font-weight:600;
-     text-decoration:none;
-     box-shadow:0 0 12px rgba(177,77,255,0.25);
-   "
-   aria-label="Browse Pokémon Card Catalogue">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-       stroke="currentColor" stroke-width="2.5"
-       stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="11" cy="11" r="8"/>
-    <path d="m21 21-4.35-4.35"/>
-  </svg>
-  <span id="gsSearchPillLabel">Pokémon Card Catalogue</span>
-</a>
 
 {% endblock %}

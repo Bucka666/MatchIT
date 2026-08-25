@@ -4164,6 +4164,27 @@ def serve_search_index(game):
         return jsonify({"error": "index unavailable"}), 500
 
 
+JP_SET_COVERAGE_PATH = "/modal_data/jp_set_coverage.json" if _os.path.exists("/modal_data") else "jp_set_coverage.json"
+
+
+@app.route('/api/jp-set-coverage')
+def serve_jp_set_coverage():
+    """{set_id: {imaged, total, limited}} for every JP set with >=1 imaged
+    card, written by build_pokemon_search_index.py. Powers search.html's set
+    picker "(Limited coverage)" label -- a set absent from this file has zero
+    imaged cards and should not be listed at all, not just unlabeled."""
+    try:
+        with open(JP_SET_COVERAGE_PATH, 'r', encoding='utf-8') as f:
+            data = f.read()
+        resp = make_response(data)
+        resp.headers['Content-Type'] = 'application/json; charset=utf-8'
+        resp.headers['Cache-Control'] = 'public, max-age=86400'
+        return resp
+    except Exception as e:
+        app.logger.error(f"[JP-COVERAGE] Failed to serve: {e}")
+        return jsonify({}), 200
+
+
 @app.route("/search")
 def search_page():
     return render_template("search.html")
@@ -7021,8 +7042,20 @@ _preload_identifier_lookup()
 
 POKEMON_SEARCH_INDEX_PATH = "/modal_data/pokemon_search_index.json" if _os.path.exists("/modal_data") else "pokemon_search_index.json"
 ONEPIECE_SEARCH_INDEX_PATH = "/modal_data/onepiece_search_index.json" if _os.path.exists("/modal_data") else "onepiece_search_index.json"
-_SEARCH_INDEX_PATHS = {"pokemon": POKEMON_SEARCH_INDEX_PATH, "onepiece": ONEPIECE_SEARCH_INDEX_PATH}
-_search_indexes = {"pokemon": [], "onepiece": []}  # each: list of {sku,name,number,set_id,set_name,...}
+MTG_SEARCH_INDEX_PATH = "/modal_data/mtg_search_index.json" if _os.path.exists("/modal_data") else "mtg_search_index.json"
+YGO_SEARCH_INDEX_PATH = "/modal_data/ygo_search_index.json" if _os.path.exists("/modal_data") else "ygo_search_index.json"
+_SEARCH_INDEX_PATHS = {
+    "pokemon":  POKEMON_SEARCH_INDEX_PATH,
+    "onepiece": ONEPIECE_SEARCH_INDEX_PATH,
+    "mtg":      MTG_SEARCH_INDEX_PATH,
+    "ygo":      YGO_SEARCH_INDEX_PATH,
+}
+# Each: list of {sku,name,number,set_id,set_name,...}. Previously only
+# pokemon/onepiece existed here, so /api/card-search?game=mtg|ygo silently
+# fell back to Pokémon's index (card_search()'s `if game not in
+# _search_indexes: game = "pokemon"` guard) -- these two new keys are what
+# actually fixes that, not the guard itself, which is unchanged.
+_search_indexes = {"pokemon": [], "onepiece": [], "mtg": [], "ygo": []}
 
 
 def _preload_search_indexes():
@@ -7565,11 +7598,22 @@ def rebuild_identifier_lookup():
 POKEMON_SET_CARDS_PATH = "/modal_data/pokemon_set_card_lists.json" if _os.path.exists("/modal_data") else "pokemon_set_card_lists.json"
 MTG_SET_CARDS_PATH = "/modal_data/mtg_set_card_lists.json" if _os.path.exists("/modal_data") else "mtg_set_card_lists.json"
 YGO_SET_CARDS_PATH = "/modal_data/ygo_set_card_lists.json" if _os.path.exists("/modal_data") else "ygo_set_card_lists.json"
+ONEPIECE_SET_CARDS_PATH = "/modal_data/onepiece_set_card_lists.json" if _os.path.exists("/modal_data") else "onepiece_set_card_lists.json"
 
+# ONEPIECE was missing from this dict before 2026-08-25 -- found while
+# diagnosing the rebuild_set_cards timeout. Effect: sets_cards() never had a
+# sidecar path to check for ONEPIECE (_SET_CARDS_PATH_BY_GAME.get("ONEPIECE")
+# was always None), so every One Piece /api/sets/<id>/cards request has
+# always taken the live _build_set_card_list fallback, never the baked one --
+# and rebuild_set_card_lists()'s old single-pass version silently dropped any
+# ONEPIECE-bucketed data at its final write loop (which only ever iterated
+# this dict's keys), so a One Piece sidecar was never produced at all. Fixed
+# as part of the same per-game split below, not a separate change.
 _SET_CARDS_PATH_BY_GAME = {
-    "POKEMON": POKEMON_SET_CARDS_PATH,
-    "MTG": MTG_SET_CARDS_PATH,
-    "YUGIOH": YGO_SET_CARDS_PATH,
+    "POKEMON":  POKEMON_SET_CARDS_PATH,
+    "MTG":      MTG_SET_CARDS_PATH,
+    "YUGIOH":   YGO_SET_CARDS_PATH,
+    "ONEPIECE": ONEPIECE_SET_CARDS_PATH,
 }
 
 _json_sidecar_cache = {}  # path -> (mtime, data)
@@ -7615,13 +7659,132 @@ def _card_sort_key(c):
         return (1, c["card_number"])
 
 
+_GAME_DIR_NAME = {"POKEMON": "pokemon", "MTG": "mtg", "YUGIOH": "yugioh", "ONEPIECE": "onepiece"}
+
+
+def _load_profile_direct(sku, db_root, game):
+    """Direct profile.json read for a SKU whose game is already known.
+    _load_card_profile_for_sku (profile_utils.py) is the general-purpose
+    version -- it doesn't know the game, so it probes EVERY CardsDB game
+    directory (pokemon/mtg/yugioh/onepiece/hellbreak) in turn, calling
+    .exists() on each candidate path until one hits, over a network-backed
+    volume. _build_set_card_list always knows the game up front (it's a
+    function parameter), so that probe is pure waste here -- this goes
+    straight to the one correct path. Same file, same content, output
+    identical; only the number of filesystem round-trips changes (up to
+    5x fewer per call, worst case). Identified 2026-08-25 while diagnosing
+    why rebuild_set_cards started exceeding its 3600s timeout after the
+    dedup-then-limit fix started fetching complete (not capped) sets --
+    this was already the dominant per-row cost, the fetch-volume increase
+    just made it visible at scale."""
+    game_dir = _GAME_DIR_NAME.get(game)
+    if not game_dir:
+        return {}
+    profile_path = os.path.join(db_root, game_dir, sku, "profile.json")
+    try:
+        with open(profile_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+# Per-game offline-download eligibility ceiling. This is NOT a data-fetch
+# limit — a set over its ceiling is still returned complete (every card
+# still resolves individually for online search) and gets flagged
+# offline_disabled instead of silently truncated. Sized from a live
+# post-dedup census (2026-08-25): Pokémon max 304 (swshp), OnePiece max 274
+# (op09), YGO max 450 (MP25), MTG max EXCLUDING plst is 819 (j22) — MTG's
+# "The List" (plst) is a rotating cross-set reprint bucket at ~4,753 unique
+# cards, 5.8x the next-largest MTG set, and deliberately excluded from this
+# sizing on purpose (see _SET_FETCH_SAFETY_LIMIT below for why it's still
+# fully searchable). Any future set that grows past its game's ceiling
+# trips the same rule automatically — this is a threshold, not a per-set
+# exclusion list.
+_OFFLINE_SET_SIZE_CEILING = {
+    "POKEMON":  350,
+    "YUGIOH":   500,
+    "ONEPIECE": 350,
+    "MTG":      1000,
+}
+
+def _extract_price_for_sku(prof, game):
+    """Best-effort price + currency for a card profile, branched per game --
+    profile.json's price shape is NOT uniform across games (confirmed live,
+    2026-08-25): Pokémon and One Piece keep a FLAT cardmarket.avg_sell; MTG
+    and YGO nest cardmarket BY VARIANT (normal/foil -> .trend). tcgplayer is
+    nested-by-variant for every game except One Piece (flat .market). A
+    single passthrough would silently return no price for whichever games
+    it wasn't written for, so this branches instead of guessing one shape.
+
+    Preference order mirrors the existing search-index builders and
+    match.html's own client-side price logic: Cardmarket (EUR, UK/EU
+    market) first, TCGplayer (USD) as fallback. Returns (price, currency),
+    both None if nothing usable is found.
+    """
+    prices = prof.get("prices") or {}
+    cm = prices.get("cardmarket") or {}
+    tcp = prices.get("tcgplayer") or {}
+
+    if game in ("POKEMON", "ONEPIECE"):
+        if cm.get("avg_sell"):
+            try:
+                return float(cm["avg_sell"]), "EUR"
+            except (TypeError, ValueError):
+                pass
+        if game == "ONEPIECE":
+            if tcp.get("market"):
+                try:
+                    return float(tcp["market"]), "USD"
+                except (TypeError, ValueError):
+                    pass
+        else:
+            for variant in tcp.values():
+                if isinstance(variant, dict) and variant.get("market"):
+                    try:
+                        return float(variant["market"]), "USD"
+                    except (TypeError, ValueError):
+                        pass
+        return None, None
+
+    # MTG / YUGIOH: cardmarket nested by variant (normal/foil -> trend)
+    for variant in cm.values():
+        if isinstance(variant, dict) and variant.get("trend"):
+            try:
+                return float(variant["trend"]), "EUR"
+            except (TypeError, ValueError):
+                pass
+    for variant in tcp.values():
+        if isinstance(variant, dict) and variant.get("market"):
+            try:
+                return float(variant["market"]), "USD"
+            except (TypeError, ValueError):
+                pass
+    return None, None
+
+
+# SQL/prefix fetch safety valve — bounds worst-case query cost, NOT a real
+# per-set cap. Must exceed the largest known RAW (pre-dedup) row count for
+# any set so every card is always fetched: MTG's plst is 4,982 raw rows
+# before dedup collapses it to 4,753 unique cards, the largest of any kind
+# observed. 6000 leaves >1000 rows of headroom above that. `truncated`
+# below reports whether this safety valve actually bound (expected to
+# never fire against known data) — a distinct signal from offline_disabled.
+_SET_FETCH_SAFETY_LIMIT = 6000
+
+
 def _build_set_card_list(set_id, game=None, meta=None):
     """Builds the per-set card list exactly as sets_cards() did before this
     sidecar existed — same game detection, same SQL queries, same MTG
-    name-dedup (lowest card_number wins), same YGO LIMIT 200 +
-    truncated/total_in_db semantics, same sort order. Shared by the live
-    handler (fallback for any set absent from its game's baked sidecar)
-    and the offline weekly bake (looping every set_id).
+    name-dedup (lowest card_number wins), same sort order. Shared by the
+    live handler (fallback for any set absent from its game's baked
+    sidecar) and the offline weekly bake (looping every set_id).
+
+    Fetch limits are a safety valve only (_SET_FETCH_SAFETY_LIMIT) — every
+    real set is returned complete, dedup-then-limit for MTG so the
+    per-(set_id, name) collapse runs over the full raw pool rather than a
+    pre-dedup truncated one. Offline-download eligibility is a separate
+    concern, applied AFTER the real (deduped) count is known
+    (_OFFLINE_SET_SIZE_CEILING) — see offline_disabled in the return value.
 
     Per-row profile.json reads are dispatched to a thread pool (I/O-bound
     network reads against CardsDB — same trick as the MTG totals bake),
@@ -7633,7 +7796,7 @@ def _build_set_card_list(set_id, game=None, meta=None):
     that work; the bake passes them too, since it already has meta from
     its own set_metadata.json iteration.
 
-    Returns (game, cards, truncated, total_in_db).
+    Returns (game, cards, truncated, total_in_db, offline_disabled).
     """
     from concurrent.futures import ThreadPoolExecutor
 
@@ -7649,7 +7812,9 @@ def _build_set_card_list(set_id, game=None, meta=None):
 
     from vertical_loader import get_db_root as _gdbr
     db_root = _gdbr() or "CardsDB"
-    data_dir = get_data_dir()
+    # data_dir (get_data_dir()) is no longer needed here -- every profile
+    # read in this function now goes through _load_profile_direct, which
+    # only needs db_root + the already-known game (see its docstring).
 
     if game in ("POKEMON", "MTG"):
         try:
@@ -7658,14 +7823,14 @@ def _build_set_card_list(set_id, game=None, meta=None):
             try:
                 if game == "POKEMON":
                     rows = conn.execute(
-                        "SELECT image_id, sku FROM images WHERE sku LIKE ? LIMIT 500",
-                        (set_id + "-%",)
+                        "SELECT image_id, sku FROM images WHERE sku LIKE ? LIMIT ?",
+                        (set_id + "-%", _SET_FETCH_SAFETY_LIMIT)
                     ).fetchall()
                 else:
                     rows = conn.execute(
                         "SELECT DISTINCT image_id, sku FROM images"
-                        " WHERE sku LIKE ? OR sku LIKE ? LIMIT 500",
-                        ("mtg-" + set_id + "-%", set_id + "-%")
+                        " WHERE sku LIKE ? OR sku LIKE ? LIMIT ?",
+                        ("mtg-" + set_id + "-%", set_id + "-%", _SET_FETCH_SAFETY_LIMIT)
                     ).fetchall()
             finally:
                 conn.close()
@@ -7674,12 +7839,18 @@ def _build_set_card_list(set_id, game=None, meta=None):
 
         # Drop SKUs that don't belong to this game (guards bare-prefix collisions, e.g. me1)
         rows = [r for r in rows if _get_sku_game(r["sku"]) == game]
+        # Hit the safety valve -- the true set is larger than what we fetched.
+        # For MTG this checks the RAW (pre-dedup) row count, which is correct:
+        # dedup can only shrink the count, so if the raw fetch already hit the
+        # valve the post-dedup total is unknowable from this query.
+        truncated = len(rows) >= _SET_FETCH_SAFETY_LIMIT
+        total_in_db = len(rows)
 
         profiles = {}
         if rows:
             with ThreadPoolExecutor(max_workers=32) as pool:
                 for sku, prof in pool.map(
-                    lambda r: (r["sku"], _load_card_profile_for_sku(r["sku"], db_root, data_dir)),
+                    lambda r: (r["sku"], _load_profile_direct(r["sku"], db_root, game)),
                     rows,
                 ):
                     profiles[sku] = prof
@@ -7691,6 +7862,7 @@ def _build_set_card_list(set_id, game=None, meta=None):
             prof = profiles.get(sku) or {}
             name = prof.get("name") or sku
             card_number = prof.get("card_number") or ""
+            price, currency = _extract_price_for_sku(prof, game)
 
             if game == "MTG":
                 key = name.lower().strip()
@@ -7701,6 +7873,8 @@ def _build_set_card_list(set_id, game=None, meta=None):
                         "name": name,
                         "card_number": card_number,
                         "img_url": "https://images.grailsweep.com/" + image_id + ".jpg",
+                        "price": price,
+                        "currency": currency,
                     }
                 else:
                     # Keep lowest card_number variant
@@ -7711,6 +7885,8 @@ def _build_set_card_list(set_id, game=None, meta=None):
                                 "name": name,
                                 "card_number": card_number,
                                 "img_url": "https://images.grailsweep.com/" + image_id + ".jpg",
+                                "price": price,
+                                "currency": currency,
                             }
                     except (ValueError, TypeError):
                         pass
@@ -7720,6 +7896,8 @@ def _build_set_card_list(set_id, game=None, meta=None):
                     "name": name,
                     "card_number": card_number,
                     "img_url": "https://images.grailsweep.com/" + image_id + ".jpg",
+                    "price": price,
+                    "currency": currency,
                 })
 
         if game == "MTG":
@@ -7728,7 +7906,6 @@ def _build_set_card_list(set_id, game=None, meta=None):
     else:
         # YUGIOH / ONEPIECE: query images.db by SKU prefix (fast path) —
         # both are always self-prefixed (ygo-/op-), no bare-sku ambiguity.
-        PREFIX_LIMIT = 200
         prefix = "ygo-" if game == "YUGIOH" else "op-"
         prefix_pattern = prefix + set_id + "-%"
         try:
@@ -7740,19 +7917,19 @@ def _build_set_card_list(set_id, game=None, meta=None):
                 ).fetchone()[0]
                 prefix_rows = conn.execute(
                     "SELECT image_id, sku FROM images WHERE sku LIKE ? LIMIT ?",
-                    (prefix_pattern, PREFIX_LIMIT)
+                    (prefix_pattern, _SET_FETCH_SAFETY_LIMIT)
                 ).fetchall()
             finally:
                 conn.close()
         except Exception:
             prefix_rows = []
-        truncated = total_in_db > PREFIX_LIMIT
+        truncated = total_in_db > _SET_FETCH_SAFETY_LIMIT
 
         profiles = {}
         if prefix_rows:
             with ThreadPoolExecutor(max_workers=32) as pool:
                 for sku, prof in pool.map(
-                    lambda r: (r["sku"], _load_card_profile_for_sku(r["sku"], db_root, data_dir)),
+                    lambda r: (r["sku"], _load_profile_direct(r["sku"], db_root, game)),
                     prefix_rows,
                 ):
                     profiles[sku] = prof
@@ -7763,11 +7940,14 @@ def _build_set_card_list(set_id, game=None, meta=None):
             prof = profiles.get(sku) or {}
             name = prof.get("name") or sku
             card_number = prof.get("card_number") or ""
+            price, currency = _extract_price_for_sku(prof, game)
             cards.append({
                 "sku": sku,
                 "name": name,
                 "card_number": card_number,
                 "img_url": "https://images.grailsweep.com/" + image_id + ".jpg",
+                "price": price,
+                "currency": currency,
             })
 
     # JP sets: images.db only contains cards that have gone through the
@@ -7795,69 +7975,110 @@ def _build_set_card_list(set_id, game=None, meta=None):
                     continue
                 name = prof.get("name") or folder_name
                 card_number = prof.get("card_number") or prof.get("number") or ""
+                price, currency = _extract_price_for_sku(prof, game)
                 cards.append({
                     "sku": folder_name,
                     "name": name,
                     "card_number": card_number,
                     "img_url": "/static/assets/gs_card_placeholder.png",
+                    "price": price,
+                    "currency": currency,
                 })
 
     cards.sort(key=_card_sort_key)
-    return game, cards, truncated, total_in_db
+
+    # Offline-download eligibility, decided AFTER the real (deduped) count is
+    # known -- never truncates cards, only flags the set as not offered for
+    # per-set offline download. See _OFFLINE_SET_SIZE_CEILING docstring.
+    ceiling = _OFFLINE_SET_SIZE_CEILING.get(game)
+    offline_disabled = bool(ceiling is not None and len(cards) > ceiling)
+
+    return game, cards, truncated, total_in_db, offline_disabled
+
+
+_SET_CARDS_SAMPLE_IDS = ("base1", "snc", "2017", "eb01")
+
+
+def rebuild_set_cards_for_game(game, set_metadata=None):
+    """Bakes ONE game's per-set card-list sidecar and writes it immediately.
+    Isolated per game (2026-08-25) so a slow/timing-out game can't take the
+    others down with it and can't waste already-completed work — the old
+    single-pass rebuild_set_card_lists() computed every game in memory and
+    wrote all files together at the very end, so a timeout anywhere meant
+    NOTHING got written, including games that had already finished.
+
+    game must be one of _SET_CARDS_PATH_BY_GAME's keys (POKEMON/MTG/
+    YUGIOH/ONEPIECE). set_metadata is loaded fresh if not passed in --
+    accept it as a param so a caller building all 4 games doesn't reload
+    the same file 4 times.
+
+    Only sets that _detect_set_game resolves to THIS game are processed
+    (collision sets like me1 route correctly regardless of which game's
+    call this is, same as before). No set is excluded by meta["exclude"]
+    — parity with the live handler, not a new policy.
+
+    Written atomically (.tmp + os.replace). Returns
+    {"sets": N, "cards": N, "samples": {...}}.
+    """
+    if set_metadata is None:
+        set_metadata = _load_set_metadata()
+    path = _SET_CARDS_PATH_BY_GAME[game]
+
+    data = {}
+    for set_id, meta in set_metadata.items():
+        if _detect_set_game(set_id, meta) != game:
+            continue
+        _game, cards, truncated, total_in_db, offline_disabled = _build_set_card_list(set_id, game=game, meta=meta)
+        data[set_id] = {
+            "cards": cards,
+            "truncated": truncated,
+            "total_in_db": total_in_db,
+            "offline_disabled": offline_disabled,
+        }
+
+    tmp_path = path + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, separators=(",", ":"))
+    os.replace(tmp_path, path)
+
+    total_cards = sum(len(e["cards"]) for e in data.values())
+    samples = {
+        sid: {"game": game, "cards": len(data[sid]["cards"])}
+        for sid in _SET_CARDS_SAMPLE_IDS if sid in data
+    }
+
+    print(f"[SET-CARDS] {game}: {len(data)} sets, {total_cards} cards -> {path} "
+          f"(samples={samples})", flush=True)
+
+    return {"sets": len(data), "cards": total_cards, "samples": samples}
 
 
 def rebuild_set_card_lists():
     """Weekly precompute: bakes the per-set card list (sku/name/card_number/
-    img_url) for every set into THREE per-game sidecars — pokemon/mtg/ygo —
-    so /api/sets/<set_id>/cards can skip the live SQL+profile-read path at
-    request time.
+    img_url/price/currency) for every set into FOUR per-game sidecars —
+    pokemon/mtg/ygo/onepiece — so /api/sets/<set_id>/cards can skip the
+    live SQL+profile-read path at request time.
 
-    Calls _build_set_card_list(set_id) once per set_id in set_metadata.json.
-    That function does its own game detection per set (same sku_game_map
-    override the live handler already applies), so each baked entry is
-    bucketed by whatever game _build_set_card_list itself determines — not
-    by metadata's label, which is wrong for collision sets like me1.
-
-    No set is excluded: the live handler never filtered by meta["exclude"]
-    either, so this bake doesn't introduce one (parity with current
-    behavior, not a new policy).
-
-    Each of the three files is written atomically (.tmp + os.replace).
+    Thin wrapper around rebuild_set_cards_for_game(), called once per game
+    so each game's sidecar is written as soon as that game's data is
+    ready — see that function's docstring for why. This function's own
+    return shape (stats/total_cards/samples) is unchanged from before the
+    split, so its one existing caller (set_scheduler.py's daily chain)
+    needs no change; the manual `modal run set_scheduler.py::rebuild_set_cards`
+    entrypoint calls rebuild_set_cards_for_game() directly instead, per
+    game, so a slow MTG run there doesn't also block on this wrapper's
+    other 3 games finishing first.
     """
     set_metadata = _load_set_metadata()
-    buckets = {"POKEMON": {}, "MTG": {}, "YUGIOH": {}}
-
-    for set_id, meta in set_metadata.items():
-        game = _detect_set_game(set_id, meta)
-        game, cards, truncated, total_in_db = _build_set_card_list(set_id, game=game, meta=meta)
-        buckets.setdefault(game, {})[set_id] = {
-            "cards": cards,
-            "truncated": truncated,
-            "total_in_db": total_in_db,
-        }
-
     stats = {}
-    for game, path in _SET_CARDS_PATH_BY_GAME.items():
-        data = buckets.get(game, {})
-        tmp_path = path + ".tmp"
-        with open(tmp_path, "w", encoding="utf-8") as f:
-            json.dump(data, f, separators=(",", ":"))
-        os.replace(tmp_path, path)
-        stats[game] = {"sets": len(data), "cards": sum(len(e["cards"]) for e in data.values())}
+    samples = {}
+    for game in _SET_CARDS_PATH_BY_GAME:
+        result = rebuild_set_cards_for_game(game, set_metadata=set_metadata)
+        stats[game] = {"sets": result["sets"], "cards": result["cards"]}
+        samples.update(result["samples"])
 
     total_cards = sum(s["cards"] for s in stats.values())
-
     print(f"[SET-CARDS] Baked -> {stats}, total_cards={total_cards}", flush=True)
-    print(f"[SET-CARDS] Files: {POKEMON_SET_CARDS_PATH} | "
-          f"{MTG_SET_CARDS_PATH} | {YGO_SET_CARDS_PATH}", flush=True)
-
-    samples = {}
-    for sid in ("base1", "snc", "2017"):
-        for game, data in buckets.items():
-            if sid in data:
-                samples[sid] = {"game": game, "cards": len(data[sid]["cards"])}
-                break
-    print(f"[SET-CARDS] Samples: {samples}", flush=True)
 
     return {"stats": stats, "total_cards": total_cards, "samples": samples}
 
@@ -8883,8 +9104,9 @@ def sets_cards(set_id):
         cards = entry["cards"]
         truncated = entry.get("truncated", False)
         total_in_db = entry.get("total_in_db", len(cards))
+        offline_disabled = entry.get("offline_disabled", False)
     else:
-        game, cards, truncated, total_in_db = _build_set_card_list(set_id, game=game, meta=meta)
+        game, cards, truncated, total_in_db, offline_disabled = _build_set_card_list(set_id, game=game, meta=meta)
 
     set_name = meta.get("name") or set_id
     resp = {
@@ -8896,8 +9118,57 @@ def sets_cards(set_id):
         "truncated": truncated if game == "YUGIOH" else False,
         "total_in_db": total_in_db if game == "YUGIOH" else len(cards),
         "printed_total": meta.get("printed_total") if game == "POKEMON" else None,
+        "offline_disabled": offline_disabled,
     }
     return jsonify(resp)
+
+_SETS_LIST_GAME_MAP = {"pokemon": "POKEMON", "mtg": "MTG", "ygo": "YUGIOH", "onepiece": "ONEPIECE"}
+
+
+@app.route('/api/sets-list/<game>')
+def sets_list(game):
+    """Lightweight set-picker source: set_id + display name + total +
+    offline_disabled per set, filtered by game -- NOT card-level data. Built
+    for the MTG/YGO per-set download/search picker (search.html), which
+    must not load a card-level index just to populate a dropdown.
+
+    set_metadata.json supplies name/printed_total for every set; the
+    per-game set_card_lists sidecar (already baked by
+    rebuild_set_card_lists/_build_set_card_list) supplies the REAL card
+    count and offline_disabled where it's available, since set_metadata's
+    printed_total is frequently null for MTG (confirmed live, 2026-08-25) --
+    falls back to set_metadata's declared total when the sidecar has
+    nothing for that set yet.
+    """
+    game_key = game.strip().lower()
+    game_upper = _SETS_LIST_GAME_MAP.get(game_key)
+    if not game_upper:
+        return jsonify({"error": "unknown game"}), 404
+
+    set_metadata = _load_set_metadata()
+    sidecar_path = _SET_CARDS_PATH_BY_GAME.get(game_upper)
+    sidecar = _load_json_sidecar(sidecar_path) if sidecar_path else {}
+
+    out = []
+    for set_id, meta in set_metadata.items():
+        if not isinstance(meta, dict):
+            continue
+        if _detect_set_game(set_id, meta) != game_upper:
+            continue
+        entry = sidecar.get(set_id)
+        real_total = len(entry["cards"]) if entry else None
+        declared_total = meta.get("printed_total")
+        if declared_total is None:
+            declared_total = meta.get("total")
+        out.append({
+            "set_id": set_id,
+            "name": meta.get("name") or set_id,
+            "total": real_total if real_total is not None else declared_total,
+            "offline_disabled": bool(entry.get("offline_disabled")) if entry else False,
+        })
+    out.sort(key=lambda s: (s["name"] or "").lower())
+    return jsonify({"game": game_key, "sets": out})
+
 
 @app.route("/api/imaged-sets")
 def get_imaged_sets():

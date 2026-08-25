@@ -98,6 +98,16 @@
                      background:transparent;color:#00e5ff;font-size:0.85rem;font-weight:600;cursor:pointer;">
         One Piece
       </button>
+      <button class="gs-game-btn" data-game="mtg"
+              style="flex:1;padding:8px 12px;border-radius:20px;border:1px solid #00e5ff;
+                     background:transparent;color:#00e5ff;font-size:0.85rem;font-weight:600;cursor:pointer;">
+        MTG
+      </button>
+      <button class="gs-game-btn" data-game="ygo"
+              style="flex:1;padding:8px 12px;border-radius:20px;border:1px solid #00e5ff;
+                     background:transparent;color:#00e5ff;font-size:0.85rem;font-weight:600;cursor:pointer;">
+        Yu-Gi-Oh!
+      </button>
     </div>
     <div id="gsLangToggle" style="display:flex;gap:8px;margin:0 0 12px;">
       <button class="gs-lang-btn gs-lang-btn--active" data-lang="en"
@@ -156,7 +166,7 @@
         <option value="dp">Diamond & Pearl</option>
         <option value="ex">EX Series</option>
         <option value="base">Base-Neo Era</option>
-        <option value="__all__">All sets (large download)</option>
+        <option value="me">Mega Evolution</option>
       </select>
 
       <div id="gsOfflineProgress" style="display:none;
@@ -187,6 +197,130 @@
       </div>
     </div>
 
+    <!-- JP Card Show Mode — set-level, not era-level, because JP coverage is
+         partial per set (see build_pokemon_search_index.py's jp_set_coverage
+         output). Kept as its own block rather than reusing gsOfflineKit's
+         era <select> so a JP-only concept (per-set "(Limited coverage)"
+         labeling, imageless sets omitted entirely) doesn't leak into the EN
+         era picker. MTG/YGO diverge here too — keep in sync: three
+         independent kits (EN era-based, JP set-based, MTG/YGO set-based),
+         not one shared picker. -->
+    <div id="gsJpOfflineKit" style="display:none;
+      margin:12px 0 16px;
+      background:rgba(177,77,255,0.08);
+      border:1px solid rgba(177,77,255,0.25);
+      border-radius:12px;
+      padding:14px 16px;">
+      <div style="display:flex;align-items:center;
+        justify-content:space-between;
+        margin-bottom:10px;">
+        <span style="font-size:0.85rem;font-weight:700;
+          color:#b14dff;">
+          ⚡ Card Show Mode
+        </span>
+        <span style="font-size:0.72rem;color:#888;">PRO</span>
+      </div>
+      <p style="font-size:0.8rem;color:#aaa;
+        margin:0 0 12px;">
+        Download a Japanese set for offline use. Only sets
+        with at least one imaged card are listed — sets marked
+        "(Limited coverage)" don't have every card imaged yet.
+      </p>
+      <select id="gsJpSetSelect" style="
+        width:100%;padding:8px 10px;
+        background:#1a1a2e;border:1px solid #333;
+        border-radius:8px;color:#eee;
+        font-size:0.82rem;margin-bottom:10px;">
+        <option value="">Select set to download...</option>
+      </select>
+      <div id="gsJpOfflineProgress" style="display:none;
+        margin-bottom:10px;">
+        <div style="background:#1a1a2e;border-radius:6px;
+          overflow:hidden;height:6px;margin-bottom:6px;">
+          <div id="gsJpOfflineBar" style="height:100%;
+            width:0%;background:#b14dff;
+            transition:width 0.2s;"></div>
+        </div>
+        <div id="gsJpOfflineStatus" style="font-size:0.78rem;
+          color:#aaa;text-align:center;"></div>
+      </div>
+      <button id="gsJpOfflineBtn" onclick="gsStartSetOfflineDownload('pokemon-jp', 'gsJp')"
+        style="width:100%;padding:10px;
+        background:#b14dff;border:none;
+        border-radius:8px;color:#fff;
+        font-size:0.85rem;font-weight:700;
+        cursor:pointer;">
+        Download for Offline
+      </button>
+      <div id="gsJpOfflineDone" style="display:none;
+        text-align:center;font-size:0.82rem;
+        color:#4caf50;margin-top:8px;">
+        ✓ Downloaded — cards available offline
+      </div>
+    </div>
+
+    <!-- MTG/YGO/One Piece Card Show Mode — per-set, not whole-index (79,844
+         MTG / 35,828 YGO cards is never shipped to the browser; see the
+         2026-08-25 build recon). One Piece added 2026-08-26 -- same kit,
+         no new backend needed. A set flagged offline_disabled by
+         /api/sets-list (currently just MTG's "The List" / plst, ~4,753
+         cards — a rotating cross-set reprint bucket, not a real booster)
+         is shown but not downloadable; it stays fully searchable online
+         via /api/card-search regardless. -->
+    <div id="gsSetOfflineKit" style="display:none;
+      margin:12px 0 16px;
+      background:rgba(177,77,255,0.08);
+      border:1px solid rgba(177,77,255,0.25);
+      border-radius:12px;
+      padding:14px 16px;">
+      <div style="display:flex;align-items:center;
+        justify-content:space-between;
+        margin-bottom:10px;">
+        <span style="font-size:0.85rem;font-weight:700;
+          color:#b14dff;">
+          ⚡ Card Show Mode
+        </span>
+        <span style="font-size:0.72rem;color:#888;">PRO</span>
+      </div>
+      <p style="font-size:0.8rem;color:#aaa;
+        margin:0 0 12px;">
+        Download a set for offline use before you leave for a
+        show. One set at a time — search still works across
+        the whole game while you're online.
+      </p>
+      <select id="gsSetPickerSelect" style="
+        width:100%;padding:8px 10px;
+        background:#1a1a2e;border:1px solid #333;
+        border-radius:8px;color:#eee;
+        font-size:0.82rem;margin-bottom:10px;">
+        <option value="">Select set to download...</option>
+      </select>
+      <div id="gsSetOfflineProgress" style="display:none;
+        margin-bottom:10px;">
+        <div style="background:#1a1a2e;border-radius:6px;
+          overflow:hidden;height:6px;margin-bottom:6px;">
+          <div id="gsSetOfflineBar" style="height:100%;
+            width:0%;background:#b14dff;
+            transition:width 0.2s;"></div>
+        </div>
+        <div id="gsSetOfflineStatus" style="font-size:0.78rem;
+          color:#aaa;text-align:center;"></div>
+      </div>
+      <button id="gsSetOfflineBtn" onclick="gsStartSetOfflineDownload(currentGame, 'gsSet')"
+        style="width:100%;padding:10px;
+        background:#b14dff;border:none;
+        border-radius:8px;color:#fff;
+        font-size:0.85rem;font-weight:700;
+        cursor:pointer;">
+        Download for Offline
+      </button>
+      <div id="gsSetOfflineDone" style="display:none;
+        text-align:center;font-size:0.82rem;
+        color:#4caf50;margin-top:8px;">
+        ✓ Downloaded — cards available offline
+      </div>
+    </div>
+
     <div id="gsOfflineBanner" style="display:none;
       background:rgba(255,215,0,0.12);
       border:1px solid rgba(255,215,0,0.3);
@@ -201,6 +335,7 @@
     <div class="gs-grid" id="gsResults"></div>
   </main>
 
+  <script src="/static/gs-set-cache.js"></script>
   <script>
     var EUR_RATE = 0.86, GBP_RATE = 0.79; // fallbacks; refreshed from /api/fx_rates
     (function loadFx() {
@@ -309,9 +444,20 @@
       return price;
     }
 
-    // ERA prefix map for filtering the search index
+    // ERA prefix map for filtering the search index. 'sv' explicitly
+    // whitelists rsv10pt5/zsv10pt5 (White Flare/Black Bolt) alongside the
+    // startsWith('sv') prefix rule — neither SKU starts with "sv" (they're
+    // "rsv10pt5"/"zsv10pt5"), confirmed live 2026-08-25, so a plain prefix
+    // rule silently excludes both. 'me' covers all six Mega Evolution era
+    // sets (me1 Mega Evolution, me2 Phantasmal Flames, me2pt5 Ascended
+    // Heroes, me3 Perfect Order, me4 Chaos Rising, me5 Pitch Black) via one
+    // prefix rule — no other set_id in set_metadata.json starts with "me"
+    // (mb2/mh1-3/mm2-3 are distinct two-letter prefixes), so this is safe.
+    // '__all__' removed — Card Show Mode never offers "download everything"
+    // any more; see the 2026-08-25 recon on why that option produced most
+    // of its own reported failures (no retry, multi-GB single pass).
     var _gsEraMap = {
-      'sv':   function(s){ return s.startsWith('sv'); },
+      'sv':   function(s){ return s.startsWith('sv') || s === 'rsv10pt5' || s === 'zsv10pt5'; },
       'swsh': function(s){ return s.startsWith('swsh'); },
       'sm':   function(s){ return s.startsWith('sm'); },
       'xy':   function(s){ return s.startsWith('xy'); },
@@ -320,11 +466,104 @@
       'dp':   function(s){ return s.startsWith('dp') || s.startsWith('legends'); },
       'ex':   function(s){ return s.startsWith('ex') || s.startsWith('pop') || s.startsWith('tk'); },
       'base': function(s){ return s.startsWith('base') || s.startsWith('neo') || s.startsWith('gym') || s.startsWith('si') || s.startsWith('ecard'); },
-      '__all__': function(s){ return true; }
+      'me':   function(s){ return s.startsWith('me'); }
     };
 
+    // Shared image-download engine — used by the EN era picker, the JP set
+    // picker, and the MTG/YGO set picker (three separate callers, one
+    // engine, so the retry/counting behavior can't drift between them the
+    // way the actual list-building/UI wiring is allowed to per game).
+    // Bounded retry (2 extra attempts, short backoff) per image.
+    // cache.put() is awaited/caught so a write failure (e.g. Cache Storage
+    // quota) counts as a real failure instead of being silently swallowed
+    // as a false success — both the missing retry and the fire-and-forget
+    // cache.put() were identified as real bugs in the 2026-08-25 recon on
+    // why Card Show Mode's own reported download numbers couldn't be
+    // trusted. elIds = {btn, progress, bar, status, done} DOM id strings.
+    // cards = [{img: <url>}, ...]. onDone(result) fires once, after the
+    // final status text is set, with {total, failed}.
+    function _gsDownloadImagesToCache(cards, elIds, onDone) {
+      var btn = document.getElementById(elIds.btn);
+      var progress = document.getElementById(elIds.progress);
+      var bar = document.getElementById(elIds.bar);
+      var status = document.getElementById(elIds.status);
+      var done = document.getElementById(elIds.done);
+
+      btn.disabled = true;
+      btn.textContent = 'Downloading...';
+      progress.style.display = 'block';
+      done.style.display = 'none';
+
+      var total = cards.length;
+      var completed = 0;
+      var failed = 0;
+      var BATCH = 15;
+      var MAX_ATTEMPTS = 3; // 1 try + 2 retries
+
+      function updateProgress() {
+        var pct = Math.round((completed / total) * 100);
+        bar.style.width = pct + '%';
+        status.textContent = 'Downloading ' + completed + ' of ' + total + ' cards...';
+      }
+
+      function fetchAndCacheOne(cache, url, attempt) {
+        return fetch(url).then(function(resp) {
+          if (!resp || resp.status !== 200) {
+            throw new Error('bad status ' + (resp && resp.status));
+          }
+          return cache.put(url, resp.clone());
+        }).catch(function(err) {
+          if (attempt < MAX_ATTEMPTS) {
+            return new Promise(function(resolve) { setTimeout(resolve, 300 * attempt); })
+              .then(function() { return fetchAndCacheOne(cache, url, attempt + 1); });
+          }
+          throw err;
+        });
+      }
+
+      function downloadBatch(startIdx) {
+        if (startIdx >= total) {
+          bar.style.width = '100%';
+          status.textContent = failed > 0
+            ? (total - failed) + ' of ' + total + ' cards downloaded — ' + failed +
+              ' couldn\'t be downloaded. Check your connection and try again.'
+            : total + ' cards downloaded.';
+          btn.disabled = false;
+          btn.textContent = 'Download for Offline';
+          done.style.display = 'block';
+          if (typeof onDone === 'function') onDone({ total: total, failed: failed });
+          return;
+        }
+
+        var batch = cards.slice(startIdx, startIdx + BATCH);
+        var promises = batch.map(function(card) {
+          return caches.open('gs-images-v2').then(function(cache) {
+            // ignoreVary: true -- see sw.js's v159 changelog entry. Without
+            // it this pre-check can miss an image already cached via
+            // ordinary <img> browsing (different Vary-relevant request
+            // shape than this fetch()) and redundantly re-download it.
+            return cache.match(card.img, { ignoreVary: true }).then(function(cached) {
+              if (cached) { completed++; updateProgress(); return; }
+              return fetchAndCacheOne(cache, card.img, 1).then(function() {
+                completed++; updateProgress();
+              }).catch(function() {
+                failed++; completed++; updateProgress();
+              });
+            });
+          });
+        });
+
+        Promise.all(promises).then(function() {
+          setTimeout(function() { downloadBatch(startIdx + BATCH); }, 50);
+        });
+      }
+
+      updateProgress();
+      downloadBatch(0);
+    }
+
     function gsStartOfflineDownload() {
-      if (currentGame !== 'pokemon') return; // Card Show Mode is Pokémon-only (set-era based)
+      if (currentGame !== 'pokemon' || currentLang === 'ja') return; // EN era picker only — JP has its own set-based kit below
       var era = document.getElementById('gsOfflineEraSelect').value;
       if (!era) {
         alert('Please select an era to download.');
@@ -347,67 +586,159 @@
           return;
         }
 
-        var btn = document.getElementById('gsOfflineBtn');
-        var progress = document.getElementById('gsOfflineProgress');
-        var bar = document.getElementById('gsOfflineBar');
-        var status = document.getElementById('gsOfflineStatus');
-        var done = document.getElementById('gsOfflineDone');
+        _gsDownloadImagesToCache(cards, {
+          btn: 'gsOfflineBtn', progress: 'gsOfflineProgress', bar: 'gsOfflineBar',
+          status: 'gsOfflineStatus', done: 'gsOfflineDone'
+        });
+      });
+    }
 
-        btn.disabled = true;
-        btn.textContent = 'Downloading...';
-        progress.style.display = 'block';
-        done.style.display = 'none';
+    // MTG/YGO diverge here — keep in sync: JP and MTG/YGO both use this
+    // set-based (not era-based) picker, unlike EN's gsStartOfflineDownload
+    // above, because both need per-set data (JP: which cards are actually
+    // imaged; MTG/YGO: the real deduped card list) that only
+    // /api/sets/<set_id>/cards has. kitKey selects which kit's DOM ids to
+    // use (see _gsSetKitElIds) — 'gsJp' for the JP kit, 'gsSet' for the
+    // MTG/YGO kit.
+    var _gsSetKitElIds = {
+      gsJp:  { select: 'gsJpSetSelect', btn: 'gsJpOfflineBtn', progress: 'gsJpOfflineProgress',
+               bar: 'gsJpOfflineBar', status: 'gsJpOfflineStatus', done: 'gsJpOfflineDone' },
+      gsSet: { select: 'gsSetPickerSelect', btn: 'gsSetOfflineBtn', progress: 'gsSetOfflineProgress',
+               bar: 'gsSetOfflineBar', status: 'gsSetOfflineStatus', done: 'gsSetOfflineDone' }
+    };
 
-        var total = cards.length;
-        var completed = 0;
-        var failed = 0;
-        var BATCH = 15;
+    function gsStartSetOfflineDownload(game, kitKey) {
+      var ids = _gsSetKitElIds[kitKey];
+      if (!ids) return;
+      var setId = document.getElementById(ids.select).value;
+      if (!setId) {
+        alert('Please select a set to download.');
+        return;
+      }
 
-        function updateProgress() {
-          var pct = Math.round((completed / total) * 100);
-          bar.style.width = pct + '%';
-          status.textContent = 'Downloading ' + completed + ' of ' + total + ' cards...';
-        }
-
-        function downloadBatch(startIdx) {
-          if (startIdx >= total) {
-            bar.style.width = '100%';
-            status.textContent = total + ' cards downloaded' +
-              (failed > 0 ? ' (' + failed + ' failed)' : '');
-            btn.disabled = false;
-            btn.textContent = 'Download for Offline';
-            done.style.display = 'block';
+      fetch('/api/sets/' + encodeURIComponent(setId) + '/cards')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data || !data.cards || !data.cards.length) {
+            alert('No cards found for this set.');
+            return;
+          }
+          // A set over its game's offline-download ceiling (currently just
+          // MTG's "The List" / plst, ~4,753 cards — a rotating cross-set
+          // reprint bucket, not a real booster) is flagged, never silently
+          // truncated. It stays fully searchable online regardless.
+          if (data.offline_disabled) {
+            alert('This set is too large to download for offline use. It still works for online search.');
             return;
           }
 
-          var batch = cards.slice(startIdx, startIdx + BATCH);
-          var promises = batch.map(function(card) {
-            return caches.open('gs-images-v1').then(function(cache) {
-              return cache.match(card.img).then(function(cached) {
-                if (cached) { completed++; updateProgress(); return; }
-                return fetch(card.img).then(function(resp) {
-                  if (resp && resp.status === 200) {
-                    cache.put(card.img, resp.clone());
-                  }
-                  completed++;
-                  updateProgress();
-                }).catch(function() {
-                  failed++;
-                  completed++;
-                  updateProgress();
-                });
-              });
-            });
+          // Only cards with a real image are downloadable — profile-only
+          // JP entries fall back to the branded placeholder graphic
+          // (_build_set_card_list, app.py) and are skipped here, not
+          // counted as failed, per spec.
+          var withImages = data.cards.filter(function(c) {
+            return c.img_url && c.img_url.indexOf('gs_card_placeholder') === -1;
           });
+          var skippedImageless = data.cards.length - withImages.length;
 
-          Promise.all(promises).then(function() {
-            setTimeout(function() { downloadBatch(startIdx + BATCH); }, 50);
+          if (withImages.length === 0) {
+            alert('No downloadable images for this set yet.');
+            return;
+          }
+
+          var downloadCards = withImages.map(function(c) { return { img: c.img_url }; });
+
+          _gsDownloadImagesToCache(downloadCards, ids, function() {
+            if (skippedImageless > 0) {
+              var statusEl = document.getElementById(ids.status);
+              if (statusEl) {
+                statusEl.textContent += ' (' + skippedImageless + ' cards have no image yet, skipped)';
+              }
+            }
+            // Cache the DATA (not just images) for offline search, via the
+            // isolated IndexedDB module — see gs-set-cache.js. Saved after
+            // the image download attempt completes, not before, so a set
+            // that fails outright doesn't get marked available offline
+            // with nothing to show.
+            if (window.GSSetCache) {
+              window.GSSetCache.saveSet(game, setId, data.name, data.total, data.cards)
+                .catch(function(e) { console.warn('[SetCache] save failed:', e); });
+            }
           });
-        }
+        })
+        .catch(function() {
+          alert('Could not load this set. Check your connection and try again.');
+        });
+    }
 
-        updateProgress();
-        downloadBatch(0);
+    // Populates the JP set picker from /api/jp-set-coverage — set_id + name
+    // + imaged/total + limited, no card-level data. Sets with zero imaged
+    // cards are already omitted server-side (build_pokemon_search_index.py),
+    // so every option here is downloadable.
+    var _gsJpPickerLoaded = false;
+    function gsLoadJpSetPicker() {
+      if (_gsJpPickerLoaded) return;
+      _gsJpPickerLoaded = true;
+      fetch('/api/jp-set-coverage')
+        .then(function(r) { return r.json(); })
+        .then(function(coverage) {
+          var select = document.getElementById('gsJpSetSelect');
+          if (!select) return;
+          var entries = Object.keys(coverage).map(function(setId) {
+            var c = coverage[setId];
+            return { setId: setId, name: c.name, imaged: c.imaged, total: c.total, limited: c.limited };
+          }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+          entries.forEach(function(e) {
+            var opt = document.createElement('option');
+            opt.value = e.setId;
+            opt.textContent = e.name + ' (' + e.imaged + '/' + e.total + ')' +
+              (e.limited ? ' (Limited coverage)' : '');
+            select.appendChild(opt);
+          });
+        })
+        .catch(function() { _gsJpPickerLoaded = false; });
+    }
+
+    // Populates the MTG/YGO set picker from /api/sets-list/<game> — set_id
+    // + name + total + offline_disabled, no card-level data (that endpoint
+    // exists specifically so this picker never has to load a card-level
+    // index just to list sets). Oversized sets are shown but disabled, not
+    // omitted, so the user can see why "The List" isn't there rather than
+    // it silently not existing.
+    //
+    // The <select> is SHARED between MTG and YGO (only one is visible at a
+    // time), so switching games must fully re-render it, not append — an
+    // append-only version would leave MTG's options in place when the user
+    // switches to YGO. Data is cached per game after the first fetch so
+    // switching back and forth doesn't re-fetch, but the DOM is always
+    // rebuilt from that cache.
+    var _gsSetPickerDataFor = {};
+    function _gsRenderSetPicker(sets) {
+      var select = document.getElementById('gsSetPickerSelect');
+      if (!select) return;
+      select.innerHTML = '<option value="">Select set to download...</option>';
+      sets.forEach(function(s) {
+        var opt = document.createElement('option');
+        opt.value = s.set_id;
+        opt.textContent = s.name + (s.total ? ' (' + s.total + ' cards)' : '') +
+          (s.offline_disabled ? ' — too large for offline' : '');
+        if (s.offline_disabled) opt.disabled = true;
+        select.appendChild(opt);
       });
+    }
+    function gsLoadSetPicker(game) {
+      if (_gsSetPickerDataFor[game]) {
+        _gsRenderSetPicker(_gsSetPickerDataFor[game]);
+        return;
+      }
+      fetch('/api/sets-list/' + encodeURIComponent(game))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var sets = (data && data.sets) || [];
+          _gsSetPickerDataFor[game] = sets;
+          _gsRenderSetPicker(sets);
+        })
+        .catch(function() {});
     }
 
     fetch('/api/fx_rates')
@@ -457,6 +788,27 @@
           if (typeof gsAddToWatchlist === 'function') gsAddToWatchlist(c, wlBtn);
         });
         grid.appendChild(card);
+
+        // Page-side cache read, no Service Worker involved. Cache Storage is
+        // never auto-consulted by the browser's native <img> resource loader
+        // -- that only happens via an SW's fetch handler (event.respondWith),
+        // which doesn't exist on iOS Capacitor (navigator.serviceWorker is
+        // undefined there, confirmed live 2026-08-25). This is the only
+        // mechanism that can ever serve an offline-cached card image on that
+        // platform, so it runs unconditionally rather than forking per
+        // platform -- harmless/redundant on Android where the SW already
+        // serves it, load-bearing on iOS where nothing else can.
+        if (window.caches && c.image_url) {
+          caches.open('gs-images-v2').then(function (cache) {
+            return cache.match(c.image_url, { ignoreVary: true });
+          }).then(function (resp) {
+            if (!resp) return; // not cached -- leave the original src, existing onerror->placeholder still applies
+            return resp.blob().then(function (blob) {
+              var imgEl = card.querySelector('.gs-card-img');
+              if (imgEl) imgEl.src = URL.createObjectURL(blob);
+            });
+          }).catch(function () {});
+        }
       });
     }
 
@@ -464,11 +816,11 @@
     var currentGame = 'pokemon';
     (function() {
       var g = new URLSearchParams(window.location.search).get('game');
-      if (g === 'onepiece') currentGame = 'onepiece';
+      if (g === 'onepiece' || g === 'mtg' || g === 'ygo') currentGame = g;
     })();
 
-    // Per-game/lang placeholder + hint text. One Piece has no JP split
-    // (all cards EN-only), unlike Pokémon.
+    // Per-game/lang placeholder + hint text. One Piece/MTG/YGO have no JP
+    // split (all cards EN-only), unlike Pokémon.
     var GS_GAME_LABELS = {
       pokemon: {
         en: { placeholder: 'Card name or number, e.g. Charizard or 032/165',
@@ -479,36 +831,66 @@
       onepiece: {
         en: { placeholder: 'Card name or number, e.g. Luffy or OP04-014',
               hint: 'One Piece cards. Type a name or card number.' }
+      },
+      mtg: {
+        en: { placeholder: 'Card name, e.g. Lightning Bolt',
+              hint: 'Magic: The Gathering cards. Type a card name.' }
+      },
+      ygo: {
+        en: { placeholder: 'Card name, e.g. Dark Magician',
+              hint: 'Yu-Gi-Oh! cards. Type a card name.' }
       }
     };
 
     // Shared by both the game toggle and the lang toggle so placeholder/hint/
     // Card Show Mode visibility can never drift between the two switches.
+    // MTG/YGO diverge here — keep in sync: three independent Card Show Mode
+    // kits exist (gsOfflineKit: EN era-based, gsJpOfflineKit: JP set-based,
+    // gsSetOfflineKit: MTG/YGO set-based) and exactly one is ever shown.
     function _gsRefreshUiForGameAndLang() {
       var input = document.getElementById('gsSearchInput');
       var hint  = document.getElementById('gsSearchHint');
       var langToggle = document.getElementById('gsLangToggle');
       var offlineKit = document.getElementById('gsOfflineKit');
+      var jpOfflineKit = document.getElementById('gsJpOfflineKit');
+      var setOfflineKit = document.getElementById('gsSetOfflineKit');
       var gameLabels = GS_GAME_LABELS[currentGame] || GS_GAME_LABELS.pokemon;
       var labels = gameLabels[currentLang] || gameLabels.en;
+      var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
 
       input.placeholder = labels.placeholder;
       hint.textContent = labels.hint;
 
+      if (offlineKit) offlineKit.style.display = 'none';
+      if (jpOfflineKit) jpOfflineKit.style.display = 'none';
+      if (setOfflineKit) setOfflineKit.style.display = 'none';
+
       if (currentGame === 'pokemon') {
         if (langToggle) langToggle.style.display = 'flex';
-        // Restore only for Pro, and never for JP — same gate as the block's
-        // initial reveal below, so switching games/langs can't expose Card
-        // Show Mode to a free user or to a mode it doesn't support.
-        if (offlineKit) {
-          var isPro = localStorage.getItem('matchit_premium_v1') === 'unlocked';
-          offlineKit.style.display = (isPro && currentLang !== 'ja') ? 'block' : 'none';
+        if (!isPro) return;
+        if (currentLang === 'ja') {
+          if (jpOfflineKit) { jpOfflineKit.style.display = 'block'; gsLoadJpSetPicker(); }
+        } else {
+          if (offlineKit) offlineKit.style.display = 'block';
         }
       } else {
-        // Non-Pokémon games: EN-only (no lang toggle), no Card Show Mode
-        // (Pokémon set-era specific).
+        // MTG/YGO/One Piece all share the same per-set Card Show Mode kit
+        // (gsSetOfflineKit) -- gsStartSetOfflineDownload/gsLoadSetPicker
+        // already take `game` as a plain parameter with no per-game
+        // branching inside them, and /api/sets-list/<game> +
+        // /api/sets/<id>/cards are both game-agnostic server-side too, so
+        // no backend or download-engine change was needed to add One
+        // Piece here. It was previously left out of this block entirely --
+        // not a deliberate exclusion, just never wired in when MTG/YGO/JP
+        // gained Card Show Mode in the prior build pass (confirmed live
+        // 2026-08-25: /api/sets-list/onepiece, /api/sets/st14/cards and its
+        // images.grailsweep.com image URLs all already work end-to-end,
+        // same R2 host/CORS/Vary handling as every other game).
         if (langToggle) langToggle.style.display = 'none';
-        if (offlineKit) offlineKit.style.display = 'none';
+        if (isPro && setOfflineKit) {
+          setOfflineKit.style.display = 'block';
+          gsLoadSetPicker(currentGame);
+        }
       }
     }
 
@@ -591,13 +973,101 @@
         })
         .catch(function(){
           if (thisQuery !== lastQuery) return;
+
+          // MTG/YGO/One Piece diverge here — keep in sync: these three
+          // games' Card Show Mode is per-set (gsSetOfflineKit), not a
+          // whole-catalogue client-side index, so their offline search can
+          // only cover sets the user has actually downloaded via GSSetCache
+          // (IndexedDB) — not "the whole game" the way EN/JP Pokémon's
+          // in-memory whole-index fallback does below. This is a real,
+          // disclosed narrowing of what offline search can find, not a bug
+          // — see the 2026-08-25 build recon's answer to "is there a
+          // search-without-set-selection flow" for why online search stays
+          // whole-game while offline can't. One Piece was moved into this
+          // branch 2026-08-26 alongside its new download button: its old
+          // whole-index fallback (_gsSearchOffline) lives only in an
+          // in-memory JS variable (_gsLocalIndexCache), never persisted, so
+          // a genuine cold-launch-while-offline card show scenario would
+          // have re-fetched /api/search-index/onepiece, failed, and shown
+          // zero results even though the box claimed "Downloaded" — moving
+          // it here makes the offline search actually read what Card Show
+          // Mode just downloaded, same as MTG/YGO.
+          if (currentGame === 'mtg' || currentGame === 'ygo' || currentGame === 'onepiece') {
+            box.classList.remove('loading');
+            if (!window.GSSetCache) { return; }
+            _gsOfflineMode = true;
+            var banner = document.getElementById('gsOfflineBanner');
+            banner.textContent = '⚡ Offline mode — showing your downloaded sets only';
+            banner.style.display = 'block';
+            window.GSSetCache.searchDownloaded(currentGame, raw).then(function(results) {
+              if (thisQuery !== lastQuery) return;
+              var mapped = results.map(function(c) {
+                return {
+                  sku:       c.sku,
+                  name:      c.name,
+                  set_name:  '',
+                  number:    c.card_number,
+                  set_total: null,
+                  gbp:       _gsOfflineGbp(c.price, c.currency),
+                  image_url: c.img_url || null
+                };
+              });
+              if (!mapped.length) {
+                grid.innerHTML = '';
+                noResults.classList.remove('hidden');
+              } else {
+                noResults.classList.add('hidden');
+                render(mapped);
+              }
+            }).catch(function(e) { console.warn('[SetCache] offline search failed:', e); });
+            return;
+          }
+
+          // JP diverges here too — keep in sync with the MTG/YGO branch
+          // above: same reasoning (no whole-catalogue index held
+          // client-side for JP either — build_pokemon_search_index.py's
+          // JP inclusion is gated on images.db coverage, not size, but the
+          // *download* is still per-set, so offline search is scoped to
+          // downloaded sets the same way). This used to just give up
+          // immediately offline ("JP search requires internet connection")
+          // — that was true before JP got its own Card Show Mode kit; now
+          // that GSSetCache can hold downloaded JP sets, it's wired the
+          // same as MTG/YGO instead of silently going nowhere.
           if (currentLang === 'ja') {
             box.classList.remove('loading');
-            return; // JP search requires internet connection
+            if (!window.GSSetCache) { return; }
+            _gsOfflineMode = true;
+            var jpBanner = document.getElementById('gsOfflineBanner');
+            jpBanner.textContent = '⚡ Offline mode — showing your downloaded sets only';
+            jpBanner.style.display = 'block';
+            window.GSSetCache.searchDownloaded('pokemon-jp', raw).then(function(results) {
+              if (thisQuery !== lastQuery) return;
+              var mapped = results.map(function(c) {
+                return {
+                  sku:       c.sku,
+                  name:      c.name,
+                  set_name:  '',
+                  number:    c.card_number,
+                  set_total: null,
+                  gbp:       _gsOfflineGbp(c.price, c.currency),
+                  image_url: c.img_url || null
+                };
+              });
+              if (!mapped.length) {
+                grid.innerHTML = '';
+                noResults.classList.remove('hidden');
+              } else {
+                noResults.classList.add('hidden');
+                render(mapped);
+              }
+            }).catch(function(e) { console.warn('[SetCache] JP offline search failed:', e); });
+            return;
           }
           box.classList.remove('loading');
           _gsOfflineMode = true;
-          document.getElementById('gsOfflineBanner').style.display = 'block';
+          var wholeIndexBanner = document.getElementById('gsOfflineBanner');
+          wholeIndexBanner.textContent = '⚡ Offline mode — showing cached prices';
+          wholeIndexBanner.style.display = 'block';
           _gsSearchOffline(raw, function(results) {
             if (thisQuery !== lastQuery) return;
             var mapped = results.map(function(e) {
@@ -628,13 +1098,88 @@
       debTimer = setTimeout(function(){ doSearch(raw); }, 300);
     });
 
+    // Page-side SW auto-update -- same mechanism as base.html's
+    // _gsWireAutoUpdate (search.html doesn't extend base.html, so it needs
+    // its own copy rather than a shared include; kept identical on purpose).
+    // See base.html's version for the full design rationale.
+    function _gsWireAutoUpdate(reg) {
+      var reloadPending = false;
+      var newControllerWhileHidden = false;
+      var initiallyControlled = !!navigator.serviceWorker.controller;
+
+      // Mid-Stripe-redirect guard. search.html has no checkout flow of its
+      // own, but gs_payment_pending_at (set in base.html's
+      // gsNavigateToCheckout, cleared in upgrade.html on redemption) is
+      // sessionStorage-scoped to the browsing context, not the page -- if
+      // the user navigated here from an in-progress checkout on another
+      // page within the same session, it's still valid here.
+      function paymentFlowActive() {
+        try {
+          var ts = sessionStorage.getItem('gs_payment_pending_at');
+          return !!ts && (Date.now() - Number(ts)) < 20 * 60 * 1000;
+        } catch (e) { return false; }
+      }
+      // search.html has no camera/scScanning of its own -- this always
+      // resolves false here via the typeof guard, kept for symmetry with
+      // base.html's copy (which DOES need it, for match.html).
+      function scanActive() {
+        try { return typeof scScanning !== 'undefined' && (scScanning || scBusy); }
+        catch (e) { return false; }
+      }
+      function showUpdateBanner() {
+        var banner = document.getElementById('gsUpdateBanner');
+        if (banner) banner.style.display = 'flex';
+      }
+      function maybeReload() {
+        if (reloadPending) return;
+        if (paymentFlowActive() || scanActive()) {
+          reloadPending = true;
+          showUpdateBanner();
+          return;
+        }
+        reloadPending = true;
+        window.location.reload();
+      }
+
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!initiallyControlled) {
+          initiallyControlled = true;
+          return;
+        }
+        if (document.visibilityState === 'hidden') {
+          newControllerWhileHidden = true;
+        } else if (!reloadPending) {
+          reloadPending = true;
+          showUpdateBanner();
+        }
+      });
+
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+          if (newControllerWhileHidden && !reloadPending) maybeReload();
+          reg.update().catch(function(){});
+        }
+      });
+    }
+
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(function(){});
+      navigator.serviceWorker.register('/sw.js')
+        .then(function(reg) { _gsWireAutoUpdate(reg); })
+        .catch(function(){});
     }
 
     setTimeout(function(){
       _gsLoadLocalIndex(function(){});
     }, 2000);
   </script>
+
+  <div id="gsUpdateBanner" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;
+    background:var(--gs-bg);border:1px solid var(--gs-violet);border-radius:10px;padding:10px 14px;
+    align-items:center;justify-content:space-between;gap:10px;font-family:'DM Sans',sans-serif;
+    font-size:0.82rem;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,0.4);">
+    <span>⚡ Update ready</span>
+    <button onclick="window.location.reload()" style="background:var(--gs-violet);border:none;border-radius:6px;
+      color:#fff;padding:6px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;">Refresh</button>
+  </div>
 </body>
 </html>

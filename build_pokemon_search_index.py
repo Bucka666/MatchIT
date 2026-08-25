@@ -14,11 +14,22 @@ Entry shape (one per English Pokémon SKU):
       "number":    "4",          # profile.card_number, VERBATIM (unpadded)
       "set_id":    "base1",      # profile.set_id
       "set_name":  "Base",       # profile.set_name (falls back to set_id)
-      "set_total": "102"         # printed_total from set_metadata.json by set_id (or null)
+      "set_total": "102",        # printed_total from set_metadata.json by set_id (or null)
+      "img":       "https://images.grailsweep.com/<image_id>.jpg"  # R2 if the
+                   # sku has an image_id in images.db, else the scraped
+                   # external URL (images.pokemontcg.io/images.scrydex.com) if
+                   # present, else null. R2 preferred as of 2026-08-25 -- see
+                   # the image-coverage recon this session for why the field
+                   # previously pointed at external hosts even for cards we
+                   # already had on our own R2.
     }
 
 Output path: /modal_data/pokemon_search_index.json on Modal, else local
 pokemon_search_index.json (mirrors IDENTIFIER_LOOKUP_PATH convention in app.py).
+
+Also writes jp_set_coverage.json alongside it: {set_id: {imaged, total,
+limited}} for every JP set with >=1 imaged card (fully-imageless sets
+omitted). Feeds the search.html set picker's "(Limited coverage)" label.
 
 Callable as build_pokemon_search_index() from the scheduler (set_scheduler.py),
 or run directly as a script for a manual local rebuild against C:\\CardsDB.
@@ -75,16 +86,65 @@ def build_pokemon_search_index(data_root="."):
                     jp_setnames[_sid] = _n
     print(f"[PKM-SEARCH] JP set-id map: {len(jp_setid_map)} entries", flush=True)
 
-    # JP image filter: only include JP cards present in images.db (~4,294 with R2 thumbnails)
+    # JP image filter: only include JP cards present in images.db. Also build
+    # the full sku -> image_id map here (all rows, not just jpn-%) for the R2
+    # image-field fix below -- one connection, two queries, same file.
     imaged_jp_skus = set()
+    sku_to_image_id = {}
     images_db_path = os.path.join(data_root, "MatchITv2_ProductMatch_Data", "cards", "images.db")
     try:
         with sqlite3.connect(images_db_path) as _conn:
             _rows = _conn.execute("SELECT sku FROM images WHERE sku LIKE 'jpn-%'").fetchall()
             imaged_jp_skus = {r[0] for r in _rows}
-        print(f"[PKM-SEARCH] {len(imaged_jp_skus)} imaged JP SKUs from images.db", flush=True)
+            for _sku, _image_id in _conn.execute("SELECT sku, image_id FROM images"):
+                sku_to_image_id[_sku] = _image_id
+        print(f"[PKM-SEARCH] {len(imaged_jp_skus)} imaged JP SKUs, "
+              f"{len(sku_to_image_id)} total sku->image_id rows from images.db", flush=True)
     except Exception as e:
-        print(f"[PKM-SEARCH] WARN could not load images.db ({e}) — JP cards will be excluded", flush=True)
+        print(f"[PKM-SEARCH] WARN could not load images.db ({e}) — JP cards will be "
+              f"excluded and img falls back to external URLs only: {e}", flush=True)
+
+    # JP per-set coverage (imaged vs total card count), for the search.html set
+    # picker's "(Limited coverage)" labeling. String-only pass over folder
+    # names -- imaged_jp_skus (above) and the set-code segment of the folder
+    # name (jpn-<code>-<number>) are already enough, no profile reads needed.
+    # Fully-imageless sets (imaged == 0) are omitted from the output entirely,
+    # per spec -- the picker should never list a set with zero downloadable
+    # cards. No percentage threshold: any set short of 100% imaged is
+    # "limited", full stop.
+    jp_set_totals = {}
+    jp_set_imaged = {}
+    with os.scandir(pokemon_dir) as _it:
+        for _d in _it:
+            _name = _d.name
+            if not _name.startswith("jpn-") or not _d.is_dir():
+                continue
+            _rest = _name[4:]
+            _code = _rest.rsplit("-", 1)[0] if "-" in _rest else _rest
+            _meta_set_id = jp_setid_map.get(_code.lower(), "jpn-" + _code.lower())
+            jp_set_totals[_meta_set_id] = jp_set_totals.get(_meta_set_id, 0) + 1
+            if _name in imaged_jp_skus:
+                jp_set_imaged[_meta_set_id] = jp_set_imaged.get(_meta_set_id, 0) + 1
+
+    jp_set_coverage = {}
+    for _sid, _total in jp_set_totals.items():
+        _imaged = jp_set_imaged.get(_sid, 0)
+        if _imaged == 0:
+            continue
+        jp_set_coverage[_sid] = {
+            "name":    jp_setnames.get(_sid) or _sid,
+            "imaged":  _imaged,
+            "total":   _total,
+            "limited": _imaged < _total,
+        }
+    coverage_path = os.path.join(data_root, "jp_set_coverage.json")
+    _tmp_coverage = coverage_path + ".tmp"
+    with open(_tmp_coverage, "w", encoding="utf-8") as f:
+        json.dump(jp_set_coverage, f, ensure_ascii=False, separators=(",", ":"))
+    os.replace(_tmp_coverage, coverage_path)
+    print(f"[PKM-SEARCH] JP set coverage: {len(jp_set_coverage)} sets with >=1 "
+          f"imaged card ({sum(1 for v in jp_set_coverage.values() if v['limited'])} "
+          f"limited) -> {coverage_path}", flush=True)
 
     def _read_one(d):
         sku_dir = d.name
@@ -148,6 +208,17 @@ def build_pokemon_search_index(data_root="."):
                         pass
                     break
 
+        # R2 from image_id, preferred -- non-regressive: fall back to the
+        # scraped external URL only if this sku has no image_id, else null.
+        # image_url_small pointed at images.pokemontcg.io / images.scrydex.com
+        # verbatim before this fix; every sku with an image_id already has a
+        # live R2 object at this URL (confirmed 2026-08-25, 200/200 sampled).
+        _image_id = sku_to_image_id.get(sku_dir)
+        if _image_id:
+            img = "https://images.grailsweep.com/" + _image_id + ".jpg"
+        else:
+            img = str(p.get("image_url_small") or "").strip() or None
+
         return {
             "sku":       sku_dir,
             "name":      name,
@@ -158,7 +229,7 @@ def build_pokemon_search_index(data_root="."):
             "lang":      lang,
             "price":     price_val,
             "currency":  price_currency,
-            "img":       str(p.get("image_url_small") or "").strip() or None,
+            "img":       img,
         }
 
     with os.scandir(pokemon_dir) as _it:

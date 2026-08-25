@@ -166,13 +166,53 @@
 // v146 — 2026-08-12: no client-facing change (cloudflare_worker.js +
 // matchit_modal.py routing sync for /api/heartbeat and /api/stats onto the
 // CPU twin) — bump requested as part of this commit's reference point
-const CACHE_NAME = 'grailsweep-v157'; // 2026-08-17 OP gate bypass + OP OCR direct-lookup
+// v158 — 2026-08-25: image cache key migration. search.html's Card Show
+// Mode / offline downloader now writes gs-images-v2 (was gs-images-v1) --
+// the repoint from external CDN URLs (images.pokemontcg.io/scrydex.com) to
+// our own R2 (images.grailsweep.com/<image_id>.jpg) changes the cache KEY
+// for every image, so old v1 entries are dead weight, not salvageable.
+// activate() below stops sparing v1 and lets it fall into the normal
+// eviction sweep -- a one-time purge. Users see a "re-download your sets"
+// nudge (search.html) since their old offline images are gone either way.
+// v159 — 2026-08-25: the CORS fix that unblocked the offline downloader's
+// fetch() (images.grailsweep.com now sends Access-Control-Allow-Origin)
+// came with Cloudflare adding `Vary: Origin` to the same responses --
+// Cache Storage honors Vary by default, so cache.match() on a plain <img>
+// load could miss an entry the downloader had already written, even with
+// an identical URL in the identical gs-images-v2 store (confirmed live:
+// the response has Vary: Origin only when the request carries an Origin
+// header, which a page-JS fetch() does and a native <img> load doesn't
+// consistently). Both cache.match() call sites (below, and
+// _gsDownloadImagesToCache's pre-check in search.html) now pass
+// {ignoreVary: true} -- safe here because these are static, immutable,
+// public card images whose bytes never actually differ by Origin. This is
+// a read-side fix only: existing gs-images-v2 entries from v158 don't
+// need to be re-downloaded, they just start being found.
+// v160 — 2026-08-25: end-to-end test payload for the new page-side SW
+// auto-update mechanism (_gsWireAutoUpdate, base.html/search.html). No
+// functional change here beyond the version bump itself -- the actual test
+// payload is the footer "build-check v1" marker (base.html). A primed
+// device (per the auto-update rollout's one-time prime-the-pump step)
+// should pick this up on next resume/visibility-change with NO manual
+// reload. Remove this changelog entry's test-marker reference once
+// confirmed working; the marker itself can come out too.
+// v161 — 2026-08-25: adds the TEMPORARY GS_VERSION message handler below
+// (real behavior, not just this comment) for the on-device snc image-cache
+// diagnostic -- lets search.html's diagnostic panel confirm which SW
+// instance/CACHE_NAME is actually controlling the page.
+// v162 — 2026-08-25: removes v161's TEMPORARY GS_VERSION message handler --
+// investigation closed (root cause confirmed: iOS Capacitor has no SW at
+// all, unrelated to which instance was controlling anything). The
+// permanent fixes (ignoreVary reads, render()'s page-side cache.match ->
+// blob URL swap, auto-update) are untouched by this removal.
+const CACHE_NAME = 'grailsweep-v162';
 const PRECACHE = [
   '/',
   '/static/style.css',
   '/static/assets/grailsweep_app_icon.png',
   '/static/assets/gs_card_placeholder.png',
   '/static/gs-ondevice.js',
+  '/static/gs-set-cache.js',
   '/api/search-index/pokemon',
   '/api/fx_rates'
 ];
@@ -192,7 +232,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== 'gs-images-v1').map(k => caches.delete(k)))
+      Promise.all(keys.filter(k => k !== CACHE_NAME && k !== 'gs-images-v2').map(k => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
@@ -205,8 +245,8 @@ self.addEventListener('fetch', event => {
   // persist across sw.js version bumps and aren't purged every deploy.
   if (IMAGE_HOSTS.some(h => event.request.url.includes(h))) {
     event.respondWith(
-      caches.open('gs-images-v1').then(function(cache) {
-        return cache.match(event.request).then(
+      caches.open('gs-images-v2').then(function(cache) {
+        return cache.match(event.request, { ignoreVary: true }).then(
           function(cached) {
             if (cached) return cached;
             return fetch(event.request).then(function(resp) {

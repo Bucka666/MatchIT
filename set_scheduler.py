@@ -2238,6 +2238,36 @@ def run_scheduler(
                 f"[SCHED] build_pokemon_search_index failed: {e}"
             )
 
+        try:
+            from build_onepiece_search_index import \
+                build_onepiece_search_index
+            run_summary["onepiece_search_index"] = \
+                build_onepiece_search_index()
+        except Exception as e:
+            logger.error(
+                f"[SCHED] build_onepiece_search_index failed: {e}"
+            )
+
+        try:
+            from build_mtg_search_index import \
+                build_mtg_search_index
+            run_summary["mtg_search_index"] = \
+                build_mtg_search_index()
+        except Exception as e:
+            logger.error(
+                f"[SCHED] build_mtg_search_index failed: {e}"
+            )
+
+        try:
+            from build_ygo_search_index import \
+                build_ygo_search_index
+            run_summary["ygo_search_index"] = \
+                build_ygo_search_index()
+        except Exception as e:
+            logger.error(
+                f"[SCHED] build_ygo_search_index failed: {e}"
+            )
+
     # ── 2e. Refresh the FX rate cache (single source for all 5 GBP consumers) ──
     # Same "runs every day regardless of any_new" rationale as 2c/2d. Runs
     # before step 5 (price alerts) so this same run's alert check uses the
@@ -2356,7 +2386,32 @@ if _HAS_MODAL:
         result = _rebuild_mtg_totals_remote.remote()
         print(json.dumps(result, indent=2))
 
-    # Same App, same pattern — set-detail card-list sidecars (pokemon/mtg/ygo).
+    # Same App, same pattern — set-detail card-list sidecars
+    # (pokemon/mtg/ygo/onepiece). ONE task per game (2026-08-25) rather than
+    # one function covering all four: the single-function version hit
+    # FunctionTimeoutError at 3600s once the dedup-then-limit fix (app.py's
+    # _build_set_card_list) started fetching each set's COMPLETE raw pool
+    # instead of a pre-dedup-truncated one -- MTG's "The List" alone went
+    # from a capped 500-row fetch to its true ~4,982, and every previously
+    # 200/500-row-capped set across all four games saw the same kind of
+    # increase. That's real, unavoidable extra work (fetching the whole set
+    # is the entire point of the fix), compounded by a separate, avoidable
+    # inefficiency this same pass fixed: _build_set_card_list was loading
+    # each row's profile via the general-purpose _load_card_profile_for_sku,
+    # which probes every CardsDB game directory per SKU over the network
+    # volume even though the game is already known here -- replaced with a
+    # direct single-path read (_load_profile_direct, app.py).
+    #
+    # Splitting per game means a slow MTG run can't block or erase the other
+    # three games' already-completed sidecars (the old version computed
+    # everything in memory and wrote all 3 files together at the very end --
+    # a timeout anywhere meant NOTHING got written, not even a game that had
+    # already finished). Each call below is independent: its own container,
+    # its own volume commit, its own timeout. Run in order, not parallel --
+    # avoids any question of concurrent commits to the same volume, and
+    # POKEMON/YUGIOH/ONEPIECE are all fast enough that sequencing them costs
+    # little next to MTG's own runtime.
+    #
     # Usage:
     #   modal run set_scheduler.py::rebuild_set_cards
     @_modal_app.function(
@@ -2364,28 +2419,41 @@ if _HAS_MODAL:
         volumes={"/modal_data": _vol},
         timeout=3600,
     )
-    def _rebuild_set_cards_remote() -> dict:
+    def _rebuild_set_cards_for_game_remote(game: str) -> dict:
         import os as _os_inner
         _os_inner.chdir("/app")
         _os_inner.environ["LOCALAPPDATA"] = "/modal_data"
         _vol.reload()
         from matchit_modal import _fix_vertical_config
         _fix_vertical_config()
-        from app import rebuild_set_card_lists
-        result = rebuild_set_card_lists()
+        from app import rebuild_set_cards_for_game
+        result = rebuild_set_cards_for_game(game)
+        result["game"] = game
         try:
             _vol.commit()
             result["vol_commit"] = "OK"
         except Exception as e:
             result["vol_commit"] = f"FAILED: {e}"
-        print(f"[SET-CARDS] {result}", flush=True)
+        print(f"[SET-CARDS] {game}: {result}", flush=True)
         return result
 
     @_modal_app.local_entrypoint()
     def rebuild_set_cards():
-        """Bake the per-game set card-list sidecars against the live Modal volume (manual, one-off)."""
-        result = _rebuild_set_cards_remote.remote()
-        print(json.dumps(result, indent=2))
+        """Bake the per-game set card-list sidecars against the live Modal
+        volume (manual, one-off) -- one independent task per game, in order,
+        so a slow/failing game can't block or erase the others. Each game's
+        result (including whether ITS volume commit succeeded) is printed as
+        it finishes, not batched at the end."""
+        results = {}
+        for game in ("POKEMON", "YUGIOH", "ONEPIECE", "MTG"):
+            print(f"--- {game} ---", flush=True)
+            try:
+                results[game] = _rebuild_set_cards_for_game_remote.remote(game)
+            except Exception as e:
+                results[game] = {"error": str(e)}
+            print(json.dumps(results[game], indent=2), flush=True)
+        print("=== summary ===", flush=True)
+        print(json.dumps(results, indent=2))
 
 
 # ─────────────────────────────────────────────────────────────

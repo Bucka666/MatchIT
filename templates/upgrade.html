@@ -583,6 +583,11 @@ async function upgradeValidateCode() {
             localStorage.setItem('matchit_access_code_v1', code);
             localStorage.setItem('matchit_tier_v1', data.tier || 'monthly');
             document.cookie = 'gs_access_code=' + encodeURIComponent(code) + ';path=/;max-age=31536000;samesite=lax';
+            // Checkout flow is done -- clear the SW auto-update payment guard
+            // (base.html's gsNavigateToCheckout / _gsWireAutoUpdate) so the
+            // update banner can resolve normally again instead of waiting
+            // out its 20-minute safety window.
+            try { sessionStorage.removeItem('gs_payment_pending_at'); } catch (e) {}
             // Sync collection from server on Pro unlock
             try {
                 var _syncCode = code.trim().toUpperCase();

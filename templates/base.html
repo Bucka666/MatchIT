@@ -1024,7 +1024,10 @@
   </div>
 
   <footer class="mi-footer">
-    <div>© <span id="miYear"></span> <span style="background:linear-gradient(90deg,#b14dff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">GrailSweep</span>. All rights reserved.</div>
+    <div>© <span id="miYear"></span> <span style="background:linear-gradient(90deg,#b14dff,#00e5ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;">GrailSweep</span>. All rights reserved.
+      <!-- SW auto-update end-to-end test marker (2026-08-25) — bump the number each retest, then remove once confirmed working. -->
+      <span style="opacity:0.35;font-size:0.68em;">&nbsp;· build-check v1</span>
+    </div>
     <div style="margin-top:8px;">
       <a href="/privacy" style="color:var(--mi-muted,#aaa);text-decoration:none;font-size:0.75rem;">Privacy</a>
       <span style="color:var(--mi-muted,#aaa);font-size:0.75rem;"> · </span>
@@ -1081,7 +1084,93 @@
     <div class="mi-disclaimer">{{ vbrand.disclaimer }}</div>
   </footer>
 
+  <div id="gsUpdateBanner" style="display:none;position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;
+    background:var(--mi-bg);border:1px solid var(--mi-accent);border-radius:10px;padding:10px 14px;
+    align-items:center;justify-content:space-between;gap:10px;font-family:'DM Sans',sans-serif;
+    font-size:0.82rem;color:var(--mi-text);box-shadow:0 4px 16px rgba(0,0,0,0.4);">
+    <span>⚡ Update ready</span>
+    <button onclick="window.location.reload()" style="background:var(--mi-accent);border:none;border-radius:6px;
+      color:#fff;padding:6px 12px;font-size:0.78rem;font-weight:700;cursor:pointer;">Refresh</button>
+  </div>
+
   <script>
+    // Page-side SW auto-update. skipWaiting/clients.claim (sw.js) already make
+    // the new SW activate promptly -- this is the other half: telling an
+    // already-open page (which keeps running its OLD in-memory HTML/JS
+    // regardless of how fast the SW updates underneath it) that it should
+    // reload. A TWA/PWA session is typically resumed from background, not
+    // freshly navigated, so without this a device could run stale JS
+    // indefinitely. See the 2026-08-25 SW-auto-update recon for the full
+    // diagnosis (page-side gap, not a regression -- skipWaiting/clients.claim
+    // have been in sw.js since this repo's first commit).
+    function _gsWireAutoUpdate(reg) {
+      var reloadPending = false;
+      var newControllerWhileHidden = false;
+      var initiallyControlled = !!navigator.serviceWorker.controller;
+
+      // Mid-Stripe-redirect guard. gs_payment_pending_at is set in
+      // gsNavigateToCheckout() below (the single choke point both the TWA
+      // intent:// path and the plain-browser same-tab path go through) and
+      // cleared on successful code redemption (upgrade.html's
+      // upgradeValidateCode()). 20-minute safety window in case the user
+      // abandons checkout and never returns, so the guard can't get stuck
+      // open forever.
+      function paymentFlowActive() {
+        try {
+          var ts = sessionStorage.getItem('gs_payment_pending_at');
+          return !!ts && (Date.now() - Number(ts)) < 20 * 60 * 1000;
+        } catch (e) { return false; }
+      }
+      // Mid-scan guard. scScanning/scBusy are match.html's own globals (this
+      // script runs on every page that extends base.html, including
+      // match.html, via template inheritance) -- CROSS-FILE COUPLING: if
+      // those variable names ever change in match.html, this guard silently
+      // stops working. Keep in sync.
+      function scanActive() {
+        try { return typeof scScanning !== 'undefined' && (scScanning || scBusy); }
+        catch (e) { return false; }
+      }
+      function showUpdateBanner() {
+        var banner = document.getElementById('gsUpdateBanner');
+        if (banner) banner.style.display = 'flex';
+      }
+      function maybeReload() {
+        if (reloadPending) return;
+        if (paymentFlowActive() || scanActive()) {
+          // Unsafe to yank the page right now -- offer instead of forcing.
+          reloadPending = true;
+          showUpdateBanner();
+          return;
+        }
+        reloadPending = true;
+        window.location.reload();
+      }
+
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!initiallyControlled) {
+          // First-ever activation for this page load (e.g. fresh install) --
+          // not a genuine update, ignore once so we don't spuriously reload.
+          initiallyControlled = true;
+          return;
+        }
+        if (document.visibilityState === 'hidden') {
+          newControllerWhileHidden = true; // resolve once the tab is visible again
+        } else if (!reloadPending) {
+          // Controller changed while the tab was actively in use -- never
+          // auto-reload here, always offer instead.
+          reloadPending = true;
+          showUpdateBanner();
+        }
+      });
+
+      document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+          if (newControllerWhileHidden && !reloadPending) maybeReload();
+          reg.update().catch(function(){}); // shortens Chrome's ~24h background update check
+        }
+      });
+    }
+
     (function(){
       var y = new Date().getFullYear();
       var el = document.getElementById("miYear");
@@ -1089,7 +1178,7 @@
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
-          .then(function() { gsInitPush(); })
+          .then(function(reg) { gsInitPush(); _gsWireAutoUpdate(reg); })
           .catch(function(){});
       }
 
@@ -1445,6 +1534,11 @@ function gsIsWatchlisted(sku) {
   }
 
   function gsNavigateToCheckout(checkoutUrl) {
+    // Marks a payment flow in progress so the SW auto-update banner (see
+    // _gsWireAutoUpdate) never yanks the page mid-checkout -- most load-
+    // bearing on the TWA branch below, which backgrounds the app entirely
+    // into system Chrome; cleared on successful redemption in upgrade.html.
+    try { sessionStorage.setItem('gs_payment_pending_at', String(Date.now())); } catch (e) {}
     if (gsIsRunningInTWA()) {
       var stripped = checkoutUrl.replace(/^https:\/\//, '');
       var intentUrl =

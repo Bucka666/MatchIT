@@ -41,6 +41,7 @@ set_scheduler.py's weekly chain — that's a separate decision.
 """
 import json
 import os
+import sqlite3
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
@@ -55,6 +56,19 @@ def build_onepiece_search_index(data_root="."):
     if not os.path.isdir(onepiece_dir):
         print(f"[OP-SEARCH] onepiece dir not found: {onepiece_dir} — nothing built", flush=True)
         return {"total": 0, "skipped": 0, "out_path": out_path}
+
+    # sku -> image_id, for the R2 image-field fix below. img_url previously
+    # pointed at Bandai's own CDN (en.onepiece-cardgame.com) verbatim for
+    # every card, even the ones we already had a live R2 object for.
+    sku_to_image_id = {}
+    images_db_path = os.path.join(data_root, "MatchITv2_ProductMatch_Data", "cards", "images.db")
+    try:
+        with sqlite3.connect(images_db_path) as _conn:
+            for _sku, _image_id in _conn.execute("SELECT sku, image_id FROM images WHERE sku LIKE 'op-%'"):
+                sku_to_image_id[_sku] = _image_id
+        print(f"[OP-SEARCH] {len(sku_to_image_id)} sku->image_id rows from images.db", flush=True)
+    except Exception as e:
+        print(f"[OP-SEARCH] WARN could not load images.db ({e}) — img falls back to Bandai CDN: {e}", flush=True)
 
     # set_total is NOT in per-card profiles — it lives in set_metadata.json
     # keyed by set_id (populated for ONEPIECE sets via CardsDB re-scan, see
@@ -124,6 +138,14 @@ def build_onepiece_search_index(data_root="."):
                 except (TypeError, ValueError):
                     pass
 
+        # R2 from image_id, preferred -- non-regressive: fall back to Bandai's
+        # CDN only if this sku has no image_id, else null.
+        _image_id = sku_to_image_id.get(sku_dir)
+        if _image_id:
+            img = "https://images.grailsweep.com/" + _image_id + ".jpg"
+        else:
+            img = str(p.get("img_url") or "").strip() or None
+
         return {
             "sku":       sku_dir,
             "name":      name,
@@ -134,7 +156,7 @@ def build_onepiece_search_index(data_root="."):
             "lang":      "en",
             "price":     price_val,
             "currency":  price_currency,
-            "img":       str(p.get("img_url") or "").strip() or None,
+            "img":       img,
         }
 
     with os.scandir(onepiece_dir) as _it:

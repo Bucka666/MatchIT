@@ -566,7 +566,7 @@
       var imgSrc = c.img_url || '';
       return (
         '<div class="sets-card-thumb ' + cls + '">' +
-        '<img src="' + escHtml(imgSrc) + '" loading="lazy" onerror="this.style.opacity=\'0.1\'" alt="">' +
+        '<img src="' + escHtml(imgSrc) + '" loading="lazy" onerror="this.onerror=null;this.src=\'/static/assets/gs_card_placeholder.png\'" alt="">' +
         '<div class="sets-card-thumb-num">#' + escHtml(c.card_number || '?') + '</div>' +
         '<div class="sets-card-thumb-name" title="' + escHtml(c.name || '') + '">' + escHtml(c.name || '') + '</div>' +
         '</div>'
