@@ -4040,6 +4040,32 @@ def _search_index_entries(game, raw, lang):
     on which index to scan."""
     index = _search_indexes.get(game, [])
     matches = []
+
+    setcode_query = re.match(r'^([a-z]+\d+)-(\d+)$', raw.strip().lower())
+    if setcode_query:
+        # "SETCODE-NUMBER" (e.g. "OP16-015") -- One Piece's card_number is
+        # stored bare ("015") with the set code in a separate set_id field
+        # ("op16"), unlike YGO where card_number IS the full "2017-EN001"
+        # string. group2 here must be pure digits, so a YGO query like
+        # "2017-EN001" never matches this pattern (its second half is
+        # alphanumeric "EN001") and falls through to the plain-prefix branch
+        # below, unaffected. Tolerant of zero-padding ("OP16-15" == "OP16-015")
+        # and of variant-suffixed SKUs ("015_p1" -> base "015").
+        set_code, typed_num = setcode_query.groups()
+        typed_num = typed_num.lstrip('0') or '0'
+        exact, prefix = [], []
+        for entry in index:
+            if entry.get("lang", "en") != lang:
+                continue
+            if str(entry.get("set_id") or "").lower() != set_code:
+                continue
+            entry_base = entry["number"].split("_", 1)[0].lstrip("0") or "0"
+            if entry_base == typed_num:
+                exact.append(entry)
+            elif entry_base.startswith(typed_num):
+                prefix.append(entry)
+        return (exact + prefix)[:12]
+
     if "/" in raw:
         # "number/total" → match card_number prefix AND exact set_total.
         # Leading zeros stripped on each numeric part so "032/165" matches "32"/"165".

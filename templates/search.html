@@ -411,6 +411,25 @@
         // "001" can't surface JP cards in an English offline search.
         index = index.filter(function(e) { return (e.lang || 'en') !== 'ja'; });
 
+        // "SETCODE-NUMBER" (e.g. "op16-015") -- mirrors the server-side branch
+        // in _search_index_entries() (app.py); keep both in sync. group2 must
+        // be pure digits so YGO's "2017-en001" (second half "en001" is
+        // alphanumeric) never matches and keeps using the branches below.
+        var setcodeMatch = /^([a-z]+\d+)-(\d+)$/.exec(q);
+        if (setcodeMatch) {
+          var setCode = setcodeMatch[1];
+          var typedNum = setcodeMatch[2].replace(/^0+/, '') || '0';
+          var exact = [], prefix = [];
+          index.forEach(function(e) {
+            if ((e.set_id || '').toLowerCase() !== setCode) return;
+            var entryBase = String(e.number).split('_')[0].replace(/^0+/, '') || '0';
+            if (entryBase === typedNum) exact.push(e);
+            else if (entryBase.indexOf(typedNum) === 0) prefix.push(e);
+          });
+          cb(exact.concat(prefix).slice(0, 30));
+          return;
+        }
+
         if (slash >= 0) {
           var numPart = q.slice(0, slash).trim();
           var totalPart = q.slice(slash+1).trim()
