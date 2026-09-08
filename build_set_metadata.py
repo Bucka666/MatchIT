@@ -25,9 +25,23 @@ do; a dedicated exclude list can be added in Phase B if needed.
 
 Usage:
     python build_set_metadata.py
+    python build_set_metadata.py --game onepiece          # only rebuild onepiece's slice, skip
+                                                            # network calls for the other 3 games
+    python build_set_metadata.py --game pokemon,mtg       # comma-separated, or repeat --game
     CARDSDB_ROOT=C:/my/CardsDB python build_set_metadata.py
+
+SCOPING (2026-09-07): --game restricts BOTH which games make network calls
+AND which games' entries get replaced in the output file. Without it,
+main() always rebuilt all 4 games and wrote a wholesale-overwrite dict
+built only from that run's own results -- a scoped run without a merge fix
+would have silently deleted every other game's entries. The fix loads the
+existing set_metadata.json first and only replaces the scoped game(s)'
+slice (matched by each entry's own "game" field), leaving every other
+entry byte-identical. Omitting --game reproduces the exact prior
+behavior (every game rebuilt, same collision-handling order and rules).
 """
 
+import argparse
 import json
 import os
 import time
@@ -349,8 +363,33 @@ def build_onepiece_metadata(root: Path, set_ids: Set[str]) -> Dict[str, dict]:
 
 # ── Main ────────────────────────────────────────────────────────────────────
 
+def _parse_game_arg(raw_values) -> Set[str]:
+    """--game accepts both repeatable flags and comma-separated values,
+    matching build_one_piece_data.py's --set-id convention."""
+    only = set()
+    for raw in raw_values:
+        for piece in raw.split(","):
+            piece = piece.strip().lower()
+            if piece:
+                only.add(piece)
+    return only
+
+
+_GAME_LABEL = {"pokemon": "POKEMON", "mtg": "MTG", "yugioh": "YUGIOH", "onepiece": "ONEPIECE"}
+
+
 def main():
     t0 = time.time()
+
+    parser = argparse.ArgumentParser(description="Build set_metadata.json for set-completion tracking.")
+    parser.add_argument("--game", action="append", default=None,
+                         help="only rebuild this game (pokemon, mtg, yugioh, onepiece). "
+                              "Repeatable or comma-separated. Omit for all games (default).")
+    args = parser.parse_args()
+    only_games = _parse_game_arg(args.game) if args.game else None
+
+    def in_scope(folder_name: str) -> bool:
+        return only_games is None or folder_name in only_games
 
     if not CARDSDB_ROOT.exists():
         print(f"[ERROR] CardsDB root not found: {CARDSDB_ROOT}")
@@ -358,49 +397,80 @@ def main():
 
     print(f"=== build_set_metadata.py ===")
     print(f"CardsDB : {CARDSDB_ROOT}")
-    print(f"Output  : {OUTPUT_PATH}\n")
+    print(f"Output  : {OUTPUT_PATH}")
+    if only_games is not None:
+        print(f"Scoped to game(s): {sorted(only_games)}")
+    print()
 
     # ── 1. Discover set_ids ────────────────────────────────────────────────
+    # Always scans all 4 games' folders -- one cheap local walk, no network
+    # calls, so there's no cost to skip here even for out-of-scope games.
     print("Scanning CardsDB...")
     sets_by_game = scan_cardsdb(CARDSDB_ROOT)
     for game, ids in sorted(sets_by_game.items()):
         print(f"  {game}: {len(ids)} unique sets")
 
-    # ── 2. Enrich from APIs ───────────────────────────────────────────────
+    # ── 2. Enrich from APIs — only for in-scope games. An out-of-scope
+    #    game gets {} here, which also means zero network calls are made
+    #    for it (build_pokemon_metadata/build_mtg_metadata/build_ygo_metadata
+    #    are simply never invoked).────────────────────────────────────────
     print()
-    pokemon_meta = build_pokemon_metadata(sets_by_game["POKEMON"])
+    pokemon_meta  = build_pokemon_metadata(sets_by_game["POKEMON"]) if in_scope("pokemon") else {}
     print()
-    mtg_meta     = build_mtg_metadata(sets_by_game["MTG"])
+    mtg_meta      = build_mtg_metadata(sets_by_game["MTG"]) if in_scope("mtg") else {}
     print()
-    ygo_meta     = build_ygo_metadata(sets_by_game["YUGIOH"])
+    ygo_meta      = build_ygo_metadata(sets_by_game["YUGIOH"]) if in_scope("yugioh") else {}
     print()
-    onepiece_meta = build_onepiece_metadata(CARDSDB_ROOT, sets_by_game["ONEPIECE"])
+    onepiece_meta = build_onepiece_metadata(CARDSDB_ROOT, sets_by_game["ONEPIECE"]) if in_scope("onepiece") else {}
 
-    metadata: Dict[str, dict] = {}
-    metadata.update(pokemon_meta)
-    # Collision-aware merge: some set_ids (e.g. me1/me2/me3 — Pokémon "Mega
-    # Evolution"/"Phantasmal Flames"/"Perfect Order" vs MTG "Masters Edition"
-    # I/II/III) exist in both CardsDB/pokemon and CardsDB/mtg. An unconditional
-    # update() here let mtg_meta silently clobber the correct Pokémon totals
-    # with null MTG ones. Pokémon wins on collision — never overwrite a key
-    # pokemon_meta already populated.
-    mtg_collisions = sorted(set(mtg_meta) & set(metadata))
-    if mtg_collisions:
-        print(f"  [COLLISION] {len(mtg_collisions)} set_id(s) in both Pokémon and MTG — "
-              f"keeping Pokémon entry: {mtg_collisions}")
-    for k, v in mtg_meta.items():
-        if k not in metadata:
-            metadata[k] = v
-    metadata.update(ygo_meta)
-    onepiece_collisions = sorted(set(onepiece_meta) & set(metadata))
-    if onepiece_collisions:
-        print(f"  [COLLISION] {len(onepiece_collisions)} set_id(s) in both One Piece and "
-              f"an existing game — keeping existing entry: {onepiece_collisions}")
-    for k, v in onepiece_meta.items():
-        if k not in metadata:
-            metadata[k] = v
+    # ── 3. Merge-safe write. Load whatever's already on disk, then only
+    #    replace the scoped game(s)' slice (matched by each entry's own
+    #    "game" field) -- every other entry stays byte-identical. Omitting
+    #    --game touches every game, reproducing the original unconditional
+    #    full-rebuild exactly (same insertion order, same collision rules).
+    existing_metadata: Dict[str, dict] = {}
+    if OUTPUT_PATH.exists():
+        try:
+            with open(OUTPUT_PATH, "r", encoding="utf-8") as f:
+                existing_metadata = json.load(f)
+        except Exception as e:
+            print(f"[WARN] could not read existing {OUTPUT_PATH}, starting fresh: {e}")
 
-    # ── 3. Write output ───────────────────────────────────────────────────
+    metadata: Dict[str, dict] = dict(existing_metadata)
+
+    if in_scope("pokemon"):
+        metadata = {k: v for k, v in metadata.items() if v.get("game") != "POKEMON"}
+        metadata.update(pokemon_meta)
+
+    if in_scope("mtg"):
+        metadata = {k: v for k, v in metadata.items() if v.get("game") != "MTG"}
+        # Collision-aware merge: some set_ids (e.g. me1/me2/me3 — Pokémon "Mega
+        # Evolution"/"Phantasmal Flames"/"Perfect Order" vs MTG "Masters Edition"
+        # I/II/III) exist in both CardsDB/pokemon and CardsDB/mtg. Pokémon wins
+        # on collision — never overwrite a key pokemon_meta already populated
+        # (whether from this same run or preserved untouched from disk).
+        mtg_collisions = sorted(set(mtg_meta) & set(metadata))
+        if mtg_collisions:
+            print(f"  [COLLISION] {len(mtg_collisions)} set_id(s) in both Pokémon and MTG — "
+                  f"keeping Pokémon entry: {mtg_collisions}")
+        for k, v in mtg_meta.items():
+            if k not in metadata:
+                metadata[k] = v
+
+    if in_scope("yugioh"):
+        metadata = {k: v for k, v in metadata.items() if v.get("game") != "YUGIOH"}
+        metadata.update(ygo_meta)
+
+    if in_scope("onepiece"):
+        metadata = {k: v for k, v in metadata.items() if v.get("game") != "ONEPIECE"}
+        onepiece_collisions = sorted(set(onepiece_meta) & set(metadata))
+        if onepiece_collisions:
+            print(f"  [COLLISION] {len(onepiece_collisions)} set_id(s) in both One Piece and "
+                  f"an existing game — keeping existing entry: {onepiece_collisions}")
+        for k, v in onepiece_meta.items():
+            if k not in metadata:
+                metadata[k] = v
+
     print(f"\nWriting {len(metadata)} entries to {OUTPUT_PATH}...")
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, ensure_ascii=False, sort_keys=True)
