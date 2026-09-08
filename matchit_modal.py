@@ -375,8 +375,16 @@ def warm():
     timeout=3600,
 )
 def run_embed_gpu(hot_reload=True):
+    # vol.reload() + commit_cb=vol.commit: run_incremental_embed() now
+    # checkpoints partial progress (SQLite + .npy cache + volume commit)
+    # every checkpoint_every images rather than only at the very end (see
+    # incremental_embed.py) -- without passing commit_cb through here too,
+    # this scheduler-invoked path would still only get the outer vol.commit()
+    # scheduled_set_check() does after the whole chain finishes, so a timeout
+    # inside THIS function specifically would still lose everything.
+    vol.reload()
     from incremental_embed import run_incremental_embed
-    return run_incremental_embed(hot_reload=hot_reload)
+    return run_incremental_embed(hot_reload=hot_reload, commit_cb=vol.commit)
 
 
 @app.function(

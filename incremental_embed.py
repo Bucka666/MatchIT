@@ -18,11 +18,21 @@ import json
 import logging
 import os
 import sqlite3
+import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
+
+# Log lines here (and in app.py, imported via get_embedder()/_embed_one_query)
+# can contain non-ASCII characters (e.g. "->"/arrow glyphs); Windows consoles
+# default stdout to cp1252, which can't encode them and raises inside the
+# logging module itself (non-fatal but noisy -- confirmed live while testing
+# the checkpointing change below). Same fix as scrape_pokemon_jpn.py /
+# build_set_metadata.py.
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 logger = logging.getLogger(__name__)
 
@@ -169,12 +179,24 @@ def _embed_new_images(
     new_rows: List[dict],
     emb,
     batch_size: int = 50,
+    checkpoint_every: int = 1000,
+    on_checkpoint: Optional[Callable[[List[np.ndarray], List[tuple]], None]] = None,
 ) -> Tuple[np.ndarray, List[tuple], int]:
     """
     Embed a list of new image rows using the provided embedder.
     Returns (matrix, info_list, sqlite_written) where matrix is float32 (N, dim).
     Also writes each embedding to the images.db embedding column so SQLite
     stays in sync with the .npy cache.
+
+    Checkpointing (mirrors commit a49721a, the One Piece price-refresh
+    timeout fix): every `checkpoint_every` images, the SQLite writes so far
+    are committed and, if `on_checkpoint` is given, it's called with
+    (vecs_so_far, info_so_far) so the caller can persist the accumulated
+    .npy cache + volume state. Without this, a timeout mid-run loses every
+    embedding computed since the START of the run, not just since the last
+    checkpoint -- this was previously a single all-or-nothing commit/save
+    at the very end. on_checkpoint is also called once more after the loop
+    finishes, covering the remainder since the last interval boundary.
     """
     from app import _embed_one_query
     from vertical_loader import get_vertical
@@ -234,9 +256,27 @@ def _embed_new_images(
             failed += 1
             continue
 
+        done = i + 1
+        if checkpoint_every > 0 and done % checkpoint_every == 0:
+            if db_conn is not None:
+                db_conn.commit()
+            if on_checkpoint is not None:
+                on_checkpoint(vecs, info)
+            logger.info(
+                f"[INCR] Checkpoint at {done}/{total} "
+                f"(sqlite committed, cache+volume saved)"
+            )
+
     if db_conn is not None:
         db_conn.commit()
         db_conn.close()
+
+    # Final checkpoint for the remainder since the last interval boundary
+    # (e.g. total=5123, checkpoint_every=1000 -> covers images 5001-5123).
+    # Harmless no-op re-save if the loop's last iteration already landed
+    # exactly on a checkpoint boundary.
+    if on_checkpoint is not None and vecs:
+        on_checkpoint(vecs, info)
 
     if not vecs:
         logger.warning("[INCR] No vectors produced")
@@ -340,6 +380,8 @@ def _reload_app_matrices(
 def run_incremental_embed(
     category_filter: Optional[str] = None,
     hot_reload:      bool = True,
+    commit_cb:       Optional[Callable[[], None]] = None,
+    checkpoint_every: int = 1000,
 ) -> Dict:
     """
     Find and embed any new images not yet in the matrix cache.
@@ -347,6 +389,15 @@ def run_incremental_embed(
     Args:
         category_filter: Optional TCG filter e.g. 'POKEMON', 'MTG', 'YUGIOH'
         hot_reload:      If True, immediately update the in-memory matrices
+        commit_cb:       Optional zero-arg callable (pass Modal's vol.commit)
+                         invoked every `checkpoint_every` images so partial
+                         progress becomes durable on the volume mid-run, not
+                         just at the very end. None for local/non-Modal runs
+                         (nothing to commit to). Mirrors refresh_onepiece_
+                         dotgg_prices.py's commit_cb convention (a49721a).
+        checkpoint_every: Images per checkpoint (SQLite commit + .npy cache
+                         save + commit_cb()). 1000 by default -- see
+                         _embed_new_images() callers below for the reasoning.
 
     Returns:
         Summary dict with counts and timing.
@@ -398,9 +449,37 @@ def run_incremental_embed(
 
     sqlite_total = 0
 
+    def _do_checkpoint(vecs_so_far, info_so_far, *, is_front: bool):
+        """Persist the accumulated cache state (existing + embedded-so-far
+        on the side currently being embedded, the other side untouched)
+        plus a volume commit. Called periodically from _embed_new_images()
+        via on_checkpoint, and once more after each loop for the remainder."""
+        partial = (
+            np.stack(vecs_so_far).astype(np.float32) if vecs_so_far
+            else np.empty((0, front_matrix.shape[1]), dtype=np.float32)
+        )
+        if is_front:
+            combined_front = np.concatenate([front_matrix, partial], axis=0)
+            combined_front_info = front_info + info_so_far
+            _save_updated_cache(combined_front, back_matrix, combined_front_info, back_info, extra)
+        else:
+            base_back = back_matrix if (back_matrix is not None and back_matrix.shape[0] > 0) else None
+            combined_back = np.concatenate([base_back, partial], axis=0) if base_back is not None else partial
+            combined_back_info = back_info + info_so_far
+            _save_updated_cache(front_matrix, combined_back, front_info, combined_back_info, extra)
+        if commit_cb is not None:
+            try:
+                commit_cb()
+            except Exception as e:
+                logger.warning(f"[INCR] commit_cb() failed at checkpoint: {e}")
+
     # 4. Embed new FRONT images
     if new_front_rows:
-        new_front_matrix, new_front_info, n_written = _embed_new_images(new_front_rows, emb)
+        new_front_matrix, new_front_info, n_written = _embed_new_images(
+            new_front_rows, emb,
+            checkpoint_every=checkpoint_every,
+            on_checkpoint=lambda v, i: _do_checkpoint(v, i, is_front=True),
+        )
         sqlite_total += n_written
         if new_front_matrix.shape[0] > 0:
             front_matrix = np.concatenate(
@@ -411,7 +490,11 @@ def run_incremental_embed(
 
     # 5. Embed new BACK images
     if new_back_rows:
-        new_back_matrix, new_back_info, n_written = _embed_new_images(new_back_rows, emb)
+        new_back_matrix, new_back_info, n_written = _embed_new_images(
+            new_back_rows, emb,
+            checkpoint_every=checkpoint_every,
+            on_checkpoint=lambda v, i: _do_checkpoint(v, i, is_front=False),
+        )
         sqlite_total += n_written
         if new_back_matrix.shape[0] > 0:
             if back_matrix is not None and back_matrix.shape[0] > 0:
@@ -425,12 +508,16 @@ def run_incremental_embed(
 
     summary["sqlite_written"] = sqlite_total
 
-    # 6. Save updated cache
-    _save_updated_cache(
-        front_matrix, back_matrix,
-        front_info,   back_info,
-        extra,
-    )
+    # No separate final save here: _embed_new_images() already guarantees
+    # one unconditional on_checkpoint() call after its loop for any
+    # non-empty batch (checkpoint boundary or not, see its docstring), and
+    # that checkpoint's closure (_do_checkpoint above) closes over
+    # front_matrix/front_info/back_matrix/back_info by reference -- so by
+    # the time step 5's checkpoints (if any) fire, they already see step
+    # 4's reassigned values. A second unconditional save+commit here was
+    # confirmed redundant (always fires immediately after one that just
+    # wrote the identical state) during verification of this checkpointing
+    # change -- removed rather than left as harmless-but-wasteful.
 
     # 7. Hot-reload in-memory matrices
     if hot_reload:
@@ -492,15 +579,22 @@ embed_app = modal.App("grailsweep-incremental-embed")
         modal.Secret.from_name("external-api-credentials"),
         modal.Secret.from_name("cf-proxy-secret"),
     ],
-    timeout=1800,
+    # Was 1800 -- bumped to match run_embed_gpu's (matchit_modal.py) already-
+    # proven ceiling for this identical shared function, not a fresh guess.
+    # Checkpointing (see run_incremental_embed's commit_cb) means a timeout
+    # now loses at most one checkpoint_every-sized chunk of progress instead
+    # of the whole run, so this is headroom for a big one-off batch, not a
+    # substitute for the safety net.
+    timeout=3600,
 )
 def run_embed():
     import os, sys
     os.chdir("/app")
     sys.path.insert(0, "/app")
     os.environ["LOCALAPPDATA"] = "/modal_data"
+    vol.reload()
     from incremental_embed import run_incremental_embed as _run
-    result = _run(hot_reload=False)
+    result = _run(hot_reload=False, commit_cb=vol.commit)
     print("\n=== Incremental Embed Summary ===", flush=True)
     for k, v in result.items():
         print(f"  {k}: {v}", flush=True)
