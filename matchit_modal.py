@@ -505,11 +505,22 @@ def scheduled_set_check():
     # Pokemon JustTCG refreshes for a shared quota (dotgg.gg needs no API
     # key at all) — this scheduling note is kept for history, not because
     # it still matters.
-    timeout=1800,  # ceiling, not a target — see backfill_onepiece_dotgg_prices.py's
-    # identical note: dotgg's own fetch is fast, but reading+writing 4,672
-    # profile.json files over the network volume is what takes time. 600s
-    # was too tight (same FunctionTimeoutError class as the one confirmed
-    # live 2026-08-16 in the standalone backfill's original 300s ceiling).
+    timeout=5400,  # matches the EN/JP Pokémon siblings' proven ceiling
+    # (scheduled_en_price_refresh / scheduled_jp_price_refresh below), not
+    # another guess at the same number. 1800s (itself already one bump up
+    # from 600s, both confirmed live via FunctionTimeoutError) was still
+    # timing out because the loop opened all ~4,672 profile.json files
+    # unconditionally just to check staleness -- confirmed live: a
+    # read-only pass over the same files couldn't finish inside Modal's
+    # 300s default either. The real fix lives in
+    # refresh_onepiece_dotgg_prices.py: a persisted staleness index
+    # (onepiece_price_staleness.json) now short-circuits already-fresh
+    # cards before their profile.json is ever opened, and
+    # ThreadPoolExecutor(max_workers=8) parallelizes the I/O for whatever
+    # stale-or-unknown subset remains, mirroring the EN/JP Pokémon
+    # refreshers' own pattern on this same volume. 5400s is now a real
+    # ceiling again, not a target -- see that file's module docstring for
+    # the full design (staleness-index update policy, checkpoint cadence).
 )
 def scheduled_onepiece_price_refresh():
     """Daily refresh of TCGPlayer (USD) and Cardmarket (EUR) pricing for
@@ -521,9 +532,12 @@ def scheduled_onepiece_price_refresh():
     dotgg.gg needs no API key and covers ~83% of our catalog in one
     unauthenticated request (confirmed live 2026-08-16).
 
-    Re-fetches cards whose price is missing or >24h stale, not just cards
-    with no price at all -- this runs every day, prices should stay
-    current.
+    Re-fetches cards the staleness index says are missing or >48h checked,
+    not just cards with no price at all -- this runs every day, prices
+    should stay current. (Was >24h until 2026-09-07 -- that collided with
+    this cron's own ~daily cadence, so almost the whole matched set went
+    stale again right as each day's run started, making the skip-fresh
+    check nearly useless in steady state. 48h gives real headroom.)
 
     No gpu= here — pure HTTP fetch + JSON write, CPU-only, same pattern as
     scheduled_fx_refresh/scheduled_jp_price_refresh below.
@@ -541,9 +555,9 @@ def scheduled_onepiece_price_refresh():
     from refresh_onepiece_dotgg_prices import refresh_onepiece_dotgg_prices
     try:
         result = refresh_onepiece_dotgg_prices(
-            Path("/modal_data/CardsDB"), dry_run=False,
+            Path("/modal_data/CardsDB"), dry_run=False, commit_cb=vol.commit,
         )
-        vol.commit()
+        vol.commit()  # final flush -- covers anything since the last mid-run checkpoint
         print(f"[OP-PRICE-CRON] {result}", flush=True)
     except Exception as e:
         print(f"[OP-PRICE-CRON] FAILED: {e}", flush=True)

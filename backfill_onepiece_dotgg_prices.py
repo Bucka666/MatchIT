@@ -30,6 +30,25 @@ key, never a zero placeholder.
 Only fills cards with no existing price (resume=True default), so a
 partial/interrupted run or a re-run is safe.
 
+STALENESS INDEX SYNC (2026-09-07): the daily cron (refresh_onepiece_dotgg_
+prices.py) now keeps a small onepiece_price_staleness.json cache so it can
+skip already-fresh cards without opening their profile.json -- see that
+file's module docstring for the full design. This script is a second, live
+write path for the same profile["prices_updated"] field (a manual re-run
+after e.g. a new set is scraped), so it must update the same index or the
+cron's cache would silently drift out of sync with what's actually on
+disk. Deliberately NOT sharing refresh's per-card worker function or
+threading here: this script's eligibility check (resume=True -> "has no
+existing price at all") and write shape (additive setdefault-merge) are
+genuinely different from refresh's (timestamp-staleness -> diff-and-merge-
+compare) -- forcing them into one shared code path would conflate two
+different eligibility conditions for no real benefit, since this script
+is a manual/occasional operation, not the daily budget under time
+pressure. The index update is bolted on at the one place this script
+already writes prices_updated, and persisted once at the end alongside
+the existing single vol.commit() -- no threading, no checkpointing added,
+since this script isn't the one that was timing out.
+
 Run:
     modal run backfill_onepiece_dotgg_prices.py                # writes to the volume
     modal run backfill_onepiece_dotgg_prices.py --dry-run       # fetch + match only, no writes
@@ -37,6 +56,7 @@ Run:
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -44,6 +64,11 @@ import modal
 
 VOLUME_NAME = "matchit-data-v2"
 _DOTGG_URL = "https://api.dotgg.gg/cgfw/getcards?game=onepiece&mode=indexed"
+_STALENESS_PATH = (
+    "/modal_data/onepiece_price_staleness.json"
+    if os.path.exists("/modal_data")
+    else "onepiece_price_staleness.json"
+)
 
 vol = modal.Volume.from_name(VOLUME_NAME)
 app = modal.App("matchit-onepiece-dotgg-price-backfill")
@@ -85,6 +110,25 @@ def _fetch_dotgg_prices() -> dict:
     return prices
 
 
+# ── Staleness-index sync helpers ────────────────────────────────────────────
+# Copied verbatim from refresh_onepiece_dotgg_prices.py (standalone-script
+# convention, matching this file's existing copy of _fetch_dotgg_prices
+# above -- see module docstring for why this isn't cross-imported).
+def _load_staleness_index() -> dict:
+    try:
+        with open(_STALENESS_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _save_staleness_index(index: dict) -> None:
+    tmp = _STALENESS_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(index, f, separators=(",", ":"))
+    os.replace(tmp, _STALENESS_PATH)
+
+
 @app.function(
     image=image,
     volumes={"/modal_data": vol},
@@ -109,6 +153,8 @@ def backfill_onepiece_dotgg_prices(dry_run: bool = False, resume: bool = True) -
 
     all_prices = _fetch_dotgg_prices()
     print(f"[OP-DOTGG-BACKFILL] Total distinct priced identities: {len(all_prices)}", flush=True)
+
+    staleness = _load_staleness_index()
 
     for folder in sorted(onepiece_dir.iterdir()):
         profile_path = folder / "profile.json"
@@ -141,13 +187,18 @@ def backfill_onepiece_dotgg_prices(dry_run: bool = False, resume: bool = True) -
                 prices["tcgplayer"] = {"market": entry["usd"]}
             if entry["eur"] is not None:
                 prices["cardmarket"] = {"avg_sell": entry["eur"]}
-            profile["prices_updated"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            profile["prices_updated"] = now
             with open(profile_path, "w", encoding="utf-8") as f:
                 json.dump(profile, f, indent=2, ensure_ascii=False)
+            # Keep the cron's staleness cache in sync with this write path
+            # too -- see module docstring's STALENESS INDEX SYNC note.
+            staleness[folder.name] = now
 
         stats["priced"] += 1
 
     if not dry_run and stats["priced"] > 0:
+        _save_staleness_index(staleness)
         vol.commit()
 
     return stats
