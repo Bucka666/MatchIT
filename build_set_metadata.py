@@ -28,6 +28,11 @@ Usage:
     python build_set_metadata.py --game onepiece          # only rebuild onepiece's slice, skip
                                                             # network calls for the other 3 games
     python build_set_metadata.py --game pokemon,mtg       # comma-separated, or repeat --game
+    python build_set_metadata.py --game pokemon --set-ids jpn-sm2l,jpn-sm3h
+                                                            # delta: only these set_ids within
+                                                            # the scoped game(s); skips the API
+                                                            # call entirely for any game with no
+                                                            # matching set_ids in scope
     CARDSDB_ROOT=C:/my/CardsDB python build_set_metadata.py
 
 SCOPING (2026-09-07): --game restricts BOTH which games make network calls
@@ -44,11 +49,20 @@ behavior (every game rebuilt, same collision-handling order and rules).
 import argparse
 import json
 import os
+import sys
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 from typing import Dict, Optional, Set
+
+# JP set names (jp_name from TCGdex) contain CJK characters -- Windows
+# consoles default stdout to cp1252, which can't encode them and crashes
+# the summary print at the end of a successful run (data is written to
+# disk with explicit encoding="utf-8" beforehand, unaffected either way).
+# Same fix as scrape_pokemon_jpn.py.
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 # ── Config ─────────────────────────────────────────────────────────────────
 
@@ -173,8 +187,16 @@ def _fetch_jp_set_totals(set_code: str):
 
 
 def build_pokemon_metadata(set_ids: Set[str]) -> Dict[str, dict]:
-    print(f"[POKEMON] Fetching set list from pokemontcg.io ({len(set_ids)} sets to match)...")
-    data = _fetch_json(POKEMON_SETS_API, "pokemontcg.io/v2/sets")
+    # pokemontcg.io is EN-only (see the else-branch below) -- a delta run
+    # scoped to only jpn- set_ids has no use for it, so skip the call
+    # entirely rather than pay its retry/backoff cost for nothing.
+    needs_en_api = any(not sid.startswith("jpn-") for sid in set_ids)
+    if needs_en_api:
+        print(f"[POKEMON] Fetching set list from pokemontcg.io ({len(set_ids)} sets to match)...")
+        data = _fetch_json(POKEMON_SETS_API, "pokemontcg.io/v2/sets")
+    else:
+        print(f"[POKEMON] {len(set_ids)} set(s) to match, all JP -- skipping pokemontcg.io (EN-only)")
+        data = None
 
     api_lookup: Dict[str, dict] = {}
     if data:
@@ -375,6 +397,20 @@ def _parse_game_arg(raw_values) -> Set[str]:
     return only
 
 
+def _parse_set_ids_arg(raw_values) -> Set[str]:
+    """--set-ids accepts repeatable flags and/or comma-separated values, same
+    convention as --game. Values are matched case-insensitively against the
+    set_ids discovered by scan_cardsdb() (which are already lowercase for
+    Pokémon/MTG/YGO; onepiece ids are lowercase too)."""
+    only = set()
+    for raw in raw_values:
+        for piece in raw.split(","):
+            piece = piece.strip().lower()
+            if piece:
+                only.add(piece)
+    return only
+
+
 _GAME_LABEL = {"pokemon": "POKEMON", "mtg": "MTG", "yugioh": "YUGIOH", "onepiece": "ONEPIECE"}
 
 
@@ -385,8 +421,19 @@ def main():
     parser.add_argument("--game", action="append", default=None,
                          help="only rebuild this game (pokemon, mtg, yugioh, onepiece). "
                               "Repeatable or comma-separated. Omit for all games (default).")
+    parser.add_argument("--set-ids", action="append", default=None,
+                         help="only rebuild these specific set_ids within the scoped game(s) "
+                              "(e.g. jpn-sm2l,jpn-sm3h). Repeatable or comma-separated. "
+                              "Requires --game. Skips the API/network call entirely for any "
+                              "game with no matching set_ids in scope. Omit to rebuild every "
+                              "set_id in the scoped game(s) (default).")
     args = parser.parse_args()
     only_games = _parse_game_arg(args.game) if args.game else None
+    only_set_ids = _parse_set_ids_arg(args.set_ids) if args.set_ids else None
+
+    if only_set_ids is not None and only_games is None:
+        print("[ERROR] --set-ids requires --game")
+        raise SystemExit(1)
 
     def in_scope(folder_name: str) -> bool:
         return only_games is None or folder_name in only_games
@@ -400,6 +447,8 @@ def main():
     print(f"Output  : {OUTPUT_PATH}")
     if only_games is not None:
         print(f"Scoped to game(s): {sorted(only_games)}")
+    if only_set_ids is not None:
+        print(f"Scoped to set_id(s): {sorted(only_set_ids)}")
     print()
 
     # ── 1. Discover set_ids ────────────────────────────────────────────────
@@ -410,24 +459,39 @@ def main():
     for game, ids in sorted(sets_by_game.items()):
         print(f"  {game}: {len(ids)} unique sets")
 
+    # --set-ids further narrows each in-scope game's set_ids to the
+    # requested subset -- this is what lets a delta run (e.g. 7 newly
+    # scraped JP sets) skip the other ~300+ sets' API calls entirely,
+    # rather than re-fetching the whole game every time.
+    if only_set_ids is not None:
+        folder_by_label = {v: k for k, v in _GAME_LABEL.items()}
+        for game in sets_by_game:
+            sets_by_game[game] = sets_by_game[game] & only_set_ids
+        for game, ids in sorted(sets_by_game.items()):
+            if in_scope(folder_by_label.get(game, game.lower())):
+                print(f"  {game}: {len(ids)} set(s) after --set-ids filter")
+
     # ── 2. Enrich from APIs — only for in-scope games. An out-of-scope
     #    game gets {} here, which also means zero network calls are made
     #    for it (build_pokemon_metadata/build_mtg_metadata/build_ygo_metadata
     #    are simply never invoked).────────────────────────────────────────
     print()
-    pokemon_meta  = build_pokemon_metadata(sets_by_game["POKEMON"]) if in_scope("pokemon") else {}
+    pokemon_meta  = build_pokemon_metadata(sets_by_game["POKEMON"]) if in_scope("pokemon") and sets_by_game["POKEMON"] else {}
     print()
-    mtg_meta      = build_mtg_metadata(sets_by_game["MTG"]) if in_scope("mtg") else {}
+    mtg_meta      = build_mtg_metadata(sets_by_game["MTG"]) if in_scope("mtg") and sets_by_game["MTG"] else {}
     print()
-    ygo_meta      = build_ygo_metadata(sets_by_game["YUGIOH"]) if in_scope("yugioh") else {}
+    ygo_meta      = build_ygo_metadata(sets_by_game["YUGIOH"]) if in_scope("yugioh") and sets_by_game["YUGIOH"] else {}
     print()
-    onepiece_meta = build_onepiece_metadata(CARDSDB_ROOT, sets_by_game["ONEPIECE"]) if in_scope("onepiece") else {}
+    onepiece_meta = build_onepiece_metadata(CARDSDB_ROOT, sets_by_game["ONEPIECE"]) if in_scope("onepiece") and sets_by_game["ONEPIECE"] else {}
 
     # ── 3. Merge-safe write. Load whatever's already on disk, then only
     #    replace the scoped game(s)' slice (matched by each entry's own
     #    "game" field) -- every other entry stays byte-identical. Omitting
     #    --game touches every game, reproducing the original unconditional
     #    full-rebuild exactly (same insertion order, same collision rules).
+    #    With --set-ids, the replacement is narrowed further to just the
+    #    requested set_ids -- wiping the whole game slice here would delete
+    #    every OTHER set in that game that wasn't part of this delta run.
     existing_metadata: Dict[str, dict] = {}
     if OUTPUT_PATH.exists():
         try:
@@ -439,11 +503,20 @@ def main():
     metadata: Dict[str, dict] = dict(existing_metadata)
 
     if in_scope("pokemon"):
-        metadata = {k: v for k, v in metadata.items() if v.get("game") != "POKEMON"}
+        if only_set_ids is not None:
+            for k in only_set_ids:
+                metadata.pop(k, None)
+        else:
+            metadata = {k: v for k, v in metadata.items() if v.get("game") != "POKEMON"}
         metadata.update(pokemon_meta)
 
     if in_scope("mtg"):
-        metadata = {k: v for k, v in metadata.items() if v.get("game") != "MTG"}
+        if only_set_ids is not None:
+            for k in only_set_ids:
+                if metadata.get(k, {}).get("game") == "MTG":
+                    metadata.pop(k, None)
+        else:
+            metadata = {k: v for k, v in metadata.items() if v.get("game") != "MTG"}
         # Collision-aware merge: some set_ids (e.g. me1/me2/me3 — Pokémon "Mega
         # Evolution"/"Phantasmal Flames"/"Perfect Order" vs MTG "Masters Edition"
         # I/II/III) exist in both CardsDB/pokemon and CardsDB/mtg. Pokémon wins
@@ -458,11 +531,20 @@ def main():
                 metadata[k] = v
 
     if in_scope("yugioh"):
-        metadata = {k: v for k, v in metadata.items() if v.get("game") != "YUGIOH"}
+        if only_set_ids is not None:
+            for k in only_set_ids:
+                metadata.pop(k, None)
+        else:
+            metadata = {k: v for k, v in metadata.items() if v.get("game") != "YUGIOH"}
         metadata.update(ygo_meta)
 
     if in_scope("onepiece"):
-        metadata = {k: v for k, v in metadata.items() if v.get("game") != "ONEPIECE"}
+        if only_set_ids is not None:
+            for k in only_set_ids:
+                if metadata.get(k, {}).get("game") == "ONEPIECE":
+                    metadata.pop(k, None)
+        else:
+            metadata = {k: v for k, v in metadata.items() if v.get("game") != "ONEPIECE"}
         onepiece_collisions = sorted(set(onepiece_meta) & set(metadata))
         if onepiece_collisions:
             print(f"  [COLLISION] {len(onepiece_collisions)} set_id(s) in both One Piece and "

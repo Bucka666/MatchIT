@@ -6633,6 +6633,14 @@
     "ptcgoCode": null,
     "total": 73
   },
+  "jpn-sm11b": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "ドリームリーグ",
+    "printed_total": 49,
+    "ptcgoCode": null,
+    "total": 75
+  },
   "jpn-sm12": {
     "exclude": false,
     "game": "POKEMON",
@@ -6677,6 +6685,22 @@
     "printed_total": 55,
     "ptcgoCode": null,
     "total": 55
+  },
+  "jpn-sm2l": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "アローラの月光",
+    "printed_total": 50,
+    "ptcgoCode": null,
+    "total": 62
+  },
+  "jpn-sm3h": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "闘う虹を見たか",
+    "printed_total": 51,
+    "ptcgoCode": null,
+    "total": 64
   },
   "jpn-sm3n": {
     "exclude": false,
@@ -6741,6 +6765,14 @@
     "ptcgoCode": null,
     "total": 59
   },
+  "jpn-sm6b": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "チャンピオンロード",
+    "printed_total": 66,
+    "ptcgoCode": null,
+    "total": 86
+  },
   "jpn-sm7": {
     "exclude": false,
     "game": "POKEMON",
@@ -6758,6 +6790,14 @@
     "printed_total": 66,
     "ptcgoCode": null,
     "total": 66
+  },
+  "jpn-sm7b": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "フェアリーライズ",
+    "printed_total": 50,
+    "ptcgoCode": null,
+    "total": 63
   },
   "jpn-sm8": {
     "exclude": false,
@@ -6777,6 +6817,14 @@
     "ptcgoCode": null,
     "total": 58
   },
+  "jpn-sm8b": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "GXウルトラシャイニー",
+    "printed_total": 150,
+    "ptcgoCode": null,
+    "total": 250
+  },
   "jpn-sm9": {
     "exclude": false,
     "game": "POKEMON",
@@ -6794,6 +6842,14 @@
     "printed_total": 63,
     "ptcgoCode": null,
     "total": 63
+  },
+  "jpn-sm9b": {
+    "exclude": false,
+    "game": "POKEMON",
+    "name": "フルメタルウォール",
+    "printed_total": 54,
+    "ptcgoCode": null,
+    "total": 69
   },
   "jpn-sn": {
     "exclude": false,
