@@ -28,6 +28,7 @@ import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from typing import Callable, Optional
 
 import requests
 import modal
@@ -254,12 +255,24 @@ def _refresh_one(folder: Path, tcgdex_set_id: str, set_prefix: str, force: bool 
 
 
 def refresh_en_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8,
-                      force: bool = False) -> dict:
+                      force: bool = False,
+                      commit_cb: Optional[Callable[[], None]] = None) -> dict:
     """Refresh prices for all English (non-jpn-) Pokémon cards from TCGdex EN.
 
     force=True bypasses the 23h freshness skip — needed to backfill new fields
     (e.g. per-source timestamps) across cards that were just refreshed and would
-    otherwise all be skipped. The daily cron leaves force=False for efficiency."""
+    otherwise all be skipped. The daily cron leaves force=False for efficiency.
+
+    commit_cb (2026-09-09): optional zero-arg callable (pass Modal's
+    vol.commit), called after each set finishes. This loop runs across
+    ~170 sets / ~20,237 cards total -- previously a single vol.commit() at
+    the very end (both call sites: run_refresh() below and matchit_modal.py's
+    scheduled_en_price_refresh), so a timeout partway through discarded
+    every card refreshed since the run started. Checkpointing per-set
+    (not a fixed card count) reuses the loop's own natural boundary rather
+    than adding a separate counter -- worst-case loss is bounded to
+    whatever the current set's card count is. commit_cb=None for
+    local/non-Modal runs (nothing to commit to)."""
     pokemon_dir = db_root / "pokemon"
 
     # English POKEMON sets from set_metadata.json (keys are pokemontcg.io set_ids)
@@ -349,6 +362,14 @@ def refresh_en_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8
         stats["sets_done"] += 1
         print(f"[EN-REFRESH] {our_id} done ({i}/{total_sets}, {cards_seen} cards total): "
               f"{set_stats}", flush=True)
+
+        if commit_cb is not None:
+            try:
+                commit_cb()
+                print(f"[EN-REFRESH] Checkpoint after {our_id} (volume committed)", flush=True)
+            except Exception as e:
+                print(f"[EN-REFRESH] commit_cb() failed after {our_id}: {e}", flush=True)
+
         time.sleep(0.1)  # gentle between sets — respect TCGdex throttle
 
     print(f"[EN-REFRESH] Done. {stats}", flush=True)
@@ -367,9 +388,16 @@ _vol   = modal.Volume.from_name("matchit-data-v2", version=2)
 @_app.function(image=_image, volumes={"/modal_data": _vol}, timeout=5400)
 def run_refresh(dry_run: bool = False, force: bool = False) -> dict:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    result = refresh_en_prices(Path("/modal_data/CardsDB"), dry_run=dry_run, force=force)
-    _vol.commit()
-    print(f"[EN-REFRESH] volume committed: {result}", flush=True)
+    # No separate final _vol.commit() here -- refresh_en_prices()'s loop
+    # already calls commit_cb() after every set including the last one, so
+    # by the time this returns everything is already committed (a redundant
+    # extra commit here was confirmed wasteful for the identical pattern in
+    # incremental_embed.py earlier tonight).
+    result = refresh_en_prices(
+        Path("/modal_data/CardsDB"), dry_run=dry_run, force=force,
+        commit_cb=None if dry_run else _vol.commit,
+    )
+    print(f"[EN-REFRESH] done: {result}", flush=True)
     return result
 
 

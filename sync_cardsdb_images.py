@@ -127,14 +127,29 @@ def run_sync(
         print(f"[ERROR] DB root not found: {db_root}")
         return {"status": "error", "error": f"DB root not found: {db_root}"}
 
+    # Dedup key: sku, not original_filename (fixed 2026-09-09). This table
+    # is one row per SKU by design (no view/category column -- every row
+    # is a FRONT entry, confirmed by direct query: zero legitimate
+    # multi-row-per-sku cases across any of the 4 games). original_filename
+    # matching broke silently because it depends on the exact string every
+    # historical ingestion pipeline happened to write there -- confirmed
+    # live that ALL 8,788 pre-existing jpn- rows checked used one of two
+    # older formats ('{sku}_FRONT.ext' or '{scrape_id}_FRONT.ext', from
+    # insert_jp_sku_links.py and similar), none matching this script's own
+    # f"{game}/{sku}/{sku}_FRONT" construction -- so every one of them
+    # looked "new" on every run, and re-syncing an already-registered SKU
+    # creates a genuine duplicate row (image_id is the only primary key;
+    # sku has an index, not a uniqueness constraint, so INSERT OR REPLACE
+    # never collides with the existing row). SKU existence is
+    # format-independent and is what "already synced" actually means here.
     existing = set()
     with sqlite3.connect(db_path) as conn:
         rows = conn.execute(
-            "SELECT original_filename FROM images WHERE original_filename IS NOT NULL"
+            "SELECT DISTINCT sku FROM images WHERE sku IS NOT NULL"
         ).fetchall()
-        for (orig,) in rows:
-            if orig:
-                existing.add(str(orig).strip().lower())
+        for (sku,) in rows:
+            if sku:
+                existing.add(str(sku).strip().lower())
 
     to_process = []
     skipped_existing = 0
@@ -152,10 +167,13 @@ def run_sync(
         # alone wasn't enough (still ~36k SKUs to stat for pokemon).
         pending = []
         for sku, sku_dir in _iter_one_game_skus(db_root, game_filter):
-            rel_id = f"{game_filter}/{sku}/{sku}_FRONT"
-            if rel_id.lower() in existing:
+            if sku.strip().lower() in existing:
                 skipped_existing += 1
                 continue
+            # rel_id is still computed and stored as original_filename on
+            # INSERT (informational/for any future consumer that reads it),
+            # it's just no longer what dedup itself checks against.
+            rel_id = f"{game_filter}/{sku}/{sku}_FRONT"
             pending.append((sku, sku_dir, rel_id))
 
         print(f"[SCAN] {len(pending)} SKU(s) not yet in images.db, {skipped_existing} already present "
@@ -172,13 +190,13 @@ def run_sync(
                     continue
                 to_process.append((sku, src_path, rel_id))
     else:
-        # Unscoped (sync every game) -- unchanged full-catalog walk.
+        # Unscoped (sync every game) -- unchanged full-catalog walk, same
+        # sku-based dedup as the scoped path above.
         for sku, src_path, rel_id in _iter_cardsdb_images(db_root):
             if not rel_id:
                 skipped_bad += 1
                 continue
-            rel_key = rel_id.strip().lower()
-            if rel_key in existing:
+            if sku.strip().lower() in existing:
                 skipped_existing += 1
                 continue
             to_process.append((sku, src_path, rel_id))
@@ -203,42 +221,101 @@ def run_sync(
     r2_failed = []
     insert_failed = []
 
+    def _process_one(item):
+        """Runs in a worker thread -- copy + normalize + R2 upload only,
+        NEVER touches the SQLite connection. Mirrors the scan phase's own
+        _resolve()/pool.map() pattern above: worker threads return a
+        result, the actual write to shared state (there: to_process.append,
+        here: conn.execute) happens back in the main thread as results
+        stream in via pool.map(). This is what makes 8-way threading safe
+        with a single sqlite3.Connection -- the connection is only ever
+        used from the thread that created it."""
+        sku, src_path, rel_id = item
+        try:
+            image_id = str(uuid.uuid4())
+            dst_path = os.path.join(img_dir, f"{image_id}.jpg")
+            shutil.copy2(str(src_path), dst_path)
+            normalize_uploaded_image(dst_path)
+            r2_ok = upload_to_r2(image_id, dst_path)
+            return {"ok": True, "sku": sku, "src_path": src_path, "image_id": image_id,
+                    "dst_path": dst_path, "rel_id": rel_id, "r2_ok": r2_ok}
+        except Exception as e:
+            return {"ok": False, "sku": sku, "src_path": src_path, "error": str(e)}
+
     conn = sqlite3.connect(db_path)
     try:
-        for idx, (sku, src_path, rel_id) in enumerate(to_process):
-            try:
-                image_id = str(uuid.uuid4())
-                dst_path = os.path.join(img_dir, f"{image_id}.jpg")
-
-                shutil.copy2(str(src_path), dst_path)
-                normalize_uploaded_image(dst_path)
-                r2_ok = upload_to_r2(image_id, dst_path)
-                if not r2_ok:
-                    r2_failed.append(sku)
-
-                conn.execute(
-                    """
-                    INSERT OR REPLACE INTO images
-                        (image_id, sku, description, original_filename, path, added_at, embedding)
-                    VALUES (?, ?, ?, ?, ?, ?, NULL)
-                    """,
-                    (image_id, sku, "", rel_id, dst_path, datetime.utcnow().isoformat()),
-                )
-                inserted += 1
-                print(f"  [OK] {sku} -> {image_id}.jpg" + ("" if r2_ok else "  (R2 upload failed, row inserted anyway)"))
-            except Exception as e:
-                insert_failed.append(f"{sku}: {e}")
-                print(f"  [FAIL] {sku} ({src_path}): {e}")
-
-            done = idx + 1
-            if checkpoint_every > 0 and done % checkpoint_every == 0:
-                conn.commit()
-                if commit_cb is not None:
+        # 8 workers: each image's copy+normalize+R2-upload is I/O-bound
+        # (two network-volume round trips for the copy, one R2 network
+        # call), not CPU-bound, so this parallelizes well -- and matches
+        # r2_util.py's own boto3 Config(max_pool_connections=8), which was
+        # already sized for exactly this concurrency level. Serial
+        # processing measured ~1.9s/image; a ~4,845-image batch at that
+        # rate needs ~2.5h, which checkpointing bounds the LOSS from but
+        # does nothing to reduce -- this is the actual throughput fix.
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            for idx, result in enumerate(pool.map(_process_one, to_process)):
+                if result["ok"]:
+                    if not result["r2_ok"]:
+                        r2_failed.append(result["sku"])
                     try:
-                        commit_cb()
-                    except Exception as e:
-                        print(f"  [WARN] commit_cb() failed at checkpoint: {e}")
-                print(f"  [CHECKPOINT] {done}/{len(to_process)} (sqlite committed, volume committed)")
+                        # OR IGNORE, not OR REPLACE (2026-09-09): with
+                        # idx_images_sku_unique in place, OR REPLACE would
+                        # resolve a sku conflict by silently DELETING the
+                        # existing row (with its real embedding) and
+                        # inserting this one (embedding=NULL) -- no
+                        # exception, no trace. If a future dedup-check gap
+                        # (like tonight's) ever let an already-registered
+                        # SKU reach this point again, that's silent,
+                        # unrecoverable loss of an embedded row, not a
+                        # recoverable duplicate. OR IGNORE instead leaves
+                        # the existing row untouched and drops the attempted
+                        # insert -- the just-uploaded R2 object becomes a
+                        # harmless orphan (unreferenced, cleanable later),
+                        # never worse than that. No code path in this
+                        # script (or any other caller, confirmed) currently
+                        # relies on REPLACE semantics -- the dedup check
+                        # above unconditionally skips already-registered
+                        # SKUs before they ever reach this insert, so there
+                        # was never a legitimate "re-sync a corrected image"
+                        # flow depending on this default overwriting.
+                        cur = conn.execute(
+                            """
+                            INSERT OR IGNORE INTO images
+                                (image_id, sku, description, original_filename, path, added_at, embedding)
+                            VALUES (?, ?, ?, ?, ?, ?, NULL)
+                            """,
+                            (result["image_id"], result["sku"], "", result["rel_id"],
+                             result["dst_path"], datetime.utcnow().isoformat()),
+                        )
+                        if cur.rowcount == 0:
+                            # sku already existed (idx_images_sku_unique
+                            # conflict) -- dedup should have caught this
+                            # upstream. Not silent: visible in run output
+                            # even though nothing was lost.
+                            insert_failed.append(f"{result['sku']}: sku already existed, insert skipped")
+                            print(f"  [WARN] {result['sku']}: SKU already existed in images.db -- "
+                                  f"dedup check should have caught this, insert skipped to protect "
+                                  f"existing row (orphaned R2 object: {result['image_id']}.jpg)")
+                        else:
+                            inserted += 1
+                            print(f"  [OK] {result['sku']} -> {result['image_id']}.jpg"
+                                  + ("" if result["r2_ok"] else "  (R2 upload failed, row inserted anyway)"))
+                    except sqlite3.Error as e:
+                        insert_failed.append(f"{result['sku']}: {e}")
+                        print(f"  [FAIL] {result['sku']} (sqlite error on insert): {e}")
+                else:
+                    insert_failed.append(f"{result['sku']}: {result['error']}")
+                    print(f"  [FAIL] {result['sku']} ({result['src_path']}): {result['error']}")
+
+                done = idx + 1
+                if checkpoint_every > 0 and done % checkpoint_every == 0:
+                    conn.commit()
+                    if commit_cb is not None:
+                        try:
+                            commit_cb()
+                        except Exception as e:
+                            print(f"  [WARN] commit_cb() failed at checkpoint: {e}")
+                    print(f"  [CHECKPOINT] {done}/{len(to_process)} (sqlite committed, volume committed)")
 
         conn.commit()
         if commit_cb is not None:

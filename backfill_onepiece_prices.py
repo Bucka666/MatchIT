@@ -197,6 +197,16 @@ def backfill_onepiece_prices(dry_run: bool = False, resume: bool = True) -> dict
     all_prices = _fetch_all_justtcg_onepiece_prices(api_key)
     print(f"[OP-PRICE-BACKFILL] Total distinct priced identities: {len(all_prices)}", flush=True)
 
+    # Checkpointing (2026-09-09): a full run over the ~4,672-card catalog
+    # was previously a single vol.commit() at the very end -- a timeout
+    # (this function's own history: the JustTCG-era version needed 7200s)
+    # discarded everything since the run started, not just recent work,
+    # because a killed container never gets to commit its local writes.
+    # 300 matches the sibling dotgg backfill/refresh's own proven interval
+    # for this identical per-profile I/O shape (a49721a), not a fresh
+    # guess.
+    CHECKPOINT_EVERY = 300
+
     # ── Match against local CardsDB/onepiece profiles, write flat prices ──
     for folder in sorted(onepiece_dir.iterdir()):
         profile_path = folder / "profile.json"
@@ -236,6 +246,11 @@ def backfill_onepiece_prices(dry_run: bool = False, resume: bool = True) -> dict
                 json.dump(profile, f, indent=2, ensure_ascii=False)
 
         stats["priced"] += 1
+
+        if not dry_run and stats["cards_checked"] % CHECKPOINT_EVERY == 0:
+            vol.commit()
+            print(f"[OP-PRICE-BACKFILL] Checkpoint at {stats['cards_checked']} cards checked "
+                  f"(volume committed)", flush=True)
 
     if not dry_run and stats["priced"] > 0:
         vol.commit()

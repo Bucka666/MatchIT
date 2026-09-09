@@ -36,6 +36,7 @@ import threading
 import urllib.parse
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Callable
 
 # Japanese set names contain CJK characters — force UTF-8 on Windows
 if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
@@ -426,6 +427,7 @@ def backfill_justtcg_prices(
     api_key: str,
     dry_run: bool = False,
     resume: bool = True,
+    commit_cb: Callable[[], None] | None = None,
 ) -> dict:
     """
     Walk all imaged jpn- card folders and write TCGPlayer (USD) prices
@@ -440,6 +442,13 @@ def backfill_justtcg_prices(
         dry_run:  If True, fetch but don't write profiles
         resume:   If True, skip cards that already have a Cardmarket
                   avg_sell or an existing tcgplayer.market price
+        commit_cb: optional zero-arg callable (pass Modal's vol.commit),
+                  called after each set finishes (2026-09-09). Both
+                  callers (matchit_modal.py's scheduled_jp_price_refresh
+                  and run_justtcg_backfill) previously only committed once
+                  after this whole multi-set function returned -- a timeout
+                  partway through lost every set already processed.
+                  commit_cb=None for local/non-Modal runs.
     """
     pokemon_dir = db_root / "pokemon"
     if not pokemon_dir.exists():
@@ -552,6 +561,13 @@ def backfill_justtcg_prices(
                     json.dump(profile, f, indent=2, ensure_ascii=False)
 
             stats["priced"] += 1
+
+        if commit_cb is not None:
+            try:
+                commit_cb()
+                print(f"[JUSTTCG-BACKFILL] Checkpoint after {our_set_code} (volume committed)")
+            except Exception as e:
+                print(f"[JUSTTCG-BACKFILL] commit_cb() failed after {our_set_code}: {e}")
 
         time.sleep(1.0)  # Pause between sets
 
@@ -784,7 +800,8 @@ def _refresh_one(folder: str, pokemon_dir: Path) -> dict:
     return {"folder": folder, "status": "refreshed", "price_changed": changed}
 
 
-def refresh_cardmarket_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8) -> dict:
+def refresh_cardmarket_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8,
+                              commit_cb: Callable[[], None] | None = None) -> dict:
     """Re-fetch Cardmarket pricing for jpn- cards that ALREADY have a price
     (the ~1,261 from the original backfill), skipping cards that don't (the
     ~3,033 repo-only/vintage cards classify_unpriced already proved are
@@ -855,6 +872,17 @@ def refresh_cardmarket_prices(db_root: Path, dry_run: bool = False, max_workers:
                     print(f"  ... {completed}/{total} refreshed "
                           f"(refreshed={stats['refreshed']} changed={stats['price_changed']} errors={stats['errors']})",
                           flush=True)
+                    if commit_cb is not None:
+                        try:
+                            commit_cb()
+                        except Exception as e:
+                            print(f"[REFRESH] commit_cb() failed at {completed}: {e}", flush=True)
+
+    if commit_cb is not None:
+        try:
+            commit_cb()
+        except Exception as e:
+            print(f"[REFRESH] commit_cb() failed at final commit: {e}", flush=True)
 
     print(f"[REFRESH] Done. {stats}", flush=True)
     return stats

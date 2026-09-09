@@ -16,8 +16,16 @@ print("[LOG-INIT] modal entry: logging configured -> stdout INFO", flush=True)
 app = modal.App("matchit-api")
 
 
-def _sweep_query_dir():
-    """Delete scan images from /modal_data/query older than QUERY_IMAGE_TTL_SECONDS."""
+def _sweep_query_dir(commit_cb=None):
+    """Delete scan images from /modal_data/query older than QUERY_IMAGE_TTL_SECONDS.
+
+    commit_cb (2026-09-09): optional zero-arg callable (pass vol.commit),
+    called every 500 deletions -- same single-commit-at-the-end pattern as
+    purge_query_images.py (its standalone twin, already fixed), applied
+    here too even though a cold-start sweep's backlog is normally small.
+    Callers now pass vol.commit here instead of committing after the call
+    returns (that was a confirmed-redundant duplicate for the same reason
+    fixed elsewhere tonight, once this function commits internally)."""
     query_dir = "/modal_data/query"
     if not os.path.isdir(query_dir):
         print("[QUERY-SWEEP] startup: query dir missing, skipping", flush=True)
@@ -34,9 +42,24 @@ def _sweep_query_dir():
                 deleted_n += 1
         except Exception:
             errors += 1
+
+        if commit_cb is not None and deleted_n > 0 and deleted_n % 500 == 0:
+            try:
+                commit_cb()
+                print(f"[QUERY-SWEEP] checkpoint at {deleted_n} deleted (volume committed)", flush=True)
+            except Exception as e:
+                print(f"[QUERY-SWEEP] checkpoint commit FAILED at {deleted_n}: {e}", flush=True)
+
     mb = deleted_b / (1024 * 1024)
     suffix = f" ({errors} errors)" if errors else ""
     print(f"[QUERY-SWEEP] startup deleted {deleted_n} files, freed {mb:.1f} MB{suffix}", flush=True)
+
+    if commit_cb is not None and deleted_n > 0:
+        try:
+            commit_cb()
+        except Exception as e:
+            print(f"[QUERY-SWEEP] final commit FAILED: {e}", flush=True)
+
     return deleted_n, deleted_b
 
 
@@ -164,13 +187,9 @@ def serve():
     _app_module._vol_commit_fn = vol.commit
     _fix_db_paths()
 
-    _swept_n, _ = _sweep_query_dir()
-    if _swept_n > 0:
-        try:
-            vol.commit()
-            print("[QUERY-SWEEP] vol.commit() OK", flush=True)
-        except Exception as _e:
-            print(f"[QUERY-SWEEP] vol.commit() FAILED: {_e}", flush=True)
+    # No separate commit block here -- _sweep_query_dir() now commits
+    # internally (periodically + a final commit if anything was deleted).
+    _sweep_query_dir(commit_cb=vol.commit)
 
     # Pre-load models during container warmup so snapshot captures them
     # Skip if already loaded (snapshot restore)
@@ -296,13 +315,9 @@ def serve_light():
     _app_module._vol_commit_fn = vol.commit
     _fix_db_paths()
 
-    _swept_n, _ = _sweep_query_dir()
-    if _swept_n > 0:
-        try:
-            vol.commit()
-            print("[QUERY-SWEEP] vol.commit() OK", flush=True)
-        except Exception as _e:
-            print(f"[QUERY-SWEEP] vol.commit() FAILED: {_e}", flush=True)
+    # No separate commit block here -- _sweep_query_dir() now commits
+    # internally (periodically + a final commit if anything was deleted).
+    _sweep_query_dir(commit_cb=vol.commit)
 
     # Deliberately NO get_embedder() / load_embedding_cache() call here — that's
     # the entire point of this function. The 3 light routes never touch
@@ -633,8 +648,12 @@ def scheduled_jp_price_refresh():
     from pathlib import Path
     from scrape_pokemon_jpn import refresh_cardmarket_prices
     try:
-        # Cardmarket refresh (existing — only re-fetches already-priced cards)
-        result = refresh_cardmarket_prices(Path("/modal_data/CardsDB"), dry_run=False)
+        # commit_cb: both functions below now checkpoint (vol.commit) as
+        # they go -- refresh_cardmarket_prices every 50 cards, backfill_
+        # justtcg_prices after each set -- rather than only once after both
+        # complete. A timeout partway through either one previously
+        # discarded everything processed since this cron started.
+        result = refresh_cardmarket_prices(Path("/modal_data/CardsDB"), dry_run=False, commit_cb=vol.commit)
         print(f"[JP-REFRESH] Cardmarket: {result}")
 
         # JustTCG refresh (fills cards with no Cardmarket price)
@@ -646,12 +665,16 @@ def scheduled_jp_price_refresh():
                 api_key=justtcg_key,
                 dry_run=False,
                 resume=True,  # Skip cards that already have any price
+                commit_cb=vol.commit,
             )
             print(f"[JP-REFRESH] JustTCG: {jtcg_result}")
         else:
             print("[JP-REFRESH] JustTCG: no API key found, skipping")
 
-        vol.commit()
+        # No separate vol.commit() here -- both functions above already
+        # commit everything via their own final/per-set checkpoint before
+        # returning (same confirmed-redundant pattern removed from
+        # incremental_embed.py and refresh_en_prices.py's wrappers tonight).
         print(f"[JP-PRICE-CRON] {result}", flush=True)
     except Exception as e:
         print(f"[JP-PRICE-CRON] FAILED: {e}", flush=True)
@@ -679,8 +702,13 @@ def scheduled_en_price_refresh():
     from pathlib import Path
     from refresh_en_prices import refresh_en_prices
     try:
-        result = refresh_en_prices(Path("/modal_data/CardsDB"), dry_run=False)
-        vol.commit()
+        # commit_cb: refresh_en_prices() now checkpoints (vol.commit) after
+        # every set it finishes, not just once at the end -- a ~170-set/
+        # ~20,237-card run is exactly the shape that can time out partway
+        # through. No separate final vol.commit() needed here for the same
+        # reason it was removed from refresh_en_prices.py's own run_refresh()
+        # wrapper: the loop's last checkpoint already covers it.
+        result = refresh_en_prices(Path("/modal_data/CardsDB"), dry_run=False, commit_cb=vol.commit)
         print(f"[EN-PRICE-CRON] {result}", flush=True)
     except Exception as e:
         print(f"[EN-PRICE-CRON] FAILED: {e}", flush=True)
@@ -1606,14 +1634,16 @@ def _run_justtcg_backfill_remote(dry_run: bool = False):
     if not api_key:
         return {"error": "No JUSTTCG_API_KEY in environment"}
     vol.reload()
+    # No separate final vol.commit() -- backfill_justtcg_prices() now
+    # checkpoints (vol.commit) after every set it finishes, so by the time
+    # this returns everything is already committed.
     result = backfill_justtcg_prices(
         Path("/modal_data/CardsDB"),
         api_key=api_key,
         dry_run=dry_run,
         resume=True,
+        commit_cb=None if dry_run else vol.commit,
     )
-    if not dry_run:
-        vol.commit()
     return result
 
 

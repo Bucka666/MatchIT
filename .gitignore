@@ -184,6 +184,14 @@ images_volume_corrupt.db
 # source. Kept on disk, not history.
 scheduler_log_check.json
 
+# Durable audit record of the 2026-09-09 images.db duplicate-sku cleanup
+# (1,501 rows, one per SKU re-synced under the pre-fix original_filename
+# dedup bug in sync_cardsdb_images.py — see idx_images_sku_unique). Lists
+# which image_id was kept vs deleted per SKU and the R2 keys of the
+# deleted rows (not yet cleaned up from R2). Point-in-time production
+# data, not source — kept on disk for reference, not in history.
+dup_cleanup_plan.json
+
 # JP SWSH SKU-link output (2026-08-23) — regenerable from the committed
 # jp_cardid_maps/ + identifier_lookup.json via `python link_jp_skus.py`.
 # jp_sku_links.json's content also depends on which --sets filter was last

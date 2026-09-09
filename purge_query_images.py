@@ -62,6 +62,16 @@ def purge_query_images(commit: bool = False):
         print("\nNo changes made.")
         return
 
+    # Checkpointing (2026-09-09): was a single vol.commit() after the whole
+    # deletion loop -- same pattern fixed elsewhere tonight, though lower
+    # stakes here (an uncommitted delete is simply retried next run, since
+    # the file is still "eligible" until a commit makes the deletion
+    # durable -- nothing valuable is lost, just re-work). Checkpointing
+    # anyway for consistency and so a large backlog's progress isn't
+    # entirely re-done after a timeout. 500 matches this repo's established
+    # batch-size convention (smart_upload.py's IMAGE_BATCH_SIZE) for
+    # per-file volume operations.
+    CHECKPOINT_EVERY = 500
     deleted, errors = 0, 0
     for fname, fpath, _, _ in eligible:
         try:
@@ -70,6 +80,13 @@ def purge_query_images(commit: bool = False):
         except Exception as e:
             print(f"  ERROR deleting {fname}: {e}")
             errors += 1
+
+        if deleted % CHECKPOINT_EVERY == 0:
+            try:
+                _vol.commit()
+                print(f"  ... checkpoint at {deleted} deleted (volume committed)")
+            except Exception as e:
+                print(f"  ... checkpoint commit FAILED at {deleted}: {e}")
 
     try:
         _vol.commit()

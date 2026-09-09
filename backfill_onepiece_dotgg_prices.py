@@ -45,9 +45,10 @@ compare) -- forcing them into one shared code path would conflate two
 different eligibility conditions for no real benefit, since this script
 is a manual/occasional operation, not the daily budget under time
 pressure. The index update is bolted on at the one place this script
-already writes prices_updated, and persisted once at the end alongside
-the existing single vol.commit() -- no threading, no checkpointing added,
-since this script isn't the one that was timing out.
+already writes prices_updated. Checkpointed every 300 cards (2026-09-09,
+matching refresh_onepiece_dotgg_prices.py's own interval) -- a full-catalog
+run over ~4,672 cards can itself time out, and a killed container discards
+everything written since its last vol.commit().
 
 Run:
     modal run backfill_onepiece_dotgg_prices.py                # writes to the volume
@@ -156,6 +157,17 @@ def backfill_onepiece_dotgg_prices(dry_run: bool = False, resume: bool = True) -
 
     staleness = _load_staleness_index()
 
+    # Checkpointing (2026-09-09): this docstring used to say "no threading,
+    # no checkpointing added, since this script isn't the one that was
+    # timing out" -- that reasoning doesn't hold once a run over the full
+    # ~4,672-card catalog is itself the thing that can time out. 300 cards
+    # matches refresh_onepiece_dotgg_prices.py's already-proven interval
+    # for this identical per-profile I/O shape (a49721a), not a fresh
+    # guess. Unlike incremental_embed.py this function is Modal-only
+    # (always has `vol` in scope, never called from a plain local context),
+    # so vol.commit() is called directly rather than via a commit_cb param.
+    CHECKPOINT_EVERY = 300
+
     for folder in sorted(onepiece_dir.iterdir()):
         profile_path = folder / "profile.json"
         if not profile_path.exists():
@@ -196,6 +208,12 @@ def backfill_onepiece_dotgg_prices(dry_run: bool = False, resume: bool = True) -
             staleness[folder.name] = now
 
         stats["priced"] += 1
+
+        if not dry_run and stats["cards_checked"] % CHECKPOINT_EVERY == 0:
+            _save_staleness_index(staleness)
+            vol.commit()
+            print(f"[OP-DOTGG-BACKFILL] Checkpoint at {stats['cards_checked']} cards checked "
+                  f"(staleness index + volume committed)", flush=True)
 
     if not dry_run and stats["priced"] > 0:
         _save_staleness_index(staleness)

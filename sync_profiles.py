@@ -3,7 +3,7 @@ import logging
 import os
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional
 
 logger = logging.getLogger("app")
 
@@ -23,6 +23,8 @@ def sync_profiles_to_cardsdb(
     scrape_root: Optional[str] = None,
     cardsdb_root: Optional[str] = None,
     overwrite: bool = True,
+    commit_cb: Optional[Callable[[], None]] = None,
+    checkpoint_every: int = 500,
 ) -> dict:
     """Copy scraped profile.json files into CardsDB.
 
@@ -31,6 +33,14 @@ def sync_profiles_to_cardsdb(
                   every SKU under that game (used for manual backfill).
     Returns {"copied": N, "updated": N, "skipped": N, "errors": [str]}.
     Never raises.
+
+    commit_cb / checkpoint_every (2026-09-09): --all-flag syncs EVERY SKU
+    for a game -- up to ~79,799 for MTG -- and this was previously a
+    single vol.commit() at the very end (see _run_sync_remote below,
+    timeout=600). Checkpointing every 500 SKUs (matching smart_upload.py's
+    own PROFILE_BATCH_SIZE for the same "sync profile.json files" work,
+    not a fresh guess) means a timeout mid-run loses at most one
+    checkpoint_every-sized chunk. commit_cb=None for local/non-Modal runs.
     """
     scrape_root = scrape_root or _default_scrape_root()
     cardsdb_root = cardsdb_root or _default_cardsdb_root()
@@ -43,6 +53,7 @@ def sync_profiles_to_cardsdb(
         result["errors"].append(f"scrape_root does not exist: {scrape_root}")
         return result
 
+    processed = 0
     for game, set_codes in sets_by_game.items():
         game_dir = scrape_root_p / game
         if not game_dir.is_dir():
@@ -87,6 +98,20 @@ def sync_profiles_to_cardsdb(
             except Exception as e:
                 result["errors"].append(f"{game}/{sku_dir.name}: copy failed ({e})")
 
+            processed += 1
+            if commit_cb is not None and checkpoint_every > 0 and processed % checkpoint_every == 0:
+                try:
+                    commit_cb()
+                    logger.info("[PROFILE-SYNC] Checkpoint at %d processed (volume committed)", processed)
+                except Exception as e:
+                    logger.warning("[PROFILE-SYNC] commit_cb() failed at %d: %s", processed, e)
+
+    if commit_cb is not None and processed > 0:
+        try:
+            commit_cb()
+        except Exception as e:
+            logger.warning("[PROFILE-SYNC] commit_cb() failed at final commit: %s", e)
+
     logger.info(
         "[PROFILE-SYNC] copied=%d updated=%d skipped=%d errors=%d",
         result["copied"], result["updated"], result["skipped"], len(result["errors"]),
@@ -115,11 +140,19 @@ if _HAS_MODAL:
     @_modal_app.function(
         image=_modal_image,
         volumes={"/modal_data": _vol},
-        timeout=600,
+        # Was 600 -- fine for a scoped --sets run (a handful of sets), but
+        # --all-flag exists specifically to sync EVERY SKU for a game (up to
+        # ~79,799 for MTG) as a real, intended manual-backfill use case, not
+        # a hypothetical -- 600s was never going to be enough for that path.
+        # sync_profiles_to_cardsdb() now checkpoints (vol.commit every 500
+        # SKUs) so this is headroom for one invocation to make real
+        # progress, not a substitute for that safety net.
+        timeout=5400,
     )
     def _run_sync_remote(game: str, sets: str = "", all_flag: bool = False) -> dict:
         import os
         os.environ["LOCALAPPDATA"] = "/modal_data"
+        _vol.reload()
         if all_flag:
             codes = ["*"]
         else:
@@ -127,12 +160,15 @@ if _HAS_MODAL:
             if not codes:
                 return {"error": "must provide --sets or --all-flag"}
         sets_by_game = {game: codes}
-        result = sync_profiles_to_cardsdb(sets_by_game)
-        try:
-            _vol.commit()
-            result["vol_commit"] = "OK"
-        except Exception as e:
-            result["vol_commit"] = f"FAILED: {e}"
+        # No separate vol.commit() here -- sync_profiles_to_cardsdb() now
+        # checkpoints as it goes and does its own final commit before
+        # returning.
+        result = sync_profiles_to_cardsdb(sets_by_game, commit_cb=_vol.commit)
+        # sync_profiles_to_cardsdb() logs (not raises) any commit_cb
+        # failure per-checkpoint, so "checkpointed" here means the commits
+        # were attempted throughout the run, not that every one is
+        # confirmed successful -- check logs for [PROFILE-SYNC] warnings.
+        result["vol_commit"] = "checkpointed"
         print(f"[SYNC] {result}", flush=True)
         return result
 
