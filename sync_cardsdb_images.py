@@ -32,6 +32,7 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from pathlib import Path
+from typing import Callable, Optional
 
 
 def _iter_one_game_skus(cardsdb_root: Path, game_folder: str):
@@ -76,7 +77,13 @@ def _resolve_front_image(sku_dir: Path, is_image_file):
     return candidates[0] if candidates else None
 
 
-def run_sync(game: str = "", dry_run: bool = False, limit: int = 0) -> dict:
+def run_sync(
+    game: str = "",
+    dry_run: bool = False,
+    limit: int = 0,
+    commit_cb: Optional[Callable[[], None]] = None,
+    checkpoint_every: int = 200,
+) -> dict:
     """Core sync logic, callable directly (used by main() below and by the
     Modal entry point at the bottom of this file) as well as from the CLI.
 
@@ -88,7 +95,17 @@ def run_sync(game: str = "", dry_run: bool = False, limit: int = 0) -> dict:
     discovery step. incremental_embed.py's Modal entrypoint uses the same
     deferred-import pattern for exactly this reason (see its `from app
     import get_embedder` inside run_incremental_embed(), not at module
-    scope) -- mirrored here rather than just structurally resembled."""
+    scope) -- mirrored here rather than just structurally resembled.
+
+    commit_cb / checkpoint_every: same checkpointing pattern as
+    incremental_embed.py's run_incremental_embed() (mirrors commit a49721a,
+    the One Piece price-refresh timeout fix) -- every checkpoint_every
+    images, the SQLite transaction is committed and commit_cb() (pass
+    Modal's vol.commit) is called, instead of a single commit at the very
+    end. A run that times out mid-batch now loses at most one
+    checkpoint_every-sized chunk, not everything processed since the run
+    started. commit_cb=None for local/non-Modal runs (nothing to commit
+    to)."""
     from app import (
         init_db, get_images_db_path, get_image_db_dir,
         normalize_uploaded_image, load_embedding_cache, _iter_cardsdb_images,
@@ -188,7 +205,7 @@ def run_sync(game: str = "", dry_run: bool = False, limit: int = 0) -> dict:
 
     conn = sqlite3.connect(db_path)
     try:
-        for sku, src_path, rel_id in to_process:
+        for idx, (sku, src_path, rel_id) in enumerate(to_process):
             try:
                 image_id = str(uuid.uuid4())
                 dst_path = os.path.join(img_dir, f"{image_id}.jpg")
@@ -213,7 +230,22 @@ def run_sync(game: str = "", dry_run: bool = False, limit: int = 0) -> dict:
                 insert_failed.append(f"{sku}: {e}")
                 print(f"  [FAIL] {sku} ({src_path}): {e}")
 
+            done = idx + 1
+            if checkpoint_every > 0 and done % checkpoint_every == 0:
+                conn.commit()
+                if commit_cb is not None:
+                    try:
+                        commit_cb()
+                    except Exception as e:
+                        print(f"  [WARN] commit_cb() failed at checkpoint: {e}")
+                print(f"  [CHECKPOINT] {done}/{len(to_process)} (sqlite committed, volume committed)")
+
         conn.commit()
+        if commit_cb is not None:
+            try:
+                commit_cb()
+            except Exception as e:
+                print(f"  [WARN] commit_cb() failed at final commit: {e}")
     finally:
         conn.close()
 
@@ -287,7 +319,16 @@ def _fix_vertical_config():
     # just never mirrored to R2. Matches every other R2-uploading function in
     # this repo (matchit_modal.py, r2_image_upload.py, smart_upload.py).
     secrets=[modal.Secret.from_name("r2-credentials")],
-    timeout=1800,
+    # Was 1800 -- a real ~5,123-image pokemon batch confirmed timed out at
+    # that ceiling before completing. run_sync() now checkpoints (SQLite
+    # commit + vol.commit every checkpoint_every images, see run_sync()'s
+    # docstring), so a timeout no longer loses everything processed since
+    # the run started -- this is headroom for one invocation to make real
+    # progress on a big batch, not a substitute for that safety net. 3600
+    # matches r2_image_upload.py's own proven ceiling for the same class of
+    # work (a loop of per-image R2 uploads), not a fresh guess -- mirrors
+    # how incremental_embed.py's 1800->3600 bump was justified tonight.
+    timeout=3600,
 )
 def run_sync_remote(game: str = "", dry_run: bool = False, limit: int = 0):
     os.chdir("/app")
@@ -299,9 +340,12 @@ def run_sync_remote(game: str = "", dry_run: bool = False, limit: int = 0):
     # caches db_root at import time (see matchit_modal.py comment).
     _fix_vertical_config()
     from sync_cardsdb_images import run_sync as _run
-    result = _run(game=game, dry_run=dry_run, limit=limit)
-    if not dry_run:
-        vol.commit()
+    # commit_cb is only ever invoked from inside the (non-dry-run) insert
+    # loop -- run_sync()'s dry-run branch returns before reaching it, and
+    # its own final commit (after the loop) covers the tail, so no separate
+    # vol.commit() is needed here (that was a confirmed-redundant duplicate
+    # in incremental_embed.py's equivalent wrapper, fixed the same way).
+    result = _run(game=game, dry_run=dry_run, limit=limit, commit_cb=vol.commit)
     return result
 
 
