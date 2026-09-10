@@ -5365,6 +5365,24 @@ def contact():
     return resp
 
 
+@app.route('/get')
+def get_app():
+    ua = request.headers.get('User-Agent', '').lower()
+
+    if any(x in ua for x in ['iphone', 'ipad', 'ipod']):
+        return redirect('https://apps.apple.com/app/id6792369291', 302)
+
+    elif 'android' in ua:
+        return redirect(
+            'https://play.google.com/store/apps/details?id=com.grailsweep.app', 302
+        )
+
+    elif 'windows' in ua:
+        return redirect('https://www.microsoft.com/store/apps/9P9N5VWVP190', 302)
+
+    else:
+        return redirect('https://grailsweep.com', 302)
+
 
 @app.route("/api/deep_grade", methods=["POST"])
 def deep_grade():
