@@ -1225,6 +1225,18 @@ def rebuild_lookup_files(new_skus: list = None, new_set_ids: list = None):
     )
     print(f"[REBUILD] Done ({mode_label}). Volume committed.", flush=True)
 
+    if _regressions:
+        # sku_game_map.json changes (if any) are already durably committed
+        # above -- this raise only concerns set_metadata.json, whose write
+        # was skipped. Without this, the function returns normally and a
+        # failed set_metadata.json write is indistinguishable from a
+        # successful one in Modal logs or to any caller checking the result.
+        raise RuntimeError(
+            f"set_metadata.json write aborted: {len(_regressions)} existing "
+            f"entr{'y' if len(_regressions) == 1 else 'ies'} would lose "
+            f"printed_total, total, or name: {_regressions[:10]}"
+        )
+
 
 @app.function(image=image, volumes={"/modal_data": vol}, timeout=3600)
 def rebuild_identifier_lookup_only():

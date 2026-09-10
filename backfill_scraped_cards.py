@@ -207,7 +207,10 @@ def _run_remote(tcg: str, sets, dry_run: bool, cards_root: str = None):
     os.environ["LOCALAPPDATA"] = "/modal_data"
     sys.path.insert(0, "/app")
     from backfill_scraped_cards import register_scraped_cards as _reg
-    return _reg(tcg=tcg, sets=sets, dry_run=dry_run, cards_root=cards_root)
+    result = _reg(tcg=tcg, sets=sets, dry_run=dry_run, cards_root=cards_root)
+    if not dry_run:
+        vol.commit()
+    return result
 
 
 @app.local_entrypoint()
