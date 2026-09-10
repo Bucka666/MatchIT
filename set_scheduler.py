@@ -1649,6 +1649,7 @@ def _try_catalog_ingest(entry: Dict, detected: Dict, db_root: str, dry_run: bool
             f"[SCHED-STATE] lookup rebuild failed for {set_id}: {e}"
         )
         result["lookup_rebuild_error"] = str(e)
+        return result  # leave at 'detected' — retry next tick
 
     result["ok"] = True
     return result
