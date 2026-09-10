@@ -3999,7 +3999,7 @@ def _best_price_hint(prices, cm_updated=None, tcp_updated=None, sku=None):
     if sku in _CARDMARKET_CONTAMINATED_SKUS:
         cm = {}
     if isinstance(cm, dict):
-        v = cm.get("avg_sell") or cm.get("low")
+        v = cm.get("trend") or cm.get("avg_sell") or cm.get("low")
         if isinstance(v, (int, float)) and v > 0:
             cm_val = float(v)
 
@@ -8511,7 +8511,7 @@ def _extract_gbp_from_profile(profile, sku=None):
 
     cm = prices.get("cardmarket") if sku not in _CARDMARKET_CONTAMINATED_SKUS else None
     if isinstance(cm, dict):
-        cm_price = cm.get("avg_sell") or cm.get("mid")
+        cm_price = cm.get("trend") or cm.get("avg_sell") or cm.get("mid")
         if cm_price:
             return round(float(cm_price) * fx["eur_gbp"], 2)
 

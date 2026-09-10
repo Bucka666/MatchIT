@@ -629,9 +629,9 @@ def _build_cardmarket_fields(detail: dict):
 
 
 def _extract_gbp_from_profile(profile):
-    """Verbatim mirror of app.py:6367 _extract_gbp_from_profile() — kept
-    here so verification entrypoints in this file don't need to import the
-    full app.py (CLIP/DINOv2/PaddleOCR cold start)."""
+    """Local copy for this file's probe functions only, so verification
+    entrypoints don't need to import the full app.py (CLIP/DINOv2/PaddleOCR
+    cold start). Canonical version: app.py:8481."""
     if not profile:
         return None
     prices = profile.get("prices") if isinstance(profile, dict) else None
@@ -644,7 +644,7 @@ def _extract_gbp_from_profile(profile):
             continue
         for _var, vdata in sdata.items():
             if isinstance(vdata, dict):
-                price = vdata.get("market") or vdata.get("mid") or vdata.get("trend") or vdata.get("avg_sell")
+                price = vdata.get("trend") or vdata.get("avg_sell") or vdata.get("mid")
             else:
                 price = vdata
             if price:
