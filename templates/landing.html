@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 {% block head %}
+<!-- Hero poster is the mobile LCP element. Preloading it (and marking it
+     high-priority on the <video> tag below) gets the browser to discover
+     and start fetching it from the initial HTML instead of waiting on the
+     video element's normal, lower-priority resource scan. -->
+<link rel="preload" as="image" href="/static/assets/hero-poster.jpg?v=1" fetchpriority="high">
 <!-- Homepage-only structured data. The sitewide SoftwareApplication schema
      (with real Free/Monthly/Annual pricing) lives in base.html's <head> and
      already covers every page including this one — do not duplicate it here.
@@ -39,7 +44,7 @@
 ═══════════════════════════════════════════════════════ -->
 <section class="gs-hero">
   <div class="gs-hero-video-wrap">
-    <video class="gs-hero-video" autoplay muted loop playsinline id="gsHeroVideo" poster="/static/assets/hero-poster.jpg?v=1">
+    <video class="gs-hero-video" autoplay muted loop playsinline id="gsHeroVideo" poster="/static/assets/hero-poster.jpg?v=1" fetchpriority="high">
       <source src="/static/assets/Hero.mp4?v=2" type="video/mp4">
     </video>
     <script>

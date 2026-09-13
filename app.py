@@ -158,12 +158,23 @@ _LONG_CACHE_STATIC_PATHS = {
     "/static/assets/microsoft-store-badge.svg",
     "/static/assets/favicon.ico",
     "/static/assets/grailsweep_favicon.png",
+    "/static/manifest.json",
 }
 
 
 @app.after_request
 def _cache_versioned_static_assets(response):
-    if request.path in _LONG_CACHE_STATIC_PATHS and "Cache-Control" not in response.headers:
+    # Unconditional overwrite, deliberately: Werkzeug's send_file/
+    # send_from_directory already stamps every static response with
+    # `Cache-Control: no-cache` by default when no max_age is configured, so
+    # a "only if unset" guard here never fires — confirmed live by curling
+    # the origin directly (bypassing Cloudflare via the Modal/* UA exemption
+    # in _enforce_cf_proxy) and seeing `Cache-Control: no-cache` on style.css
+    # despite this hook supposedly covering it. None of the paths in
+    # _LONG_CACHE_STATIC_PATHS are served by a route that sets its own
+    # deliberate Cache-Control (those live at different literal paths, e.g.
+    # /favicon.ico vs /static/assets/favicon.ico), so overwriting here is safe.
+    if request.path in _LONG_CACHE_STATIC_PATHS:
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return response
 
