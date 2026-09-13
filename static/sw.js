@@ -1,4 +1,15 @@
 // GrailSweep Service Worker — enables PWA install + basic caching + push notifications
+// v163 (2026-09-13) — homepage PageSpeed pass: lucide.min.js/gsap.min.js now
+// load with `defer` in base.html (lucide.createIcons() moved into the existing
+// DOMContentLoaded listener to match); grailsweep_app_icon.png resized
+// 1024x1024 -> 192x192 and re-versioned ?v=1 (also fixes /favicon.ico, which
+// was serving that same oversized PNG instead of the dedicated favicon.ico);
+// Hero.mp4 gained a poster frame and a ?v=1 param; /static responses for the
+// now-versioned assets get a 1-year immutable Cache-Control from Flask. Bumped
+// here only because the versioned PRECACHE entry below changed — no other SW
+// behavior touched. NOTE: this does NOT reliably force the Android TWA to pick
+// up the JS timing change; that's a known limitation of this update mechanism,
+// not something this bump attempts to fix.
 // v142 (2026-08-09) — three fixes: (1) ocr_confirm.py's Pokémon set-code OCR now
 // skips the EN ptcgoCode map entirely in jp_mode, so a JP card can no longer
 // resolve to a wrong EN set via substring noise (e.g. pl2 matching on a genuine
@@ -205,11 +216,11 @@
 // all, unrelated to which instance was controlling anything). The
 // permanent fixes (ignoreVary reads, render()'s page-side cache.match ->
 // blob URL swap, auto-update) are untouched by this removal.
-const CACHE_NAME = 'grailsweep-v162';
+const CACHE_NAME = 'grailsweep-v163';
 const PRECACHE = [
   '/',
   '/static/style.css',
-  '/static/assets/grailsweep_app_icon.png',
+  '/static/assets/grailsweep_app_icon.png?v=1',
   '/static/assets/gs_card_placeholder.png',
   '/static/gs-ondevice.js',
   '/static/gs-set-cache.js',

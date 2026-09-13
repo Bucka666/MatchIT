@@ -7,9 +7,15 @@
   <link rel="stylesheet" href="/static/style.css?v=3">
   <link rel="icon" type="image/x-icon" href="/static/assets/favicon.ico?v=2">
   <link rel="icon" type="image/png" href="/static/assets/grailsweep_favicon.png?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="/static/vendor/lucide.min.js?v=1"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <!-- defer: neither script needs to block parsing. lucide.createIcons()'s
+       one call site (below, in this file) is wrapped in DOMContentLoaded
+       for exactly this reason; gsap's only consumer (results.html) already
+       gates its calls behind DOMContentLoaded on its own. -->
+  <script src="/static/vendor/lucide.min.js?v=1" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js" defer></script>
   <!-- PWA -->
   <link rel="manifest" href="/static/manifest.json">
   <meta name="theme-color" content="#1a1830">
@@ -19,7 +25,7 @@
        and would band awkwardly above the purple gradient. "black-translucent"
        is what caused the original status-bar overlap — do not revert to it. -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <link rel="apple-touch-icon" href="/static/assets/grailsweep_app_icon.png">
+  <link rel="apple-touch-icon" href="/static/assets/grailsweep_app_icon.png?v=1">
   <script>window.GS_SCANNER_KEY = '{{ cfg.get("grailsweep_scanner_key", "") }}';</script>
 
   <!-- ── Theme override: Lighter Purple ── -->
@@ -831,18 +837,35 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
+      "@type": "SoftwareApplication",
       "name": "GrailSweep — AI Trading Card Scanner",
       "alternateName": "GrailSweep",
       "url": "https://grailsweep.com",
       "description": "UK's first AI-powered trading card scanner and price checker for Pokémon TCG, Magic: The Gathering, Yu-Gi-Oh and One Piece TCG. Instantly identify cards, get live GBP prices from TCGPlayer and Cardmarket, grade card condition, and track your collection. Free to use.",
       "applicationCategory": "UtilitiesApplication",
-      "operatingSystem": "Web, iOS, Android",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "GBP"
-      },
+      "operatingSystem": "Web, iOS, Android, Windows",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free",
+          "price": "0",
+          "priceCurrency": "GBP"
+        },
+        {
+          "@type": "Offer",
+          "name": "GrailSweep Pro (Monthly)",
+          "price": "4.39",
+          "priceCurrency": "GBP",
+          "billingDuration": "P1M"
+        },
+        {
+          "@type": "Offer",
+          "name": "GrailSweep Pro (Annual)",
+          "price": "34.99",
+          "priceCurrency": "GBP",
+          "billingDuration": "P1Y"
+        }
+      ],
       "featureList": [
         "AI card identification",
         "Live GBP pricing from TCGPlayer and Cardmarket",
@@ -960,6 +983,7 @@
 
   try { if (window.gsDeviceWeak()) document.documentElement.classList.add('gs-weak-device'); } catch (e) {}
   </script>
+  {% block head %}{% endblock %}
 </head>
 
 <body class="mi-page">
@@ -985,7 +1009,7 @@
     <header class="mi-top">
       <a class="mi-brand" href="/match">
         <div class="mi-logo-wrap" aria-hidden="true">
-          <img src="/static/assets/grailsweep_app_icon.png" alt="GrailSweep">
+          <img src="/static/assets/grailsweep_app_icon.png?v=1" alt="GrailSweep">
         </div>
         <div class="mi-brand-text">
           <div class="mi-brand-name">{{ vbrand.name }}</div>
@@ -1069,10 +1093,10 @@
           <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="40">
         </a>
         <a href="https://apps.apple.com/gb/app/grailsweep/id6792369291" target="_blank" rel="noopener" class="gs-appstore-badge-link">
-          <img src="/static/assets/app-store-badge.svg" alt="Download on the App Store" height="40">
+          <img src="/static/assets/app-store-badge.svg?v=1" alt="Download on the App Store" height="40">
         </a>
         <a href="https://apps.microsoft.com/detail/9P9N5VWVP190" target="_blank" rel="noopener">
-          <img src="/static/assets/microsoft-store-badge.svg" alt="Get it from Microsoft" height="40">
+          <img src="/static/assets/microsoft-store-badge.svg?v=1" alt="Get it from Microsoft" height="40">
         </a>
       </div>
     </div>
@@ -1171,7 +1195,7 @@
       });
     }
 
-    (function(){
+    document.addEventListener('DOMContentLoaded', function(){
       var y = new Date().getFullYear();
       var el = document.getElementById("miYear");
       if (el) el.textContent = y;
@@ -1182,9 +1206,12 @@
           .catch(function(){});
       }
 
-      // Init Lucide icons after DOM is ready
+      // Init Lucide icons after DOM is ready. Now that lucide.min.js loads
+      // with `defer` (2026-09), this listener is what guarantees `lucide`
+      // is defined by the time this runs — deferred scripts always finish
+      // before DOMContentLoaded fires.
       if (typeof lucide !== 'undefined') { lucide.createIcons(); }
-    })();
+    });
   </script>
 
   <!-- Floating particle system -->

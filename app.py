@@ -141,6 +141,32 @@ def _enforce_cf_proxy():
                 "Please use https://grailsweep.com\n"), 403
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ── Long-lived caching for versioned static assets ──────────────────────────
+# Flask's built-in /static handler sends no Cache-Control by default, so
+# Cloudflare's dashboard "Browser Cache TTL" (4h) is what browsers actually
+# see today. Every path below is referenced with a `?v=N` query param in the
+# templates that use it, so bumping that param is what busts the cache —
+# raising max-age here is safe ONLY as long as that stays true. Extend this
+# set only alongside adding (or already having) a `?v=` on that reference.
+_LONG_CACHE_STATIC_PATHS = {
+    "/static/style.css",
+    "/static/vendor/lucide.min.js",
+    "/static/assets/grailsweep_app_icon.png",
+    "/static/assets/Hero.mp4",
+    "/static/assets/hero-poster.jpg",
+    "/static/assets/app-store-badge.svg",
+    "/static/assets/microsoft-store-badge.svg",
+    "/static/assets/favicon.ico",
+    "/static/assets/grailsweep_favicon.png",
+}
+
+
+@app.after_request
+def _cache_versioned_static_assets(response):
+    if request.path in _LONG_CACHE_STATIC_PATHS and "Cache-Control" not in response.headers:
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return response
+
 # ============================================================
 # Stable paths (AppData)
 # ============================================================
@@ -3636,10 +3662,37 @@ def img_query(filename):
 
 @app.route("/robots.txt")
 def robots():
-    return app.response_class(
-        "User-agent: *\nDisallow: /api/\nDisallow: /webhook/\nDisallow: /xref-search\nDisallow: /results\nDisallow: /admin\nAllow: /\nSitemap: https://grailsweep.com/sitemap.xml\n",
-        mimetype="text/plain"
-    )
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        # Admin / password-gated
+        "Disallow: /admin",
+        "Disallow: /login",
+        "Disallow: /logout",
+        "Disallow: /db_manage",
+        "Disallow: /db_upload",
+        "Disallow: /db_review/",
+        "Disallow: /db_image_review",
+        "Disallow: /db_delete/",
+        "Disallow: /db_flag_image/",
+        "Disallow: /db_replace_image/",
+        # App-internal / functional, no indexable content
+        "Disallow: /api/",
+        "Disallow: /webhook/",
+        "Disallow: /xref-search",
+        "Disallow: /results",
+        "Disallow: /capture_submit",
+        "Disallow: /feedback",
+        "Disallow: /csv_template",
+        "Disallow: /ocr-test",
+        "Disallow: /payment-success",
+        "Disallow: /img/",
+        "Disallow: /get",
+        "Disallow: /static/scanner.html",
+        "Sitemap: https://grailsweep.com/sitemap.xml",
+        "",
+    ]
+    return app.response_class("\n".join(lines), mimetype="text/plain")
 
 
 @app.route("/.well-known/assetlinks.json")
@@ -4216,62 +4269,39 @@ def search_page():
     return render_template("search.html")
 
 
+# Public, indexable pages only. NOT the place for the 165k+ individual card
+# records (CardsDB) — that needs its own paginated/sharded sitemap and is a
+# separate project. Add a new page here as {"path", "changefreq", "priority"}.
+SITEMAP_PAGES = [
+    {"path": "/",               "changefreq": "weekly",  "priority": "1.0"},
+    {"path": "/match",          "changefreq": "weekly",  "priority": "0.9"},
+    {"path": "/upgrade",        "changefreq": "monthly", "priority": "0.8"},
+    {"path": "/collection",     "changefreq": "monthly", "priority": "0.7"},
+    {"path": "/privacy",        "changefreq": "yearly",  "priority": "0.3"},
+    {"path": "/terms",          "changefreq": "yearly",  "priority": "0.3"},
+    {"path": "/delete-account", "changefreq": "yearly",  "priority": "0.3"},
+    {"path": "/contact",        "changefreq": "yearly",  "priority": "0.3"},
+]
+
+
 @app.route("/sitemap.xml")
 def sitemap():
     from flask import Response
     from datetime import datetime
     today = datetime.utcnow().strftime("%Y-%m-%d")
-    xml = '''<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://grailsweep.com/</loc>
-    <lastmod>{date}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://grailsweep.com/match</loc>
-    <lastmod>{date}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://grailsweep.com/upgrade</loc>
-    <lastmod>{date}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://grailsweep.com/collection</loc>
-    <lastmod>{date}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://grailsweep.com/privacy</loc>
-    <lastmod>{date}</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://grailsweep.com/terms</loc>
-    <lastmod>{date}</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://grailsweep.com/delete-account</loc>
-    <lastmod>{date}</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-  <url>
-    <loc>https://grailsweep.com/contact</loc>
-    <lastmod>{date}</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-</urlset>'''.format(date=today)
+
+    entries = "\n".join(
+        "  <url>\n"
+        "    <loc>https://grailsweep.com{path}</loc>\n"
+        "    <lastmod>{date}</lastmod>\n"
+        "    <changefreq>{changefreq}</changefreq>\n"
+        "    <priority>{priority}</priority>\n"
+        "  </url>".format(date=today, **page)
+        for page in SITEMAP_PAGES
+    )
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+           + entries + '\n</urlset>')
     resp = Response(xml, mimetype="application/xml")
     resp.headers["Cache-Control"] = "public, max-age=86400, s-maxage=604800"
     return resp
@@ -4281,8 +4311,8 @@ def sitemap():
 def favicon():
     return send_from_directory(
         os.path.join(app.root_path, "static", "assets"),
-        "grailsweep_app_icon.png",
-        mimetype="image/png",
+        "favicon.ico",
+        mimetype="image/vnd.microsoft.icon",
     )
 
 

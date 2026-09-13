@@ -1,23 +1,23 @@
 {% extends "base.html" %}
 {% block head %}
+<!-- Homepage-only structured data. The sitewide SoftwareApplication schema
+     (with real Free/Monthly/Annual pricing) lives in base.html's <head> and
+     already covers every page including this one — do not duplicate it here.
+     This block adds the Organization entity, which base.html does not define. -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
+  "@type": "Organization",
   "name": "GrailSweep",
-  "operatingSystem": "Web, iOS, Android",
-  "applicationCategory": "UtilitiesApplication",
-  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "GBP"},
-  "description": "UK's first AI trading card scanner. Identify Pokémon, MTG, Yu-Gi-Oh and One Piece cards instantly with live GBP pricing.",
   "url": "https://grailsweep.com",
-  "screenshot": "https://grailsweep.com/static/assets/grailsweep_og.png",
-  "featureList": "AI card identification, Live GBP pricing, Condition grading, Collection tracking, Set completion tracking, Collection analytics",
-  "inLanguage": "en-GB",
-  "countryOfOrigin": "GB",
+  "logo": "https://grailsweep.com/static/assets/icon-512.png",
   "sameAs": [
     "https://www.instagram.com/grailsweep",
     "https://www.tiktok.com/@grailsweep",
-    "https://discord.gg/5t54wx9wH"
+    "https://discord.gg/5t54wx9wH",
+    "https://apps.apple.com/app/id6792369291",
+    "https://play.google.com/store/apps/details?id=com.grailsweep.app",
+    "https://www.microsoft.com/store/apps/9P9N5VWVP190"
   ]
 }
 </script>
@@ -39,8 +39,8 @@
 ═══════════════════════════════════════════════════════ -->
 <section class="gs-hero">
   <div class="gs-hero-video-wrap">
-    <video class="gs-hero-video" autoplay muted loop playsinline id="gsHeroVideo">
-      <source src="/static/assets/Hero.mp4" type="video/mp4">
+    <video class="gs-hero-video" autoplay muted loop playsinline id="gsHeroVideo" poster="/static/assets/hero-poster.jpg?v=1">
+      <source src="/static/assets/Hero.mp4?v=1" type="video/mp4">
     </video>
     <script>
       (function() {
