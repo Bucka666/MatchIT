@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>{{ vbrand.page_title }}</title>
+  <title>{% block title %}{{ vbrand.page_title }}{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css?v=3">
   <link rel="icon" type="image/x-icon" href="/static/assets/favicon.ico?v=2">
   <link rel="icon" type="image/png" href="/static/assets/grailsweep_favicon.png?v=3">
@@ -805,7 +805,7 @@
   </style>
 
     <!-- SEO Meta Tags -->
-    <meta name="description" content="GrailSweep — UK's first AI-powered trading card scanner. Instantly identify Pokémon, MTG, Yu-Gi-Oh and One Piece cards, get live GBP prices from TCGPlayer & Cardmarket, and grade card condition in seconds.">
+    <meta name="description" content="{% block meta_description %}GrailSweep — UK's first AI-powered trading card scanner. Instantly identify Pokémon, MTG, Yu-Gi-Oh and One Piece cards, get live GBP prices from TCGPlayer & Cardmarket, and grade card condition in seconds.{% endblock %}">
     <meta name="keywords" content="pokemon card scanner, trading card value checker, MTG card identifier, Yu-Gi-Oh card price, one piece card scanner, one piece tcg price checker, TCG card scanner, trading card grading UK, pokemon card price checker, magic the gathering scanner, yugioh card identifier, TCG price checker UK, tcg uk pricing, trading cards UK, sell trading cards UK, best trading cards to collect UK, pokemon cards UK, card condition grading, TCG collection tracker, grailsweep">
     <meta name="author" content="GrailSweep">
     <meta name="robots" content="index, follow">
@@ -820,8 +820,8 @@
     <!-- Open Graph (Facebook, WhatsApp, Discord previews) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://grailsweep.com/">
-    <meta property="og:title" content="GrailSweep — AI Trading Card Scanner & Price Checker">
-    <meta property="og:description" content="Instantly identify Pokémon, MTG, Yu-Gi-Oh and One Piece cards with AI. Get live GBP prices, condition grading and marketplace links. Free to use.">
+    <meta property="og:title" content="{{ self.title() }}">
+    <meta property="og:description" content="{{ self.meta_description() }}">
     <meta property="og:image" content="https://grailsweep.com/static/assets/grailsweep_og.png">
     <meta property="og:site_name" content="GrailSweep">
     <meta property="og:locale" content="en_GB">
@@ -829,8 +829,8 @@
     <!-- Twitter/X Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://grailsweep.com/">
-    <meta name="twitter:title" content="GrailSweep — AI Trading Card Scanner & Price Checker">
-    <meta name="twitter:description" content="Instantly identify Pokémon, MTG, Yu-Gi-Oh and One Piece cards with AI. Get live GBP prices and condition grading. Free to use.">
+    <meta name="twitter:title" content="{{ self.title() }}">
+    <meta name="twitter:description" content="{{ self.meta_description() }}">
     <meta name="twitter:image" content="https://grailsweep.com/static/assets/grailsweep_og.png">
 
     <!-- JSON-LD Structured Data -->
