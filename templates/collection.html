@@ -346,6 +346,8 @@
 .cd-card-name { font-size: 0.95rem; font-weight: 700; color: #ffd700; margin-bottom: 4px; }
 .cd-card-set  { font-size: 0.8rem; color: #00e5ff; margin-bottom: 6px; }
 .cd-card-price { font-size: 1.1rem; font-weight: 700; color: #00ff88; margin-bottom: 6px; }
+.cd-card-vintage-label { font-size: 0.68rem; color: rgba(255,255,255,0.45); margin-top: -4px; margin-bottom: 3px; }
+.cd-card-vintage-note { font-size: 0.68rem; color: #ffd700; line-height: 1.4; margin-bottom: 6px; max-width: 320px; }
 .cd-card-condition,
 .cd-card-notes,
 .cd-card-added { font-size: 0.78rem; color: rgba(255,255,255,0.45); margin-bottom: 3px; }
@@ -1847,6 +1849,16 @@ function gsExportCSV() {
   URL.revokeObjectURL(url);
 }
 
+/* ── Vintage print-run gate (relabel + caveat only — the stored .gbp value
+   is untouched) — sets confirmed to have a real Unlimited vs 1st Ed /
+   Shadowless price gap. Single source of truth is app.py's
+   VINTAGE_PRINT_RUN_SETS; add a set there, not here. ── */
+var VINTAGE_PRINT_RUN_SETS = {{ VINTAGE_PRINT_RUN_SETS | list | tojson }};
+function gsIsVintagePrintRun(sku) {
+  if (!sku) return false;
+  return VINTAGE_PRINT_RUN_SETS.some(function(setId) { return sku.indexOf(setId + '-') === 0; });
+}
+
 /* ── Card detail modal ── */
 var _cdCurrentCard = null;
 var _cdCurrentIdx  = null;
@@ -1872,6 +1884,9 @@ function gsOpenCardDetail(card) {
   document.getElementById('cdCardName').textContent   = card.name || '';
   document.getElementById('cdCardSet').textContent    = cardSet;
   document.getElementById('cdCardPrice').textContent  = card.gbp ? '\u00a3' + parseFloat(card.gbp).toFixed(2) : '\u2014';
+  var _cdVintage = gsIsVintagePrintRun(card.sku);
+  document.getElementById('cdCardVintageLabel').classList.toggle('gs-hidden', !_cdVintage);
+  document.getElementById('cdCardVintageNote').classList.toggle('gs-hidden', !_cdVintage);
   document.getElementById('cdCardCondition').textContent = card.condition ? 'Condition: ' + card.condition : '';
   document.getElementById('cdCardNotes').textContent  = card.notes ? 'Notes: ' + card.notes : '';
   document.getElementById('cdCardAdded').textContent  = card.added ? 'Added: ' + card.added : '';
@@ -2322,6 +2337,8 @@ function colLoadValueChart() {
           <div class="cd-card-name" id="cdCardName"></div>
           <div class="cd-card-set" id="cdCardSet"></div>
           <div class="cd-card-price" id="cdCardPrice"></div>
+          <div class="cd-card-vintage-label gs-hidden" id="cdCardVintageLabel">Unlimited print price (Cardmarket)</div>
+          <div class="cd-card-vintage-note gs-hidden" id="cdCardVintageNote">This reflects the standard Unlimited print. 1st Edition or Shadowless copies can be worth significantly more.</div>
           <div class="cd-card-condition" id="cdCardCondition"></div>
           <div class="cd-card-notes" id="cdCardNotes"></div>
           <div class="cd-card-added" id="cdCardAdded"></div>

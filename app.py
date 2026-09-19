@@ -76,6 +76,17 @@ def _load_contaminated_skus() -> frozenset:
 
 _CARDMARKET_CONTAMINATED_SKUS = _load_contaminated_skus()
 
+# Sets confirmed to have a real price gap between the standard Unlimited
+# print (what profile.json's Cardmarket/TCGPlayer prices actually are) and
+# 1st Edition / Shadowless copies of the same card, which can be worth
+# 1.2x-15x+ more. No profile carries print-run data, so scan results,
+# collection value and the setcode lookup all silently show the Unlimited
+# figure with no caveat for any set. Add a set_id here once its print-run
+# gap is confirmed (recon into other early WOTC-era sets is ongoing) to
+# surface a relabel + caveat wherever that set's price is shown — nothing
+# else needs to change.
+VINTAGE_PRINT_RUN_SETS = {"base1"}
+
 # ============================================================
 # App
 # ============================================================
@@ -87,6 +98,7 @@ print("[LOG-INIT] app.py: logging configured -> stdout INFO", flush=True)
 app = Flask(__name__)
 app.secret_key = os.environ.get("MATCHIT_SECRET", "dev-secret-change-me")
 CORS(app)
+app.jinja_env.globals['VINTAGE_PRINT_RUN_SETS'] = VINTAGE_PRINT_RUN_SETS
 register_api_routes(app)
 
 # ── Stripe webhook worker durability ─────────────────────────────────────────

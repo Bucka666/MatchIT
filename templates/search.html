@@ -67,6 +67,8 @@
       font-size:0.9rem; color:var(--gs-gold); }
     .gs-card-price.none { color:var(--gs-muted); font-size:0.72rem; font-family:inherit; }
     .gs-price-updated { font-size:0.62rem; color:rgba(255,255,255,0.35); margin-top:3px; }
+    .gs-price-vintage-label { font-size:0.6rem; color:rgba(255,255,255,0.45); margin-top:2px; }
+    .gs-price-vintage-note { font-size:0.6rem; color:var(--gs-gold); line-height:1.35; margin-top:1px; }
     .gs-state { text-align:center; color:var(--gs-muted); padding:48px 16px; font-size:0.9rem; }
     .gs-state.hidden { display:none; }
     .gs-card-actions { display:flex; gap:6px; margin-top:8px; }
@@ -765,10 +767,21 @@
       .then(function(d){ window._gsCachedFxRates = d; })
       .catch(function(){});
 
+    // Vintage print-run gate (relabel + caveat only — the price itself is
+    // still the plain Unlimited-print value already returned by the API).
+    // Single source of truth is app.py's VINTAGE_PRINT_RUN_SETS; add a set
+    // there, not here.
+    var VINTAGE_PRINT_RUN_SETS = {{ VINTAGE_PRINT_RUN_SETS | list | tojson }};
+    function gsIsVintagePrintRun(sku) {
+      if (!sku) return false;
+      return VINTAGE_PRINT_RUN_SETS.some(function(setId) { return sku.indexOf(setId + '-') === 0; });
+    }
+
     function render(results) {
       grid.innerHTML = '';
       results.forEach(function(c) {
         var priceStr = (c.gbp != null) ? fmtGbpValue(c.gbp) : fmtGbp(c.best_price, c.best_currency);
+        var isVintage = priceStr && gsIsVintagePrintRun(c.sku);
         var card = document.createElement('div');
         card.className = 'gs-card';
         var img = c.image_url
@@ -777,6 +790,10 @@
         var price = priceStr
           ? '<div class="gs-card-price">' + priceStr + '</div>'
           : '<div class="gs-card-price none">No price</div>';
+        var vintageNote = isVintage
+          ? '<div class="gs-price-vintage-label">Unlimited print price (Cardmarket)</div>' +
+            '<div class="gs-price-vintage-note">1st Edition or Shadowless copies can be worth significantly more.</div>'
+          : '';
         var freshness = '';
         if (c.prices_updated) {
           var _d = new Date(c.prices_updated);
@@ -789,7 +806,7 @@
           '<div class="gs-card-body">' +
             '<p class="gs-card-name">' + c.name + '</p>' +
             '<p class="gs-card-set">' + (c.set_name || '') + ' · #' + c.number + (c.set_total ? '/' + c.set_total : '') + '</p>' +
-            price + freshness +
+            price + vintageNote + freshness +
             '<div class="gs-card-actions">' +
               '<button type="button" class="gs-card-btn gs-card-btn-col">+ Collection</button>' +
               '<button type="button" class="gs-card-btn gs-card-btn-wl">+ Wishlist</button>' +
