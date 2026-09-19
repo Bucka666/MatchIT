@@ -3713,6 +3713,7 @@ def robots():
         "Disallow: /get",
         "Disallow: /static/scanner.html",
         "Sitemap: https://grailsweep.com/sitemap.xml",
+        "Sitemap: https://grailsweep.com/sitemap_index.xml",
         "",
     ]
     return app.response_class("\n".join(lines), mimetype="text/plain")
@@ -4327,6 +4328,258 @@ def sitemap():
            + entries + '\n</urlset>')
     resp = Response(xml, mimetype="application/xml")
     resp.headers["Cache-Control"] = "public, max-age=86400, s-maxage=604800"
+    return resp
+
+
+# ============================================================
+# Card price pages — programmatic SEO pilot (Base Set only, wave 1)
+# ============================================================
+# Route: /cards/pokemon/<set_slug>/<card_slug>. CARD_PAGE_SETS maps a
+# URL-facing set slug to the real CardsDB set_id -- add an entry here to
+# bring a new set into scope; the slug index and sitemap chunking both key
+# off this dict, so nothing else needs to change to add a set.
+CARD_PAGE_SETS = {
+    "base-set": "base1",   # "Base" (WOTC, 1998) -- confirmed via live-volume
+                            # recon 2026-09-16: 102/102 CardsDB profiles
+                            # present, matches set_metadata.json's
+                            # printed_total exactly. NOT "base4" (Base Set 2,
+                            # a later reprint set, 130 cards) -- excluded.
+}
+
+# Secondary "get graded and authenticity-checked" CTA only shows above this
+# GBP current price. Picked from the real Base Set GBP distribution
+# (avg_sell * eur_gbp across all 102 cards, computed live 2026-09-16):
+# min=0.21 median=2.74 p75=7.66 p90=25.82 max=448.04 (Charizard). Lowered
+# from 25 to 18 (2026-09-16) to catch more of the 16 classic WOTC holo
+# rares -- verified against the real distribution this pulls in exactly 2
+# more (Magneton GBP21.82, Gyarados GBP20.93), taking the CTA's coverage of
+# that 16-card holo tier from 11/16 to 13/16. The remaining 3 (Ninetales
+# GBP17.31, Machamp GBP13.97, Hitmonchan GBP10.51) stay below the line --
+# going lower than 18 to catch Ninetales specifically would pull in a lot
+# more of the non-holo p75-p90 band too, so this wasn't chased further.
+# This is Base-Set-shaped, not a general rule -- revisit per-set (or make
+# it data-driven) as more sets are added.
+CARD_PAGE_AUTH_CTA_THRESHOLD_GBP = 18
+
+
+def _card_page_slugify(text):
+    text = (text or "").lower()
+    text = re.sub(r"[^a-z0-9]+", "-", text)
+    return text.strip("-") or "card"
+
+
+def _card_page_build_slug(profile):
+    """name + api_id suffix (NOT card_number) -- card_number silently
+    collapses alt-art variants (e.g. cel25c-15_A1..A4 all report
+    card_number "15", confirmed via recon). The api_id suffix is the field
+    that stays unique across those variants, so slugs stay collision-free
+    as later sets (with alt-art) are added, not just for Base Set today."""
+    api_id = profile.get("api_id", "")
+    set_id = profile.get("set_id", "")
+    prefix = set_id + "-"
+    suffix = api_id[len(prefix):] if api_id.startswith(prefix) else api_id
+    return f"{_card_page_slugify(profile.get('name'))}-{_card_page_slugify(suffix)}"
+
+
+# {set_slug: {card_slug: api_id}} -- process-lifetime cache. Slugs are
+# name + api_id-suffix, which never changes once a card is scraped, so this
+# never goes stale -- unlike prices, which are always read fresh per
+# request from profile.json, never cached here.
+_card_page_slug_cache = {}
+
+
+def _card_page_slug_index(set_slug, set_id):
+    cached = _card_page_slug_cache.get(set_slug)
+    if cached is not None:
+        return cached
+    db_root = get_db_root()
+    pokemon_dir = os.path.join(db_root, "pokemon")
+    prefix = set_id + "-"
+    try:
+        with os.scandir(pokemon_dir) as it:
+            names = [e.name for e in it if e.is_dir() and e.name.startswith(prefix)]
+    except Exception:
+        names = []
+    idx = {}
+    for api_id in names:
+        prof = _load_profile_direct(api_id, db_root, "POKEMON")
+        if not prof:
+            continue
+        idx[_card_page_build_slug(prof)] = api_id
+    _card_page_slug_cache[set_slug] = idx
+    return idx
+
+
+def _card_page_gbp(eur_value, fx):
+    """Same formula as _extract_gbp_from_profile(): round(float(v) *
+    fx['eur_gbp'], 2). Applied per-field here (avg_sell and trend
+    independently) rather than via that function directly, since the page
+    shows both as separate figures -- _extract_gbp_from_profile() only
+    ever picks one best-effort value."""
+    if eur_value is None:
+        return None
+    try:
+        return round(float(eur_value) * fx["eur_gbp"], 2)
+    except (TypeError, ValueError, KeyError):
+        return None
+
+
+@app.route("/cards/pokemon/<set_slug>/<card_slug>")
+def card_price_page(set_slug, card_slug):
+    set_id = CARD_PAGE_SETS.get(set_slug)
+    if not set_id:
+        abort(404)
+
+    idx = _card_page_slug_index(set_slug, set_id)
+    api_id = idx.get(card_slug)
+    if not api_id:
+        abort(404)
+
+    db_root = get_db_root()
+    profile = _load_profile_direct(api_id, db_root, "POKEMON")
+    if not profile:
+        abort(404)
+    profile = _attach_set_total(profile, sku=api_id)
+
+    fx = get_fx()
+    prices = profile.get("prices") or {}
+    cm = prices.get("cardmarket") if api_id not in _CARDMARKET_CONTAMINATED_SKUS else None
+    cm = cm if isinstance(cm, dict) else {}
+
+    current_gbp = _card_page_gbp(cm.get("avg_sell"), fx)
+    trend_gbp = _card_page_gbp(cm.get("trend"), fx)
+    avg_7d_gbp = _card_page_gbp(cm.get("avg_7d"), fx)
+    avg_30d_gbp = _card_page_gbp(cm.get("avg_30d"), fx)
+    has_price = current_gbp is not None or trend_gbp is not None
+
+    # Shadowless/1st-Ed pricing (added 2026-09-17, see refresh_en_prices.py).
+    # Gated to RARE_HOLO only -- confirmed via recon that although
+    # refresh_en_prices.py captures a shadowless number for EVERY card
+    # generically, it's only reliable for the 16 classic holo rares (ratio
+    # range 1.24x-15.1x vs Unlimited, matching known hobby premiums).
+    # Commons/uncommons show wildly implausible ratios up to 89x -- thin
+    # Cardmarket listing volume on bulk cards, not real value, so those are
+    # deliberately never shown even though the field exists for them too.
+    # The >=1 GBP diff is belt-and-suspenders (every RARE_HOLO card already
+    # clears it by a wide margin today; matters more once other sets, with
+    # their own variant quirks, get added to CARD_PAGE_SETS).
+    cm_shadowless = prices.get("cardmarket_shadowless") if api_id not in _CARDMARKET_CONTAMINATED_SKUS else None
+    cm_shadowless = cm_shadowless if isinstance(cm_shadowless, dict) else {}
+    shadowless_gbp = _card_page_gbp(cm_shadowless.get("avg_sell"), fx)
+    show_shadowless = (
+        shadowless_gbp is not None
+        and current_gbp is not None
+        and profile.get("rarity") == "RARE_HOLO"
+        and (shadowless_gbp - current_gbp) >= 1
+    )
+
+    # Cheap directional signal (no historical chart for this pilot): compare
+    # the two rolling averages already present in profile.json.
+    trend_direction = None
+    if avg_7d_gbp is not None and avg_30d_gbp:
+        diff_pct = (avg_7d_gbp - avg_30d_gbp) / avg_30d_gbp * 100
+        if abs(diff_pct) >= 1:  # ignore sub-1% noise from rounding
+            trend_direction = {"above": diff_pct > 0, "pct": round(abs(diff_pct), 1)}
+
+    rarity_raw = profile.get("rarity") or ""
+    if rarity_raw:
+        rarity_display = rarity_raw.replace("_", " ").title()
+    elif profile.get("card_supertype") == "ENERGY":
+        # All 6 empty-rarity Base Set cards are basic Energy cards
+        # (confirmed via recon) -- Energy cards genuinely have no rarity
+        # tier in the physical product, this isn't missing data.
+        rarity_display = "Energy Card"
+    else:
+        rarity_display = "Rarity Unlisted"
+
+    image_id = _image_id_for_sku(api_id)
+    image_url = f"https://images.grailsweep.com/{image_id}.jpg" if image_id else None
+
+    last_checked = profile.get("cardmarket_updated") or profile.get("prices_updated")
+
+    # Checks whichever of Unlimited / Shadowless is higher -- but only the
+    # Shadowless figure that already passed the show_shadowless trust gate
+    # above, so an unreliable bulk-common shadowless number (e.g. the 89x
+    # outlier seen on a basic Energy card) can never wrongly trigger this.
+    best_price_for_cta = current_gbp or 0
+    if show_shadowless:
+        best_price_for_cta = max(best_price_for_cta, shadowless_gbp)
+    show_auth_cta = best_price_for_cta >= CARD_PAGE_AUTH_CTA_THRESHOLD_GBP
+
+    resp = make_response(render_template(
+        "card_price_page.html",
+        profile=profile,
+        api_id=api_id,
+        set_slug=set_slug,
+        card_slug=card_slug,
+        current_gbp=current_gbp,
+        trend_gbp=trend_gbp,
+        avg_7d_gbp=avg_7d_gbp,
+        avg_30d_gbp=avg_30d_gbp,
+        shadowless_gbp=shadowless_gbp,
+        show_shadowless=show_shadowless,
+        trend_direction=trend_direction,
+        has_price=has_price,
+        rarity_display=rarity_display,
+        image_url=image_url,
+        last_checked=last_checked,
+        show_auth_cta=show_auth_cta,
+    ))
+    # Prices refresh once/day at 4am UTC (refresh_en_prices.py) -- s-maxage=
+    # 43200 (12h) lets the Cloudflare edge catch up within half a day of
+    # that refresh without re-hitting the origin every request. Same
+    # public/max-age=0/must-revalidate pattern as /privacy (see that route)
+    # -- browsers always revalidate with origin, only the edge TTL differs.
+    resp.headers["Cache-Control"] = "public, max-age=0, s-maxage=43200, must-revalidate"
+    return resp
+
+
+def _card_page_chunks():
+    """One (chunk_name, [url, ...]) pair per configured set. Adding a set
+    to CARD_PAGE_SETS automatically gives it its own sitemap chunk -- no
+    rewrite needed here as more sets are added later."""
+    chunks = []
+    for set_slug, set_id in CARD_PAGE_SETS.items():
+        idx = _card_page_slug_index(set_slug, set_id)
+        urls = [f"/cards/pokemon/{set_slug}/{slug}" for slug in sorted(idx.keys())]
+        chunks.append((f"cards-{set_slug}", urls))
+    return chunks
+
+
+@app.route("/sitemap_index.xml")
+def sitemap_index():
+    from flask import Response
+    chunks = _card_page_chunks()
+    entries = "\n".join(
+        "  <sitemap>\n    <loc>https://grailsweep.com/sitemap-{name}.xml</loc>\n  </sitemap>".format(name=name)
+        for name, _ in chunks
+    )
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+           '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+           + entries + '\n</sitemapindex>')
+    resp = Response(xml, mimetype="application/xml")
+    resp.headers["Cache-Control"] = "public, max-age=0, s-maxage=43200, must-revalidate"
+    return resp
+
+
+@app.route("/sitemap-<chunk_name>.xml")
+def sitemap_chunk(chunk_name):
+    from flask import Response
+    from datetime import datetime
+    chunks = dict(_card_page_chunks())
+    urls = chunks.get(chunk_name)
+    if urls is None:
+        abort(404)
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    entries = "\n".join(
+        "  <url>\n    <loc>https://grailsweep.com{u}</loc>\n    <lastmod>{d}</lastmod>\n  </url>".format(u=u, d=today)
+        for u in urls
+    )
+    xml = ('<?xml version="1.0" encoding="UTF-8"?>\n'
+           '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+           + entries + '\n</urlset>')
+    resp = Response(xml, mimetype="application/xml")
+    resp.headers["Cache-Control"] = "public, max-age=0, s-maxage=43200, must-revalidate"
     return resp
 
 

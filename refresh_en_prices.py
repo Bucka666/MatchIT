@@ -10,8 +10,11 @@ Set-id mapping: TCGdex set IDs differ from pokemontcg.io's (e.g. our rsv10pt5 ->
 TCGdex sv10.5w "White Flare"). Built at runtime by normalized-name match against
 TCGdex /v2/en/sets, with MANUAL_OVERRIDES for the known name-mismatch sets.
 
-_fetch_card_detail and _build_price_fields are COPIED VERBATIM from
-backfill_en_tcgdex_prices.py (standalone-script convention — no cross-import).
+_fetch_card_detail is COPIED VERBATIM from backfill_en_tcgdex_prices.py
+(standalone-script convention — no cross-import). _build_price_fields
+started as a verbatim copy too but has since diverged here (per-source
+timestamps, then shadowless-print-run pricing, 2026-09-17) — the two files
+are no longer identical; check both if changing shared card-pricing logic.
 
 Run:
     modal run refresh_en_prices.py                 # full refresh on the live volume
@@ -103,18 +106,46 @@ def _fetch_card_detail(tcgdex_id: str, timeout: int = 8) -> dict:
 def _build_price_fields(detail: dict) -> dict | None:
     """
     Extract TCGplayer + Cardmarket prices from a TCGdex EN card detail response.
-    Uses the top-level 'pricing' field (primary variant).
+    Uses the top-level 'pricing' field (primary variant -- confirmed via recon
+    to always equal the "unlimited" entry in variants_detailed[], never a
+    blend across print runs).
     Returns None if no usable prices found.
     """
     pricing = detail.get("pricing") or {}
 
-    # ── Cardmarket ────────────────────────────────────────────────────────────
+    # ── Cardmarket (top-level / Unlimited) ──────────────────────────────────────
     cm = pricing.get("cardmarket") or {}
     cm_prices = {}
     for out_key, src_key in _CM_FIELD_MAP:
         v = cm.get(src_key)
         if v is not None:
             cm_prices[out_key] = v
+
+    # ── Cardmarket (Shadowless / stamped-1st-Edition, bundled) ─────────────────
+    # TCGdex's variants_detailed[] carries a separate pricing.cardmarket block
+    # per real print run. subtype=="shadowless" is the one that matters --
+    # confirmed via recon (2026-09-16) its raw cardmarket field set is
+    # IDENTICAL to the top-level block's (avg/low/trend/avg1/avg7/avg30 + the
+    # -holo variants), so the same _CM_FIELD_MAP applies unchanged. Note
+    # TCGdex does NOT distinguish a true stamped 1st Edition from plain
+    # Shadowless -- both the stamped and unstamped shadowless entries share
+    # the same cardmarket idProduct and identical prices (confirmed on every
+    # card checked), so "shadowless" here really means "Shadowless-or-1st-Ed,
+    # whichever a Cardmarket listing happened to tag". Generic across any
+    # set with real print-run variants -- not hardcoded to Base Set; simply
+    # a no-op (empty dict) for sets where TCGdex has no such variant, which
+    # is every set of a real cost/latency (zero -- this reads data already
+    # present in the same `detail` response, no extra API call).
+    cm_shadowless_prices = {}
+    for variant in (detail.get("variants_detailed") or []):
+        if variant.get("subtype") != "shadowless":
+            continue
+        v_cm = (variant.get("pricing") or {}).get("cardmarket") or {}
+        for out_key, src_key in _CM_FIELD_MAP:
+            v = v_cm.get(src_key)
+            if v is not None:
+                cm_shadowless_prices[out_key] = v
+        break  # first shadowless entry -- stamped/unstamped duplicates share identical pricing (confirmed via recon)
 
     # ── TCGplayer ─────────────────────────────────────────────────────────────
     tcp_raw = pricing.get("tcgplayer") or {}
@@ -137,6 +168,8 @@ def _build_price_fields(detail: dict) -> dict | None:
         "cardmarket": cm_prices,
         "tcgplayer":  tcp_prices,
     }
+    if cm_shadowless_prices:
+        result["cardmarket_shadowless"] = cm_shadowless_prices
     if cm.get("idProduct"):
         result["cardmarket_id"] = str(cm["idProduct"])
     # Per-source timestamps stored separately so freshness can be compared
@@ -153,7 +186,7 @@ def _build_price_fields(detail: dict) -> dict | None:
         result["prices_updated"] = updated
 
     return result
-# ── end verbatim copy (extended: per-source timestamps) ───────────────────────
+# ── end verbatim copy (extended: per-source timestamps, shadowless pricing) ───
 
 
 def _build_setid_map(our_set_ids: list) -> dict:
@@ -239,6 +272,12 @@ def _refresh_one(folder: Path, tcgdex_set_id: str, set_prefix: str, force: bool 
         "tcgplayer":  fields["tcgplayer"],
         "cardmarket": fields["cardmarket"],
     }
+    # Additive, keeps existing "cardmarket" key's meaning (Unlimited) totally
+    # unchanged. profile["prices"] is rebuilt fresh every refresh (not
+    # merged), so a card that loses its shadowless variant on a later
+    # refresh naturally drops this key again -- no explicit cleanup needed.
+    if "cardmarket_shadowless" in fields:
+        profile["prices"]["cardmarket_shadowless"] = fields["cardmarket_shadowless"]
     if "cardmarket_id" in fields:
         profile["cardmarket_id"] = fields["cardmarket_id"]
     if "cardmarket_updated" in fields:

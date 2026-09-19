@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.name }} ({{ profile.set_name }}) Price & Value | GrailSweep{% endblock %}
+{% block meta_description %}{{ profile.name }} — {{ profile.set_name }} #{{ profile.card_number }}{% if profile.set_total %}/{{ profile.set_total }}{% endif %}. Live GBP price from Cardmarket{% if has_price and current_gbp %}, currently £{{ '%.2f'|format(current_gbp) }}{% endif %}. Scan your own copy for an instant condition-adjusted valuation.{% endblock %}
+{% block og_image %}{{ image_url or 'https://grailsweep.com/static/assets/grailsweep_og.png' }}{% endblock %}
+
+{% block head %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "{{ profile.name }} ({{ profile.set_name }})",
+  "sku": "{{ api_id }}",
+  "brand": { "@type": "Brand", "name": "Pokémon TCG" }
+  {%- if image_url %},
+  "image": "{{ image_url }}"
+  {%- endif %}
+  {%- if has_price and current_gbp %},
+  "offers": {
+    "@type": "Offer",
+    "price": "{{ '%.2f'|format(current_gbp) }}",
+    "priceCurrency": "GBP"
+  }
+  {%- endif %}
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://grailsweep.com/" },
+    { "@type": "ListItem", "position": 2, "name": "{{ profile.set_name }}" },
+    { "@type": "ListItem", "position": 3, "name": "{{ profile.name }}" }
+  ]
+}
+</script>
+<style>
+  .cpp-breadcrumb { font-size: 0.78rem; color: var(--mi-muted,#9b95b8); margin-bottom: 16px; }
+  .cpp-breadcrumb a { color: var(--mi-muted,#9b95b8); text-decoration: none; }
+  .cpp-breadcrumb a:hover { color: #b14dff; }
+  .cpp-layout { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+  .cpp-image-wrap { flex: 0 0 240px; max-width: 240px; }
+  .cpp-image-wrap img { width: 100%; border-radius: 12px; display: block; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+  .cpp-info { flex: 1 1 300px; min-width: 260px; text-align: left; }
+  .cpp-set-line { font-size: 0.85rem; color: var(--mi-muted,#9b95b8); margin-bottom: 4px; }
+  .cpp-rarity-pill { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; padding: 3px 10px; border-radius: 999px; background: rgba(177,77,255,0.12); border: 1px solid rgba(177,77,255,0.3); color: #b14dff; margin-top: 6px; }
+  .cpp-price-block { margin-top: 20px; padding: 18px 20px; border-radius: 12px; background: rgba(0,229,255,0.06); border: 1px solid rgba(0,229,255,0.2); }
+  .cpp-price-current { font-family: 'Orbitron', sans-serif; font-size: 2rem; font-weight: 700; color: #00e5ff; line-height: 1.1; }
+  .cpp-price-current-label { font-size: 0.75rem; color: var(--mi-muted,#9b95b8); }
+  .cpp-variant-row { display: flex; justify-content: space-between; align-items: baseline; }
+  .cpp-variant-row + .cpp-variant-row { margin-top: 10px; }
+  .cpp-variant-label { font-size: 0.8rem; color: var(--mi-muted,#9b95b8); }
+  .cpp-variant-value { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1.3rem; color: #00e5ff; }
+  .cpp-variant-row.cpp-variant-highlight .cpp-variant-label { color: #ffd700; }
+  .cpp-variant-row.cpp-variant-highlight .cpp-variant-value { color: #ffd700; font-size: 1.5rem; }
+  .cpp-variant-note { font-size: 0.74rem; color: var(--mi-muted,#9b95b8); line-height: 1.5; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .cpp-price-row { display: flex; justify-content: space-between; font-size: 0.82rem; color: var(--mi-muted,#9b95b8); margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .cpp-price-row:first-of-type { border-top: none; padding-top: 0; margin-top: 10px; }
+  .cpp-trend-up { color: #00ff88; }
+  .cpp-trend-down { color: #ff2d6f; }
+  .cpp-last-checked { font-size: 0.72rem; color: var(--mi-muted,#9b95b8); margin-top: 10px; opacity: 0.8; }
+  .cpp-no-price { font-size: 0.88rem; color: var(--mi-muted,#9b95b8); line-height: 1.6; }
+  .cpp-cta-primary { display: block; text-align: center; margin-top: 20px; padding: 14px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg,#b14dff,#00e5ff); color: #0f0f1a; font-weight: 700; font-size: 0.95rem; text-decoration: none; }
+  .cpp-cta-secondary { display: block; text-align: center; margin-top: 10px; padding: 12px 18px; border-radius: 10px; border: 1px solid rgba(255,215,0,0.35); background: rgba(255,215,0,0.08); color: #ffd700; font-weight: 700; font-size: 0.85rem; text-decoration: none; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="mi-card" style="max-width:760px;margin:0 auto;padding:28px;">
+
+  <nav class="cpp-breadcrumb">
+    <a href="/match">Home</a> &rsaquo; {{ profile.set_name }} &rsaquo; {{ profile.name }}
+  </nav>
+
+  <div class="cpp-layout">
+    <div class="cpp-image-wrap">
+      {% if image_url %}
+        <img src="{{ image_url }}" alt="{{ profile.name }} — {{ profile.set_name }} #{{ profile.card_number }}" loading="lazy">
+      {% else %}
+        <div style="aspect-ratio:2.5/3.5;border-radius:12px;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;color:var(--mi-muted,#9b95b8);font-size:0.8rem;">No image available</div>
+      {% endif %}
+    </div>
+
+    <div class="cpp-info">
+      <h1 class="mi-h1" style="font-size:1.5rem;margin-bottom:4px;">{{ profile.name }}</h1>
+      <div class="cpp-set-line">{{ profile.set_name }} &middot; #{{ profile.card_number }}{% if profile.set_total %}/{{ profile.set_total }}{% endif %}</div>
+      <span class="cpp-rarity-pill">{{ rarity_display }}</span>
+
+      {% if has_price %}
+        <div class="cpp-price-block">
+          {% if show_shadowless %}
+            <div class="cpp-variant-row">
+              <span class="cpp-variant-label">Unlimited</span>
+              <span class="cpp-variant-value">£{{ '%.2f'|format(current_gbp) }}</span>
+            </div>
+            <div class="cpp-variant-row cpp-variant-highlight">
+              <span class="cpp-variant-label">Shadowless / 1st Edition</span>
+              <span class="cpp-variant-value">£{{ '%.2f'|format(shadowless_gbp) }}</span>
+            </div>
+            <p class="cpp-variant-note">Cardmarket doesn't separately track a genuine stamped 1st Edition from plain Shadowless — both are blended into the figure above. If your copy has the 1st Edition stamp, it may be worth more still than the price shown here.</p>
+          {% elif current_gbp is not none %}
+            <div class="cpp-price-current">£{{ '%.2f'|format(current_gbp) }}</div>
+            <div class="cpp-price-current-label">Unlimited print price (Cardmarket)</div>
+          {% endif %}
+
+          {% if trend_gbp is not none %}
+          <div class="cpp-price-row">
+            <span>Cardmarket Trend Price</span>
+            <span>£{{ '%.2f'|format(trend_gbp) }}</span>
+          </div>
+          {% endif %}
+
+          {% if trend_direction %}
+          <div class="cpp-price-row">
+            <span>7-day vs 30-day average</span>
+            <span class="{{ 'cpp-trend-up' if trend_direction.above else 'cpp-trend-down' }}">
+              tracking {{ 'above' if trend_direction.above else 'below' }} the 30-day average ({{ trend_direction.pct }}%)
+            </span>
+          </div>
+          {% endif %}
+
+          {% if last_checked %}
+          <div class="cpp-last-checked">Prices last checked {{ last_checked[:10] }}</div>
+          {% endif %}
+        </div>
+      {% else %}
+        <div class="cpp-price-block">
+          <p class="cpp-no-price">Live pricing isn't available for this card right now. Scan your copy below for an instant valuation instead.</p>
+        </div>
+      {% endif %}
+
+      <a href="/match" class="cpp-cta-primary">Scan your copy to check its exact value</a>
+      {% if show_auth_cta %}
+      <a href="/upgrade" class="cpp-cta-secondary">Get your copy graded and authenticity-checked</a>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
