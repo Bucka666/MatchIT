@@ -1037,17 +1037,71 @@
 "source": "scryfall",
 "name": "Masters Edition IV"
 },
+"me5": {
+"date": "2026-07-17",
+"set_type": null,
+"source": "pokemontcg.io",
+"name": "Pitch Black"
+},
+"me55": {
+"date": "2026-09-16",
+"set_type": null,
+"source": "pokemontcg.io",
+"name": "30th Celebration"
+},
+"me55c": {
+"date": "2026-09-16",
+"set_type": null,
+"source": "pokemontcg.io",
+"name": "30th Celebration: Classic Collection"
+},
+"ttrk": {
+"date": "2026-11-13",
+"set_type": "token",
+"source": "scryfall",
+"name": "Star Trek Tokens"
+},
+"sds": {
+"date": "2026-11-13",
+"set_type": "masterpiece",
+"source": "scryfall",
+"name": "Stardates"
+},
+"trk": {
+"date": "2026-11-13",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Star Trek"
+},
 "trc": {
-"date": "2026-11-20",
+"date": "2026-11-13",
 "set_type": "commander",
 "source": "scryfall",
 "name": "Star Trek Commander"
 },
-"trk": {
-"date": "2026-11-20",
-"set_type": "expansion",
+"mbc": {
+"date": "2026-11-09",
+"set_type": "draft_innovation",
 "source": "scryfall",
-"name": "Star Trek"
+"name": "Mystery Booster Commander Edition"
+},
+"tfra": {
+"date": "2026-10-02",
+"set_type": "token",
+"source": "scryfall",
+"name": "Reality Fracture Tokens"
+},
+"tfrc": {
+"date": "2026-10-02",
+"set_type": "token",
+"source": "scryfall",
+"name": "Reality Fracture Commander Tokens"
+},
+"tfdc": {
+"date": "2026-10-02",
+"set_type": "token",
+"source": "scryfall",
+"name": "Foundations Commander Tokens"
 },
 "fra": {
 "date": "2026-10-02",
@@ -1055,17 +1109,23 @@
 "source": "scryfall",
 "name": "Reality Fracture"
 },
+"frc": {
+"date": "2026-10-02",
+"set_type": "commander",
+"source": "scryfall",
+"name": "Reality Fracture Commander"
+},
+"slz": {
+"date": "2026-09-02",
+"set_type": "box",
+"source": "scryfall",
+"name": "The Zeta Set"
+},
 "thob": {
 "date": "2026-08-14",
 "set_type": "token",
 "source": "scryfall",
 "name": "The Hobbit Tokens"
-},
-"hoc": {
-"date": "2026-08-14",
-"set_type": "commander",
-"source": "scryfall",
-"name": "The Hobbit Commander"
 },
 "hob": {
 "date": "2026-08-14",
@@ -1073,17 +1133,29 @@
 "source": "scryfall",
 "name": "The Hobbit"
 },
+"hoc": {
+"date": "2026-08-14",
+"set_type": "eternal",
+"source": "scryfall",
+"name": "The Hobbit Eternal"
+},
 "msh": {
 "date": "2026-06-26",
 "set_type": "expansion",
 "source": "scryfall",
 "name": "Marvel Super Heroes"
 },
-"tmsc": {
+"fmsc": {
 "date": "2026-06-26",
-"set_type": "token",
+"set_type": "memorabilia",
 "source": "scryfall",
-"name": "Marvel Super Heroes Commander Tokens"
+"name": "Marvel Super Heroes Jumpstart Front Cards"
+},
+"amsh": {
+"date": "2026-06-26",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Marvel Super Heroes Art Series"
 },
 "tmsh": {
 "date": "2026-06-26",
@@ -1091,11 +1163,11 @@
 "source": "scryfall",
 "name": "Marvel Super Heroes Tokens"
 },
-"fmsc": {
+"tmsc": {
 "date": "2026-06-26",
-"set_type": "memorabilia",
+"set_type": "token",
 "source": "scryfall",
-"name": "Marvel Super Heroes Jumpstart Front Cards"
+"name": "Marvel Super Heroes Commander Tokens"
 },
 "msc": {
 "date": "2026-06-26",
@@ -1115,17 +1187,17 @@
 "source": "scryfall",
 "name": "Secrets of Strixhaven Promos"
 },
-"tsoc": {
+"soc": {
 "date": "2026-04-24",
-"set_type": "token",
+"set_type": "commander",
 "source": "scryfall",
-"name": "Secrets of Strixhaven Commander Tokens"
+"name": "Secrets of Strixhaven Commander"
 },
-"sos": {
+"soa": {
 "date": "2026-04-24",
-"set_type": "expansion",
+"set_type": "masterpiece",
 "source": "scryfall",
-"name": "Secrets of Strixhaven"
+"name": "Secrets of Strixhaven Mystical Archive"
 },
 "tsos": {
 "date": "2026-04-24",
@@ -1139,17 +1211,29 @@
 "source": "scryfall",
 "name": "Secrets of Strixhaven Art Series"
 },
-"soc": {
+"sos": {
 "date": "2026-04-24",
-"set_type": "commander",
+"set_type": "expansion",
 "source": "scryfall",
-"name": "Secrets of Strixhaven Commander"
+"name": "Secrets of Strixhaven"
 },
-"soa": {
+"tsoc": {
 "date": "2026-04-24",
-"set_type": "masterpiece",
+"set_type": "token",
 "source": "scryfall",
-"name": "Secrets of Strixhaven Mystical Archive"
+"name": "Secrets of Strixhaven Commander Tokens"
+},
+"atmt": {
+"date": "2026-03-06",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Teenage Mutant Ninja Turtles Art Series"
+},
+"ftmc": {
+"date": "2026-03-06",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Teenage Mutant Ninja Turtles Eternal Front Cards"
 },
 "pza": {
 "date": "2026-03-06",
@@ -1181,18 +1265,6 @@
 "source": "scryfall",
 "name": "Teenage Mutant Ninja Turtles"
 },
-"atmt": {
-"date": "2026-03-06",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Teenage Mutant Ninja Turtles Art Series"
-},
-"ftmc": {
-"date": "2026-03-06",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Teenage Mutant Ninja Turtles Eternal Front Cards"
-},
 "pl26": {
 "date": "2026-02-17",
 "set_type": "promo",
@@ -1211,24 +1283,6 @@
 "source": "scryfall",
 "name": "Lorwyn Eclipsed Promos"
 },
-"ecl": {
-"date": "2026-01-23",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Lorwyn Eclipsed"
-},
-"ecc": {
-"date": "2026-01-23",
-"set_type": "commander",
-"source": "scryfall",
-"name": "Lorwyn Eclipsed Commander"
-},
-"tecc": {
-"date": "2026-01-23",
-"set_type": "token",
-"source": "scryfall",
-"name": "Lorwyn Eclipsed Commander Tokens"
-},
 "aecl": {
 "date": "2026-01-23",
 "set_type": "memorabilia",
@@ -1241,17 +1295,35 @@
 "source": "scryfall",
 "name": "Lorwyn Eclipsed Tokens"
 },
-"pw26": {
-"date": "2026-01-01",
-"set_type": "promo",
+"ecl": {
+"date": "2026-01-23",
+"set_type": "expansion",
 "source": "scryfall",
-"name": "Wizards Play Network 2026"
+"name": "Lorwyn Eclipsed"
+},
+"tecc": {
+"date": "2026-01-23",
+"set_type": "token",
+"source": "scryfall",
+"name": "Lorwyn Eclipsed Commander Tokens"
+},
+"ecc": {
+"date": "2026-01-23",
+"set_type": "commander",
+"source": "scryfall",
+"name": "Lorwyn Eclipsed Commander"
 },
 "pf26": {
 "date": "2026-01-01",
 "set_type": "promo",
 "source": "scryfall",
 "name": "MagicFest 2026"
+},
+"pw26": {
+"date": "2026-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Wizards Play Network 2026"
 },
 "afic": {
 "date": "2025-12-05",
@@ -1271,6 +1343,36 @@
 "source": "scryfall",
 "name": "Avatar: The Last Airbender Tokens"
 },
+"ftla": {
+"date": "2025-11-21",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Avatar: The Last Airbender Beginner Box Front Cards"
+},
+"atle": {
+"date": "2025-11-21",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Avatar: the Last Airbender Eternal Art Series"
+},
+"tle": {
+"date": "2025-11-21",
+"set_type": "eternal",
+"source": "scryfall",
+"name": "Avatar: The Last Airbender Eternal"
+},
+"ttle": {
+"date": "2025-11-21",
+"set_type": "token",
+"source": "scryfall",
+"name": "Avatar: The Last Airbender Eternal Tokens"
+},
+"tla": {
+"date": "2025-11-21",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Avatar: The Last Airbender"
+},
 "jtla": {
 "date": "2025-11-21",
 "set_type": "memorabilia",
@@ -1283,41 +1385,17 @@
 "source": "scryfall",
 "name": "Avatar: the Last Airbender Art Series"
 },
-"atle": {
-"date": "2025-11-21",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Avatar: the Last Airbender Eternal Art Series"
-},
-"ttle": {
-"date": "2025-11-21",
-"set_type": "token",
-"source": "scryfall",
-"name": "Avatar: The Last Airbender Eternal Tokens"
-},
-"ftla": {
-"date": "2025-11-21",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Avatar: The Last Airbender Beginner Box Front Cards"
-},
-"tle": {
-"date": "2025-11-21",
-"set_type": "eternal",
-"source": "scryfall",
-"name": "Avatar: The Last Airbender Eternal"
-},
-"tla": {
-"date": "2025-11-21",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Avatar: The Last Airbender"
-},
 "lmar": {
 "date": "2025-09-30",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Marvel Legends Series Inserts"
+},
+"tspm": {
+"date": "2025-09-26",
+"set_type": "token",
+"source": "scryfall",
+"name": "Marvel's Spider-Man Tokens"
 },
 "aspm": {
 "date": "2025-09-26",
@@ -1331,18 +1409,6 @@
 "source": "scryfall",
 "name": "Marvel's Spider-Man Promos"
 },
-"tspm": {
-"date": "2025-09-26",
-"set_type": "token",
-"source": "scryfall",
-"name": "Marvel's Spider-Man Tokens"
-},
-"spm": {
-"date": "2025-09-26",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Marvel's Spider-Man"
-},
 "mar": {
 "date": "2025-09-26",
 "set_type": "masterpiece",
@@ -1355,23 +1421,29 @@
 "source": "scryfall",
 "name": "Marvel's Spider-Man Eternal"
 },
+"spm": {
+"date": "2025-09-26",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Marvel's Spider-Man"
+},
 "aa4": {
 "date": "2025-09-23",
 "set_type": "box",
 "source": "scryfall",
 "name": "Arena Anthology 4"
 },
-"omb": {
-"date": "2025-09-23",
-"set_type": "masterpiece",
-"source": "scryfall",
-"name": "Through the Omenpaths Bonus Sheet"
-},
 "om1": {
 "date": "2025-09-23",
 "set_type": "expansion",
 "source": "scryfall",
 "name": "Through the Omenpaths"
+},
+"omb": {
+"date": "2025-09-23",
+"set_type": "masterpiece",
+"source": "scryfall",
+"name": "Through the Omenpaths Bonus Sheet"
 },
 "aa3": {
 "date": "2025-09-23",
@@ -1391,17 +1463,17 @@
 "source": "scryfall",
 "name": "Arena Anthology 2"
 },
-"yeoe": {
-"date": "2025-08-19",
-"set_type": "alchemy",
-"source": "scryfall",
-"name": "Alchemy: Edge of Eternities"
-},
 "aa1": {
 "date": "2025-08-19",
 "set_type": "box",
 "source": "scryfall",
 "name": "Arena Anthology 1"
+},
+"yeoe": {
+"date": "2025-08-19",
+"set_type": "alchemy",
+"source": "scryfall",
+"name": "Alchemy: Edge of Eternities"
 },
 "aeoe": {
 "date": "2025-08-01",
@@ -1415,29 +1487,23 @@
 "source": "scryfall",
 "name": "Edge of Eternities Promos"
 },
-"eoe": {
-"date": "2025-08-01",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Edge of Eternities"
-},
 "eos": {
 "date": "2025-08-01",
 "set_type": "masterpiece",
 "source": "scryfall",
 "name": "Edge of Eternities: Stellar Sights"
 },
+"eoe": {
+"date": "2025-08-01",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Edge of Eternities"
+},
 "teoe": {
 "date": "2025-08-01",
 "set_type": "token",
 "source": "scryfall",
 "name": "Edge of Eternities Tokens"
-},
-"teoc": {
-"date": "2025-08-01",
-"set_type": "token",
-"source": "scryfall",
-"name": "Edge of Eternities Commander Tokens"
 },
 "pbig": {
 "date": "2025-08-01",
@@ -1451,6 +1517,12 @@
 "source": "scryfall",
 "name": "Edge of Eternities Commander"
 },
+"teoc": {
+"date": "2025-08-01",
+"set_type": "token",
+"source": "scryfall",
+"name": "Edge of Eternities Commander Tokens"
+},
 "rfin": {
 "date": "2025-06-13",
 "set_type": "promo",
@@ -1462,24 +1534,6 @@
 "set_type": "token",
 "source": "scryfall",
 "name": "Final Fantasy Tokens"
-},
-"afin": {
-"date": "2025-06-13",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Final Fantasy Art Series"
-},
-"pfin": {
-"date": "2025-06-13",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Final Fantasy Promos"
-},
-"tfic": {
-"date": "2025-06-13",
-"set_type": "token",
-"source": "scryfall",
-"name": "Final Fantasy Commander Tokens"
 },
 "fic": {
 "date": "2025-06-13",
@@ -1493,17 +1547,35 @@
 "source": "scryfall",
 "name": "Final Fantasy: Through the Ages"
 },
-"wfin": {
+"pfin": {
+"date": "2025-06-13",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Final Fantasy Promos"
+},
+"afin": {
+"date": "2025-06-13",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Final Fantasy Art Series"
+},
+"tfic": {
 "date": "2025-06-13",
 "set_type": "token",
 "source": "scryfall",
-"name": "FIN Asia WPN Promo Tokens"
+"name": "Final Fantasy Commander Tokens"
 },
 "pss5": {
 "date": "2025-06-13",
 "set_type": "promo",
 "source": "scryfall",
 "name": "FIN Standard Showdown"
+},
+"wfin": {
+"date": "2025-06-13",
+"set_type": "token",
+"source": "scryfall",
+"name": "FIN Asia WPN Promo Tokens"
 },
 "fin": {
 "date": "2025-06-13",
@@ -1523,17 +1595,17 @@
 "source": "scryfall",
 "name": "Alchemy: Tarkir"
 },
+"ptdm": {
+"date": "2025-04-11",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Tarkir: Dragonstorm Promos"
+},
 "ttdm": {
 "date": "2025-04-11",
 "set_type": "token",
 "source": "scryfall",
 "name": "Tarkir: Dragonstorm Tokens"
-},
-"atdm": {
-"date": "2025-04-11",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Tarkir: Dragonstorm Art Series"
 },
 "ttdc": {
 "date": "2025-04-11",
@@ -1541,11 +1613,11 @@
 "source": "scryfall",
 "name": "Tarkir: Dragonstorm Commander Tokens"
 },
-"ptdm": {
+"atdm": {
 "date": "2025-04-11",
-"set_type": "promo",
+"set_type": "memorabilia",
 "source": "scryfall",
-"name": "Tarkir: Dragonstorm Promos"
+"name": "Tarkir: Dragonstorm Art Series"
 },
 "tdc": {
 "date": "2025-04-11",
@@ -1589,12 +1661,6 @@
 "source": "scryfall",
 "name": "Aetherdrift Promos"
 },
-"dft": {
-"date": "2025-02-14",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Aetherdrift"
-},
 "tdrc": {
 "date": "2025-02-14",
 "set_type": "token",
@@ -1607,17 +1673,23 @@
 "source": "scryfall",
 "name": "Aetherdrift Tokens"
 },
-"pl25": {
-"date": "2025-02-14",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Year of the Snake 2025"
-},
 "drc": {
 "date": "2025-02-14",
 "set_type": "commander",
 "source": "scryfall",
 "name": "Aetherdrift Commander"
+},
+"dft": {
+"date": "2025-02-14",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Aetherdrift"
+},
+"pl25": {
+"date": "2025-02-14",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Year of the Snake 2025"
 },
 "pjsc": {
 "date": "2025-02-09",
@@ -1631,17 +1703,17 @@
 "source": "scryfall",
 "name": "Innistrad Remastered Art Series"
 },
-"inr": {
-"date": "2025-01-24",
-"set_type": "masters",
-"source": "scryfall",
-"name": "Innistrad Remastered"
-},
 "tinr": {
 "date": "2025-01-24",
 "set_type": "token",
 "source": "scryfall",
 "name": "Innistrad Remastered Tokens"
+},
+"inr": {
+"date": "2025-01-24",
+"set_type": "masters",
+"source": "scryfall",
+"name": "Innistrad Remastered"
 },
 "pspl": {
 "date": "2025-01-03",
@@ -1649,17 +1721,17 @@
 "source": "scryfall",
 "name": "Spotlight Series"
 },
-"pf25": {
-"date": "2025-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "MagicFest 2025"
-},
 "pw25": {
 "date": "2025-01-01",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Wizards Play Network 2025"
+},
+"pf25": {
+"date": "2025-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "MagicFest 2025"
 },
 "pio": {
 "date": "2024-12-10",
@@ -1667,35 +1739,17 @@
 "source": "scryfall",
 "name": "Pioneer Masters"
 },
-"afdn": {
-"date": "2024-11-15",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Foundations Art Series"
-},
 "pfdn": {
 "date": "2024-11-15",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Foundations Promos"
 },
-"fdc": {
-"date": "2024-11-15",
-"set_type": "commander",
-"source": "scryfall",
-"name": "Foundations Commander"
-},
-"ffdn": {
+"afdn": {
 "date": "2024-11-15",
 "set_type": "memorabilia",
 "source": "scryfall",
-"name": "Foundations Front Cards"
-},
-"fdn": {
-"date": "2024-11-15",
-"set_type": "core",
-"source": "scryfall",
-"name": "Foundations"
+"name": "Foundations Art Series"
 },
 "fj25": {
 "date": "2024-11-15",
@@ -1709,11 +1763,29 @@
 "source": "scryfall",
 "name": "Foundations Tokens"
 },
+"fdc": {
+"date": "2024-11-15",
+"set_type": "commander",
+"source": "scryfall",
+"name": "Foundations Commander"
+},
+"fdn": {
+"date": "2024-11-15",
+"set_type": "core",
+"source": "scryfall",
+"name": "Foundations"
+},
 "j25": {
 "date": "2024-11-15",
 "set_type": "draft_innovation",
 "source": "scryfall",
 "name": "Foundations Jumpstart"
+},
+"ffdn": {
+"date": "2024-11-15",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Foundations Front Cards"
 },
 "pltc": {
 "date": "2024-10-16",
@@ -1727,24 +1799,6 @@
 "source": "scryfall",
 "name": "Alchemy: Duskmourn"
 },
-"dsc": {
-"date": "2024-09-27",
-"set_type": "commander",
-"source": "scryfall",
-"name": "Duskmourn: House of Horror Commander"
-},
-"adsk": {
-"date": "2024-09-27",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Duskmourn: House of Horror Art Series"
-},
-"tdsk": {
-"date": "2024-09-27",
-"set_type": "token",
-"source": "scryfall",
-"name": "Duskmourn: House of Horror Tokens"
-},
 "pdsk": {
 "date": "2024-09-27",
 "set_type": "promo",
@@ -1757,11 +1811,29 @@
 "source": "scryfall",
 "name": "Duskmourn: House of Horror"
 },
+"dsc": {
+"date": "2024-09-27",
+"set_type": "commander",
+"source": "scryfall",
+"name": "Duskmourn: House of Horror Commander"
+},
 "tdsc": {
 "date": "2024-09-27",
 "set_type": "token",
 "source": "scryfall",
 "name": "Duskmourn Commander Tokens"
+},
+"tdsk": {
+"date": "2024-09-27",
+"set_type": "token",
+"source": "scryfall",
+"name": "Duskmourn: House of Horror Tokens"
+},
+"adsk": {
+"date": "2024-09-27",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Duskmourn: House of Horror Art Series"
 },
 "yblb": {
 "date": "2024-08-20",
@@ -1775,18 +1847,6 @@
 "source": "scryfall",
 "name": "Love Your LGS 2024"
 },
-"tblc": {
-"date": "2024-08-02",
-"set_type": "token",
-"source": "scryfall",
-"name": "Bloomburrow Commander Tokens"
-},
-"ablb": {
-"date": "2024-08-02",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Bloomburrow Art Series"
-},
 "tblb": {
 "date": "2024-08-02",
 "set_type": "token",
@@ -1799,17 +1859,17 @@
 "source": "scryfall",
 "name": "Bloomburrow Promos"
 },
-"mb2": {
+"tblc": {
 "date": "2024-08-02",
-"set_type": "masters",
+"set_type": "token",
 "source": "scryfall",
-"name": "Mystery Booster 2"
+"name": "Bloomburrow Commander Tokens"
 },
-"blb": {
+"ablb": {
 "date": "2024-08-02",
-"set_type": "expansion",
+"set_type": "memorabilia",
 "source": "scryfall",
-"name": "Bloomburrow"
+"name": "Bloomburrow Art Series"
 },
 "blc": {
 "date": "2024-08-02",
@@ -1823,17 +1883,23 @@
 "source": "scryfall",
 "name": "Cowboy Bebop"
 },
+"blb": {
+"date": "2024-08-02",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Bloomburrow"
+},
+"mb2": {
+"date": "2024-08-02",
+"set_type": "masters",
+"source": "scryfall",
+"name": "Mystery Booster 2"
+},
 "macr": {
 "date": "2024-07-05",
 "set_type": "minigame",
 "source": "scryfall",
 "name": "Assassin's Creed Minigames"
-},
-"aacr": {
-"date": "2024-07-05",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Assassin's Creed Art Series"
 },
 "tacr": {
 "date": "2024-07-05",
@@ -1847,6 +1913,12 @@
 "source": "scryfall",
 "name": "Assassin's Creed"
 },
+"aacr": {
+"date": "2024-07-05",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Assassin's Creed Art Series"
+},
 "pmh3": {
 "date": "2024-06-14",
 "set_type": "promo",
@@ -1858,6 +1930,18 @@
 "set_type": "token",
 "source": "scryfall",
 "name": "Modern Horizons 3 Substitute Cards"
+},
+"tm3c": {
+"date": "2024-06-14",
+"set_type": "token",
+"source": "scryfall",
+"name": "Modern Horizons 3 Commander Tokens"
+},
+"tmh3": {
+"date": "2024-06-14",
+"set_type": "token",
+"source": "scryfall",
+"name": "Modern Horizons 3 Tokens"
 },
 "amh3": {
 "date": "2024-06-14",
@@ -1871,17 +1955,11 @@
 "source": "scryfall",
 "name": "Modern Horizons 3 Commander"
 },
-"tmh3": {
+"h2r": {
 "date": "2024-06-14",
-"set_type": "token",
+"set_type": "draft_innovation",
 "source": "scryfall",
-"name": "Modern Horizons 3 Tokens"
-},
-"tm3c": {
-"date": "2024-06-14",
-"set_type": "token",
-"source": "scryfall",
-"name": "Modern Horizons 3 Commander Tokens"
+"name": "Modern Horizons 2 Timeshifts"
 },
 "mh3": {
 "date": "2024-06-14",
@@ -1889,23 +1967,11 @@
 "source": "scryfall",
 "name": "Modern Horizons 3"
 },
-"h2r": {
-"date": "2024-06-07",
-"set_type": "draft_innovation",
-"source": "scryfall",
-"name": "Modern Horizons 2 Timeshifts"
-},
 "yotj": {
 "date": "2024-05-07",
 "set_type": "alchemy",
 "source": "scryfall",
 "name": "Alchemy: Outlaws of Thunder Junction"
-},
-"potj": {
-"date": "2024-04-19",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Outlaws of Thunder Junction Promos"
 },
 "aotj": {
 "date": "2024-04-19",
@@ -1919,17 +1985,11 @@
 "source": "scryfall",
 "name": "Outlaws of Thunder Junction Tokens"
 },
-"big": {
+"potj": {
 "date": "2024-04-19",
-"set_type": "expansion",
+"set_type": "promo",
 "source": "scryfall",
-"name": "The Big Score"
-},
-"tbig": {
-"date": "2024-04-19",
-"set_type": "token",
-"source": "scryfall",
-"name": "The Big Score Tokens"
+"name": "Outlaws of Thunder Junction Promos"
 },
 "totc": {
 "date": "2024-04-19",
@@ -1943,11 +2003,11 @@
 "source": "scryfall",
 "name": "Breaking News Tokens"
 },
-"otc": {
+"big": {
 "date": "2024-04-19",
-"set_type": "commander",
+"set_type": "expansion",
 "source": "scryfall",
-"name": "Outlaws of Thunder Junction Commander"
+"name": "The Big Score"
 },
 "otj": {
 "date": "2024-04-19",
@@ -1960,6 +2020,18 @@
 "set_type": "masterpiece",
 "source": "scryfall",
 "name": "Breaking News"
+},
+"tbig": {
+"date": "2024-04-19",
+"set_type": "token",
+"source": "scryfall",
+"name": "The Big Score Tokens"
+},
+"otc": {
+"date": "2024-04-19",
+"set_type": "commander",
+"source": "scryfall",
+"name": "Outlaws of Thunder Junction Commander"
 },
 "tpip": {
 "date": "2024-03-08",
@@ -1977,7 +2049,7 @@
 "date": "2024-03-05",
 "set_type": "alchemy",
 "source": "scryfall",
-"name": "Alchemy: Murders at Karlov Manor "
+"name": "Alchemy: Murders at Karlov Manor"
 },
 "punk": {
 "date": "2024-02-24",
@@ -1985,23 +2057,29 @@
 "source": "scryfall",
 "name": "Black Lotus Unknown Planechase"
 },
-"fclu": {
-"date": "2024-02-23",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Ravnica: Clue Edition Front Cards"
-},
 "clu": {
 "date": "2024-02-23",
 "set_type": "draft_innovation",
 "source": "scryfall",
 "name": "Ravnica: Clue Edition"
 },
+"fclu": {
+"date": "2024-02-23",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Ravnica: Clue Edition Front Cards"
+},
 "pss4": {
 "date": "2024-02-10",
 "set_type": "promo",
 "source": "scryfall",
 "name": "MKM Standard Showdown"
+},
+"tmkc": {
+"date": "2024-02-09",
+"set_type": "token",
+"source": "scryfall",
+"name": "Murders at Karlov Manor Commander Tokens"
 },
 "amkm": {
 "date": "2024-02-09",
@@ -2021,18 +2099,6 @@
 "source": "scryfall",
 "name": "Murders at Karlov Manor Tokens"
 },
-"tmkc": {
-"date": "2024-02-09",
-"set_type": "token",
-"source": "scryfall",
-"name": "Murders at Karlov Manor Commander Tokens"
-},
-"mkc": {
-"date": "2024-02-09",
-"set_type": "commander",
-"source": "scryfall",
-"name": "Murders at Karlov Manor Commander"
-},
 "mkm": {
 "date": "2024-02-09",
 "set_type": "expansion",
@@ -2045,23 +2111,29 @@
 "source": "scryfall",
 "name": "MKM Japanese Promo Tokens"
 },
+"mkc": {
+"date": "2024-02-09",
+"set_type": "commander",
+"source": "scryfall",
+"name": "Murders at Karlov Manor Commander"
+},
 "pl24": {
 "date": "2024-02-08",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Year of the Dragon 2024"
 },
-"trvr": {
-"date": "2024-01-12",
-"set_type": "token",
-"source": "scryfall",
-"name": "Ravnica Remastered Tokens"
-},
 "rvr": {
 "date": "2024-01-12",
 "set_type": "masters",
 "source": "scryfall",
 "name": "Ravnica Remastered"
+},
+"trvr": {
+"date": "2024-01-12",
+"set_type": "token",
+"source": "scryfall",
+"name": "Ravnica Remastered Tokens"
 },
 "pw24": {
 "date": "2024-01-01",
@@ -2099,41 +2171,11 @@
 "source": "scryfall",
 "name": "The Lost Caverns of Ixalan Art Series"
 },
-"tlci": {
-"date": "2023-11-17",
-"set_type": "token",
-"source": "scryfall",
-"name": "The Lost Caverns of Ixalan Tokens"
-},
 "lci": {
 "date": "2023-11-17",
 "set_type": "expansion",
 "source": "scryfall",
 "name": "The Lost Caverns of Ixalan"
-},
-"trex": {
-"date": "2023-11-17",
-"set_type": "token",
-"source": "scryfall",
-"name": "Jurassic World Collection Tokens"
-},
-"pmat": {
-"date": "2023-11-17",
-"set_type": "promo",
-"source": "scryfall",
-"name": "March of the Machine: The Aftermath Promos"
-},
-"slci": {
-"date": "2023-11-17",
-"set_type": "token",
-"source": "scryfall",
-"name": "The Lost Caverns of Ixalan Substitute Cards"
-},
-"tlcc": {
-"date": "2023-11-17",
-"set_type": "token",
-"source": "scryfall",
-"name": "The Lost Caverns of Ixalan Commander Tokens"
 },
 "lcc": {
 "date": "2023-11-17",
@@ -2141,11 +2183,41 @@
 "source": "scryfall",
 "name": "The Lost Caverns of Ixalan Commander"
 },
+"slci": {
+"date": "2023-11-17",
+"set_type": "token",
+"source": "scryfall",
+"name": "The Lost Caverns of Ixalan Substitute Cards"
+},
 "rex": {
 "date": "2023-11-17",
 "set_type": "eternal",
 "source": "scryfall",
 "name": "Jurassic World Collection"
+},
+"tlci": {
+"date": "2023-11-17",
+"set_type": "token",
+"source": "scryfall",
+"name": "The Lost Caverns of Ixalan Tokens"
+},
+"pmat": {
+"date": "2023-11-17",
+"set_type": "promo",
+"source": "scryfall",
+"name": "March of the Machine: The Aftermath Promos"
+},
+"trex": {
+"date": "2023-11-17",
+"set_type": "token",
+"source": "scryfall",
+"name": "Jurassic World Collection Tokens"
+},
+"tlcc": {
+"date": "2023-11-17",
+"set_type": "token",
+"source": "scryfall",
+"name": "The Lost Caverns of Ixalan Commander Tokens"
 },
 "altc": {
 "date": "2023-11-04",
@@ -2153,17 +2225,17 @@
 "source": "scryfall",
 "name": "Tales of Middle-earth Scene Box"
 },
-"twho": {
-"date": "2023-10-13",
-"set_type": "token",
-"source": "scryfall",
-"name": "Doctor Who Tokens"
-},
 "who": {
 "date": "2023-10-13",
 "set_type": "commander",
 "source": "scryfall",
 "name": "Doctor Who"
+},
+"twho": {
+"date": "2023-10-13",
+"set_type": "token",
+"source": "scryfall",
+"name": "Doctor Who Tokens"
 },
 "ywoe": {
 "date": "2023-10-10",
@@ -2189,6 +2261,12 @@
 "source": "scryfall",
 "name": "Wilds of Eldraine Tokens"
 },
+"wot": {
+"date": "2023-09-08",
+"set_type": "masterpiece",
+"source": "scryfall",
+"name": "Wilds of Eldraine: Enchanting Tales"
+},
 "wwoe": {
 "date": "2023-09-08",
 "set_type": "token",
@@ -2207,23 +2285,17 @@
 "source": "scryfall",
 "name": "Wilds of Eldraine Commander Tokens"
 },
-"wot": {
+"ptsr": {
 "date": "2023-09-08",
-"set_type": "masterpiece",
+"set_type": "promo",
 "source": "scryfall",
-"name": "Wilds of Eldraine: Enchanting Tales"
+"name": "Time Spiral Remastered Promos"
 },
 "pmda": {
 "date": "2023-09-08",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Magic \u00d7 Duel Masters Promos"
-},
-"ptsr": {
-"date": "2023-09-08",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Time Spiral Remastered Promos"
 },
 "woe": {
 "date": "2023-09-08",
@@ -2261,17 +2333,17 @@
 "source": "scryfall",
 "name": "2022 Heroes of the Realm"
 },
-"ha7": {
-"date": "2023-07-18",
-"set_type": "box",
-"source": "scryfall",
-"name": "Historic Anthology 7"
-},
 "ea3": {
 "date": "2023-07-18",
 "set_type": "box",
 "source": "scryfall",
 "name": "Explorer Anthology 3"
+},
+"ha7": {
+"date": "2023-07-18",
+"set_type": "box",
+"source": "scryfall",
+"name": "Historic Anthology 7"
 },
 "pf23": {
 "date": "2023-07-01",
@@ -2297,17 +2369,11 @@
 "source": "scryfall",
 "name": "Tales of Middle-earth Commander Tokens"
 },
-"ltr": {
+"mltr": {
 "date": "2023-06-23",
-"set_type": "draft_innovation",
+"set_type": "minigame",
 "source": "scryfall",
-"name": "The Lord of the Rings: Tales of Middle-earth"
-},
-"altr": {
-"date": "2023-06-23",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Tales of Middle-earth Art Series"
+"name": "The Lord of the Rings: Tales of Middle-earth Minigames"
 },
 "tltr": {
 "date": "2023-06-23",
@@ -2315,11 +2381,17 @@
 "source": "scryfall",
 "name": "Tales of Middle-earth Tokens"
 },
-"mltr": {
+"altr": {
 "date": "2023-06-23",
-"set_type": "minigame",
+"set_type": "memorabilia",
 "source": "scryfall",
-"name": "The Lord of the Rings: Tales of Middle-earth Minigames"
+"name": "Tales of Middle-earth Art Series"
+},
+"ltr": {
+"date": "2023-06-23",
+"set_type": "draft_innovation",
+"source": "scryfall",
+"name": "The Lord of the Rings: Tales of Middle-earth"
 },
 "fltr": {
 "date": "2023-06-23",
@@ -2351,11 +2423,11 @@
 "source": "scryfall",
 "name": "Multiverse Legends Tokens"
 },
-"mul": {
+"tmom": {
 "date": "2023-04-21",
-"set_type": "masterpiece",
+"set_type": "token",
 "source": "scryfall",
-"name": "Multiverse Legends"
+"name": "March of the Machine Tokens"
 },
 "moc": {
 "date": "2023-04-21",
@@ -2363,29 +2435,17 @@
 "source": "scryfall",
 "name": "March of the Machine Commander"
 },
+"amom": {
+"date": "2023-04-21",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "March of the Machine Art Series"
+},
 "mom": {
 "date": "2023-04-21",
 "set_type": "expansion",
 "source": "scryfall",
 "name": "March of the Machine"
-},
-"wmom": {
-"date": "2023-04-21",
-"set_type": "token",
-"source": "scryfall",
-"name": "MOM Japanese Promo Tokens"
-},
-"pmom": {
-"date": "2023-04-21",
-"set_type": "promo",
-"source": "scryfall",
-"name": "March of the Machine Promos"
-},
-"tmom": {
-"date": "2023-04-21",
-"set_type": "token",
-"source": "scryfall",
-"name": "March of the Machine Tokens"
 },
 "smom": {
 "date": "2023-04-21",
@@ -2393,11 +2453,23 @@
 "source": "scryfall",
 "name": "March of the Machine Substitute Cards"
 },
-"amom": {
+"mul": {
 "date": "2023-04-21",
-"set_type": "memorabilia",
+"set_type": "masterpiece",
 "source": "scryfall",
-"name": "March of the Machine Art Series"
+"name": "Multiverse Legends"
+},
+"pmom": {
+"date": "2023-04-21",
+"set_type": "promo",
+"source": "scryfall",
+"name": "March of the Machine Promos"
+},
+"wmom": {
+"date": "2023-04-21",
+"set_type": "token",
+"source": "scryfall",
+"name": "MOM Japanese Promo Tokens"
 },
 "sis": {
 "date": "2023-03-21",
@@ -2435,23 +2507,41 @@
 "source": "scryfall",
 "name": "Phyrexia: All Will Be One Commander"
 },
-"pl23": {
+"fone": {
 "date": "2023-02-10",
-"set_type": "promo",
+"set_type": "memorabilia",
 "source": "scryfall",
-"name": "Year of the Rabbit 2023"
+"name": "Phyrexia: All Will Be One Jumpstart Front Cards"
 },
-"one": {
+"mone": {
 "date": "2023-02-10",
-"set_type": "expansion",
+"set_type": "minigame",
 "source": "scryfall",
-"name": "Phyrexia: All Will Be One"
+"name": "Phyrexia: All Will Be One Minigames"
 },
 "pone": {
 "date": "2023-02-10",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Phyrexia: All Will Be One Promos"
+},
+"pl23": {
+"date": "2023-02-10",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Year of the Rabbit 2023"
+},
+"aone": {
+"date": "2023-02-10",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Phyrexia: All Will Be One Art Series"
+},
+"one": {
+"date": "2023-02-10",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Phyrexia: All Will Be One"
 },
 "tonc": {
 "date": "2023-02-03",
@@ -2464,24 +2554,6 @@
 "set_type": "token",
 "source": "scryfall",
 "name": "Phyrexia: All Will Be One Tokens"
-},
-"aone": {
-"date": "2023-02-03",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Phyrexia: All Will Be One Art Series"
-},
-"fone": {
-"date": "2023-02-03",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Phyrexia: All Will Be One Jumpstart Front Cards"
-},
-"mone": {
-"date": "2023-02-03",
-"set_type": "minigame",
-"source": "scryfall",
-"name": "Phyrexia: All Will Be One Minigames"
 },
 "wone": {
 "date": "2023-01-27",
@@ -2507,17 +2579,17 @@
 "source": "scryfall",
 "name": "Regional Championship Qualifiers 2023"
 },
-"pw23": {
-"date": "2023-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Wizards Play Network 2023"
-},
 "p23": {
 "date": "2023-01-01",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Judge Gift Cards 2023"
+},
+"pw23": {
+"date": "2023-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Wizards Play Network 2023"
 },
 "ybro": {
 "date": "2022-12-13",
@@ -2609,17 +2681,29 @@
 "source": "scryfall",
 "name": "The Brothers' War Southeast Asia Tokens"
 },
-"mbro": {
+"sbro": {
 "date": "2022-11-18",
-"set_type": "minigame",
+"set_type": "token",
 "source": "scryfall",
-"name": "The Brothers' War Minigames"
+"name": "The Brothers' War Substitute Cards"
 },
 "tbrc": {
 "date": "2022-11-18",
 "set_type": "token",
 "source": "scryfall",
 "name": "The Brothers' War Commander Tokens"
+},
+"abro": {
+"date": "2022-11-18",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "The Brothers' War Art Series"
+},
+"mbro": {
+"date": "2022-11-18",
+"set_type": "minigame",
+"source": "scryfall",
+"name": "The Brothers' War Minigames"
 },
 "bro": {
 "date": "2022-11-18",
@@ -2632,18 +2716,6 @@
 "set_type": "memorabilia",
 "source": "scryfall",
 "name": "The Brothers' War Jumpstart Front Cards"
-},
-"abro": {
-"date": "2022-11-18",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "The Brothers' War Art Series"
-},
-"sbro": {
-"date": "2022-11-18",
-"set_type": "token",
-"source": "scryfall",
-"name": "The Brothers' War Substitute Cards"
 },
 "tbro": {
 "date": "2022-11-18",
@@ -2675,6 +2747,12 @@
 "source": "scryfall",
 "name": "The List (Unfinity Foil Edition)"
 },
+"unf": {
+"date": "2022-10-07",
+"set_type": "funny",
+"source": "scryfall",
+"name": "Unfinity"
+},
 "sunf": {
 "date": "2022-10-07",
 "set_type": "funny",
@@ -2686,12 +2764,6 @@
 "set_type": "token",
 "source": "scryfall",
 "name": "Unfinity Tokens"
-},
-"unf": {
-"date": "2022-10-07",
-"set_type": "funny",
-"source": "scryfall",
-"name": "Unfinity"
 },
 "t40k": {
 "date": "2022-10-07",
@@ -2735,23 +2807,17 @@
 "source": "scryfall",
 "name": "Dominaria United Southeast Asia Tokens"
 },
-"tdmu": {
-"date": "2022-09-09",
-"set_type": "token",
-"source": "scryfall",
-"name": "Dominaria United Tokens"
-},
 "admu": {
 "date": "2022-09-09",
 "set_type": "memorabilia",
 "source": "scryfall",
 "name": "Dominaria United Art Series"
 },
-"fdmu": {
+"mdmu": {
 "date": "2022-09-09",
-"set_type": "memorabilia",
+"set_type": "minigame",
 "source": "scryfall",
-"name": "Dominaria United Jumpstart Front Cards"
+"name": "Dominaria United Minigames"
 },
 "wdmu": {
 "date": "2022-09-09",
@@ -2759,17 +2825,17 @@
 "source": "scryfall",
 "name": "DMU Japanese Promo Tokens"
 },
-"tdmc": {
-"date": "2022-09-09",
-"set_type": "token",
-"source": "scryfall",
-"name": "Dominaria United Commander Tokens"
-},
 "dmc": {
 "date": "2022-09-09",
 "set_type": "commander",
 "source": "scryfall",
 "name": "Dominaria United Commander"
+},
+"tdmc": {
+"date": "2022-09-09",
+"set_type": "token",
+"source": "scryfall",
+"name": "Dominaria United Commander Tokens"
 },
 "dmu": {
 "date": "2022-09-09",
@@ -2777,11 +2843,17 @@
 "source": "scryfall",
 "name": "Dominaria United"
 },
-"mdmu": {
+"fdmu": {
 "date": "2022-09-09",
-"set_type": "minigame",
+"set_type": "memorabilia",
 "source": "scryfall",
-"name": "Dominaria United Minigames"
+"name": "Dominaria United Jumpstart Front Cards"
+},
+"tdmu": {
+"date": "2022-09-09",
+"set_type": "token",
+"source": "scryfall",
+"name": "Dominaria United Tokens"
 },
 "p30a": {
 "date": "2022-09-02",
@@ -2825,17 +2897,17 @@
 "source": "scryfall",
 "name": "Store Championships"
 },
-"2x2": {
-"date": "2022-07-08",
-"set_type": "masters",
-"source": "scryfall",
-"name": "Double Masters 2022"
-},
 "t2x2": {
 "date": "2022-07-08",
 "set_type": "token",
 "source": "scryfall",
 "name": "Double Masters 2022 Tokens"
+},
+"2x2": {
+"date": "2022-07-08",
+"set_type": "masters",
+"source": "scryfall",
+"name": "Double Masters 2022"
 },
 "hbg": {
 "date": "2022-07-07",
@@ -2861,29 +2933,29 @@
 "source": "scryfall",
 "name": "Commander Legends: Battle for Baldur's Gate Minigames"
 },
-"tclb": {
-"date": "2022-06-10",
-"set_type": "token",
-"source": "scryfall",
-"name": "Battle for Baldur's Gate Tokens"
-},
-"aclb": {
-"date": "2022-06-10",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Battle for Baldur's Gate Art Series"
-},
 "clb": {
 "date": "2022-06-10",
 "set_type": "draft_innovation",
 "source": "scryfall",
 "name": "Commander Legends: Battle for Baldur's Gate"
 },
+"tclb": {
+"date": "2022-06-10",
+"set_type": "token",
+"source": "scryfall",
+"name": "Battle for Baldur's Gate Tokens"
+},
 "oclb": {
 "date": "2022-06-10",
 "set_type": "memorabilia",
 "source": "scryfall",
 "name": "Battle for Baldur's Gate Oversized Cards"
+},
+"aclb": {
+"date": "2022-06-10",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Battle for Baldur's Gate Art Series"
 },
 "ysnc": {
 "date": "2022-06-02",
@@ -2915,17 +2987,17 @@
 "source": "scryfall",
 "name": "Streets of New Capenna"
 },
-"ncc": {
-"date": "2022-04-29",
-"set_type": "commander",
-"source": "scryfall",
-"name": "New Capenna Commander"
-},
 "tncc": {
 "date": "2022-04-29",
 "set_type": "token",
 "source": "scryfall",
 "name": "New Capenna Commander Tokens"
+},
+"ncc": {
+"date": "2022-04-29",
+"set_type": "commander",
+"source": "scryfall",
+"name": "New Capenna Commander"
 },
 "psnc": {
 "date": "2022-04-29",
@@ -2999,17 +3071,17 @@
 "source": "scryfall",
 "name": "Kamigawa: Neon Dynasty Substitute Cards"
 },
-"tnec": {
-"date": "2022-02-18",
-"set_type": "token",
-"source": "scryfall",
-"name": "Neon Dynasty Commander Tokens"
-},
 "neo": {
 "date": "2022-02-18",
 "set_type": "expansion",
 "source": "scryfall",
 "name": "Kamigawa: Neon Dynasty"
+},
+"tnec": {
+"date": "2022-02-18",
+"set_type": "token",
+"source": "scryfall",
+"name": "Neon Dynasty Commander Tokens"
 },
 "tneo": {
 "date": "2022-02-18",
@@ -3059,12 +3131,6 @@
 "source": "scryfall",
 "name": "Innistrad: Crimson Vow Promos"
 },
-"tvoc": {
-"date": "2021-11-19",
-"set_type": "token",
-"source": "scryfall",
-"name": "Crimson Vow Commander Tokens"
-},
 "tvow": {
 "date": "2021-11-19",
 "set_type": "token",
@@ -3076,6 +3142,12 @@
 "set_type": "memorabilia",
 "source": "scryfall",
 "name": "Crimson Vow Commander Display Commanders"
+},
+"tvoc": {
+"date": "2021-11-19",
+"set_type": "token",
+"source": "scryfall",
+"name": "Crimson Vow Commander Tokens"
 },
 "mvow": {
 "date": "2021-11-19",
@@ -3089,12 +3161,6 @@
 "source": "scryfall",
 "name": "Innistrad: Crimson Vow Substitute Cards"
 },
-"avow": {
-"date": "2021-11-19",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Crimson Vow Art Series"
-},
 "vow": {
 "date": "2021-11-19",
 "set_type": "expansion",
@@ -3106,6 +3172,12 @@
 "set_type": "commander",
 "source": "scryfall",
 "name": "Crimson Vow Commander"
+},
+"avow": {
+"date": "2021-11-19",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Crimson Vow Art Series"
 },
 "q06": {
 "date": "2021-10-15",
@@ -3119,18 +3191,6 @@
 "source": "scryfall",
 "name": "Innistrad: Midnight Hunt Substitute Cards"
 },
-"amid": {
-"date": "2021-09-24",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Midnight Hunt Art Series"
-},
-"tmid": {
-"date": "2021-09-24",
-"set_type": "token",
-"source": "scryfall",
-"name": "Innistrad: Midnight Hunt Tokens"
-},
 "tmic": {
 "date": "2021-09-24",
 "set_type": "token",
@@ -3142,6 +3202,18 @@
 "set_type": "commander",
 "source": "scryfall",
 "name": "Midnight Hunt Commander"
+},
+"amid": {
+"date": "2021-09-24",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Midnight Hunt Art Series"
+},
+"tmid": {
+"date": "2021-09-24",
+"set_type": "token",
+"source": "scryfall",
+"name": "Innistrad: Midnight Hunt Tokens"
 },
 "omic": {
 "date": "2021-09-24",
@@ -3191,17 +3263,17 @@
 "source": "scryfall",
 "name": "Adventures in the Forgotten Realms Promos"
 },
-"oafr": {
-"date": "2021-07-23",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Forgotten Realms Oversized Cards"
-},
 "oafc": {
 "date": "2021-07-23",
 "set_type": "memorabilia",
 "source": "scryfall",
 "name": "Forgotten Realms Commander Display Commanders"
+},
+"oafr": {
+"date": "2021-07-23",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Forgotten Realms Oversized Cards"
 },
 "aafr": {
 "date": "2021-07-23",
@@ -3215,17 +3287,17 @@
 "source": "scryfall",
 "name": "Forgotten Realms Commander"
 },
-"tafr": {
-"date": "2021-07-23",
-"set_type": "token",
-"source": "scryfall",
-"name": "Adventures in the Forgotten Realms Tokens"
-},
 "tafc": {
 "date": "2021-07-23",
 "set_type": "token",
 "source": "scryfall",
 "name": "Forgotten Realms Commander Tokens"
+},
+"tafr": {
+"date": "2021-07-23",
+"set_type": "token",
+"source": "scryfall",
+"name": "Adventures in the Forgotten Realms Tokens"
 },
 "mafr": {
 "date": "2021-07-23",
@@ -3257,17 +3329,23 @@
 "source": "scryfall",
 "name": "Modern Horizons 2 Art Series"
 },
+"tmh2": {
+"date": "2021-06-18",
+"set_type": "token",
+"source": "scryfall",
+"name": "Modern Horizons 2 Tokens"
+},
 "pmh2": {
 "date": "2021-06-18",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Modern Horizons 2 Promos"
 },
-"tmh2": {
+"mh2": {
 "date": "2021-06-18",
-"set_type": "token",
+"set_type": "draft_innovation",
 "source": "scryfall",
-"name": "Modern Horizons 2 Tokens"
+"name": "Modern Horizons 2"
 },
 "pw21": {
 "date": "2021-06-18",
@@ -3281,12 +3359,6 @@
 "source": "scryfall",
 "name": "Modern Horizons 1 Timeshifts"
 },
-"mh2": {
-"date": "2021-06-18",
-"set_type": "draft_innovation",
-"source": "scryfall",
-"name": "Modern Horizons 2"
-},
 "ha5": {
 "date": "2021-05-27",
 "set_type": "box",
@@ -3299,17 +3371,17 @@
 "source": "scryfall",
 "name": "Strixhaven: School of Mages Promos"
 },
-"tc21": {
-"date": "2021-04-23",
-"set_type": "token",
-"source": "scryfall",
-"name": "Commander 2021 Tokens"
-},
 "tstx": {
 "date": "2021-04-23",
 "set_type": "token",
 "source": "scryfall",
 "name": "Strixhaven: School of Mages Tokens"
+},
+"tc21": {
+"date": "2021-04-23",
+"set_type": "token",
+"source": "scryfall",
+"name": "Commander 2021 Tokens"
 },
 "sstx": {
 "date": "2021-04-23",
@@ -3323,11 +3395,11 @@
 "source": "scryfall",
 "name": "Strixhaven: School of Mages Minigames"
 },
-"stx": {
+"c21": {
 "date": "2021-04-23",
-"set_type": "expansion",
+"set_type": "commander",
 "source": "scryfall",
-"name": "Strixhaven: School of Mages"
+"name": "Commander 2021"
 },
 "astx": {
 "date": "2021-04-23",
@@ -3335,17 +3407,17 @@
 "source": "scryfall",
 "name": "Strixhaven Art Series"
 },
+"stx": {
+"date": "2021-04-23",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Strixhaven: School of Mages"
+},
 "sta": {
 "date": "2021-04-23",
 "set_type": "masterpiece",
 "source": "scryfall",
 "name": "Strixhaven Mystical Archive"
-},
-"c21": {
-"date": "2021-04-23",
-"set_type": "commander",
-"source": "scryfall",
-"name": "Commander 2021"
 },
 "oc21": {
 "date": "2021-04-23",
@@ -3389,17 +3461,23 @@
 "source": "scryfall",
 "name": "Kaldheim Substitute Cards"
 },
+"khc": {
+"date": "2021-02-05",
+"set_type": "commander",
+"source": "scryfall",
+"name": "Kaldheim Commander"
+},
 "akhm": {
 "date": "2021-02-05",
 "set_type": "memorabilia",
 "source": "scryfall",
 "name": "Kaldheim Art Series"
 },
-"tkhc": {
+"khm": {
 "date": "2021-02-05",
-"set_type": "token",
+"set_type": "expansion",
 "source": "scryfall",
-"name": "Kaldheim Commander Tokens"
+"name": "Kaldheim"
 },
 "tkhm": {
 "date": "2021-02-05",
@@ -3407,17 +3485,11 @@
 "source": "scryfall",
 "name": "Kaldheim Tokens"
 },
-"khc": {
+"tkhc": {
 "date": "2021-02-05",
-"set_type": "commander",
+"set_type": "token",
 "source": "scryfall",
-"name": "Kaldheim Commander"
-},
-"khm": {
-"date": "2021-02-05",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Kaldheim"
+"name": "Kaldheim Commander Tokens"
 },
 "pl21": {
 "date": "2021-01-25",
@@ -3437,11 +3509,11 @@
 "source": "scryfall",
 "name": "Commander Collection: Green"
 },
-"tcmr": {
+"pcmr": {
 "date": "2020-11-20",
-"set_type": "token",
+"set_type": "promo",
 "source": "scryfall",
-"name": "Commander Legends Tokens"
+"name": "Commander Legends Promos"
 },
 "cmr": {
 "date": "2020-11-20",
@@ -3449,11 +3521,11 @@
 "source": "scryfall",
 "name": "Commander Legends"
 },
-"pcmr": {
+"tcmr": {
 "date": "2020-11-20",
-"set_type": "promo",
+"set_type": "token",
 "source": "scryfall",
-"name": "Commander Legends Promos"
+"name": "Commander Legends Tokens"
 },
 "klr": {
 "date": "2020-11-12",
@@ -3485,11 +3557,11 @@
 "source": "scryfall",
 "name": "Zendikar Rising Substitute Cards"
 },
-"zne": {
+"aznr": {
 "date": "2020-09-25",
-"set_type": "masterpiece",
+"set_type": "memorabilia",
 "source": "scryfall",
-"name": "Zendikar Rising Expeditions"
+"name": "Zendikar Rising Art Series"
 },
 "znc": {
 "date": "2020-09-25",
@@ -3503,23 +3575,23 @@
 "source": "scryfall",
 "name": "Zendikar Rising Tokens"
 },
-"mznr": {
+"zne": {
 "date": "2020-09-25",
-"set_type": "minigame",
+"set_type": "masterpiece",
 "source": "scryfall",
-"name": "Zendikar Rising Minigames"
-},
-"aznr": {
-"date": "2020-09-25",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Zendikar Rising Art Series"
+"name": "Zendikar Rising Expeditions"
 },
 "znr": {
 "date": "2020-09-25",
 "set_type": "expansion",
 "source": "scryfall",
 "name": "Zendikar Rising"
+},
+"mznr": {
+"date": "2020-09-25",
+"set_type": "minigame",
+"source": "scryfall",
+"name": "Zendikar Rising Minigames"
 },
 "akr": {
 "date": "2020-08-13",
@@ -3635,17 +3707,17 @@
 "source": "scryfall",
 "name": "Commander 2020 Oversized"
 },
-"tc20": {
-"date": "2020-04-17",
-"set_type": "token",
-"source": "scryfall",
-"name": "Commander 2020 Tokens"
-},
 "c20": {
 "date": "2020-04-17",
 "set_type": "commander",
 "source": "scryfall",
 "name": "Commander 2020"
+},
+"tc20": {
+"date": "2020-04-17",
+"set_type": "token",
+"source": "scryfall",
+"name": "Commander 2020 Tokens"
 },
 "ha2": {
 "date": "2020-03-12",
@@ -3756,7 +3828,7 @@
 "name": "Planeswalker Championship Promos"
 },
 "oc19": {
-"date": "2019-08-31",
+"date": "2019-08-23",
 "set_type": "memorabilia",
 "source": "scryfall",
 "name": "Commander 2019 Oversized"
@@ -3785,6 +3857,12 @@
 "source": "scryfall",
 "name": "San Diego Comic-Con 2019"
 },
+"pm20": {
+"date": "2019-07-12",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Core Set 2020 Promos"
+},
 "ppp1": {
 "date": "2019-07-12",
 "set_type": "promo",
@@ -3796,12 +3874,6 @@
 "set_type": "token",
 "source": "scryfall",
 "name": "Core Set 2020 Tokens"
-},
-"pm20": {
-"date": "2019-07-12",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Core Set 2020 Promos"
 },
 "m20": {
 "date": "2019-07-12",
@@ -3828,7 +3900,7 @@
 "name": "Modern Horizons"
 },
 "amh1": {
-"date": "2019-06-05",
+"date": "2019-06-14",
 "set_type": "memorabilia",
 "source": "scryfall",
 "name": "Modern Horizons Art Series"
@@ -3869,17 +3941,17 @@
 "source": "scryfall",
 "name": "RNA Ravnica Weekend"
 },
-"tgk2": {
-"date": "2019-02-15",
-"set_type": "token",
-"source": "scryfall",
-"name": "RNA Guild Kit Tokens"
-},
 "gk2": {
 "date": "2019-02-15",
 "set_type": "box",
 "source": "scryfall",
 "name": "RNA Guild Kit"
+},
+"tgk2": {
+"date": "2019-02-15",
+"set_type": "token",
+"source": "scryfall",
+"name": "RNA Guild Kit Tokens"
 },
 "prna": {
 "date": "2019-01-25",
@@ -3953,17 +4025,17 @@
 "source": "scryfall",
 "name": "GRN Guild Kit Tokens"
 },
-"pgrn": {
-"date": "2018-10-05",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Guilds of Ravnica Promos"
-},
 "tgrn": {
 "date": "2018-10-05",
 "set_type": "token",
 "source": "scryfall",
 "name": "Guilds of Ravnica Tokens"
+},
+"pgrn": {
+"date": "2018-10-05",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Guilds of Ravnica Promos"
 },
 "grn": {
 "date": "2018-10-05",
@@ -3983,17 +4055,17 @@
 "source": "scryfall",
 "name": "Mythic Edition Tokens"
 },
+"oc18": {
+"date": "2018-08-10",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Commander 2018 Oversized"
+},
 "c18": {
 "date": "2018-08-10",
 "set_type": "commander",
 "source": "scryfall",
 "name": "Commander 2018"
-},
-"oc18": {
-"date": "2018-08-09",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Commander 2018 Oversized"
 },
 "tc18": {
 "date": "2018-08-09",
@@ -4043,6 +4115,12 @@
 "source": "scryfall",
 "name": "Core Set 2019 Promos"
 },
+"m19": {
+"date": "2018-07-13",
+"set_type": "core",
+"source": "scryfall",
+"name": "Core Set 2019"
+},
 "pss3": {
 "date": "2018-07-13",
 "set_type": "promo",
@@ -4054,12 +4132,6 @@
 "set_type": "token",
 "source": "scryfall",
 "name": "Core Set 2019 Tokens"
-},
-"m19": {
-"date": "2018-07-13",
-"set_type": "core",
-"source": "scryfall",
-"name": "Core Set 2019"
 },
 "gs1": {
 "date": "2018-06-22",
@@ -4085,17 +4157,17 @@
 "source": "scryfall",
 "name": "Battlebond Tokens"
 },
-"cm2": {
-"date": "2018-06-08",
-"set_type": "commander",
-"source": "scryfall",
-"name": "Commander Anthology Volume II"
-},
 "tcm2": {
 "date": "2018-06-08",
 "set_type": "token",
 "source": "scryfall",
 "name": "Commander Anthology Volume II Tokens"
+},
+"cm2": {
+"date": "2018-06-08",
+"set_type": "commander",
+"source": "scryfall",
+"name": "Commander Anthology Volume II"
 },
 "bbd": {
 "date": "2018-06-08",
@@ -4109,29 +4181,29 @@
 "source": "scryfall",
 "name": "Dominaria Promos"
 },
-"dom": {
-"date": "2018-04-27",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Dominaria"
-},
 "tdom": {
 "date": "2018-04-27",
 "set_type": "token",
 "source": "scryfall",
 "name": "Dominaria Tokens"
 },
-"tddu": {
-"date": "2018-04-06",
-"set_type": "token",
+"dom": {
+"date": "2018-04-27",
+"set_type": "expansion",
 "source": "scryfall",
-"name": "Duel Decks: Elves vs. Inventors Tokens"
+"name": "Dominaria"
 },
 "ddu": {
 "date": "2018-04-06",
 "set_type": "duel_deck",
 "source": "scryfall",
 "name": "Duel Decks: Elves vs. Inventors"
+},
+"tddu": {
+"date": "2018-04-06",
+"set_type": "token",
+"source": "scryfall",
+"name": "Duel Decks: Elves vs. Inventors Tokens"
 },
 "a25": {
 "date": "2018-03-16",
@@ -4217,17 +4289,17 @@
 "source": "scryfall",
 "name": "XLN Treasure Chest"
 },
-"v17": {
-"date": "2017-11-24",
-"set_type": "from_the_vault",
-"source": "scryfall",
-"name": "From the Vault: Transform"
-},
 "e02": {
 "date": "2017-11-24",
 "set_type": "box",
 "source": "scryfall",
 "name": "Explorers of Ixalan"
+},
+"v17": {
+"date": "2017-11-24",
+"set_type": "from_the_vault",
+"source": "scryfall",
+"name": "From the Vault: Transform"
 },
 "ima": {
 "date": "2017-11-17",
@@ -4301,17 +4373,17 @@
 "source": "scryfall",
 "name": "Commander 2017 Oversized"
 },
-"tc17": {
-"date": "2017-08-25",
-"set_type": "token",
-"source": "scryfall",
-"name": "Commander 2017 Tokens"
-},
 "c17": {
 "date": "2017-08-25",
 "set_type": "commander",
 "source": "scryfall",
 "name": "Commander 2017"
+},
+"tc17": {
+"date": "2017-08-25",
+"set_type": "token",
+"source": "scryfall",
+"name": "Commander 2017 Tokens"
 },
 "ps17": {
 "date": "2017-07-20",
@@ -4451,11 +4523,11 @@
 "source": "scryfall",
 "name": "Friday Night Magic 2017"
 },
-"pca": {
+"tpca": {
 "date": "2016-11-25",
-"set_type": "planechase",
+"set_type": "token",
 "source": "scryfall",
-"name": "Planechase Anthology"
+"name": "Planechase Anthology Tokens"
 },
 "opca": {
 "date": "2016-11-25",
@@ -4463,11 +4535,11 @@
 "source": "scryfall",
 "name": "Planechase Anthology Planes"
 },
-"tpca": {
+"pca": {
 "date": "2016-11-25",
-"set_type": "token",
+"set_type": "planechase",
 "source": "scryfall",
-"name": "Planechase Anthology Tokens"
+"name": "Planechase Anthology"
 },
 "pz2": {
 "date": "2016-11-16",
@@ -4481,17 +4553,17 @@
 "source": "scryfall",
 "name": "Commander 2016 Oversized"
 },
-"tc16": {
-"date": "2016-11-11",
-"set_type": "token",
-"source": "scryfall",
-"name": "Commander 2016 Tokens"
-},
 "c16": {
 "date": "2016-11-11",
 "set_type": "commander",
 "source": "scryfall",
 "name": "Commander 2016"
+},
+"tc16": {
+"date": "2016-11-11",
+"set_type": "token",
+"source": "scryfall",
+"name": "Commander 2016 Tokens"
 },
 "ps16": {
 "date": "2016-10-01",
@@ -4529,17 +4601,17 @@
 "source": "scryfall",
 "name": "Duel Decks: Nissa vs. Ob Nixilis"
 },
-"cn2": {
-"date": "2016-08-26",
-"set_type": "draft_innovation",
-"source": "scryfall",
-"name": "Conspiracy: Take the Crown"
-},
 "tcn2": {
 "date": "2016-08-26",
 "set_type": "token",
 "source": "scryfall",
 "name": "Conspiracy: Take the Crown Tokens"
+},
+"cn2": {
+"date": "2016-08-26",
+"set_type": "draft_innovation",
+"source": "scryfall",
+"name": "Conspiracy: Take the Crown"
 },
 "v16": {
 "date": "2016-08-19",
@@ -4553,17 +4625,17 @@
 "source": "scryfall",
 "name": "Eldritch Moon Promos"
 },
-"emn": {
-"date": "2016-07-22",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Eldritch Moon"
-},
 "temn": {
 "date": "2016-07-22",
 "set_type": "token",
 "source": "scryfall",
 "name": "Eldritch Moon Tokens"
+},
+"emn": {
+"date": "2016-07-22",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Eldritch Moon"
 },
 "tema": {
 "date": "2016-06-10",
@@ -4631,29 +4703,23 @@
 "source": "scryfall",
 "name": "League Tokens 2016"
 },
-"j16": {
-"date": "2016-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Judge Gift Cards 2016"
-},
 "f16": {
 "date": "2016-01-01",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Friday Night Magic 2016"
 },
+"j16": {
+"date": "2016-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Judge Gift Cards 2016"
+},
 "pz1": {
 "date": "2015-11-18",
 "set_type": "treasure_chest",
 "source": "scryfall",
 "name": "Legendary Cube Prize Pack"
-},
-"oc15": {
-"date": "2015-11-13",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Commander 2015 Oversized"
 },
 "c15": {
 "date": "2015-11-13",
@@ -4666,6 +4732,12 @@
 "set_type": "token",
 "source": "scryfall",
 "name": "Commander 2015 Tokens"
+},
+"oc15": {
+"date": "2015-11-13",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Commander 2015 Oversized"
 },
 "pbfz": {
 "date": "2015-10-02",
@@ -4685,17 +4757,17 @@
 "source": "scryfall",
 "name": "BFZ Standard Series"
 },
-"exp": {
-"date": "2015-10-02",
-"set_type": "masterpiece",
-"source": "scryfall",
-"name": "Zendikar Expeditions"
-},
 "bfz": {
 "date": "2015-10-02",
 "set_type": "expansion",
 "source": "scryfall",
 "name": "Battle for Zendikar"
+},
+"exp": {
+"date": "2015-10-02",
+"set_type": "masterpiece",
+"source": "scryfall",
+"name": "Zendikar Expeditions"
 },
 "ddp": {
 "date": "2015-08-28",
@@ -4721,17 +4793,17 @@
 "source": "scryfall",
 "name": "Magic Origins Promos"
 },
-"tori": {
-"date": "2015-07-17",
-"set_type": "token",
-"source": "scryfall",
-"name": "Magic Origins Tokens"
-},
 "ori": {
 "date": "2015-07-17",
 "set_type": "core",
 "source": "scryfall",
 "name": "Magic Origins"
+},
+"tori": {
+"date": "2015-07-17",
+"set_type": "token",
+"source": "scryfall",
+"name": "Magic Origins Tokens"
 },
 "ps15": {
 "date": "2015-07-09",
@@ -4799,17 +4871,17 @@
 "source": "scryfall",
 "name": "Fate Reforged Clash Pack"
 },
-"tfrf": {
-"date": "2015-01-23",
-"set_type": "token",
-"source": "scryfall",
-"name": "Fate Reforged Tokens"
-},
 "frf": {
 "date": "2015-01-23",
 "set_type": "expansion",
 "source": "scryfall",
 "name": "Fate Reforged"
+},
+"tfrf": {
+"date": "2015-01-23",
+"set_type": "token",
+"source": "scryfall",
+"name": "Fate Reforged Tokens"
 },
 "ugin": {
 "date": "2015-01-17",
@@ -4853,17 +4925,11 @@
 "source": "scryfall",
 "name": "Duel Decks Anthology: Garruk vs. Liliana Tokens"
 },
-"jvc": {
+"tevg": {
 "date": "2014-12-05",
-"set_type": "duel_deck",
+"set_type": "token",
 "source": "scryfall",
-"name": "Duel Decks Anthology: Jace vs. Chandra"
-},
-"dvd": {
-"date": "2014-12-05",
-"set_type": "duel_deck",
-"source": "scryfall",
-"name": "Duel Decks Anthology: Divine vs. Demonic"
+"name": "Duel Decks Anthology: Elves vs. Goblins Tokens"
 },
 "evg": {
 "date": "2014-12-05",
@@ -4871,17 +4937,23 @@
 "source": "scryfall",
 "name": "Duel Decks Anthology: Elves vs. Goblins"
 },
-"tevg": {
-"date": "2014-12-05",
-"set_type": "token",
-"source": "scryfall",
-"name": "Duel Decks Anthology: Elves vs. Goblins Tokens"
-},
 "gvl": {
 "date": "2014-12-05",
 "set_type": "duel_deck",
 "source": "scryfall",
 "name": "Duel Decks Anthology: Garruk vs. Liliana"
+},
+"dvd": {
+"date": "2014-12-05",
+"set_type": "duel_deck",
+"source": "scryfall",
+"name": "Duel Decks Anthology: Divine vs. Demonic"
+},
+"jvc": {
+"date": "2014-12-05",
+"set_type": "duel_deck",
+"source": "scryfall",
+"name": "Duel Decks Anthology: Jace vs. Chandra"
 },
 "oc14": {
 "date": "2014-11-07",
@@ -4907,17 +4979,17 @@
 "source": "scryfall",
 "name": "Khans of Tarkir Promos"
 },
-"ktk": {
-"date": "2014-09-26",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Khans of Tarkir"
-},
 "tktk": {
 "date": "2014-09-26",
 "set_type": "token",
 "source": "scryfall",
 "name": "Khans of Tarkir Tokens"
+},
+"ktk": {
+"date": "2014-09-26",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Khans of Tarkir"
 },
 "ddn": {
 "date": "2014-09-05",
@@ -5015,17 +5087,17 @@
 "source": "scryfall",
 "name": "Defeat a God"
 },
-"jou": {
-"date": "2014-05-02",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Journey into Nyx"
-},
 "tjou": {
 "date": "2014-05-02",
 "set_type": "token",
 "source": "scryfall",
 "name": "Journey into Nyx Tokens"
+},
+"jou": {
+"date": "2014-05-02",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Journey into Nyx"
 },
 "thp3": {
 "date": "2014-05-02",
@@ -5057,12 +5129,6 @@
 "source": "scryfall",
 "name": "Battle the Horde"
 },
-"tbng": {
-"date": "2014-02-07",
-"set_type": "token",
-"source": "scryfall",
-"name": "Born of the Gods Tokens"
-},
 "thp2": {
 "date": "2014-02-07",
 "set_type": "memorabilia",
@@ -5074,6 +5140,12 @@
 "set_type": "expansion",
 "source": "scryfall",
 "name": "Born of the Gods"
+},
+"tbng": {
+"date": "2014-02-07",
+"set_type": "token",
+"source": "scryfall",
+"name": "Born of the Gods Tokens"
 },
 "pbng": {
 "date": "2014-02-01",
@@ -5117,12 +5189,6 @@
 "source": "scryfall",
 "name": "Face the Hydra"
 },
-"tths": {
-"date": "2013-09-27",
-"set_type": "token",
-"source": "scryfall",
-"name": "Theros Tokens"
-},
 "thp1": {
 "date": "2013-09-27",
 "set_type": "memorabilia",
@@ -5135,17 +5201,17 @@
 "source": "scryfall",
 "name": "Theros"
 },
+"tths": {
+"date": "2013-09-27",
+"set_type": "token",
+"source": "scryfall",
+"name": "Theros Tokens"
+},
 "pths": {
 "date": "2013-09-21",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Theros Promos"
-},
-"tddl": {
-"date": "2013-09-06",
-"set_type": "token",
-"source": "scryfall",
-"name": "Duel Decks: Heroes vs. Monsters Tokens"
 },
 "ddl": {
 "date": "2013-09-06",
@@ -5153,23 +5219,29 @@
 "source": "scryfall",
 "name": "Duel Decks: Heroes vs. Monsters"
 },
+"tddl": {
+"date": "2013-09-06",
+"set_type": "token",
+"source": "scryfall",
+"name": "Duel Decks: Heroes vs. Monsters Tokens"
+},
 "v13": {
 "date": "2013-08-23",
 "set_type": "from_the_vault",
 "source": "scryfall",
 "name": "From the Vault: Twenty"
 },
-"m14": {
-"date": "2013-07-19",
-"set_type": "core",
-"source": "scryfall",
-"name": "Magic 2014"
-},
 "tm14": {
 "date": "2013-07-19",
 "set_type": "token",
 "source": "scryfall",
 "name": "Magic 2014 Tokens"
+},
+"m14": {
+"date": "2013-07-19",
+"set_type": "core",
+"source": "scryfall",
+"name": "Magic 2014"
 },
 "pm14": {
 "date": "2013-07-18",
@@ -5183,17 +5255,17 @@
 "source": "scryfall",
 "name": "San Diego Comic-Con 2013"
 },
-"mma": {
-"date": "2013-06-07",
-"set_type": "masters",
-"source": "scryfall",
-"name": "Modern Masters"
-},
 "tmma": {
 "date": "2013-06-07",
 "set_type": "token",
 "source": "scryfall",
 "name": "Modern Masters Tokens"
+},
+"mma": {
+"date": "2013-06-07",
+"set_type": "masters",
+"source": "scryfall",
+"name": "Modern Masters"
 },
 "dgm": {
 "date": "2013-05-03",
@@ -5261,17 +5333,17 @@
 "source": "scryfall",
 "name": "League Tokens 2013"
 },
-"f13": {
-"date": "2013-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Friday Night Magic 2013"
-},
 "j13": {
 "date": "2013-01-01",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Judge Gift Cards 2013"
+},
+"f13": {
+"date": "2013-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Friday Night Magic 2013"
 },
 "ocm1": {
 "date": "2012-11-02",
@@ -5321,17 +5393,17 @@
 "source": "scryfall",
 "name": "From the Vault: Realms"
 },
-"tm13": {
-"date": "2012-07-13",
-"set_type": "token",
-"source": "scryfall",
-"name": "Magic 2013 Tokens"
-},
 "m13": {
 "date": "2012-07-13",
 "set_type": "core",
 "source": "scryfall",
 "name": "Magic 2013"
+},
+"tm13": {
+"date": "2012-07-13",
+"set_type": "token",
+"source": "scryfall",
+"name": "Magic 2013 Tokens"
 },
 "pm13": {
 "date": "2012-07-12",
@@ -5375,17 +5447,17 @@
 "source": "scryfall",
 "name": "Avacyn Restored Promos"
 },
-"ddi": {
-"date": "2012-03-30",
-"set_type": "duel_deck",
-"source": "scryfall",
-"name": "Duel Decks: Venser vs. Koth"
-},
 "tddi": {
 "date": "2012-03-30",
 "set_type": "token",
 "source": "scryfall",
 "name": "Duel Decks: Venser vs. Koth Tokens"
+},
+"ddi": {
+"date": "2012-03-30",
+"set_type": "duel_deck",
+"source": "scryfall",
+"name": "Duel Decks: Venser vs. Koth"
 },
 "tdka": {
 "date": "2012-02-03",
@@ -5429,17 +5501,17 @@
 "source": "scryfall",
 "name": "League Tokens 2012"
 },
-"j12": {
-"date": "2012-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Judge Gift Cards 2012"
-},
 "f12": {
 "date": "2012-01-01",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Friday Night Magic 2012"
+},
+"j12": {
+"date": "2012-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Judge Gift Cards 2012"
 },
 "pd3": {
 "date": "2011-11-18",
@@ -5465,17 +5537,17 @@
 "source": "scryfall",
 "name": "Innistrad Promos"
 },
-"tddh": {
-"date": "2011-09-02",
-"set_type": "token",
-"source": "scryfall",
-"name": "Duel Decks: Ajani vs. Nicol Bolas Tokens"
-},
 "ddh": {
 "date": "2011-09-02",
 "set_type": "duel_deck",
 "source": "scryfall",
 "name": "Duel Decks: Ajani vs. Nicol Bolas"
+},
+"tddh": {
+"date": "2011-09-02",
+"set_type": "token",
+"source": "scryfall",
+"name": "Duel Decks: Ajani vs. Nicol Bolas Tokens"
 },
 "v11": {
 "date": "2011-08-26",
@@ -5483,17 +5555,17 @@
 "source": "scryfall",
 "name": "From the Vault: Legends"
 },
-"m12": {
-"date": "2011-07-15",
-"set_type": "core",
-"source": "scryfall",
-"name": "Magic 2012"
-},
 "tm12": {
 "date": "2011-07-15",
 "set_type": "token",
 "source": "scryfall",
 "name": "Magic 2012 Tokens"
+},
+"m12": {
+"date": "2011-07-15",
+"set_type": "core",
+"source": "scryfall",
+"name": "Magic 2012"
 },
 "pm12": {
 "date": "2011-07-14",
@@ -5507,17 +5579,17 @@
 "source": "scryfall",
 "name": "Commander 2011 Oversized"
 },
-"cmd": {
-"date": "2011-06-17",
-"set_type": "commander",
-"source": "scryfall",
-"name": "Commander 2011"
-},
 "pcmd": {
 "date": "2011-06-17",
 "set_type": "memorabilia",
 "source": "scryfall",
 "name": "Commander 2011 Launch Party"
+},
+"cmd": {
+"date": "2011-06-17",
+"set_type": "commander",
+"source": "scryfall",
+"name": "Commander 2011"
 },
 "td2": {
 "date": "2011-05-14",
@@ -5543,17 +5615,17 @@
 "source": "scryfall",
 "name": "New Phyrexia Promos"
 },
-"ddg": {
-"date": "2011-04-01",
-"set_type": "duel_deck",
-"source": "scryfall",
-"name": "Duel Decks: Knights vs. Dragons"
-},
 "tddg": {
 "date": "2011-04-01",
 "set_type": "token",
 "source": "scryfall",
 "name": "Duel Decks: Knights vs. Dragons Tokens"
+},
+"ddg": {
+"date": "2011-04-01",
+"set_type": "duel_deck",
+"source": "scryfall",
+"name": "Duel Decks: Knights vs. Dragons"
 },
 "mbs": {
 "date": "2011-02-04",
@@ -5591,11 +5663,11 @@
 "source": "scryfall",
 "name": "Duels of the Planeswalkers 2012 Promos"
 },
-"p11": {
+"ps11": {
 "date": "2011-01-01",
-"set_type": "promo",
+"set_type": "box",
 "source": "scryfall",
-"name": "Magic Player Rewards 2011"
+"name": "Salvat 2011"
 },
 "g11": {
 "date": "2011-01-01",
@@ -5615,11 +5687,11 @@
 "source": "scryfall",
 "name": "Legacy Championship"
 },
-"ps11": {
+"p11": {
 "date": "2011-01-01",
-"set_type": "box",
+"set_type": "promo",
 "source": "scryfall",
-"name": "Salvat 2011"
+"name": "Magic Player Rewards 2011"
 },
 "pd2": {
 "date": "2010-11-19",
@@ -5651,17 +5723,17 @@
 "source": "scryfall",
 "name": "Scars of Mirrodin Promos"
 },
-"tddf": {
-"date": "2010-09-03",
-"set_type": "token",
-"source": "scryfall",
-"name": "Duel Decks: Elspeth vs. Tezzeret Tokens"
-},
 "ddf": {
 "date": "2010-09-03",
 "set_type": "duel_deck",
 "source": "scryfall",
 "name": "Duel Decks: Elspeth vs. Tezzeret"
+},
+"tddf": {
+"date": "2010-09-03",
+"set_type": "token",
+"source": "scryfall",
+"name": "Duel Decks: Elspeth vs. Tezzeret Tokens"
 },
 "v10": {
 "date": "2010-08-27",
@@ -5669,17 +5741,17 @@
 "source": "scryfall",
 "name": "From the Vault: Relics"
 },
-"tm11": {
-"date": "2010-07-16",
-"set_type": "token",
-"source": "scryfall",
-"name": "Magic 2011 Tokens"
-},
 "m11": {
 "date": "2010-07-16",
 "set_type": "core",
 "source": "scryfall",
 "name": "Magic 2011"
+},
+"tm11": {
+"date": "2010-07-16",
+"set_type": "token",
+"source": "scryfall",
+"name": "Magic 2011 Tokens"
 },
 "pm11": {
 "date": "2010-07-15",
@@ -5765,12 +5837,6 @@
 "source": "scryfall",
 "name": "Magic Premiere Shop 2010"
 },
-"f10": {
-"date": "2010-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Friday Night Magic 2010"
-},
 "g10": {
 "date": "2010-01-01",
 "set_type": "promo",
@@ -5783,23 +5849,29 @@
 "source": "scryfall",
 "name": "Magic Player Rewards 2010"
 },
+"f10": {
+"date": "2010-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Friday Night Magic 2010"
+},
 "h09": {
 "date": "2009-11-20",
 "set_type": "premium_deck",
 "source": "scryfall",
 "name": "Premium Deck Series: Slivers"
 },
-"ddd": {
-"date": "2009-10-30",
-"set_type": "duel_deck",
-"source": "scryfall",
-"name": "Duel Decks: Garruk vs. Liliana"
-},
 "tddd": {
 "date": "2009-10-30",
 "set_type": "token",
 "source": "scryfall",
 "name": "Duel Decks: Garruk vs. Liliana Tokens"
+},
+"ddd": {
+"date": "2009-10-30",
+"set_type": "duel_deck",
+"source": "scryfall",
+"name": "Duel Decks: Garruk vs. Liliana"
 },
 "pzen": {
 "date": "2009-10-02",
@@ -5843,17 +5915,17 @@
 "source": "scryfall",
 "name": "From the Vault: Exiled"
 },
-"m10": {
-"date": "2009-07-17",
-"set_type": "core",
-"source": "scryfall",
-"name": "Magic 2010"
-},
 "tm10": {
 "date": "2009-07-17",
 "set_type": "token",
 "source": "scryfall",
 "name": "Magic 2010 Tokens"
+},
+"m10": {
+"date": "2009-07-17",
+"set_type": "core",
+"source": "scryfall",
+"name": "Magic 2010"
 },
 "pm10": {
 "date": "2009-07-16",
@@ -5867,29 +5939,29 @@
 "source": "scryfall",
 "name": "Alara Reborn Promos"
 },
-"arb": {
-"date": "2009-04-30",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Alara Reborn"
-},
 "tarb": {
 "date": "2009-04-30",
 "set_type": "token",
 "source": "scryfall",
 "name": "Alara Reborn Tokens"
 },
-"tddc": {
-"date": "2009-04-10",
-"set_type": "token",
+"arb": {
+"date": "2009-04-30",
+"set_type": "expansion",
 "source": "scryfall",
-"name": "Duel Decks: Divine vs. Demonic Tokens"
+"name": "Alara Reborn"
 },
 "ddc": {
 "date": "2009-04-10",
 "set_type": "duel_deck",
 "source": "scryfall",
 "name": "Duel Decks: Divine vs. Demonic"
+},
+"tddc": {
+"date": "2009-04-10",
+"set_type": "token",
+"source": "scryfall",
+"name": "Duel Decks: Divine vs. Demonic Tokens"
 },
 "purl": {
 "date": "2009-02-08",
@@ -5927,11 +5999,11 @@
 "source": "scryfall",
 "name": "Magic Premiere Shop 2009"
 },
-"p09": {
+"f09": {
 "date": "2009-01-01",
 "set_type": "promo",
 "source": "scryfall",
-"name": "Magic Player Rewards 2009"
+"name": "Friday Night Magic 2009"
 },
 "g09": {
 "date": "2009-01-01",
@@ -5939,23 +6011,23 @@
 "source": "scryfall",
 "name": "Judge Gift Cards 2009"
 },
-"f09": {
+"p09": {
 "date": "2009-01-01",
 "set_type": "promo",
 "source": "scryfall",
-"name": "Friday Night Magic 2009"
-},
-"tdd2": {
-"date": "2008-11-07",
-"set_type": "token",
-"source": "scryfall",
-"name": "Duel Decks: Jace vs. Chandra Tokens"
+"name": "Magic Player Rewards 2009"
 },
 "dd2": {
 "date": "2008-11-07",
 "set_type": "duel_deck",
 "source": "scryfall",
 "name": "Duel Decks: Jace vs. Chandra"
+},
+"tdd2": {
+"date": "2008-11-07",
+"set_type": "token",
+"source": "scryfall",
+"name": "Duel Decks: Jace vs. Chandra Tokens"
 },
 "pala": {
 "date": "2008-10-03",
@@ -6083,17 +6155,17 @@
 "source": "scryfall",
 "name": "Lorwyn Promos"
 },
-"lrw": {
-"date": "2007-10-12",
-"set_type": "expansion",
-"source": "scryfall",
-"name": "Lorwyn"
-},
 "tlrw": {
 "date": "2007-10-12",
 "set_type": "token",
 "source": "scryfall",
 "name": "Lorwyn Tokens"
+},
+"lrw": {
+"date": "2007-10-12",
+"set_type": "expansion",
+"source": "scryfall",
+"name": "Lorwyn"
 },
 "10e": {
 "date": "2007-07-13",
@@ -6149,11 +6221,11 @@
 "source": "scryfall",
 "name": "Planar Chaos"
 },
-"pmps07": {
+"f07": {
 "date": "2007-01-01",
 "set_type": "promo",
 "source": "scryfall",
-"name": "Magic Premiere Shop 2007"
+"name": "Friday Night Magic 2007"
 },
 "p07": {
 "date": "2007-01-01",
@@ -6161,17 +6233,17 @@
 "source": "scryfall",
 "name": "Magic Player Rewards 2007"
 },
-"f07": {
-"date": "2007-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Friday Night Magic 2007"
-},
 "g07": {
 "date": "2007-01-01",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Judge Gift Cards 2007"
+},
+"pmps07": {
+"date": "2007-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Magic Premiere Shop 2007"
 },
 "hho": {
 "date": "2006-12-31",
@@ -6263,18 +6335,6 @@
 "source": "scryfall",
 "name": "Junior APAC Series"
 },
-"dci": {
-"date": "2006-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "DCI Promos"
-},
-"g06": {
-"date": "2006-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Judge Gift Cards 2006"
-},
 "f06": {
 "date": "2006-01-01",
 "set_type": "promo",
@@ -6292,6 +6352,18 @@
 "set_type": "box",
 "source": "scryfall",
 "name": "Hachette UK"
+},
+"dci": {
+"date": "2006-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "DCI Promos"
+},
+"g06": {
+"date": "2006-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Judge Gift Cards 2006"
 },
 "p2hg": {
 "date": "2005-12-09",
@@ -6371,11 +6443,11 @@
 "source": "scryfall",
 "name": "Junior Series Europe"
 },
-"g05": {
+"f05": {
 "date": "2005-01-01",
 "set_type": "promo",
 "source": "scryfall",
-"name": "Judge Gift Cards 2005"
+"name": "Friday Night Magic 2005"
 },
 "p05": {
 "date": "2005-01-01",
@@ -6383,11 +6455,11 @@
 "source": "scryfall",
 "name": "Magic Player Rewards 2005"
 },
-"f05": {
+"g05": {
 "date": "2005-01-01",
 "set_type": "promo",
 "source": "scryfall",
-"name": "Friday Night Magic 2005"
+"name": "Judge Gift Cards 2005"
 },
 "punh": {
 "date": "2004-11-19",
@@ -6455,17 +6527,17 @@
 "source": "scryfall",
 "name": "Arena League 2004"
 },
-"g04": {
-"date": "2004-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Judge Gift Cards 2004"
-},
 "p04": {
 "date": "2004-01-01",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Magic Player Rewards 2004"
+},
+"g04": {
+"date": "2004-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Judge Gift Cards 2004"
 },
 "f04": {
 "date": "2004-01-01",
@@ -6539,6 +6611,18 @@
 "source": "scryfall",
 "name": "Arena League 2003"
 },
+"ovnt": {
+"date": "2003-01-01",
+"set_type": "memorabilia",
+"source": "scryfall",
+"name": "Vintage Championship"
+},
+"p03": {
+"date": "2003-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Magic Player Rewards 2003"
+},
 "g03": {
 "date": "2003-01-01",
 "set_type": "promo",
@@ -6550,18 +6634,6 @@
 "set_type": "promo",
 "source": "scryfall",
 "name": "Friday Night Magic 2003"
-},
-"p03": {
-"date": "2003-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Magic Player Rewards 2003"
-},
-"ovnt": {
-"date": "2003-01-01",
-"set_type": "memorabilia",
-"source": "scryfall",
-"name": "Vintage Championship"
 },
 "wc02": {
 "date": "2002-12-01",
@@ -6629,17 +6701,17 @@
 "source": "scryfall",
 "name": "Judge Gift Cards 2002"
 },
-"f02": {
-"date": "2002-01-01",
-"set_type": "promo",
-"source": "scryfall",
-"name": "Friday Night Magic 2002"
-},
 "pr2": {
 "date": "2002-01-01",
 "set_type": "promo",
 "source": "scryfall",
 "name": "Magic Player Rewards 2002"
+},
+"f02": {
+"date": "2002-01-01",
+"set_type": "promo",
+"source": "scryfall",
+"name": "Friday Night Magic 2002"
 },
 "dkm": {
 "date": "2001-12-01",
@@ -6707,11 +6779,11 @@
 "source": "scryfall",
 "name": "Arena League 2001"
 },
-"g01": {
+"f01": {
 "date": "2001-01-01",
 "set_type": "promo",
 "source": "scryfall",
-"name": "Judge Gift Cards 2001"
+"name": "Friday Night Magic 2001"
 },
 "mpr": {
 "date": "2001-01-01",
@@ -6719,11 +6791,11 @@
 "source": "scryfall",
 "name": "Magic Player Rewards 2001"
 },
-"f01": {
+"g01": {
 "date": "2001-01-01",
 "set_type": "promo",
 "source": "scryfall",
-"name": "Friday Night Magic 2001"
+"name": "Judge Gift Cards 2001"
 },
 "pinv": {
 "date": "2000-10-02",
@@ -6833,17 +6905,17 @@
 "source": "scryfall",
 "name": "Wizards of the Coast Online Store"
 },
-"pwor": {
-"date": "1999-08-04",
-"set_type": "promo",
-"source": "scryfall",
-"name": "World Championship Promos"
-},
 "wc99": {
 "date": "1999-08-04",
 "set_type": "memorabilia",
 "source": "scryfall",
 "name": "World Championship Decks 1999"
+},
+"pwor": {
+"date": "1999-08-04",
+"set_type": "promo",
+"source": "scryfall",
+"name": "World Championship Promos"
 },
 "pgru": {
 "date": "1999-07-12",
@@ -7019,17 +7091,17 @@
 "source": "scryfall",
 "name": "Oversized League Prizes"
 },
-"por": {
-"date": "1997-05-01",
-"set_type": "starter",
-"source": "scryfall",
-"name": "Portal"
-},
 "pvan": {
 "date": "1997-05-01",
 "set_type": "vanguard",
 "source": "scryfall",
 "name": "Vanguard Series"
+},
+"por": {
+"date": "1997-05-01",
+"set_type": "starter",
+"source": "scryfall",
+"name": "Portal"
 },
 "pmic": {
 "date": "1997-04-01",
@@ -7091,17 +7163,17 @@
 "source": "scryfall",
 "name": "Arena League 1996"
 },
-"rqs": {
-"date": "1996-07-01",
-"set_type": "box",
-"source": "scryfall",
-"name": "Rivals Quick Start Set"
-},
 "plgm": {
 "date": "1996-07-01",
 "set_type": "promo",
 "source": "scryfall",
 "name": "DCI Legend Membership"
+},
+"rqs": {
+"date": "1996-07-01",
+"set_type": "box",
+"source": "scryfall",
+"name": "Rivals Quick Start Set"
 },
 "all": {
 "date": "1996-06-10",
@@ -7139,17 +7211,17 @@
 "source": "scryfall",
 "name": "Rinascimento"
 },
-"chr": {
-"date": "1995-07-01",
-"set_type": "masters",
-"source": "scryfall",
-"name": "Chronicles"
-},
 "bchr": {
 "date": "1995-07-01",
 "set_type": "masters",
 "source": "scryfall",
 "name": "Chronicles Foreign Black Border"
+},
+"chr": {
+"date": "1995-07-01",
+"set_type": "masters",
+"source": "scryfall",
+"name": "Chronicles"
 },
 "ice": {
 "date": "1995-06-03",
@@ -7211,17 +7283,17 @@
 "source": "scryfall",
 "name": "Legends"
 },
-"fbb": {
-"date": "1994-04-11",
-"set_type": "core",
-"source": "scryfall",
-"name": "Foreign Black Border"
-},
 "3ed": {
 "date": "1994-04-11",
 "set_type": "core",
 "source": "scryfall",
 "name": "Revised Edition"
+},
+"fbb": {
+"date": "1994-04-11",
+"set_type": "core",
+"source": "scryfall",
+"name": "Foreign Black Border"
 },
 "atq": {
 "date": "1994-03-04",
