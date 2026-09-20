@@ -1155,7 +1155,41 @@ def _maybe_send_consolidated_email(
     elif not is_monday and has_pending:
         subject = "[GrailSweep] Pending work waiting — nothing new detected today"
 
-    return _send_email(subject, body_html, body_text)
+    # Same-day send guard (2026-09-20 incident): cron fires once at 01:00
+    # UTC, but Craig also runs `modal run matchit_modal.py::scheduled_set_check`
+    # by hand while testing calendar changes -- a legitimate, frequent habit
+    # (not something to disable), which can land the same UTC day as the
+    # cron and previously sent a second, inconsistent "NEW SET(S) DETECTED"
+    # email (Pokemon-EN detection hit a live external API each run, so the
+    # two runs' results could differ). This guards ONLY the email dispatch,
+    # not run_scheduler() itself, so manual re-runs still advance calendar
+    # state and print normally -- Craig's testing workflow is unaffected,
+    # only the duplicate customer/ops-facing email is suppressed. Keyed by
+    # UTC date and marked AFTER a successful send (never before), same
+    # pattern as the Stripe webhook idempotency guard in app.py -- a
+    # container killed mid-send leaves the day unmarked so a genuine retry
+    # still gets the email out, and any Dict error fails open (send
+    # proceeds) rather than silently swallowing a real day's email.
+    today_key = datetime.utcnow().strftime("%Y-%m-%d")
+    try:
+        import modal as _modal
+        _sent_dict = _modal.Dict.from_name("scheduler-email-sent-dates", create_if_missing=True)
+        if _sent_dict.get(today_key) is not None:
+            logger.info(f"[SCHED-EMAIL] Already sent for {today_key} — skipping duplicate send (subject would have been: {subject!r})")
+            return False
+    except Exception as _guard_e:
+        logger.warning(f"[SCHED-EMAIL] Same-day send guard check failed: {_guard_e} — proceeding anyway")
+        _sent_dict = None
+
+    sent = _send_email(subject, body_html, body_text)
+
+    if sent and _sent_dict is not None:
+        try:
+            _sent_dict.put(today_key, datetime.utcnow().isoformat())
+        except Exception as _mark_e:
+            logger.warning(f"[SCHED-EMAIL] Failed to mark {today_key} as sent: {_mark_e}")
+
+    return sent
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1400,7 +1434,16 @@ def check_price_alerts() -> None:
 # ─────────────────────────────────────────────────────────────
 
 def _save_scheduler_log(run_summary: Dict) -> None:
-    """Append this run to the scheduler log JSON."""
+    """Append this run to the scheduler log JSON.
+
+    Write is atomic (temp file + os.replace) so a concurrent reader never
+    sees a torn/partial file. This does NOT close the read-modify-write
+    race itself -- two runs racing here can still each read the same
+    history and clobber each other's append, one run's entry lost -- that
+    race is closed instead by the same-day send guard in
+    _maybe_send_consolidated_email, which stops a second same-day run from
+    reaching this point in the first place for the common case (cron +
+    manual re-run). This is corruption-safety, not a distributed lock."""
     log_path = _get_scheduler_log_path()
     history  = []
     if log_path.exists():
@@ -1414,8 +1457,10 @@ def _save_scheduler_log(run_summary: Dict) -> None:
     # Keep last 100 runs
     history = history[-100:]
 
-    with open(log_path, "w", encoding="utf-8") as f:
+    tmp_path = str(log_path) + ".tmp"
+    with open(tmp_path, "w", encoding="utf-8") as f:
         json.dump(history, f, indent=2)
+    os.replace(tmp_path, log_path)
     logger.info(f"[SCHED] Scheduler log saved to {log_path}")
 
 
