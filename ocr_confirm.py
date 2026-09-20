@@ -1467,21 +1467,70 @@ def _extract_pokemon_number(image_path: str, jp_mode: bool = False) -> Optional[
 # MTG set code pattern: 2-5 uppercase letters e.g. SNC, 2X2, MOM, LTR
 _MTG_SETCODE_RE = re.compile(r'\b([A-Z]{2,5})\b')
 
+# Modern MTG cards print a bare zero-padded collector number in the footer
+# (e.g. "R 0012"), never an N/Total fraction -- MTG has no "N/T" print
+# convention at all, unlike Pokemon. _CARD_NUMBER_RE (the shared N/T regex)
+# was matching this footer by ACCIDENT, on the rare card whose collector
+# number happened to appear inside a coincidental "/" elsewhere -- what it
+# was actually finding, every time, was a stray digit/digit pattern in the
+# card's own rules text (most commonly token-creation reminder text, e.g.
+# "create a 1/1 ... token", or a power/toughness-setting ability). A 2026-09-20
+# recon sampling two already-ingested sets (mbc, trk -- 215 cards) found 24
+# cards where this fires and 20 of those 24 (83%) coincidentally match a
+# REAL different card's number in the same set -- e.g. mtg-mbc-12's "create
+# a 1/1 ... token" text got read as card "1", which is a real card (mbc-1),
+# so the scanner short-circuited to a full-confidence WRONG direct-DB match
+# and never even ran CLIP. This is a high-frequency, not a rare-edge-case,
+# bug. Rarity-letter + number (matching the real footer shape) is tried
+# first as the more specific, safer signal; a bare 2-4 digit number is the
+# fallback; the N/T slash pattern is now the LAST resort, not the primary
+# path, since it was never a valid signal for MTG's print format to begin
+# with -- kept only in case some unusual promo product does print one.
+_MTG_RARITY_NUM_RE = re.compile(r'\b([CURMST])\s*(\d{2,4})\b')
+_MTG_PLAIN_NUM_RE = re.compile(r'\b(\d{2,4})\b')
+
 def _extract_mtg_collector(image_path: str) -> Optional[str]:
     """
     Read the collector number and set code from the bottom of an MTG card.
     Returns combined e.g. 'snc-149' for direct DB lookup.
     Falls back to plain number e.g. '149' if no set code found.
     Note: pre-8th Edition sets have no collector number — returns None.
+
+    Crop is a narrow footer strip (bottom 8% of the card), not the old
+    bottom-20% band -- the wider band routinely captured the tail of the
+    rules text box for text-heavy cards, which is what fed the false N/N
+    matches described below. See _MTG_RARITY_NUM_RE's comment.
     """
-    texts = _crop_and_read(image_path, (0.0, 0.80, 0.55, 1.00))
+    texts = _crop_and_read(image_path, (0.0, 0.92, 0.55, 1.00))
     logger.info(f"[OCR-MTG] raw texts: {texts}")
+
+    # Three passes over ALL lines, most-specific pattern first, each pass
+    # only run if the previous one found nothing ANYWHERE -- not a per-line
+    # mixed priority, so a reliable match on a LATER line can't lose to an
+    # unreliable match on an EARLIER one. See the comment above
+    # _MTG_RARITY_NUM_RE for why the slash pattern (_CARD_NUMBER_RE) is
+    # last-resort rather than primary.
     num = None
+    for text in texts:
+        m = _MTG_RARITY_NUM_RE.search(text)
+        if m:
+            num = str(int(m.group(2)))
+            break
+    if num is None:
+        for text in texts:
+            m = _MTG_PLAIN_NUM_RE.search(text)
+            if m:
+                num = str(int(m.group(1)))
+                break
+    if num is None:
+        for text in texts:
+            m = _CARD_NUMBER_RE.search(text)
+            if m:
+                num = str(int(m.group(1)))
+                break
+
     set_code = None
     for text in texts:
-        m = _CARD_NUMBER_RE.search(text)
-        if m and num is None:
-            num = str(int(m.group(1)))
         # Look for set code in same line or nearby lines
         # Set code is typically 2-5 uppercase letters/numbers e.g. SNC, 2X2
         for candidate in _MTG_SETCODE_RE.findall(text.upper()):
