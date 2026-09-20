@@ -210,6 +210,29 @@ def _run_remote(tcg: str, sets, dry_run: bool, cards_root: str = None):
     result = _reg(tcg=tcg, sets=sets, dry_run=dry_run, cards_root=cards_root)
     if not dry_run:
         vol.commit()
+
+    # Post-ingestion cleanup (2026-09-20): closes the gap where
+    # identifier_lookup.json and the per-game search index used to be
+    # rebuilt by the scheduler's now-dead 'changed' trigger (see
+    # matchit_modal.py::rebuild_search_and_lookup_after_ingest for why).
+    # Cross-app call, same pattern set_scheduler.py's _try_catalog_ingest
+    # already uses for rebuild_lookup_files -- only for tcgs that actually
+    # registered new cards, and only with an explicit --sets filter (an
+    # unscoped "--tcg mtg --all" run has no set list to scope the delta
+    # lookup rebuild to, and would need the full identifier_lookup rebuild
+    # instead -- out of scope here, left as today's manual fallback).
+    if not dry_run and sets:
+        set_ids = ",".join(sets)
+        for tcg_key, stats in result.items():
+            if not isinstance(stats, dict) or stats.get("registered", 0) <= 0:
+                continue
+            try:
+                fn = modal.Function.from_name("matchit-api", "rebuild_search_and_lookup_after_ingest")
+                post = fn.remote(tcg=tcg_key, set_ids=set_ids)
+                print(f"[BACKFILL] post-ingest rebuild for {tcg_key}: {post}", flush=True)
+            except Exception as e:
+                print(f"[BACKFILL] post-ingest rebuild FAILED for {tcg_key}: {e}", flush=True)
+
     return result
 
 

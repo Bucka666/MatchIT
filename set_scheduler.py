@@ -1696,6 +1696,24 @@ def _try_catalog_ingest(entry: Dict, detected: Dict, db_root: str, dry_run: bool
         result["lookup_rebuild_error"] = str(e)
         return result  # leave at 'detected' — retry next tick
 
+    # identifier_lookup.json + pokemon_search_index.json (2026-09-20): the
+    # old scheduler-tick trigger for these (run_scheduler's 'changed' block)
+    # is dead under the current detect-and-flag-only policy — see
+    # matchit_modal.py::rebuild_search_and_lookup_after_ingest. Non-blocking:
+    # unlike sku_game_map/set_metadata above, a failure here only leaves
+    # text search briefly stale, not worth stalling the calendar state
+    # machine over — retried automatically next time any set ingests.
+    try:
+        from matchit_modal import rebuild_search_and_lookup_after_ingest
+        result["search_and_lookup"] = rebuild_search_and_lookup_after_ingest.remote(
+            tcg="pokemon", set_ids=set_id
+        )
+    except Exception as e:
+        logger.error(
+            f"[SCHED-STATE] search/lookup rebuild failed for {set_id}: {e}"
+        )
+        result["search_and_lookup_error"] = str(e)
+
     result["ok"] = True
     return result
 
