@@ -1317,13 +1317,20 @@ def rebuild_identifier_lookup_delta(set_ids: str = ""):
         sub[key] = sku
         added += 1
 
+    # Folder names carry a game prefix for every game except pokemon
+    # (mtg-{sid}-{num}, ygo-{SID}-..., op-{sid}-{num} vs pokemon's bare
+    # {sid}-{num} / jpn-{sid}-{num}) -- the prefix check below must match
+    # that per-game convention or it silently matches nothing.
+    FOLDER_PREFIX = {"pokemon": "", "mtg": "mtg-", "yugioh": "ygo-", "onepiece": "op-"}
+
     for game_dir in ("pokemon", "mtg", "yugioh", "onepiece"):
         game_path = os.path.join(cards_root, game_dir)
         if not os.path.isdir(game_path):
             continue
+        game_prefix = FOLDER_PREFIX[game_dir]
         # ONE listdir per game dir; only matching folders get a file read.
         for folder in os.listdir(game_path):
-            if not any(folder.lower().startswith(sid + "-") for sid in wanted):
+            if not any(folder.lower().startswith(f"{game_prefix}{sid}-") for sid in wanted):
                 continue
             profile_path = os.path.join(game_path, folder, "profile.json")
             if not os.path.isfile(profile_path):
