@@ -1389,33 +1389,49 @@ _SEARCH_INDEX_BUILDER_BY_TCG = {
     "onepiece": ("build_onepiece_search_index","build_onepiece_search_index"),
 }
 
+_SET_CARDS_GAME_BY_TCG = {
+    "pokemon":  "POKEMON",
+    "mtg":      "MTG",
+    "yugioh":   "YUGIOH",
+    "onepiece": "ONEPIECE",
+}
+
 
 @app.function(image=image, volumes={"/modal_data": vol}, timeout=3600)
 def rebuild_search_and_lookup_after_ingest(tcg: str, set_ids: str):
-    """Post-ingestion step: rebuilds identifier_lookup.json (delta) and the
-    per-game search index for a just-ingested set.
+    """Post-ingestion step: rebuilds identifier_lookup.json (delta), the
+    per-game search index, the per-game set-card-list sidecar, and (MTG
+    only) mtg_set_totals.json for a just-ingested set.
 
     Why this exists (2026-09-20 recon): the scheduler's old 'run the four
-    search-index builders + full identifier_lookup rebuild' step
-    (set_scheduler.py ~line 2260, gated on `changed`/`any_new`) is dead code
-    under the current detect-and-flag-only policy -- nothing sets that flag
-    for ANY game anymore, so that block never fires. That's why
-    identifier_lookup.json and the MTG/YGO search indexes went stale for
-    mbc/trk/BETB/me55/me55c and required a manual close-out. This function
-    replaces that scheduler-tick trigger with an ingestion-tick trigger:
-    called as the LAST step of the canonical manual ingestion path
-    (backfill_scraped_cards.py's _run_remote) and from the calendar state
-    machine's _try_catalog_ingest (Pokemon-EN) -- so once a set finishes
-    ingesting, nothing else needs to be manually remembered.
+    search-index builders + full identifier_lookup rebuild + set-card-list
+    rebuild + MTG-totals rebuild' step (set_scheduler.py ~line 2260-2274,
+    gated on `changed`/`any_new`) is dead code under the current
+    detect-and-flag-only policy -- nothing sets that flag for ANY game
+    anymore, so that block never fires. That's why identifier_lookup.json
+    and the MTG/YGO search indexes went stale for mbc/trk/BETB/me55/me55c
+    and required a manual close-out; a follow-up recon (2026-09-20, same
+    day) found mtg_set_card_lists.json had the identical gap -- mbc/trk's
+    Card Show Mode returned 0 cards from a stale empty sidecar entry --
+    and that mtg_set_totals.json is exposed to the same dead trigger even
+    though its data happened to already be correct when checked. This
+    function replaces that scheduler-tick trigger with an ingestion-tick
+    trigger for all four: called as the LAST step of the canonical manual
+    ingestion path (backfill_scraped_cards.py's _run_remote) and from the
+    calendar state machine's _try_catalog_ingest (Pokemon-EN) -- so once a
+    set finishes ingesting, nothing else needs to be manually remembered.
 
     tcg: "pokemon" | "mtg" | "yugioh" | "onepiece"
     set_ids: comma-separated set codes for THIS ingestion only (not a full
              rescan) -- passed straight through to
-             rebuild_identifier_lookup_delta. The search-index builders have
-             no delta variant (same as before this fix), so this still does
-             a full rebuild for that one game -- cheap enough to run per
-             ingestion (MTG's ~80k cards took under 10 minutes in testing),
-             unlike the old scheduler-tick trigger this replaces.
+             rebuild_identifier_lookup_delta. The search-index and
+             set-card-list builders have no delta variant (same as before
+             this fix), so this still does a full rebuild for that one
+             game -- cheap enough to run per ingestion (MTG's ~80k cards
+             took under 10 minutes in testing), unlike the old
+             scheduler-tick trigger this replaces. mtg_set_totals.json has
+             no per-game scoping at all (always scans every MTG set) --
+             only called when tcg == "mtg", same as the old step 2c.
     """
     import os, sys
     os.chdir("/app"); sys.path.insert(0, "/app")
@@ -1442,6 +1458,25 @@ def rebuild_search_and_lookup_after_ingest(tcg: str, set_ids: str):
             result["search_index_error"] = str(e)
     else:
         print(f"[POST-INGEST] no search-index builder for tcg={tcg!r} -- skipped", flush=True)
+
+    game = _SET_CARDS_GAME_BY_TCG.get(tcg.lower())
+    if game:
+        try:
+            from app import rebuild_set_cards_for_game
+            result["set_cards"] = rebuild_set_cards_for_game(game)
+        except Exception as e:
+            print(f"[POST-INGEST] rebuild_set_cards_for_game({game}) failed: {e}", flush=True)
+            result["set_cards_error"] = str(e)
+    else:
+        print(f"[POST-INGEST] no set-card-list game mapping for tcg={tcg!r} -- skipped", flush=True)
+
+    if tcg.lower() == "mtg":
+        try:
+            from app import rebuild_mtg_set_totals
+            result["mtg_totals"] = rebuild_mtg_set_totals()
+        except Exception as e:
+            print(f"[POST-INGEST] rebuild_mtg_set_totals failed: {e}", flush=True)
+            result["mtg_totals_error"] = str(e)
 
     vol.commit()
     print(f"[POST-INGEST] {result}", flush=True)
