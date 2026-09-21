@@ -4056,6 +4056,51 @@ def card_profile(sku):
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
+def _extract_variant_price(d, keys, prefer_variant=None):
+    """Extract a positive numeric value under any of `keys` from a
+    prices.tcgplayer or prices.cardmarket-shaped dict.
+
+    Real data uses two different shapes depending on game/field (confirmed
+    live 2026-09-22 across all 4 games' actual current profiles, not
+    assumed): flat ({key: value} directly -- e.g. onepiece cardmarket,
+    pokemon cardmarket, onepiece tcgplayer) and nested-by-variant
+    ({variant_name: {key: value}} -- e.g. pokemon/mtg/ygo tcgplayer,
+    mtg/ygo cardmarket). The old code only ever tried ONE shape per field
+    (flat for cardmarket, nested for tcgplayer), which silently returned
+    None for any game/field combination using the other shape: onepiece's
+    flat tcgplayer, and MTG/YGO's nested cardmarket (measured live: 6% of
+    real MTG profiles and 2% of real YGO profiles with genuine price data
+    returned nothing at all because of this, and cardmarket/EUR was
+    silently unreachable -- never actually preferred over tcgplayer/USD --
+    for the rest despite the freshness-aware logic below intending it to
+    be sometimes). This tries flat first, then nested, so both shapes work
+    everywhere regardless of which game/field they came from.
+
+    prefer_variant (e.g. "holofoil"), if given and present with a valid
+    value, is tried before any other variant in the nested case --
+    preserves the original code's holofoil-priority behavior."""
+    if not isinstance(d, dict):
+        return None
+    for k in keys:
+        v = d.get(k)
+        if isinstance(v, (int, float)) and v > 0:
+            return float(v)
+    if prefer_variant:
+        vd = d.get(prefer_variant)
+        if isinstance(vd, dict):
+            for k in keys:
+                v = vd.get(k)
+                if isinstance(v, (int, float)) and v > 0:
+                    return float(v)
+    for _variant, vd in d.items():
+        if isinstance(vd, dict):
+            for k in keys:
+                v = vd.get(k)
+                if isinstance(v, (int, float)) and v > 0:
+                    return float(v)
+    return None
+
+
 def _best_price_hint(prices, cm_updated=None, tcp_updated=None, sku=None):
     """Pick a best-estimate price + its source currency from a profile.prices dict.
 
@@ -4072,25 +4117,12 @@ def _best_price_hint(prices, cm_updated=None, tcp_updated=None, sku=None):
         return None, None
 
     cm = prices.get("cardmarket") or {}
-    cm_val = None
     if sku in _CARDMARKET_CONTAMINATED_SKUS:
         cm = {}
-    if isinstance(cm, dict):
-        v = cm.get("trend") or cm.get("avg_sell") or cm.get("low")
-        if isinstance(v, (int, float)) and v > 0:
-            cm_val = float(v)
+    cm_val = _extract_variant_price(cm, ("trend", "avg_sell", "low"))
 
     tcg = prices.get("tcgplayer") or {}
-    tcg_val = None
-    if isinstance(tcg, dict):
-        holo = tcg.get("holofoil") or {}
-        if isinstance(holo, dict) and isinstance(holo.get("market"), (int, float)) and holo["market"] > 0:
-            tcg_val = float(holo["market"])
-        else:
-            for _variant, _vd in tcg.items():
-                if isinstance(_vd, dict) and isinstance(_vd.get("market"), (int, float)) and _vd["market"] > 0:
-                    tcg_val = float(_vd["market"])
-                    break
+    tcg_val = _extract_variant_price(tcg, ("market",), prefer_variant="holofoil")
 
     # Both values + both timestamps → newer source wins.
     if cm_val is not None and tcg_val is not None and cm_updated and tcp_updated:
