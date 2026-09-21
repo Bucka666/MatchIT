@@ -528,46 +528,59 @@ def scheduled_set_check():
     # Pokemon JustTCG refreshes for a shared quota (dotgg.gg needs no API
     # key at all) — this scheduling note is kept for history, not because
     # it still matters.
-    timeout=5400,  # matches the EN/JP Pokémon siblings' proven ceiling
-    # (scheduled_en_price_refresh / scheduled_jp_price_refresh below), not
-    # another guess at the same number. 1800s (itself already one bump up
-    # from 600s, both confirmed live via FunctionTimeoutError) was still
-    # timing out because the loop opened all ~4,672 profile.json files
-    # unconditionally just to check staleness -- confirmed live: a
-    # read-only pass over the same files couldn't finish inside Modal's
-    # 300s default either. The real fix lives in
-    # refresh_onepiece_dotgg_prices.py: a persisted staleness index
-    # (onepiece_price_staleness.json) now short-circuits already-fresh
-    # cards before their profile.json is ever opened, and
-    # ThreadPoolExecutor(max_workers=8) parallelizes the I/O for whatever
-    # stale-or-unknown subset remains, mirroring the EN/JP Pokémon
-    # refreshers' own pattern on this same volume. 5400s is now a real
-    # ceiling again, not a target -- see that file's module docstring for
-    # the full design (staleness-index update policy, checkpoint cadence).
+    timeout=7200,  # pass 1's own proven ceiling (5400s -- matches the
+    # EN/JP Pokémon siblings' proven ceiling, not another guess at the
+    # same number; see refresh_onepiece_dotgg_prices.py's module docstring
+    # for the full staleness-index/checkpoint design that earned it) plus
+    # 1800s headroom for pass 2, added 2026-09-21 when this function grew
+    # a second sequential pass (Modal's 5-scheduled-function workspace cap
+    # ruled out a separate cron -- see docstring). Pass 2's own real runs
+    # against the full volume measured 7-15 min, nowhere near using that
+    # headroom in practice.
 )
 def scheduled_onepiece_price_refresh():
     """Daily refresh of TCGPlayer (USD) and Cardmarket (EUR) pricing for
-    One Piece cards via dotgg.gg (see refresh_onepiece_dotgg_prices.py).
-    Replaces the JustTCG-based version: JustTCG's free-tier key returned
-    401 INVALID_API_KEY account-wide starting 2026-08-15/16 (confirmed
-    live, affecting even its already-working JP Pokemon usage), and even
-    before that only ever priced 7 of 4,672 One Piece cards in a full run.
-    dotgg.gg needs no API key and covers ~83% of our catalog in one
-    unauthenticated request (confirmed live 2026-08-16).
+    One Piece cards, in two sequential passes sharing this one 1:30am UTC
+    slot (Modal's plan caps this workspace at 5 scheduled functions --
+    confirmed live 2026-09-21 via a failed deploy at the 6th; a second
+    schedule= entry for the Limitless pass was not an option without a
+    plan upgrade, which is Craig's call, not something to force through).
+    Chaining both into one function also gives a STRONGER ordering
+    guarantee than a fixed-offset second cron would have: pass 2 starts
+    only once pass 1 has actually returned, not after an assumed number
+    of minutes.
 
-    Re-fetches cards the staleness index says are missing or >48h checked,
-    not just cards with no price at all -- this runs every day, prices
-    should stay current. (Was >24h until 2026-09-07 -- that collided with
-    this cron's own ~daily cadence, so almost the whole matched set went
-    stale again right as each day's run started, making the skip-fresh
-    check nearly useless in steady state. 48h gives real headroom.)
+    Pass 1 -- dotgg.gg (see refresh_onepiece_dotgg_prices.py). Replaces
+    the JustTCG-based version: JustTCG's free-tier key returned 401
+    INVALID_API_KEY account-wide starting 2026-08-15/16 (confirmed live,
+    affecting even its already-working JP Pokemon usage), and even before
+    that only ever priced 7 of 4,672 One Piece cards in a full run.
+    dotgg.gg needs no API key and covers ~83% of our catalog in one
+    unauthenticated request (confirmed live 2026-08-16). Re-fetches cards
+    its staleness index (onepiece_price_staleness.json) says are missing
+    or >48h checked, not just cards with no price at all -- this runs
+    every day, prices should stay current.
+
+    Pass 2 -- onepiece.limitlesstcg.com (see
+    refresh_onepiece_limitlesstcg_prices.py), gap-filler for cards dotgg
+    has no data for at all. Runs unconditionally after pass 1, success or
+    failure -- pass 1 failing is exactly when pass 2's coverage matters
+    most, and the two touch disjoint concerns (pass 2 only ever writes to
+    a SKU whose prices dict is still genuinely empty after pass 1, using
+    its OWN separate staleness index -- confirmed live 2026-09-21 that
+    sharing pass 1's index for gating was a real bug: dotgg's own no_match
+    outcome marks a SKU "fresh" in its index the same as a real price
+    would, which would have made pass 2 skip every SKU pass 1 had just
+    finished checking, for the shared 48h window -- silently defeating
+    pass 2's entire purpose the one day it matters most, e.g. a brand-new
+    set. Same profile["prices"] schema both passes: dotgg's own next-day
+    real match still cleanly overwrites a Limitless-sourced value).
 
     No gpu= here — pure HTTP fetch + JSON write, CPU-only, same pattern as
     scheduled_fx_refresh/scheduled_jp_price_refresh below.
 
-    Lazy-imports refresh_onepiece_dotgg_prices inside the function body,
-    matching scheduled_jp_price_refresh's own convention for
-    scrape_pokemon_jpn."""
+    Lazy-imports both refresh modules inside the function body, matching
+    scheduled_jp_price_refresh's own convention for scrape_pokemon_jpn."""
     print(f"[OP-PRICE-CRON] Starting run at {datetime.utcnow().isoformat()}Z", flush=True)
     import os, sys
     os.chdir("/app")
@@ -575,15 +588,27 @@ def scheduled_onepiece_price_refresh():
     os.environ["LOCALAPPDATA"] = "/modal_data"
     vol.reload()
     from pathlib import Path
+
     from refresh_onepiece_dotgg_prices import refresh_onepiece_dotgg_prices
     try:
         result = refresh_onepiece_dotgg_prices(
             Path("/modal_data/CardsDB"), dry_run=False, commit_cb=vol.commit,
         )
         vol.commit()  # final flush -- covers anything since the last mid-run checkpoint
-        print(f"[OP-PRICE-CRON] {result}", flush=True)
+        print(f"[OP-PRICE-CRON] pass 1 (dotgg): {result}", flush=True)
     except Exception as e:
-        print(f"[OP-PRICE-CRON] FAILED: {e}", flush=True)
+        print(f"[OP-PRICE-CRON] pass 1 (dotgg) FAILED: {e}", flush=True)
+
+    from refresh_onepiece_limitlesstcg_prices import refresh_onepiece_limitlesstcg_prices
+    try:
+        vol.reload()
+        result = refresh_onepiece_limitlesstcg_prices(
+            Path("/modal_data/CardsDB"), dry_run=False, commit_cb=vol.commit,
+        )
+        vol.commit()
+        print(f"[OP-PRICE-CRON] pass 2 (limitlesstcg): {result['stats']}", flush=True)
+    except Exception as e:
+        print(f"[OP-PRICE-CRON] pass 2 (limitlesstcg) FAILED: {e}", flush=True)
 
 
 @app.function(
