@@ -17,7 +17,7 @@
 #  HTML (web_spike/test_onnx_inference.html) uses antialiased smoothing and
 #  must be switched to plain bilinear to stay in lockstep with this index.
 # ============================================================================
-import os, sys, json, time, hashlib, shutil
+import os, sys, json, time, hashlib, shutil, queue, threading
 os.environ.setdefault("FLAGS_use_mkldnn", "0")
 import warnings; warnings.filterwarnings("ignore")
 import numpy as np
@@ -94,7 +94,14 @@ def front_path(game, sku):
     return p if os.path.isfile(p) else None
 
 
-def main():
+def main(commit_callback=None):
+    """commit_callback: optional zero-arg callable invoked right after each
+    on-disk checkpoint save (e.g. a Modal Volume's .commit()). Without it,
+    checkpoint files exist only in this container's local view of the mount
+    and are invisible to any other container (and may not survive this
+    container being torn down) until main() returns and the caller commits
+    once at the end -- fine for output durability but means an in-progress
+    run cannot be inspected or safely resumed from another container."""
     t0 = time.time()
     skus, kept_mtg, kept_op = select_skus()
     pk_n = sum(1 for g, _ in skus if g == "pokemon")
@@ -200,30 +207,95 @@ def main():
         vecs[start:start + len(buf_skus)] = f.cpu().numpy().astype(np.float16)
         out_skus.extend(buf_skus)
 
+    # Threaded read+preprocess (2026-09-20 recon+bench, revised same day
+    # after a real stall): Image.open() and PIL's C-level resize/crop both
+    # release the GIL, so this was purely I/O-wait time being paid serially
+    # -- benchmarked at ~507ms/image sequential vs ~90ms/image with a
+    # 4-worker pool (best of 4/6/12 tried; 12 caused CPU contention with
+    # torch's own internal threading on an 8-vCPU box and made the model
+    # step ~3x slower in isolation, net still a win but worse than 4).
+    #
+    # First production attempt at N=35,537 used ThreadPoolExecutor.map(),
+    # which preserves INPUT order: if the file at the head of the list is
+    # slow or hangs (one bad file on a network volume is enough), the other
+    # 3 workers keep completing later files but map()'s generator withholds
+    # ALL of them until the head resolves. Result: a full stall with zero
+    # checkpoint output for 1h43m real wall time and nothing recoverable.
+    # Fixed by switching to a shared work queue + N independent workers
+    # pulling and pushing results directly (no per-item ordering
+    # dependency) -- a hang in one file now costs at most 1 of N_WORKERS
+    # threads, not the whole pipeline. Output correctness is unaffected:
+    # vecs/out_skus are always written in ARRIVAL order together, so
+    # positional correspondence between them holds regardless of which
+    # order files complete in (planned_hash/resume validation is over the
+    # planned INPUT set, not output order).
+    N_WORKERS = int(os.environ.get("GS_BUILD_WORKERS", "4"))
+
+    work_q = queue.Queue()
+    for item in resolved[start_idx:]:
+        work_q.put(item)
+    for _ in range(N_WORKERS):
+        work_q.put(None)  # one stop sentinel per worker
+
+    result_q = queue.Queue(maxsize=BATCH * 4)
+
+    def _worker():
+        while True:
+            item = work_q.get()
+            if item is None:
+                break
+            sku, fp = item
+            try:
+                res = bil_preprocess(Image.open(fp).convert("RGB"))
+            except Exception as e:
+                res = e
+            result_q.put((sku, res))
+
+    worker_threads = [threading.Thread(target=_worker, daemon=True) for _ in range(N_WORKERS)]
+    for t in worker_threads:
+        t.start()
+
+    def _wait_workers_then_signal():
+        for t in worker_threads:
+            t.join()
+        result_q.put(None)  # sentinel for the consumer below
+
+    watcher_thread = threading.Thread(target=_wait_workers_then_signal, daemon=True)
+    watcher_thread.start()
+
     buf_imgs, buf_skus, start = [], [], start_idx
-    for sku, fp in resolved[start_idx:]:          # B4: skip already-done entries
-        try:
-            arr = bil_preprocess(Image.open(fp).convert("RGB"))
-        except Exception as e:
-            print(f"[skip] {sku}: {e}", flush=True)
+    while True:
+        item = result_q.get()
+        if item is None:
+            break
+        sku, res = item
+        if isinstance(res, Exception):
+            print(f"[skip] {sku}: {res}", flush=True)
             continue
-        buf_imgs.append(arr); buf_skus.append(sku)
+        buf_imgs.append(res); buf_skus.append(sku)
         if len(buf_imgs) == BATCH:
             flush_batch(buf_imgs, buf_skus, start)
             start += len(buf_skus)
             buf_imgs, buf_skus = [], []
+            # Cheap per-batch heartbeat -- console print only, no disk I/O --
+            # so a hang is visible within one BATCH (256 cards) instead of
+            # waiting up to CHECKPOINT_EVERY (2048) for any sign of life.
+            print(f"[progress] {len(out_skus)}/{N} ({100 * len(out_skus) / N:.1f}%)", flush=True)
             # B6: checkpoint + rate print when enough cards since last save
             if len(out_skus) - last_ckpt_count >= CHECKPOINT_EVERY:
                 elapsed = time.time() - last_ckpt_time
                 rate    = (len(out_skus) - last_ckpt_count) / elapsed if elapsed > 0 else 0
                 pct     = 100 * len(out_skus) / N
                 write_checkpoint(vecs, out_skus, planned_hash, N)
+                if commit_callback is not None:
+                    commit_callback()
                 print(f"[checkpoint] saved {len(out_skus)}/{N} ({pct:.1f}%) "
                       f"-- {rate:.0f} cards/sec", flush=True)
                 last_ckpt_count = len(out_skus)
                 last_ckpt_time  = time.time()
     if buf_imgs:
         flush_batch(buf_imgs, buf_skus, start)
+    watcher_thread.join()
 
     vecs = vecs[:len(out_skus)]   # trim any skipped rows
 
