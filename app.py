@@ -9482,6 +9482,64 @@ def sets_completion():
     return jsonify({"sets": result, "count": len(result)})
 
 
+def _overlay_live_prices(cards, game):
+    """Returns a NEW list of card dicts with price/currency replaced by a
+    live profile.json read, via the exact same _best_price_hint() logic
+    /api/card-search uses (not a reimplementation) -- so the same card
+    shows the same price on both surfaces, and Card Show Mode stops
+    serving whatever price happened to be baked in at the cached
+    sidecar's last rebuild (confirmed live 2026-09-22: that can be
+    ~1 month stale, e.g. op-op01-001 cached EUR2.00 vs real EUR1.69).
+
+    Builds NEW dicts rather than mutating the input in place -- `cards`
+    may be the SAME list object _load_json_sidecar() cached in
+    _json_sidecar_cache (mtime-keyed, shared across requests until the
+    file next changes); mutating it here would leak one request's live
+    price into every other request served from that cache entry.
+
+    Fetch uses _load_profile_direct() (single direct path, game already
+    known), not the generic _load_card_profile_for_sku() /api/card-search
+    uses -- that one probes up to 4 CardsDB game directories per call,
+    fine for search's 12-result cap but a real cost at Card Show Mode's
+    scale (up to ~800 cards for one set). Same ThreadPoolExecutor(
+    max_workers=32) pattern _build_set_card_list() already uses for this
+    exact class of per-SKU network-volume read.
+
+    A card with no live price shows none (price/currency -> None) --
+    never falls back to the stale cached value, which would defeat the
+    point of this overlay."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    db_root = get_db_root() or "CardsDB"
+    skus = [c.get("sku") for c in cards]
+
+    profiles = {}
+    if skus:
+        with ThreadPoolExecutor(max_workers=32) as pool:
+            for sku, prof in pool.map(
+                lambda s: (s, _load_profile_direct(s, db_root, game)),
+                skus,
+            ):
+                profiles[sku] = prof
+
+    overlaid = []
+    for c in cards:
+        sku = c.get("sku")
+        prof = profiles.get(sku) or {}
+        prices = prof.get("prices")
+        price, currency = _best_price_hint(
+            prices,
+            prof.get("cardmarket_updated"),
+            prof.get("tcgplayer_updated"),
+            sku=sku,
+        )
+        new_c = dict(c)
+        new_c["price"] = price
+        new_c["currency"] = currency
+        overlaid.append(new_c)
+    return overlaid
+
+
 @app.route("/api/sets/<set_id>/cards")
 def sets_cards(set_id):
     set_metadata = _load_set_metadata()
@@ -9502,6 +9560,21 @@ def sets_cards(set_id):
         offline_disabled = entry.get("offline_disabled", False)
     else:
         game, cards, truncated, total_in_db, offline_disabled = _build_set_card_list(set_id, game=game, meta=meta)
+
+    # Cached sidecar (and _build_set_card_list's own fallback build) only
+    # bakes price/currency in at rebuild time -- which only happens at
+    # ingestion, never on a daily price refresh (confirmed live
+    # 2026-09-22). This overlay replaces it with a live read every
+    # request instead, same logic /api/card-search already uses
+    # correctly. rebuild_set_cards_for_game()/_build_set_card_list() are
+    # left writing price/currency unchanged -- see that decision's
+    # reasoning in this commit's notes; short version: removing it saves
+    # no real work (the expensive network read is already needed for
+    # name/card_number regardless) and nothing else reads it from these
+    # 4 sidecar files (confirmed via grep), so it's harmless dead weight,
+    # not worth the regression risk of touching a function shared with
+    # the offline weekly bake.
+    cards = _overlay_live_prices(cards, game)
 
     set_name = meta.get("name") or set_id
     resp = {
