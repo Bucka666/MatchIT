@@ -4150,16 +4150,29 @@ def _search_index_entries(game, raw, lang):
     index = _search_indexes.get(game, [])
     matches = []
 
-    setcode_query = re.match(r'^([a-z]+\d+)-(\d+)$', raw.strip().lower())
+    # (.+) not ([a-z]+\d+): real set codes across MTG/Pokemon/YGO/OnePiece
+    # (confirmed live 2026-09-22 against all 1,298 real codes in
+    # set_metadata.json) don't all fit "letters then digits" -- 707/1298
+    # failed the old pattern: all-letter codes with no digit at all
+    # (abpf, basep, mbc), leading-digit codes (10e, 2017, 40k), and
+    # internal-hyphen JP codes (jpn-e1). Real user-facing breakage was
+    # Pokemon (202) + MTG (216): their set_id/number are separate fields,
+    # so a failed match fell through to a plain substring match against
+    # the bare number field, which never contains the set code and always
+    # returned nothing (confirmed live: mbc-12, trk-109, me55c-58, 10e-109
+    # all returned empty before this fix). YGO's 288 "failures" were NOT
+    # real breakage -- its card_number field already IS the full
+    # "2017-EN001" string, so those queries already matched correctly via
+    # the plain-prefix fallback below; greedy (.+) still requires a pure-
+    # digit second group, so "2017-EN001" (letters in "EN001") still
+    # doesn't match here and keeps falling through unaffected, same as
+    # before.
+    setcode_query = re.match(r'^(.+)-(\d+)$', raw.strip().lower())
     if setcode_query:
         # "SETCODE-NUMBER" (e.g. "OP16-015") -- One Piece's card_number is
         # stored bare ("015") with the set code in a separate set_id field
-        # ("op16"), unlike YGO where card_number IS the full "2017-EN001"
-        # string. group2 here must be pure digits, so a YGO query like
-        # "2017-EN001" never matches this pattern (its second half is
-        # alphanumeric "EN001") and falls through to the plain-prefix branch
-        # below, unaffected. Tolerant of zero-padding ("OP16-15" == "OP16-015")
-        # and of variant-suffixed SKUs ("015_p1" -> base "015").
+        # ("op16"). Tolerant of zero-padding ("OP16-15" == "OP16-015") and
+        # of variant-suffixed SKUs ("015_p1" -> base "015").
         set_code, typed_num = setcode_query.groups()
         typed_num = typed_num.lstrip('0') or '0'
         exact, prefix = [], []
