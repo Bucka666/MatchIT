@@ -763,13 +763,15 @@ document.addEventListener('click', function(e) {
     }
 });
 
-function colRender() {
-    premCheckGate();
-    if (!premIsUnlocked()) return;
+// Summary stats (count/value/sets/TCG breakdown/top cards) only -- split
+// out from colRender() so colFetchLivePrices() can refresh these numbers
+// after a live price lands, without re-rendering (and scroll-jumping) the
+// whole card grid, which already gets its own per-item price text updated
+// directly.
+function colUpdateStats() {
     const items = colLoad();
-    const list  = document.getElementById('colList');
-    const empty = document.getElementById('colEmpty');
     const bd    = document.getElementById('colTcgBreakdown');
+    if (!bd) return;
 
     document.getElementById('colCount').textContent = items.length;
     const total = items.reduce((s,i) => s + (parseFloat(i.gbp)||0), 0);
@@ -797,6 +799,15 @@ function colRender() {
             <div class="col-tcg-value">£${tcgs[d.key].value.toFixed(2)}</div>
         </div>`).join('');
     colRenderTopCards();
+}
+
+function colRender() {
+    premCheckGate();
+    if (!premIsUnlocked()) return;
+    const items = colLoad();
+    const list  = document.getElementById('colList');
+    const empty = document.getElementById('colEmpty');
+    colUpdateStats();
 
     if (!items.length) { empty.style.display='block'; list.style.display='none'; return; }
     empty.style.display='none'; list.style.display='flex';
@@ -851,6 +862,7 @@ function colRender() {
             '</div>' +
         '</div>';
     }).join('');
+    colFetchLivePrices();
     colFetchDeltas();
 }
 
@@ -2176,6 +2188,72 @@ function colRenderTopCards() {
     '</div>';
 }
 
+/* ── Live current price (replaces price_history.json for THIS purpose --
+   price_history is scan-triggered only and covers a tiny fraction of any
+   real collection; a live profile.json read works for every SKU) ───────── */
+window._colFxRates = window._colFxRates || null;
+
+function _colGetFxRates() {
+  if (window._colFxRates) return Promise.resolve(window._colFxRates);
+  return fetch('/api/fx_rates')
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      window._colFxRates = { usd_gbp: (d && d.usd_gbp) || 0.79, eur_gbp: (d && d.eur_gbp) || 0.86 };
+      return window._colFxRates;
+    })
+    .catch(function() {
+      return { usd_gbp: 0.79, eur_gbp: 0.86 };
+    });
+}
+
+function colFetchLivePrices() {
+  var badges = document.querySelectorAll('.col-delta-badge[data-sku]');
+  var skus = {};
+  badges.forEach(function(b) { skus[b.dataset.sku] = true; });
+  var skuList = Object.keys(skus);
+  if (!skuList.length) return;
+
+  _colGetFxRates().then(function(fx) {
+    fetch('/api/collection/live_prices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ skus: skuList })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var collection = null;
+        skuList.forEach(function(sku) {
+          var entry = data[sku];
+          if (!entry || entry.price === null || entry.price === undefined || !entry.currency) return;
+          var rate = entry.currency === 'EUR' ? fx.eur_gbp : fx.usd_gbp;
+          var gbp = Math.round(entry.price * rate * 100) / 100;
+
+          if (!collection) {
+            try { collection = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]'); }
+            catch (e) { collection = []; }
+          }
+          collection.forEach(function(item) { if (item.sku === sku) item.gbp = gbp; });
+
+          document.querySelectorAll('.col-delta-badge[data-sku="' + sku + '"]').forEach(function(badge) {
+            var actionsWrap = badge.closest('.col-item-actions');
+            var priceEl = actionsWrap && actionsWrap.querySelector('.col-item-price');
+            if (priceEl) priceEl.textContent = '£' + gbp.toFixed(2);
+          });
+        });
+        if (collection) {
+          localStorage.setItem('matchit_collection_v1', JSON.stringify(collection));
+          // Individual item price text is already updated above; the
+          // header total/count/sets/TCG-breakdown numbers are computed
+          // once at colRender() time and were otherwise never refreshed
+          // by this async fetch resolving later -- confirmed live
+          // 2026-09-23 this was a real gap, not just a theoretical one.
+          colUpdateStats();
+        }
+      })
+      .catch(function() {});
+  });
+}
+
 /* ── Gain/loss delta badges ─────────────────────────────────────────────── */
 window._colPriceCache = window._colPriceCache || {};
 
@@ -2223,16 +2301,13 @@ function colFetchDeltas() {
 function _colApplyDelta(sku, latestGbp, prevGbp) {
   if (latestGbp === null || latestGbp === undefined) return;
 
-  // Refresh the stored collection price so the headline number tracks the
-  // current market price instead of staying frozen at the add-time value.
-  try {
-    var collection = JSON.parse(localStorage.getItem('matchit_collection_v1') || '[]');
-    var changed = false;
-    collection.forEach(function(item) {
-      if (item.sku === sku) { item.gbp = latestGbp; changed = true; }
-    });
-    if (changed) localStorage.setItem('matchit_collection_v1', JSON.stringify(collection));
-  } catch (e) {}
+  // NOTE: this used to also write item.gbp into localStorage here, sourced
+  // from price_history.json's own last entry. That's now colFetchLivePrices()'s
+  // job (a live profile.json read via /api/collection/live_prices, which
+  // works for every SKU regardless of scan history -- price_history.json is
+  // scan-triggered only and covers a tiny fraction of any real collection).
+  // This function is left doing only the delta badge (day-over-day move),
+  // which is still meaningfully sourced from history where it exists.
 
   document.querySelectorAll('.col-delta-badge[data-sku="' + sku + '"]').forEach(function(badge) {
     // Prefer yesterday-vs-today from history; fall back to add-time base
@@ -2240,10 +2315,9 @@ function _colApplyDelta(sku, latestGbp, prevGbp) {
     var base  = (prevGbp !== null && prevGbp !== undefined) ? prevGbp : (parseFloat(badge.dataset.base) || 0);
     var delta = latestGbp - base;
 
-    var actionsWrap = badge.closest('.col-item-actions');
-    var priceEl = actionsWrap && actionsWrap.querySelector('.col-item-price');
-    if (priceEl) priceEl.textContent = '£' + parseFloat(latestGbp).toFixed(2);
-
+    // Price text itself is now written by colFetchLivePrices() only (live
+    // read, works even with zero history) -- this function no longer
+    // touches .col-item-price, just the delta badge below.
     if (Math.abs(delta) < 0.005) return;
     badge.textContent = (delta > 0 ? '+' : '') + '£' + delta.toFixed(2);
     badge.style.color = delta > 0 ? '#4caf50' : '#f44336';

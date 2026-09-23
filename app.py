@@ -6006,6 +6006,64 @@ def price_history_bulk_api():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/collection/live_prices", methods=["POST"])
+def collection_live_prices():
+    """Bulk live-price endpoint for collection view — accepts {"skus": [...]}
+    and returns {sku: {"price": float|None, "currency": "USD"|"EUR"|None}}.
+
+    Fixes: a collection item added when no price existed stayed priceless
+    forever unless re-added, because the collection's only other refresh
+    path (colFetchDeltas() -> /api/price_history/bulk) depends on
+    price_history.json, which is populated exclusively by scan events
+    (confirmed live 2026-09-22: only 558 SKUs catalogue-wide have any
+    entry at all). This endpoint instead does a live profile.json read via
+    _best_price_hint() -- the exact mechanism /api/card-search and Card
+    Show Mode's _overlay_live_prices() already use, not a reimplementation
+    -- so it works for every SKU regardless of scan history.
+
+    Unlike Card Show Mode (one game per request, known up front), a
+    collection spans all 4 games in one call, so game is resolved per-SKU
+    via _get_sku_game() (prefix match for ygo-/mtg-/op-, cached profile
+    read only for the ambiguous bare-prefix Pokémon/MTG case).
+
+    Same 500-SKU cap as /api/price_history/bulk, same
+    ThreadPoolExecutor(max_workers=32) pattern as _overlay_live_prices().
+    No server-side FX conversion, matching every other live-price surface
+    in the app (card-search, Card Show Mode) -- the client multiplies by
+    the live fx rate it already fetches."""
+    from concurrent.futures import ThreadPoolExecutor
+
+    try:
+        body = request.get_json(silent=True) or {}
+        skus = body.get("skus", [])
+        if not isinstance(skus, list):
+            return jsonify({"error": "skus must be a list"}), 400
+        skus = skus[:500]
+
+        db_root = get_db_root() or "CardsDB"
+
+        def _fetch_one(sku):
+            game = _get_sku_game(sku)
+            prof = _load_profile_direct(sku, db_root, game)
+            prices = prof.get("prices")
+            price, currency = _best_price_hint(
+                prices,
+                prof.get("cardmarket_updated"),
+                prof.get("tcgplayer_updated"),
+                sku=sku,
+            )
+            return sku, {"price": price, "currency": currency}
+
+        result = {}
+        if skus:
+            with ThreadPoolExecutor(max_workers=32) as pool:
+                for sku, data in pool.map(_fetch_one, skus):
+                    result[sku] = data
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/referral_code", methods=["POST"])
 def get_referral_code():
     data = request.json
