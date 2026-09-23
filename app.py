@@ -4204,8 +4204,17 @@ def _search_index_entries(game, raw, lang):
         for entry in index:
             if entry.get("lang", "en") != lang:
                 continue
-            num_match = entry["number"].startswith(num_part)
-            total_match = (str(entry.get("set_total") or "") == total_part) if total_part else True
+            # Strip the entry's own leading zeros/variant suffix the same way
+            # the typed number is normalized above (e.g. One Piece stores
+            # "008"/"003_p1" — without this, a zero-padded stored value can
+            # never match a leading-zero-stripped typed query at all).
+            entry_num = (entry.get("number") or "").split("_", 1)[0].lstrip("0") or "0"
+            num_match = entry_num.startswith(num_part)
+            # A missing/null set_total in the index (stale index, or no
+            # source data at all -- e.g. old MTG sets) shouldn't unconditionally
+            # fail the match; degrade to number-only matching instead.
+            entry_total = entry.get("set_total")
+            total_match = (str(entry_total) == total_part) if (total_part and entry_total) else True
             if num_match and total_match:
                 matches.append(entry)
                 if len(matches) >= 12:
