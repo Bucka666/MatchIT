@@ -817,6 +817,7 @@ def refresh_cardmarket_prices(db_root: Path, dry_run: bool = False, max_workers:
     Network fetches use bounded concurrency (max_workers, default 8 — NOT
     32: TCGdex throttles, and higher concurrency made it worse when tried
     in this same session) with exponential backoff on 429/timeout."""
+    t0 = time.time()
     pokemon_dir = db_root / "pokemon"
     folders = sorted(d for d in os.listdir(pokemon_dir) if d.startswith("jpn-"))
     print(f"[REFRESH] {len(folders)} jpn- folders found under {pokemon_dir}", flush=True)
@@ -846,6 +847,7 @@ def refresh_cardmarket_prices(db_root: Path, dry_run: bool = False, max_workers:
 
     if dry_run:
         stats["refreshed"] = len(candidates)  # "would refresh" — no network calls made
+        stats["elapsed_s"] = round(time.time() - t0, 1)
         print(f"[REFRESH] DRY-RUN — done, no network calls made. {stats}", flush=True)
         return stats
 
@@ -884,6 +886,7 @@ def refresh_cardmarket_prices(db_root: Path, dry_run: bool = False, max_workers:
         except Exception as e:
             print(f"[REFRESH] commit_cb() failed at final commit: {e}", flush=True)
 
+    stats["elapsed_s"] = round(time.time() - t0, 1)
     print(f"[REFRESH] Done. {stats}", flush=True)
     return stats
 

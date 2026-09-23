@@ -79,6 +79,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -228,6 +229,7 @@ def refresh_onepiece_dotgg_prices(
     stays a plain Path-in/dict-out function, same as before. No-op if
     omitted. Never called with dry_run=True (no writes to commit).
     """
+    t0 = time.time()
     onepiece_dir = Path(db_root) / "onepiece"
     if not onepiece_dir.exists():
         return {"error": str(onepiece_dir)}
@@ -309,5 +311,6 @@ def refresh_onepiece_dotgg_prices(
         if commit_cb:
             commit_cb()
 
+    stats["elapsed_s"] = round(time.time() - t0, 1)
     print(f"[OP-DOTGG-REFRESH] Done. {stats}", flush=True)
     return stats

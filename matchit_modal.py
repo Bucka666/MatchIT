@@ -582,6 +582,7 @@ def scheduled_onepiece_price_refresh():
     Lazy-imports both refresh modules inside the function body, matching
     scheduled_jp_price_refresh's own convention for scrape_pokemon_jpn."""
     print(f"[OP-PRICE-CRON] Starting run at {datetime.utcnow().isoformat()}Z", flush=True)
+    _t_cron0 = time.time()
     import os, sys
     os.chdir("/app")
     sys.path.insert(0, "/app")
@@ -609,6 +610,26 @@ def scheduled_onepiece_price_refresh():
         print(f"[OP-PRICE-CRON] pass 2 (limitlesstcg): {result['stats']}", flush=True)
     except Exception as e:
         print(f"[OP-PRICE-CRON] pass 2 (limitlesstcg) FAILED: {e}", flush=True)
+
+    # Pass 3 -- MTG (see refresh_mtg_prices.py). Chained onto this same
+    # 1:30am slot for the same 5-scheduled-function-cap reason as pass 2
+    # above: this cron has the largest real measured headroom of any
+    # existing price cron (recon 2026-09-23), so the larger of the two new
+    # bulk-sourced games (~80K cards) goes here; YGO (~36K, smaller) goes
+    # on the lighter-loaded 3am JP slot instead (see scheduled_jp_price_
+    # refresh). Independent try/except, same isolation as passes 1/2.
+    from refresh_mtg_prices import refresh_mtg_prices
+    try:
+        vol.reload()
+        result = refresh_mtg_prices(
+            Path("/modal_data/CardsDB"), dry_run=False, commit_cb=vol.commit,
+        )
+        vol.commit()
+        print(f"[OP-PRICE-CRON] pass 3 (mtg): {result}", flush=True)
+    except Exception as e:
+        print(f"[OP-PRICE-CRON] pass 3 (mtg) FAILED: {e}", flush=True)
+
+    print(f"[OP-PRICE-CRON] total elapsed_s={round(time.time() - _t_cron0, 1)}", flush=True)
 
 
 @app.function(
@@ -654,6 +675,15 @@ def scheduled_jp_price_refresh():
     with no resolvable price are skipped, not re-walked, since
     classify_unpriced already proved those are structurally unpriceable).
 
+    Also runs the YGO price refresh (see refresh_ygo_prices.py) as a second
+    pass sharing this same 3am slot — Modal's 5-scheduled-function workspace
+    cap ruled out a separate cron for it (same reasoning as OnePiece's own
+    2-pass 1:30am cron), and this was the lightest-loaded of the three daily
+    price crons by real measured headroom (recon 2026-09-23: ~1,261-card JP
+    run vs this function's 5400s ceiling). In its own try/except so a JP
+    Cardmarket failure never blocks the YGO pass, matching OnePiece's
+    independent-pass pattern.
+
     No gpu= here — this is pure HTTP fetch + JSON write, CPU-only, same
     pattern as scheduled_fx_refresh above (same image, just no GPU attached
     so it's billed as CPU-only despite the image containing the ML deps).
@@ -665,6 +695,7 @@ def scheduled_jp_price_refresh():
     mirrors how scheduled_set_check() above already lazy-imports
     set_scheduler, which has the identical second-modal.App pattern."""
     print(f"[JP-PRICE-CRON] Starting run at {datetime.utcnow().isoformat()}Z", flush=True)
+    _t_cron0 = time.time()
     import os, sys
     os.chdir("/app")
     sys.path.insert(0, "/app")
@@ -705,6 +736,16 @@ def scheduled_jp_price_refresh():
         print(f"[JP-PRICE-CRON] FAILED: {e}", flush=True)
         raise
 
+    from refresh_ygo_prices import refresh_ygo_prices
+    try:
+        vol.reload()
+        ygo_result = refresh_ygo_prices(Path("/modal_data/CardsDB"), dry_run=False, commit_cb=vol.commit)
+        print(f"[JP-PRICE-CRON] pass 2 (ygo): {ygo_result}", flush=True)
+    except Exception as e:
+        print(f"[JP-PRICE-CRON] pass 2 (ygo) FAILED: {e}", flush=True)
+
+    print(f"[JP-PRICE-CRON] total elapsed_s={round(time.time() - _t_cron0, 1)}", flush=True)
+
 
 @app.function(
     image=image,
@@ -719,6 +760,7 @@ def scheduled_en_price_refresh():
     above; refresh_en_prices.py constructs its own separate modal.App at import,
     so the import is deferred to call time to keep it out of matchit-api's deploy
     graph."""
+    _t_cron0 = time.time()
     import os, sys
     os.chdir("/app")
     sys.path.insert(0, "/app")
@@ -753,6 +795,8 @@ def scheduled_en_price_refresh():
         print(f"[COLLECTION-SNAPSHOT] {snap_result}", flush=True)
     except Exception as e:
         print(f"[COLLECTION-SNAPSHOT] FAILED: {e}", flush=True)
+
+    print(f"[EN-PRICE-CRON] total elapsed_s={round(time.time() - _t_cron0, 1)}", flush=True)
 
 
 @app.function(

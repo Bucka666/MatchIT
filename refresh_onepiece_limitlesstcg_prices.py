@@ -291,6 +291,7 @@ def refresh_onepiece_limitlesstcg_prices(
     purpose silently defeated this script's entire reason for existing."""
     from fx_rates import get_fx
 
+    t0 = time.time()
     onepiece_dir = Path(db_root) / "onepiece"
     if not onepiece_dir.exists():
         return {"error": str(onepiece_dir)}
@@ -358,6 +359,7 @@ def refresh_onepiece_limitlesstcg_prices(
         if commit_cb:
             commit_cb()
 
+    stats["elapsed_s"] = round(time.time() - t0, 1)
     print(f"[OP-LIMITLESS] Done. {stats}", flush=True)
     return {"stats": stats, "results": all_results, "fx": fx}
 

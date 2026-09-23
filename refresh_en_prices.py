@@ -312,6 +312,7 @@ def refresh_en_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8
     than adding a separate counter -- worst-case loss is bounded to
     whatever the current set's card count is. commit_cb=None for
     local/non-Modal runs (nothing to commit to)."""
+    t0 = time.time()
     pokemon_dir = db_root / "pokemon"
 
     # English POKEMON sets from set_metadata.json (keys are pokemontcg.io set_ids)
@@ -360,6 +361,7 @@ def refresh_en_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8
             "sets_with_cards": len(folders_by_set),
             "total_cards":     total,
         }
+        scope["elapsed_s"] = round(time.time() - t0, 1)
         print(f"[EN-REFRESH] DRY-RUN scope (local counts, no per-card API): {scope}", flush=True)
         return scope
 
@@ -411,6 +413,7 @@ def refresh_en_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8
 
         time.sleep(0.1)  # gentle between sets — respect TCGdex throttle
 
+    stats["elapsed_s"] = round(time.time() - t0, 1)
     print(f"[EN-REFRESH] Done. {stats}", flush=True)
     return stats
 
