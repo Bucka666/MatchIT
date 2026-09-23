@@ -8930,6 +8930,15 @@ def _extract_gbp_from_profile(profile, sku=None):
     cm = prices.get("cardmarket") if sku not in _CARDMARKET_CONTAMINATED_SKUS else None
     if isinstance(cm, dict):
         cm_price = cm.get("trend") or cm.get("avg_sell") or cm.get("mid")
+        if not cm_price:
+            # MTG/YGO nest Cardmarket by variant (normal/foil -> trend), same
+            # shape _extract_price_for_sku() already branches on — a flat
+            # top-level check alone silently misses both games' EUR price.
+            for _variant, vdata in cm.items():
+                if isinstance(vdata, dict):
+                    cm_price = vdata.get("trend") or vdata.get("avg_sell") or vdata.get("mid")
+                    if cm_price:
+                        break
         if cm_price:
             return round(float(cm_price) * fx["eur_gbp"], 2)
 
