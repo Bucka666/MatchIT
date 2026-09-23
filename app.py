@@ -9332,66 +9332,52 @@ def collection_sync_post():
     _save_collections(collections)
     return jsonify({"saved": len(items)})
 
+_COLLECTION_VALUE_HISTORY_PATH = (
+    "/modal_data/collection_value_history.json" if os.path.exists("/modal_data")
+    else "collection_value_history.json"
+)
+
+
+def _load_collection_value_history() -> dict:
+    try:
+        with open(_COLLECTION_VALUE_HISTORY_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
 @app.route("/api/collection/value_history", methods=["POST"])
 def collection_value_history():
-    from datetime import datetime as _dt, timedelta as _td
+    """Real recorded portfolio-value history, one row per day, written by
+    collection_snapshot.py's daily cron (chained onto scheduled_en_price_
+    refresh — see matchit_modal.py). Returns exactly what was recorded,
+    nothing recomputed or fabricated.
+
+    Previously this recomputed all 30 "days" from the POSTed live item
+    array on every request — every day showed today's current total
+    (confirmed live 2026-09-22/23: a single item's price changing rewrote
+    all 30 days uniformly, and an add/remove couldn't produce a step
+    since every currently-held item was applied to every day regardless
+    of its own add date). No longer reads or needs the "items" field at
+    all — the real log is keyed by code, not by whatever the client
+    happens to currently hold in localStorage."""
     data = request.get_json(silent=True) or {}
-    code  = data.get("code", "").strip().upper()
-    items = data.get("items", [])
+    code = data.get("code", "").strip().upper()
     if not code:
         return jsonify({"error": "missing code"}), 400
-    if not isinstance(items, list):
-        return jsonify({"error": "invalid items"}), 400
     subs      = _load_subs()
     cfg_codes = CFG.get("premium_codes", [])
     if code not in subs and code not in cfg_codes:
         return jsonify({"error": "invalid code"}), 401
-    history = _load_price_history()
-    today   = _dt.utcnow().date()
 
-    # Clip the window to the earliest card's add date, so the graph never
-    # shows dates before any card existed in the collection. "added" is
-    # en-GB locale format ("DD/MM/YYYY"), written client-side at add time.
-    earliest_added = None
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        added_str = item.get("added")
-        if not added_str:
-            continue
-        try:
-            _d_part, _m_part, _y_part = added_str.split("/")
-            _added_date = _dt(int(_y_part), int(_m_part), int(_d_part)).date()
-        except Exception:
-            continue
-        if earliest_added is None or _added_date < earliest_added:
-            earliest_added = _added_date
-
-    default_start = today - _td(days=29)
-    start = max(default_start, earliest_added) if earliest_added else default_start
-    num_days = (today - start).days + 1
-    days = [start + _td(days=i) for i in range(num_days)]
-
-    result  = []
-    for day in days:
-        day_str   = day.strftime("%Y-%m-%d")
-        day_total = 0.0
-        for item in items:
-            if not isinstance(item, dict):
-                continue
-            sku          = item.get("sku") or None
-            gbp_fallback = float(item.get("gbp") or 0)
-            if sku and sku in history:
-                entries = history[sku]
-                best = None
-                for entry in entries:
-                    if entry.get("date", "") <= day_str:
-                        best = entry
-                day_total += float(best["gbp"]) if best else gbp_fallback
-            else:
-                day_total += gbp_fallback
-        result.append({"date": day_str, "value": round(day_total, 2)})
-    return jsonify({"days": result})
+    history = _load_collection_value_history()
+    entries = history.get(code, [])
+    # entries are already date-sorted ascending by the writer; cap to the
+    # most recent 30 real recorded days (matches the UI's "30 days" label
+    # — this is a display window, not a fabrication of missing days).
+    entries = entries[-30:]
+    days = [{"date": e.get("date"), "value": e.get("total_gbp")} for e in entries]
+    return jsonify({"days": days})
 
 
 @app.route("/api/watchlist/sync", methods=["GET"])

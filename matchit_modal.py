@@ -738,6 +738,22 @@ def scheduled_en_price_refresh():
     except Exception as e:
         print(f"[EN-PRICE-CRON] FAILED: {e}", flush=True)
 
+    # Daily portfolio snapshot — chained here (not a new schedule; Modal's
+    # 5-scheduled-function plan cap is already fully used, same reason the
+    # Limitless One Piece pass is chained onto its own cron rather than
+    # getting a new one) and specifically onto EN, the LAST-scheduled of the
+    # 3 daily price crons (1:30 OnePiece, 3:00 JP, 4:00 EN), so it runs
+    # after that day's prices are as fresh as they're going to get. One
+    # real recorded row per saved collection per day — see
+    # collection_snapshot.py's module docstring for why this replaces the
+    # old recompute-30-fake-days-from-today's-snapshot behaviour.
+    try:
+        from collection_snapshot import write_collection_snapshot
+        snap_result = write_collection_snapshot("/modal_data", dry_run=False, commit_cb=vol.commit)
+        print(f"[COLLECTION-SNAPSHOT] {snap_result}", flush=True)
+    except Exception as e:
+        print(f"[COLLECTION-SNAPSHOT] FAILED: {e}", flush=True)
+
 
 @app.function(
     image=image,

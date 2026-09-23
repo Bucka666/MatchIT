@@ -2331,21 +2331,21 @@ function colLoadValueChart() {
   var code  = localStorage.getItem('matchit_access_code_v1');
   if (!isPro || !code) return;
 
-  var items = colLoad().map(function(c) {
-    return {sku: c.sku || null, gbp: parseFloat(c.gbp) || 0, added: c.added || null};
-  });
-  if (!items.length) return;
-
+  // Real recorded history now, one row per day written by the nightly
+  // collection_snapshot.py cron -- server no longer needs (or reads) the
+  // client's current item list, just the code, so a short real history
+  // (e.g. 3 real days for a brand-new collection) shows exactly 3 real
+  // points rather than being padded or recomputed from today's snapshot.
   fetch('/api/collection/value_history', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({code: code.trim().toUpperCase(), items: items})
+    body: JSON.stringify({code: code.trim().toUpperCase()})
   })
   .then(function(r) { return r.json(); })
   .then(function(data) {
-    if (!data.days || data.days.length < 2) return;
+    if (!data.days || data.days.length < 1) return;
     var nonZero = data.days.filter(function(d) { return d.value > 0; });
-    if (nonZero.length < 2) return;
+    if (nonZero.length < 1) return;
 
     var wrap = document.getElementById('colValueChartWrap');
     if (wrap) wrap.style.display = '';
