@@ -258,11 +258,30 @@ def serve():
 # /api/pokemon-search and /search (text search needs no CLIP/DINOv2)
 # on a CPU-only container so they never pay for (or wait behind) the GPU
 # container's CLIP/DINOv2 warmup. Same Flask app as serve() (same code, same
-# routes registered) but the WSGI router below allowlists only these 3
-# prefixes — every other path 404s here instead of falling through to the
-# full app, keeping /match and /api/v1/match practically unreachable on this
-# function. Routing traffic to this URL for those 3 paths is done at the
-# Cloudflare Worker layer (not here) — see matchit_modal.py deploy notes.
+# routes registered) but the WSGI router below allowlists only these
+# paths/prefixes — every other path 404s here instead of falling through to
+# the full app, keeping /match and /api/v1/match practically unreachable on
+# this function. Routing traffic to this URL is done at the Cloudflare
+# Worker layer (not here) — see cloudflare_worker.js.
+#
+# 2026-09-24 cost recon: added /, /privacy, /terms, /contact, /upgrade and
+# the sitemap routes. None of them call get_embedder()/FRONT_INFO/any
+# model state (verified against app.py:3022, 5679, 5693, 5717, 5504, 4603,
+# 4603-4634) — they were only ever on the GPU function because the CPU twin
+# hadn't been extended to cover them, and they alone were ~65% of serve()'s
+# daily request volume, several taking 30-55s wall time for a cold GPU
+# reload to serve a static page. /upgrade's _ssr_subscription() only reads
+# a cookie + local subscriptions.json — no RevenueCat network call at
+# request time, so no new secrets needed here for it.
+_LIGHT_ALLOWED_EXACT = (
+    "/",
+    "/privacy",
+    "/terms",
+    "/contact",
+    "/upgrade",
+    "/sitemap.xml",
+    "/sitemap_index.xml",
+)
 _LIGHT_ALLOWED_PREFIXES = (
     "/api/ondevice/telemetry",
     "/api/card-profile/",
@@ -272,6 +291,7 @@ _LIGHT_ALLOWED_PREFIXES = (
     "/api/price_history/bulk",
     "/api/heartbeat",
     "/api/stats",
+    "/sitemap-",  # /sitemap-<chunk_name>.xml
 )
 
 
@@ -328,7 +348,7 @@ def serve_light():
 
     def router(environ, start_response):
         path = environ.get("PATH_INFO", "")
-        if any(path.startswith(p) for p in _LIGHT_ALLOWED_PREFIXES):
+        if path in _LIGHT_ALLOWED_EXACT or any(path.startswith(p) for p in _LIGHT_ALLOWED_PREFIXES):
             return _flask_app(environ, start_response)
         return _light_404(environ, start_response)
 

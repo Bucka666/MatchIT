@@ -53,6 +53,73 @@ const VALIDATOR_UA_PATTERNS = [
   /Chrome-Lighthouse/i,
 ];
 
+// Every real route the Flask app (app.py + api_routes.py) registers, plus
+// Flask's own implicit /static/<path:filename> handler. Generated 2026-09-24
+// by grepping every @app.route(...) decorator in both files — kept as a
+// flat safety net so the "unmatched path -> CPU twin" default below (step 4)
+// can never silently swallow a real feature route it doesn't recognise.
+// A path landing on the CPU twin without matching anything here or in the
+// light-routing block above just gets serve_light's cheap 404 instead of
+// waking the GPU container to render the same 404 — that's the entire
+// point: nonexistent-page requests (bot/scanner guesses like /dpa,
+// /subprocessors, /ai-policy, typos, dead links) no longer cost a GPU cold
+// start just to return 404. When a new @app.route is added to either file, add it here too — nothing
+// breaks if you forget (worst case a brand-new route falls through to the
+// GPU default, exactly today's behaviour), but it stops enjoying the
+// no-GPU-wakeup protection for its own 404 siblings.
+const KNOWN_APP_ROUTES_EXACT = new Set([
+  '/', '/.well-known/assetlinks.json', '/admin', '/admin/cancel_code',
+  '/admin/create_referral_coupon', '/admin/delete_code', '/admin/feedback',
+  '/admin/feedback/clear', '/admin/reembed_all', '/admin/reembed_missing',
+  '/admin/refresh_cache', '/admin/run_scheduler', '/admin/run_scheduler_dry',
+  '/admin/scans-diagnostic', '/admin/sync_keysdb', '/admin/tier-usage-diagnostic',
+  '/api/card-search', '/api/collection/live_prices', '/api/collection/sync',
+  '/api/collection/value_history', '/api/create-checkout-session',
+  '/api/customer-portal', '/api/deep_grade', '/api/deep_grade_url',
+  '/api/delete-alert', '/api/fx_rates', '/api/google-play/rtdn',
+  '/api/google-play/verify-purchase', '/api/heartbeat', '/api/imaged-sets',
+  '/api/jp-denom-check', '/api/jp-set-coverage', '/api/ocr-lookup',
+  '/api/ondevice/telemetry', '/api/pokemon-search', '/api/price_history',
+  '/api/price_history/bulk', '/api/push/send', '/api/push/subscribe',
+  '/api/redeem-topup', '/api/referral_code', '/api/revenuecat/restore',
+  '/api/revenuecat/webhook', '/api/set-alert', '/api/sets/completion',
+  '/api/stats', '/api/tier/dismiss-warning', '/api/topup-status',
+  '/api/trial/activate', '/api/validate_premium', '/api/watchlist/sync',
+  '/app/', '/apple-touch-icon-precomposed.png', '/apple-touch-icon.png',
+  '/capture_submit', '/collection', '/contact', '/csv_template',
+  '/db_image_review', '/db_manage', '/db_upload', '/delete-account',
+  '/favicon.ico', '/feedback', '/get', '/history', '/login', '/login/',
+  '/logout', '/marketplace', '/match', '/ocr-test', '/payment-success',
+  '/privacy', '/robots.txt', '/search', '/sets', '/sitemap.xml',
+  '/sitemap_index.xml', '/static/scanner.html', '/sw.js', '/terms',
+  '/upgrade', '/watchlist', '/webhook/stripe', '/xref-search',
+  '/api/v1/health', '/api/v1/switch_vertical', '/api/v1/verticals',
+  '/api/v1/vertical', '/api/v1/match', '/api/v1/stats',
+]);
+
+const KNOWN_APP_ROUTES_PREFIXES = [
+  '/api/card-profile/',   // <string:sku>
+  '/api/search-index/',   // <game>
+  '/api/set-total/',      // <path:sku>
+  '/api/sets-list/',      // <game>
+  '/api/sets/',           // <set_id>/cards (also covers /api/sets/completion above)
+  '/cards/pokemon/',      // <set_slug>/<card_slug>
+  '/db_delete/',          // <image_id>
+  '/db_flag_image/',      // <image_id>
+  '/db_replace_image/',   // <image_id>
+  '/db_review/',          // <batch_id>
+  '/img/query/',          // <filename>
+  '/img/ras/',            // <sku>.jpg
+  '/sitemap-',            // <chunk_name>.xml
+  '/api/v1/image/',       // <image_id>
+  '/api/v1/ras_image/',   // <sku>
+  '/static/',             // Flask's implicit static file handler
+];
+
+function isKnownAppRoute(path) {
+  return KNOWN_APP_ROUTES_EXACT.has(path) || KNOWN_APP_ROUTES_PREFIXES.some(p => path.startsWith(p));
+}
+
 // Probe paths — synth 404, never hit Modal
 const PROBE_PATTERNS = [
   /\.(php|phtml|asp|aspx|jsp|cgi|pl|sh)($|\?|\/)/i,    // any server-side script — grailsweep.com is pure Python
@@ -101,16 +168,30 @@ export default {
     const host = url.hostname;
     const path = url.pathname;
 
-    // Route 8 lightweight, no-GPU routes to the CPU twin (serve_light).
+    // Route lightweight, no-GPU routes to the CPU twin (serve_light).
     // Placed first so it covers POST telemetry + GET card-profile/image in one
     // spot, before the method-based early-exit splits them apart.
+    //
+    // 2026-09-24 cost recon: added /, /privacy, /terms, /contact, /upgrade
+    // and the sitemap routes — static/legal pages and the homepage with zero
+    // model/GPU dependency (verified against app.py), which recon measured
+    // as ~65% of the GPU function's daily request volume, some taking
+    // 30-55s wall time for a cold GPU reload to serve a static page.
     if (
+      path === '/' ||
+      path === '/privacy' ||
+      path === '/terms' ||
+      path === '/contact' ||
+      path === '/upgrade' ||
+      path === '/sitemap.xml' ||
+      path === '/sitemap_index.xml' ||
       path === '/api/ondevice/telemetry' ||
       path === '/api/pokemon-search' ||
       path === '/search' ||
       path === '/api/price_history/bulk' ||
       path === '/api/heartbeat' ||
       path === '/api/stats' ||
+      path.startsWith('/sitemap-') ||
       path.startsWith('/api/card-profile/') ||
       path.startsWith('/api/v1/image/')
     ) {
@@ -175,8 +256,18 @@ export default {
       }
     }
 
-    // 4. Default — pass through to Modal (with proxy secret)
-    return proxyToModal(request, url);
+    // 4. Known real app route (not already sent to the CPU twin above) —
+    // pass through to the GPU function, unchanged behaviour.
+    if (isKnownAppRoute(path)) {
+      return proxyToModal(request, url);
+    }
+
+    // 5. Doesn't match any route this app actually serves — bot probes,
+    // typos, deprecated links. Send to the CPU twin instead of the GPU
+    // function: serve_light's own router 404s it just as correctly, without
+    // spending a GPU cold start on a response that was always going to be
+    // a 404. See KNOWN_APP_ROUTES_* above for what routes to.
+    return proxyToModal(request, url, LIGHT_HOST);
   },
 };
 
