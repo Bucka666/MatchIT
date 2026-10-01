@@ -53,10 +53,13 @@ const VALIDATOR_UA_PATTERNS = [
   /Chrome-Lighthouse/i,
 ];
 
-// Every real route the Flask app (app.py + api_routes.py) registers, plus
-// Flask's own implicit /static/<path:filename> handler. Generated 2026-09-24
-// by grepping every @app.route(...) decorator in both files — kept as a
-// flat safety net so the "unmatched path -> CPU twin" default below (step 4)
+// Every real route the Flask app (app.py + api_routes.py) registers.
+// Generated 2026-09-24 by grepping every @app.route(...) decorator in both
+// files (2026-10-02: Flask's implicit /static/<path:filename> handler,
+// /.well-known/assetlinks.json and /sw.js removed from here — they're now
+// caught by the light-routing block above and never reach this check) —
+// kept as a flat safety net so the "unmatched path -> CPU twin" default
+// below (step 4)
 // can never silently swallow a real feature route it doesn't recognise.
 // A path landing on the CPU twin without matching anything here or in the
 // light-routing block above just gets serve_light's cheap 404 instead of
@@ -68,7 +71,7 @@ const VALIDATOR_UA_PATTERNS = [
 // GPU default, exactly today's behaviour), but it stops enjoying the
 // no-GPU-wakeup protection for its own 404 siblings.
 const KNOWN_APP_ROUTES_EXACT = new Set([
-  '/', '/.well-known/assetlinks.json', '/admin', '/admin/cancel_code',
+  '/', '/admin', '/admin/cancel_code',
   '/admin/create_referral_coupon', '/admin/delete_code', '/admin/feedback',
   '/admin/feedback/clear', '/admin/reembed_all', '/admin/reembed_missing',
   '/admin/refresh_cache', '/admin/run_scheduler', '/admin/run_scheduler_dry',
@@ -91,7 +94,7 @@ const KNOWN_APP_ROUTES_EXACT = new Set([
   '/favicon.ico', '/feedback', '/get', '/history', '/login', '/login/',
   '/logout', '/marketplace', '/match', '/ocr-test', '/payment-success',
   '/privacy', '/robots.txt', '/search', '/sets', '/sitemap.xml',
-  '/sitemap_index.xml', '/static/scanner.html', '/sw.js', '/terms',
+  '/sitemap_index.xml', '/static/scanner.html', '/terms',
   '/upgrade', '/watchlist', '/webhook/stripe', '/xref-search',
   '/api/v1/health', '/api/v1/switch_vertical', '/api/v1/verticals',
   '/api/v1/vertical', '/api/v1/match', '/api/v1/stats',
@@ -113,7 +116,6 @@ const KNOWN_APP_ROUTES_PREFIXES = [
   '/sitemap-',            // <chunk_name>.xml
   '/api/v1/image/',       // <image_id>
   '/api/v1/ras_image/',   // <sku>
-  '/static/',             // Flask's implicit static file handler
 ];
 
 function isKnownAppRoute(path) {
@@ -177,6 +179,12 @@ export default {
     // model/GPU dependency (verified against app.py), which recon measured
     // as ~65% of the GPU function's daily request volume, some taking
     // 30-55s wall time for a cold GPU reload to serve a static page.
+    //
+    // 2026-10-02 follow-up: added /.well-known/assetlinks.json, /sw.js and
+    // the /static/ prefix. 24h recon found 70% of identifiable GPU
+    // cold-start triggers were these three (pure file-serving, zero model
+    // dependency) — a homepage visit loaded / fast via serve_light, but the
+    // browser's own follow-up asset requests still woke the GPU container.
     if (
       path === '/' ||
       path === '/privacy' ||
@@ -185,6 +193,8 @@ export default {
       path === '/upgrade' ||
       path === '/sitemap.xml' ||
       path === '/sitemap_index.xml' ||
+      path === '/.well-known/assetlinks.json' ||
+      path === '/sw.js' ||
       path === '/api/ondevice/telemetry' ||
       path === '/api/pokemon-search' ||
       path === '/search' ||
@@ -192,6 +202,7 @@ export default {
       path === '/api/heartbeat' ||
       path === '/api/stats' ||
       path.startsWith('/sitemap-') ||
+      path.startsWith('/static/') ||
       path.startsWith('/api/card-profile/') ||
       path.startsWith('/api/v1/image/')
     ) {

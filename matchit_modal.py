@@ -273,6 +273,16 @@ def serve():
 # reload to serve a static page. /upgrade's _ssr_subscription() only reads
 # a cookie + local subscriptions.json — no RevenueCat network call at
 # request time, so no new secrets needed here for it.
+#
+# 2026-10-02 follow-up: added /.well-known/assetlinks.json, /sw.js and the
+# /static/ prefix. 24h recon (2026-09-30 21:21 -> 2026-10-01 19:59) found
+# 70% of identifiable GPU cold-start triggers (7/10) were these three —
+# pure file-serving/hardcoded-string routes with zero model dependency
+# (app.py:3722 assetlinks, app.py:4659 sw.js; /static/ is Flask's own
+# implicit static handler). Same image as serve() (modal_config.py's
+# add_local_dir bakes /app/static/ into both containers identically), same
+# shared Flask `app` object, so content/headers are byte-identical either
+# way -- this is a pure routing change, no file/template/header changes.
 _LIGHT_ALLOWED_EXACT = (
     "/",
     "/privacy",
@@ -281,6 +291,8 @@ _LIGHT_ALLOWED_EXACT = (
     "/upgrade",
     "/sitemap.xml",
     "/sitemap_index.xml",
+    "/.well-known/assetlinks.json",
+    "/sw.js",
 )
 _LIGHT_ALLOWED_PREFIXES = (
     "/api/ondevice/telemetry",
@@ -292,6 +304,7 @@ _LIGHT_ALLOWED_PREFIXES = (
     "/api/heartbeat",
     "/api/stats",
     "/sitemap-",  # /sitemap-<chunk_name>.xml
+    "/static/",
 )
 
 
