@@ -44,6 +44,7 @@ commit_cb together, real dry_run param (default True, matching the
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -61,7 +62,8 @@ _HEADERS = {"User-Agent": "GrailSweep/1.0 (+https://grailsweep.com; contact@grai
 _MAX_WORKERS = 4  # politeness -- this hits a third-party site, not our own volume
 _REQUEST_DELAY_S = 0.15
 _CHECKPOINT_EVERY = 50  # base-number groups, not SKUs (fewer requests than DotGG's SKU-level checkpoint)
-_STALE_AFTER = timedelta(hours=48)
+_STALE_MIN_HOURS = 36
+_STALE_MAX_HOURS = 60
 
 # Shared with refresh_onepiece_dotgg_prices.py -- written to (never read
 # for gating) after a real write, so DotGG's own next run doesn't
@@ -89,7 +91,18 @@ _OWN_STALENESS_PATH = (
 )
 
 
-def _index_says_fresh(last_checked) -> bool:
+def _stale_after_hours(sku: str) -> float:
+    """Deterministic per-SKU staleness window in [36h, 60h) -- same
+    rationale and mechanism as refresh_onepiece_dotgg_prices.py's own copy
+    (2026-10-02): spreads what a single fixed window would let expire all
+    at once into a rolling band. Kept independent (not imported), matching
+    this script's own standalone-script convention."""
+    h = int(hashlib.sha256(sku.encode("utf-8")).hexdigest()[:8], 16)
+    frac = h / 0xFFFFFFFF
+    return _STALE_MIN_HOURS + frac * (_STALE_MAX_HOURS - _STALE_MIN_HOURS)
+
+
+def _index_says_fresh(sku: str, last_checked) -> bool:
     """Same semantics as refresh_onepiece_dotgg_prices.py's own helper --
     kept independent (not imported) so this script has no hard dependency
     on that module, matching its own standalone-script convention."""
@@ -99,7 +112,7 @@ def _index_says_fresh(last_checked) -> bool:
         checked = datetime.strptime(last_checked, "%Y-%m-%dT%H:%M:%SZ")
     except (ValueError, TypeError):
         return False
-    return (datetime.utcnow() - checked) <= _STALE_AFTER
+    return (datetime.utcnow() - checked) <= timedelta(hours=_stale_after_hours(sku))
 
 
 def _load_index(path: str) -> dict:
@@ -159,7 +172,7 @@ def _discover_targets(onepiece_dir: Path, staleness: dict) -> dict:
         key = (set_id, base_num)
         groups.setdefault(key, {"all_skus": [], "needs_write": set()})
         groups[key]["all_skus"].append(name)
-        if empty and not _index_says_fresh(staleness.get(name)):
+        if empty and not _index_says_fresh(name, staleness.get(name)):
             groups[key]["needs_write"].add(name)
 
     for g in groups.values():

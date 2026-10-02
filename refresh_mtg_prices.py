@@ -11,11 +11,24 @@ INCREMENTAL sibling: run backfill_mtg_prices.py once first to fill the
 catalog cold, then this keeps it fresh.
 
 STALENESS INDEX: mtg_price_staleness.json, same {sku: last_checked_iso}
-shape and same 48h window as onepiece's — a performance cache only,
-never the source of truth (a sku missing from it is always treated as
-stale). Update policy per outcome, identical to onepiece's:
+shape as onepiece's — a performance cache only, never the source of
+truth (a sku missing from it is always treated as stale). Update policy
+per outcome, identical to onepiece's:
   - priced / no_change / no_match -> index updated to now
   - error                         -> index NOT updated (unknown state)
+
+STALENESS WINDOW (2026-10-02, jittered): a fixed 48h window for every SKU
+meant all ~79,996 SKUs -- stamped together by the one-time backfill, then
+re-stamped together by whichever daily run next completed a full pass --
+went stale at the exact same moment, turning every ~other day into a
+synchronized full-catalog reprocess (confirmed live: a histogram of
+mtg_price_staleness.json showed literally all 79,996 entries timestamped
+within the same ~40-minute window). Each SKU's own window is now
+deterministic per-SKU in [36h, 60h) (see _stale_after_hours), derived
+from a stable hash of the SKU string -- NOT random.random(), so it's the
+same on every run and reproducible in tests. Spreads what was one
+synchronized cliff-edge across a rolling ~24h band. Failure direction
+unchanged: missing/unparseable/too-old is still always "stale".
 
 PARALLELISM: shared work queue + N independent worker threads, NOT
 ThreadPoolExecutor.map() — see backfill_mtg_prices.py's docstring for
@@ -28,6 +41,7 @@ Called from matchit_modal.py's scheduled_onepiece_price_refresh as pass
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import queue
@@ -40,7 +54,9 @@ from typing import Callable, Optional
 _N_WORKERS = 8
 _CHECKPOINT_EVERY = 300
 _RESULT_Q_MAXSIZE = 200
-_STALE_AFTER = timedelta(hours=48)
+_SCAN_PROGRESS_EVERY = 5000
+_STALE_MIN_HOURS = 36
+_STALE_MAX_HOURS = 60
 
 _STALENESS_PATH = (
     "/modal_data/mtg_price_staleness.json"
@@ -114,14 +130,28 @@ def _save_staleness_index(index: dict) -> None:
     os.replace(tmp, _STALENESS_PATH)
 
 
-def _index_says_fresh(last_checked) -> bool:
+def _stale_after_hours(sku: str) -> float:
+    """Deterministic per-SKU staleness window in [36h, 60h) -- derived from
+    a stable hash of the SKU string, NOT random.random(), so it's identical
+    across runs/processes and reproducible in tests. See module docstring
+    (2026-10-02) for why: a single fixed window let the whole catalog expire
+    in one synchronized moment."""
+    h = int(hashlib.sha256(sku.encode("utf-8")).hexdigest()[:8], 16)
+    frac = h / 0xFFFFFFFF
+    return _STALE_MIN_HOURS + frac * (_STALE_MAX_HOURS - _STALE_MIN_HOURS)
+
+
+def _index_says_fresh(sku: str, last_checked) -> bool:
+    """True only for a valid timestamp within THIS SKU's own jittered window.
+    Missing, unparseable, or too old -> stale (self-healing default,
+    unchanged failure direction)."""
     if not last_checked:
         return False
     try:
         checked = datetime.strptime(last_checked, "%Y-%m-%dT%H:%M:%SZ")
     except (ValueError, TypeError):
         return False
-    return (datetime.utcnow() - checked) <= _STALE_AFTER
+    return (datetime.utcnow() - checked) <= timedelta(hours=_stale_after_hours(sku))
 
 
 def _refresh_one(profile_path: Path, all_prices: dict, dry_run: bool) -> dict:
@@ -192,22 +222,37 @@ def refresh_mtg_prices(
     staleness = _load_staleness_index()
 
     targets = []
+    scanned = 0
     with os.scandir(mtg_dir) as it:
         for entry in it:
+            scanned += 1
+            if scanned % _SCAN_PROGRESS_EVERY == 0:
+                print(f"[MTG-REFRESH] {datetime.utcnow().isoformat()}Z ...scanned "
+                      f"{scanned} folders so far ({len(targets)} targets, "
+                      f"{stats['skipped_fresh']} fresh-skipped)", flush=True)
             if not entry.is_dir():
+                continue
+            # Staleness check FIRST (pure in-memory, from entry.name alone) --
+            # only a stale-or-unknown SKU pays the profile.json stat below.
+            # Same final `targets` set either way for any real folder; see
+            # 2026-10-02 recon for why this ordering was changed (a fresh SKU
+            # previously paid the same filesystem stat as a stale one).
+            sku = entry.name
+            if _index_says_fresh(sku, staleness.get(sku)):
+                stats["skipped_fresh"] += 1
                 continue
             profile_path = Path(entry.path) / "profile.json"
             if not profile_path.exists():
                 continue
-            sku = entry.name
-            if _index_says_fresh(staleness.get(sku)):
-                stats["skipped_fresh"] += 1
-                continue
             targets.append((sku, profile_path))
 
-    print(f"[MTG-REFRESH] {len(targets)} stale-or-unknown of "
+    print(f"[MTG-REFRESH] {datetime.utcnow().isoformat()}Z scan complete: "
+          f"{len(targets)} stale-or-unknown of "
           f"{len(targets) + stats['skipped_fresh']} total folders "
           f"({stats['skipped_fresh']} skipped via staleness index, never opened)", flush=True)
+
+    print(f"[MTG-REFRESH] {datetime.utcnow().isoformat()}Z processing loop starting "
+          f"({len(targets)} to process, {_N_WORKERS} workers)", flush=True)
 
     work_q: "queue.Queue" = queue.Queue()
     for sku, profile_path in targets:

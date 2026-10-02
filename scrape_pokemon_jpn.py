@@ -28,13 +28,13 @@ import os
 import re
 import sys
 import json
+import queue
 import time
 import argparse
 import requests
 import logging
 import threading
 import urllib.parse
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Callable
 
@@ -762,8 +762,8 @@ def _fetch_card_detail_with_backoff(tcgdex_id: str, max_retries: int = 3, timeou
 def _refresh_one(folder: str, pokemon_dir: Path) -> dict:
     """Refresh a single already-priced jpn card. Never raises — every
     failure mode is caught and reported in the returned dict so the
-    orchestrating ThreadPoolExecutor pool never has to handle an exception
-    from a worker."""
+    orchestrating worker pool never has to handle an exception from a
+    worker."""
     profile_path = pokemon_dir / folder / "profile.json"
     try:
         profile = json.loads(profile_path.read_text(encoding="utf-8"))
@@ -798,6 +798,20 @@ def _refresh_one(folder: str, pokemon_dir: Path) -> dict:
             encoding="utf-8",
         )
     return {"folder": folder, "status": "refreshed", "price_changed": changed}
+
+
+def _worker(work_q: "queue.Queue", result_q: "queue.Queue", pokemon_dir: Path) -> None:
+    """Shared work queue + independent worker thread, NOT
+    ThreadPoolExecutor.map() -- see refresh_mtg_prices.py's module
+    docstring for the exact 1h43m stall this avoids (map() withholds all
+    results until the head of the input list resolves; a queue-based pool
+    costs at most one of N_WORKERS threads to a single hang)."""
+    while True:
+        folder = work_q.get()
+        if folder is None:
+            break
+        result = _refresh_one(folder, pokemon_dir)
+        result_q.put(result)
 
 
 def refresh_cardmarket_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8,
@@ -852,33 +866,46 @@ def refresh_cardmarket_prices(db_root: Path, dry_run: bool = False, max_workers:
         return stats
 
     completed = 0
-    lock = threading.Lock()
     total = len(candidates)
 
-    with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        for result in pool.map(lambda f: _refresh_one(f, pokemon_dir), candidates):
-            with lock:
-                completed += 1
-                status = result["status"]
-                if status == "refreshed":
-                    stats["refreshed"] += 1
-                    if result.get("price_changed"):
-                        stats["price_changed"] += 1
-                elif status == "skipped_no_price":
-                    stats["skipped_no_price"] += 1
-                elif status == "error":
-                    stats["errors"] += 1
-                    log.warning("Refresh error for %s: %s", result["folder"], result.get("error"))
+    work_q: "queue.Queue" = queue.Queue()
+    for folder in candidates:
+        work_q.put(folder)
+    for _ in range(max_workers):
+        work_q.put(None)
 
-                if completed % 50 == 0:
-                    print(f"  ... {completed}/{total} refreshed "
-                          f"(refreshed={stats['refreshed']} changed={stats['price_changed']} errors={stats['errors']})",
-                          flush=True)
-                    if commit_cb is not None:
-                        try:
-                            commit_cb()
-                        except Exception as e:
-                            print(f"[REFRESH] commit_cb() failed at {completed}: {e}", flush=True)
+    result_q: "queue.Queue" = queue.Queue()
+    workers = [threading.Thread(target=_worker, args=(work_q, result_q, pokemon_dir), daemon=True)
+               for _ in range(max_workers)]
+    for w in workers:
+        w.start()
+
+    for _ in range(total):
+        result = result_q.get()
+        completed += 1
+        status = result["status"]
+        if status == "refreshed":
+            stats["refreshed"] += 1
+            if result.get("price_changed"):
+                stats["price_changed"] += 1
+        elif status == "skipped_no_price":
+            stats["skipped_no_price"] += 1
+        elif status == "error":
+            stats["errors"] += 1
+            log.warning("Refresh error for %s: %s", result["folder"], result.get("error"))
+
+        if completed % 50 == 0:
+            print(f"  ... {completed}/{total} refreshed "
+                  f"(refreshed={stats['refreshed']} changed={stats['price_changed']} errors={stats['errors']})",
+                  flush=True)
+            if commit_cb is not None:
+                try:
+                    commit_cb()
+                except Exception as e:
+                    print(f"[REFRESH] commit_cb() failed at {completed}: {e}", flush=True)
+
+    for w in workers:
+        w.join()
 
     if commit_cb is not None:
         try:

@@ -25,10 +25,11 @@ from __future__ import annotations
 import json
 import logging
 import os
+import queue
 import re
+import threading
 import time
 import urllib.parse
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable, Optional
@@ -293,6 +294,20 @@ def _refresh_one(folder: Path, tcgdex_set_id: str, set_prefix: str, force: bool 
     return {"folder": folder.name, "status": "refreshed"}
 
 
+def _worker(work_q: "queue.Queue", result_q: "queue.Queue", tcgdex_set_id: str,
+            prefix: str, force: bool) -> None:
+    """Shared work queue + independent worker thread, NOT ThreadPoolExecutor.map()
+    -- see refresh_mtg_prices.py's module docstring for the exact 1h43m stall this
+    avoids (map() withholds all results until the head of the input list resolves;
+    a queue-based pool costs at most one of N_WORKERS threads to a single hang)."""
+    while True:
+        folder = work_q.get()
+        if folder is None:
+            break
+        result = _refresh_one(folder, tcgdex_set_id, prefix, force)
+        result_q.put(result)
+
+
 def refresh_en_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8,
                       force: bool = False,
                       commit_cb: Optional[Callable[[], None]] = None) -> dict:
@@ -383,21 +398,37 @@ def refresh_en_prices(db_root: Path, dry_run: bool = False, max_workers: int = 8
               flush=True)
 
         set_stats = {"refreshed": 0, "no_data": 0, "no_price": 0, "fresh_skip": 0}
-        with ThreadPoolExecutor(max_workers=max_workers) as pool:
-            for res in pool.map(lambda f: _refresh_one(f, tcgdex_set_id, prefix, force), folders):
-                s = res["status"]
-                if s == "refreshed":
-                    stats["refreshed"] += 1; set_stats["refreshed"] += 1
-                elif s == "no_data":
-                    stats["no_data"] += 1; set_stats["no_data"] += 1
-                elif s == "no_price":
-                    stats["no_price"] += 1; set_stats["no_price"] += 1
-                elif s == "fresh_skip":
-                    stats["fresh_skip"] += 1; set_stats["fresh_skip"] += 1
-                elif s == "no_profile":
-                    stats["no_profile"] += 1
-                elif s == "error":
-                    stats["errors"] += 1
+
+        work_q: "queue.Queue" = queue.Queue()
+        for folder in folders:
+            work_q.put(folder)
+        for _ in range(max_workers):
+            work_q.put(None)
+
+        result_q: "queue.Queue" = queue.Queue()
+        workers = [threading.Thread(target=_worker, args=(work_q, result_q, tcgdex_set_id, prefix, force), daemon=True)
+                   for _ in range(max_workers)]
+        for w in workers:
+            w.start()
+
+        for _ in range(len(folders)):
+            res = result_q.get()
+            s = res["status"]
+            if s == "refreshed":
+                stats["refreshed"] += 1; set_stats["refreshed"] += 1
+            elif s == "no_data":
+                stats["no_data"] += 1; set_stats["no_data"] += 1
+            elif s == "no_price":
+                stats["no_price"] += 1; set_stats["no_price"] += 1
+            elif s == "fresh_skip":
+                stats["fresh_skip"] += 1; set_stats["fresh_skip"] += 1
+            elif s == "no_profile":
+                stats["no_profile"] += 1
+            elif s == "error":
+                stats["errors"] += 1
+
+        for w in workers:
+            w.join()
 
         cards_seen += len(folders)
         stats["sets_done"] += 1

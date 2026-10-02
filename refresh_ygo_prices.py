@@ -25,6 +25,7 @@ Called from matchit_modal.py's scheduled_jp_price_refresh cron
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import queue
@@ -37,7 +38,8 @@ from typing import Callable, Optional
 _N_WORKERS = 8
 _CHECKPOINT_EVERY = 300
 _RESULT_Q_MAXSIZE = 200
-_STALE_AFTER = timedelta(hours=48)
+_STALE_MIN_HOURS = 36
+_STALE_MAX_HOURS = 60
 
 _STALENESS_PATH = (
     "/modal_data/ygo_price_staleness.json"
@@ -98,14 +100,28 @@ def _save_staleness_index(index: dict) -> None:
     os.replace(tmp, _STALENESS_PATH)
 
 
-def _index_says_fresh(last_checked) -> bool:
+def _stale_after_hours(sku: str) -> float:
+    """Deterministic per-SKU staleness window in [36h, 60h) -- same
+    rationale as refresh_mtg_prices.py's own copy (2026-10-02): a single
+    fixed window let an entire catalog stamped together expire at the exact
+    same moment. Derived from a stable hash, NOT random.random(), so it's
+    identical across runs and reproducible in tests."""
+    h = int(hashlib.sha256(sku.encode("utf-8")).hexdigest()[:8], 16)
+    frac = h / 0xFFFFFFFF
+    return _STALE_MIN_HOURS + frac * (_STALE_MAX_HOURS - _STALE_MIN_HOURS)
+
+
+def _index_says_fresh(sku: str, last_checked) -> bool:
+    """True only for a valid timestamp within THIS SKU's own jittered window.
+    Missing, unparseable, or too old -> stale (self-healing default,
+    unchanged failure direction)."""
     if not last_checked:
         return False
     try:
         checked = datetime.strptime(last_checked, "%Y-%m-%dT%H:%M:%SZ")
     except (ValueError, TypeError):
         return False
-    return (datetime.utcnow() - checked) <= _STALE_AFTER
+    return (datetime.utcnow() - checked) <= timedelta(hours=_stale_after_hours(sku))
 
 
 def _refresh_one(profile_path: Path, all_prices: dict, dry_run: bool) -> dict:
@@ -176,12 +192,16 @@ def refresh_ygo_prices(
         for entry in it:
             if not entry.is_dir():
                 continue
+            # Staleness check FIRST (pure in-memory, from entry.name alone) --
+            # only a stale-or-unknown SKU pays the profile.json stat below
+            # (2026-10-02: previously every folder paid that stat regardless
+            # of freshness).
+            sku = entry.name
+            if _index_says_fresh(sku, staleness.get(sku)):
+                stats["skipped_fresh"] += 1
+                continue
             profile_path = Path(entry.path) / "profile.json"
             if not profile_path.exists():
-                continue
-            sku = entry.name
-            if _index_says_fresh(staleness.get(sku)):
-                stats["skipped_fresh"] += 1
                 continue
             targets.append((sku, profile_path))
 
